@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "frozen_before_candidate_execution": true,
+  "artifact_revision": "c7b9252c73707dba494cf4d99ca45d3f33f561b3",
+  "artifact_sha256": "6c3d0bfa055986a803a566a862fcde283a1e63db62829e5ef4a2a5aebf50bb86",
+  "recipe": "full_decoder_v1-f16-weights-f32-arithmetic",
+  "latent": "normalized F32 [1,24,1,h,w]; deterministic posterior mean",
+  "tile_pixels": 256,
+  "overlap_pixels": 64,
+  "output_slice": 3,
+  "reference": "independent PyTorch F32 model equations, original H3 VAE source pinned by file hashes",
+  "fixtures": [{"source":"inputs/2.jpg","width":256,"height":256},{"source":"inputs/2.jpg","width":512,"height":512},{"source":"inputs/2.jpg","width":640,"height":480}],
+  "crop": "FFmpeg Lanczos cover resize, center crop, RGB24 -> F32 / 255",
+  "gates": {"unclamped_rgb_mae_max":0.01,"unclamped_rgb_psnr_min_db":35.0,"roundtrip_psnr_min_db":25.0,"roundtrip_floor_applies_only_if_independent_baseline_passes":true},
+  "controls": ["all four output slices","normalization omitted/doubled","stock checkpoint rejection","whole image versus released tiling"],
+  "video_regression_frames":243,
+  "denoising_evaluation_ceiling":6,
+  "cuda_status":"requires separate execution qualification"
+}

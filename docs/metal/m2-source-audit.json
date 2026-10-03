@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "project": "VPIPE",
+      "commit": "f34e2cc3a3adae759eea254419f436f5b7800057",
+      "path": "gpu-kernels/metal/attention/attn_steel.metal",
+      "url": "https://github.com/tgo-app-dev/vpipe/blob/f34e2cc3a3adae759eea254419f436f5b7800057/gpu-kernels/metal/attention/attn_steel.metal",
+      "sha256": "b095c68bdc8c089bfaa8e6cb4fd5c9031f433fdbef5a9f127fc14b841230f837",
+      "license": "Apache-2.0",
+      "disposition": "Audit only; no code copied"
+    },
+    {
+      "project": "VPIPE",
+      "commit": "f34e2cc3a3adae759eea254419f436f5b7800057",
+      "path": "LICENSE",
+      "url": "https://github.com/tgo-app-dev/vpipe/blob/f34e2cc3a3adae759eea254419f436f5b7800057/LICENSE",
+      "sha256": "da1a325757e207244cd589713ce51febe3859aab6034f34afbccd57eb96cb53a",
+      "license": "Apache-2.0",
+      "disposition": "Audit license"
+    },
+    {
+      "project": "MLX",
+      "commit": "59d600b5e64c238427d0f8d897ab7c682ef4d3d2",
+      "path": "mlx/backend/metal/kernels/steel/attn/nax.h",
+      "url": "https://github.com/ml-explore/mlx/blob/59d600b5e64c238427d0f8d897ab7c682ef4d3d2/mlx/backend/metal/kernels/steel/attn/nax.h",
+      "sha256": "fb10bcae44095e9fed5c81213d03527dd5fe5ac11be11ec7784bd357c6f317ec",
+      "license": "MIT",
+      "disposition": "Audit only; M5 implementation deferred"
+    }
+  ],
+  "compiled_vendor_manifest": "third_party/mlx-attention/manifest.json",
+  "compiled_vendor_unchanged": true,
+  "copied_vpipe_code": false
+}

@@ -1,0 +1,12 @@
+{
+  "torch": "2.14.0",
+  "diffusers": "0.40.0",
+  "device": "cpu",
+  "dtype": "float32",
+  "threads": 8,
+  "encoder_source_sha256": "4c3c9745ee27d16ff343c4998244bad41cd8f4213f0029cf7ce11ebb6d72ca1b",
+  "stage": "math",
+  "sha256": "76ff58de58571e6a53720eb157a9253d659a521d1fe3563f75e5658b4bf4b4b9",
+  "derived_from": "0df8af4f8310ddfd8f12393519ffe69f2e26b76b1b985f23f68a4b14621bfd84",
+  "source": "https://github.com/huggingface/diffusers/blob/v0.40.0/src/diffusers/models/autoencoders/autoencoder_kl_minimax_h3.py"
+}

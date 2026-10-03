@@ -1,0 +1,190 @@
+{
+  "version": 2,
+  "status": "AI-generated input revision; requires fresh reference-only controls and a new freeze before qualification",
+  "scope": "Reference automated screening, not proof of visual indistinguishability; no human approval gate",
+  "geometry": [
+    640,
+    480,
+    243
+  ],
+  "evaluations": {
+    "B1": 1,
+    "B5": 5,
+    "B6": 6
+  },
+  "maximum_evaluations": 6,
+  "decoder": "production-VAE for B6",
+  "calibration": {
+    "prompt": "A person in a blue jacket walks through a sunny park. Birds sing softly.",
+    "seed": 42,
+    "case": "B6"
+  },
+  "preprocessing": {
+    "video": "RGB24 decoded with ffmpeg; area resize to 320x240; original frame indices retained",
+    "frame_stride": 4,
+    "append_last_frame": true,
+    "audio": "32 kHz stereo PCM float; 24 Hz RMS envelopes, 1024-point Hann STFT hop 256",
+    "lpips": "squeeze, version 0.1, CPU float32, RGB [-1,1]; every sampled frame",
+    "flow": "Farneback on sampled grayscale frames, OpenCV fixed parameters",
+    "identity": "YuNet 2026may CPU detections (score 0.8, NMS 0.3), largest reference face, candidate IoU >=0.5; SFace aligned embedding cosine and LPIPS at the reference crop. Coverage required; generated face consistency, not identification of real people.",
+    "av": "stream timing plus relative speech-envelope/mouth-motion lag proxy when face-tagged; not speech-recognition or lip-sync ground truth",
+    "continuation": "report suffix separately; apply the same spatial bounds in [-6,+12] frame seam window; inherited latent prefix must remain byte-identical"
+  },
+  "limits": {
+    "lpips_mean_max": 0.06,
+    "lpips_p95_max": 0.12,
+    "ssim_mean_min": 0.9,
+    "ssim_p05_min": 0.8,
+    "temporal_delta_rmse_max": 0.04,
+    "flow_endpoint_mean_max_px": 1.5,
+    "face_lpips_p95_max": 0.12,
+    "face_matched_fraction_min": 0.8,
+    "face_reference_detections_min": 3,
+    "audio_log_spectrum_mean_abs_max": 0.2,
+    "audio_envelope_relative_l2_max": 0.15,
+    "audio_envelope_correlation_min": 0.98,
+    "audio_clipped_fraction_increase_max": 0.0001,
+    "audio_new_dropout_windows_max": 0,
+    "av_duration_difference_max_seconds": 0.05,
+    "av_proxy_lag_difference_max_seconds": 0.125,
+    "face_identity_cosine_p05_min": 0.95
+  },
+  "controls": {
+    "positive": [
+      "exact repeat decode",
+      "RGB integer perturbation +/-1 with fixed seed; PCM quantization to 16-bit"
+    ],
+    "negative": [
+      "Gaussian blur sigma 3",
+      "16-pixel horizontal translation",
+      "reverse frame order",
+      "zero audio",
+      "250ms audio shift"
+    ],
+    "face": [
+      "repeat source face",
+      "bounded RGB +/-1 source face",
+      "missing face"
+    ]
+  },
+  "hard_checks": [
+    "all requested evaluations and 50 blocks",
+    "finite tensors and scores",
+    "zero invalid heads",
+    "original weights/schedule/conditioning",
+    "checksummed sources and outputs",
+    "identical inherited continuation prefix",
+    "no teacher forcing in independent trajectories"
+  ],
+  "metric_packages": {
+    "torch": "2.14.0",
+    "torchvision": "0.29.0",
+    "numpy": "2.5.3",
+    "opencv-python-headless": "5.0.0.93",
+    "Pillow": "12.3.0",
+    "lpips": "0.1.4",
+    "scipy": "1.18.1",
+    "tqdm": "4.70.1"
+  },
+  "metric_weights_sha256": {
+    "squeezenet1_1-b8a52dc0.pth": "b8a52dc049b60e4b6ab68ad0df457362afab8b6304b2febdc1650a5dab4d7e7b",
+    "lpips-v0.1-squeeze.pth": "4a5350f23600cb79923ce65bb07cbf57dca461329894153e05a1346bd531cf76"
+  },
+  "source_assets_sha256": {
+    "inputs/face1.jpg": "84229b1b548e6764a7291cc400d759ba7452f5cea20ec2a703b9d0f2194eab5c",
+    "inputs/body1.jpg": "295bdf44ce140cd47a60decc25ce6ed755b4ce5e46f5fa360bc38f99a995bc59",
+    "inputs/1.jpg": "1e41edd8381e7b2757278750b699e8251ad2f2525177056fcd31d4e95856caf6",
+    "inputs/2.jpg": "88fc1d0ed0008f55f5705acfe0549f5aab5361531d8a8e0f5904d9b7ee705ef0",
+    "outputs/continuation-validation/reference.mp4": "0c9190e40790ba580950e8a49199c95129dddcd07975400eab59b187291e673d",
+    "outputs/continuation-validation/reference.wav": "db22c203aab1b68d1bbccfa42a258fe4f8d806431445b13db412730401dbe04f"
+  },
+  "metric_sources": [
+    "https://github.com/richzhang/PerceptualSimilarity",
+    "https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.squeezenet1_1.html",
+    "https://github.com/opencv/opencv_zoo/tree/47534e27c9851bb1128ccc0102f1145e27f23f98/models/face_detection_yunet",
+    "https://github.com/opencv/opencv_zoo/tree/47534e27c9851bb1128ccc0102f1145e27f23f98/models/face_recognition_sface"
+  ],
+  "heldout": [
+    {
+      "id": "detail",
+      "seed": 14201,
+      "prompt": "A close-up of two people folding patterned paper at a wooden table. Faces, fingers and fine fabric texture stay visible. Natural speech and room ambience.",
+      "face": true
+    },
+    {
+      "id": "motion",
+      "seed": 14202,
+      "prompt": "The camera pans slowly along a rushing stream beside a small campfire. Water splashes, leaves move, and smoke drifts upward. Natural water and fire sounds.",
+      "face": false
+    },
+    {
+      "id": "references",
+      "seed": 14203,
+      "prompt": "The woman with the face in <Picture 1> and the outfit in <Picture 2> walks toward the camera and waves gently. A medium shot clearly shows her face and hands. Quiet garden ambience.",
+      "images": [
+        "inputs/face1.jpg",
+        "inputs/body1.jpg"
+      ],
+      "face": true
+    },
+    {
+      "id": "refvideo",
+      "seed": 14204,
+      "prompt": "Continue the motion and setting of the reference video, with steady camera motion and natural synchronized sound.",
+      "video": "outputs/continuation-validation/reference.mp4",
+      "face": false
+    },
+    {
+      "id": "refaudio",
+      "seed": 14205,
+      "prompt": "A person speaks calmly to the camera, following the reference audio. A medium close-up keeps the face and mouth visible.",
+      "audio": "outputs/continuation-validation/reference.wav",
+      "face": true
+    },
+    {
+      "id": "anchors",
+      "seed": 14206,
+      "prompt": "A slow, smooth camera move connects the first and last image, preserving the scene details and natural ambient sound.",
+      "first": "inputs/1.jpg",
+      "last": "inputs/2.jpg",
+      "face": false
+    },
+    {
+      "id": "continue39",
+      "seed": 14339,
+      "prompt": "A person in a blue jacket continues walking through the sunny park. Birds sing softly.",
+      "context": 39,
+      "face": false
+    },
+    {
+      "id": "continue90",
+      "seed": 14390,
+      "prompt": "A person in a blue jacket continues walking through the sunny park. Birds sing softly.",
+      "context": 90,
+      "face": false
+    },
+    {
+      "id": "continue141",
+      "seed": 14441,
+      "prompt": "A person in a blue jacket continues walking through the sunny park. Birds sing softly.",
+      "context": 141,
+      "face": false
+    },
+    {
+      "id": "continue192",
+      "seed": 14492,
+      "prompt": "A person in a blue jacket continues walking through the sunny park. Birds sing softly.",
+      "context": 192,
+      "face": false
+    }
+  ],
+  "face_models_sha256": {
+    "face_detection_yunet_2026may.onnx": "ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0",
+    "face_detection_yunet-LICENSE": "c83b8120c50ccbd4c4f96edf53141bdd566ebb8f8e9227e415326aa1b1aba958",
+    "face_recognition_sface_2021dec.onnx": "0ba9fbfa01b5270c96627c4ef784da859931e02f04419c829e83484087c34e79",
+    "face_recognition_sface-LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  "face_model_commit": "47534e27c9851bb1128ccc0102f1145e27f23f98",
+  "face_control_asset": "inputs/face1.jpg",
+  "input_manifest": "inputs/manifest.json"
+}

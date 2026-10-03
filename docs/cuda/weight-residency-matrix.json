@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "prompt": "Cinematic medium shot of a woman passionately playing a grand piano in a sunlit concert hall. Her fingers move across the keys as the camera slowly glides sideways. Warm natural lighting, realistic details, flowing piano music.",
+  "seed": 42,
+  "frames": 90,
+  "fps": 24,
+  "steps": 6,
+  "precision": "bf16",
+  "attention": "dense",
+  "active_blocks": 50,
+  "reuse": 1,
+  "core_reuse": 1,
+  "decode": "full-av",
+  "timeout_seconds": 1200,
+  "golden_deadline_seconds": 720,
+  "timing_pairs": [["auto", "stream"], ["stream", "auto"], ["auto", "stream"]],
+  "rows": [
+    {"id": "pro-640", "gpu": "RTX PRO 5000", "width": 640, "height": 480, "modes": ["resident", "stream", "auto"], "partial_caps": []},
+    {"id": "pro-1344", "gpu": "RTX PRO 5000", "width": 1344, "height": 768, "modes": ["resident", "stream", "auto"], "partial_caps": [16, 32]},
+    {"id": "5090-640", "gpu": "RTX 5090", "width": 640, "height": 480, "modes": ["resident", "stream", "auto"], "partial_caps": [8, 16], "resident_expected": "capacity-rejection"}
+  ],
+  "attempt_naming": "row-mode[-capN]-attemptN or row-pairN-mode",
+  "numerical_gates": ["preparation-bitwise", "velocities-bitwise", "latent-trajectories-bitwise", "decoded-rgb-bitwise", "decoded-pcm-bitwise", "unchanged-204-output-golden"],
+  "test_caps_only_reduce_capacity": true,
+  "failed_attempts_retained": true,
+  "model_identity": "file-metadata-no-weight-scan",
+  "upscale": {"source": [672, 384], "target": [1344, 768], "max_total_evaluations": 6}
+}

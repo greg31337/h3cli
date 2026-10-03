@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "prompt": "A colorful geometric sculpture in a quiet sunlit gallery. The camera moves slowly sideways. Soft ambient music.",
+  "seed": 42,
+  "width": 640,
+  "height": 480,
+  "frames": 90,
+  "fps": 24,
+  "steps": 2,
+  "layers": 50,
+  "precision": "BF16",
+  "attention": "dense",
+  "reuse": 1,
+  "core_reuse": 1,
+  "timeout_seconds": 10800,
+  "fixtures": {
+    "landscape-a.png": [
+      640,
+      480,
+      1
+    ],
+    "landscape-b.png": [
+      640,
+      480,
+      2
+    ],
+    "wide.png": [
+      4000,
+      1000,
+      3
+    ],
+    "portrait.png": [
+      1365,
+      1821,
+      4
+    ]
+  },
+  "cases": [
+    {
+      "id": "video-match",
+      "output": "video",
+      "mode": "match",
+      "references": [
+        "landscape-a.png"
+      ],
+      "canvases": [
+        [
+          640,
+          480
+        ]
+      ],
+      "patches": 1200
+    },
+    {
+      "id": "video-high-two",
+      "output": "video",
+      "mode": "high",
+      "references": [
+        "landscape-a.png",
+        "landscape-b.png"
+      ],
+      "canvases": [
+        [
+          2048,
+          1536
+        ],
+        [
+          2048,
+          1536
+        ]
+      ],
+      "patches": 24576
+    },
+    {
+      "id": "video-max-two",
+      "output": "video",
+      "mode": "max",
+      "references": [
+        "landscape-a.png",
+        "landscape-b.png"
+      ],
+      "canvases": [
+        [
+          2720,
+          2048
+        ],
+        [
+          2720,
+          2048
+        ]
+      ],
+      "patches": 43520
+    },
+    {
+      "id": "video-max-wide",
+      "output": "video",
+      "mode": "max",
+      "references": [
+        "wide.png"
+      ],
+      "canvases": [
+        [
+          8192,
+          2048
+        ]
+      ],
+      "patches": 65536
+    },
+    {
+      "id": "still-high",
+      "output": "still",
+      "mode": "high",
+      "references": [
+        "portrait.png"
+      ],
+      "canvases": [
+        [
+          1536,
+          2048
+        ]
+      ],
+      "patches": 12288
+    },
+    {
+      "id": "still-max",
+      "output": "still",
+      "mode": "max",
+      "references": [
+        "portrait.png"
+      ],
+      "canvases": [
+        [
+          2048,
+          2720
+        ]
+      ],
+      "patches": 21760
+    }
+  ]
+}

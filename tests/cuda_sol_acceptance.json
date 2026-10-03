@@ -1,0 +1,272 @@
+{
+  "schema": 1,
+  "recipe": 1,
+  "plan": 1,
+  "maximum_steps": 2,
+  "maximum_minutes": 480,
+  "gpu_cutoff_minutes": 450,
+  "buckets_minutes": {
+    "A": 25,
+    "B": 35,
+    "C": 35,
+    "D": 255,
+    "E": 50,
+    "F": 15,
+    "G": 30,
+    "contingency": 35
+  },
+  "thresholds": {
+    "operator_relative_l2": 0.01,
+    "operator_max_relative": 0.02,
+    "zero_absolute": 1e-05,
+    "velocity_relative_l2": 0.05,
+    "velocity_cosine": 0.998,
+    "routed_step_speedup": 1.1,
+    "primary_wall_regression": 0.05,
+    "workspace_bytes": 536870912
+  },
+  "calibration": {
+    "seed": 1701,
+    "prompt": "A slow cinematic pan across a quiet forest lake at sunrise, reflections moving gently with the breeze.",
+    "minimums": [
+      0.9,
+      0.75,
+      0.5
+    ]
+  },
+  "held_out": {
+    "seed": 4242,
+    "prompt": "A cinematic wide shot in a sunlit courtyard. Adults wearing everyday clothing turn toward the camera and gesture naturally. The camera moves slowly, with coherent lighting and quiet outdoor ambience."
+  },
+  "operator_cases": [
+    {
+      "id": "exact-S1-Q32",
+      "sequence": 1,
+      "q": 32,
+      "exact": true,
+      "head_major": false
+    },
+    {
+      "id": "exact-S1-Q64",
+      "sequence": 1,
+      "q": 64,
+      "exact": true,
+      "head_major": true
+    },
+    {
+      "id": "exact-S31-Q32",
+      "sequence": 31,
+      "q": 32,
+      "exact": true,
+      "head_major": false
+    },
+    {
+      "id": "exact-S31-Q64",
+      "sequence": 31,
+      "q": 64,
+      "exact": true,
+      "head_major": true
+    },
+    {
+      "id": "exact-S32-Q32",
+      "sequence": 32,
+      "q": 32,
+      "exact": true,
+      "head_major": false
+    },
+    {
+      "id": "exact-S32-Q64",
+      "sequence": 32,
+      "q": 64,
+      "exact": true,
+      "head_major": true
+    },
+    {
+      "id": "exact-S33-Q32",
+      "sequence": 33,
+      "q": 32,
+      "exact": true,
+      "head_major": false
+    },
+    {
+      "id": "exact-S33-Q64",
+      "sequence": 33,
+      "q": 64,
+      "exact": true,
+      "head_major": true
+    },
+    {
+      "id": "exact-S63-Q32",
+      "sequence": 63,
+      "q": 32,
+      "exact": true,
+      "head_major": false
+    },
+    {
+      "id": "exact-S63-Q64",
+      "sequence": 63,
+      "q": 64,
+      "exact": true,
+      "head_major": true
+    },
+    {
+      "id": "exact-S64-Q32",
+      "sequence": 64,
+      "q": 32,
+      "exact": true,
+      "head_major": false
+    },
+    {
+      "id": "exact-S64-Q64",
+      "sequence": 64,
+      "q": 64,
+      "exact": true,
+      "head_major": true
+    },
+    {
+      "id": "exact-S65-Q32",
+      "sequence": 65,
+      "q": 32,
+      "exact": true,
+      "head_major": false
+    },
+    {
+      "id": "exact-S65-Q64",
+      "sequence": 65,
+      "q": 64,
+      "exact": true,
+      "head_major": true
+    },
+    {
+      "id": "exact-S127-Q32",
+      "sequence": 127,
+      "q": 32,
+      "exact": true,
+      "head_major": false
+    },
+    {
+      "id": "exact-S127-Q64",
+      "sequence": 127,
+      "q": 64,
+      "exact": true,
+      "head_major": true
+    },
+    {
+      "id": "exact-S128-Q32",
+      "sequence": 128,
+      "q": 32,
+      "exact": true,
+      "head_major": false
+    },
+    {
+      "id": "exact-S128-Q64",
+      "sequence": 128,
+      "q": 64,
+      "exact": true,
+      "head_major": true
+    },
+    {
+      "id": "exact-S129-Q32",
+      "sequence": 129,
+      "q": 32,
+      "exact": true,
+      "head_major": false
+    },
+    {
+      "id": "exact-S129-Q64",
+      "sequence": 129,
+      "q": 64,
+      "exact": true,
+      "head_major": true
+    },
+    {
+      "id": "exact-S257-Q32",
+      "sequence": 257,
+      "q": 32,
+      "exact": true,
+      "head_major": false
+    },
+    {
+      "id": "exact-S257-Q64",
+      "sequence": 257,
+      "q": 64,
+      "exact": true,
+      "head_major": true
+    },
+    {
+      "id": "exact-S1025-Q32",
+      "sequence": 1025,
+      "q": 32,
+      "exact": true,
+      "head_major": false
+    },
+    {
+      "id": "exact-S1025-Q64",
+      "sequence": 1025,
+      "q": 64,
+      "exact": true,
+      "head_major": true
+    },
+    {
+      "id": "mixed",
+      "sequence": 513,
+      "protected": true
+    },
+    {
+      "id": "head-major",
+      "sequence": 513,
+      "head_major": true,
+      "q": 64
+    },
+    {
+      "id": "all-protected",
+      "sequence": 257,
+      "all_protected": true
+    },
+    {
+      "id": "constant",
+      "sequence": 257,
+      "pattern": "constant",
+      "minimum": 0,
+      "tau": 16
+    },
+    {
+      "id": "all-approximate",
+      "sequence": 128,
+      "minimum": 0,
+      "tau": 16
+    },
+    {
+      "id": "zero",
+      "sequence": 257,
+      "pattern": "zero",
+      "minimum": 0
+    },
+    {
+      "id": "extreme",
+      "sequence": 257,
+      "pattern": "extreme"
+    },
+    {
+      "id": "spike",
+      "sequence": 257,
+      "pattern": "spike"
+    },
+    {
+      "id": "invalid",
+      "sequence": 65,
+      "pattern": "nan"
+    },
+    {
+      "id": "lifetime",
+      "sequence": 129,
+      "repeat": 100
+    },
+    {
+      "id": "multiple-slabs-heads",
+      "sequence": 4103,
+      "heads": 9,
+      "q": 32
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+# Fixture generation/comparison only. Native h3cli and host tests do not use Python packages.
+torch==2.14.0
+diffusers==0.40.0
+numpy==2.5.3
+safetensors==0.8.0
+transformers==5.17.0

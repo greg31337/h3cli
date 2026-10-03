@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "recipe": 1,
+  "width": 640,
+  "height": 480,
+  "frames": 90,
+  "steps": 50,
+  "fps": 24,
+  "seed": 42,
+  "prompt": "Cinematic medium shot of a woman passionately playing a grand piano in a sunlit concert hall. Her fingers move across the keys as the camera slowly glides sideways. Warm natural lighting, realistic details, flowing piano music.",
+  "decoder": "full",
+  "projection": "bf16",
+  "timeout_seconds": 7200,
+  "output_root": "outputs/adaptive-subblock",
+  "variants": [
+    {"id": "D0", "args": []},
+    {"id": "R2", "args": ["--reuse", "2"]},
+    {"id": "R3", "args": ["--reuse", "3"]},
+    {"id": "C4", "args": ["--core-reuse", "4"]},
+    {"id": "C6", "args": ["--core-reuse", "6"]},
+    {"id": "A1", "args": ["--adaptive-cache", "conservative"]},
+    {"id": "A3", "args": ["--adaptive-cache", "aggressive"]},
+    {"id": "S75", "args": ["--cuda-attention", "subblock", "--subblock-sparsity", "0.75"]},
+    {"id": "S80", "args": ["--cuda-attention", "subblock", "--subblock-sparsity", "0.80"]},
+    {"id": "A1S75", "args": ["--adaptive-cache", "conservative", "--cuda-attention", "subblock", "--subblock-sparsity", "0.75"]},
+    {"id": "A3S75", "args": ["--adaptive-cache", "aggressive", "--cuda-attention", "subblock", "--subblock-sparsity", "0.75"]},
+    {"id": "A3S80", "args": ["--adaptive-cache", "aggressive", "--cuda-attention", "subblock", "--subblock-sparsity", "0.80"]}
+  ]
+}

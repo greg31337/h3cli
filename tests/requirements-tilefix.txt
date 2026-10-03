@@ -1,0 +1,3 @@
+# Fixed-latent comparison, reference decoder and gallery only.
+-r requirements-refvideo-oracle.txt
+Pillow==12.3.0

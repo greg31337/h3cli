@@ -1,0 +1,2462 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-18",
+  "scope": "Native CUDA preview VAE on RTX 5090; no cuDNN and optional cuDNN; shared local Metal regressions",
+  "baseline_commit": "a3abbba57b34b8ff142523b460d66f9aa4849c65",
+  "quality_acceptance": {
+    "metal": "accepted 2026-09-18",
+    "cuda": "accepted 2026-09-18",
+    "gallery": "outputs/preview-vae/cuda-5090/quality/review.html",
+    "cuda_review": {
+      "status": "accepted",
+      "date": "2026-09-18",
+      "reviewer": "user",
+      "statement": "all videos have acceptable quality",
+      "scope": "Reviewed RTX 5090 CUDA gallery, including cuDNN and cuBLAS tiny output and continuation joins",
+      "manifest_sha256": "ba54f75ec49c1fda8118620b070f950849bc2afec0678f5e24802419767e028c",
+      "joins_sha256": "81ad75abd1e3300253ffabd45c28e9f1a086a12d49c9f0497a2eff359172929b"
+    }
+  },
+  "host": {
+    "device": "NVIDIA GeForce RTX 5090",
+    "sm": 120,
+    "driver": "595.91.07",
+    "cuda_toolkit": "12.8.93",
+    "cudnn_native": "9.8.0.87",
+    "cudnn_runtime": 90800,
+    "container_memory_max_bytes": 91999997952,
+    "environment": "outputs/preview-vae/cuda-5090/environment.json"
+  },
+  "tiny_checkpoint": {
+    "revision": "62f7591f59dfbb4c3c02b7a621d180a9eeaba26c",
+    "sha256": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13",
+    "precision": "FP16 activations/weights; FP32 convolution accumulation"
+  },
+  "binary_sha256": {
+    "h3": "b4fa3398eb60485bba7d1f40957dc645fd91cee64a14823e994169628cf76171",
+    "h3_preview_vae_tests": "282722732ee24e4621c8ae371b05e81cb70d4c9679aa04eb1602d37a65a1f46a",
+    "h3_preview_vae_generate": "4466dacdfc6bb435d32e875232718fa547e04f00fe65f8b16e620c03b8f79adf",
+    "/path/to/models/h3-preview-vae-nocudnn/h3": "44556b8e4a9a3ec126a8f13565fd2b1da6beb7ce95d7fc968ae682b67b77b413",
+    "/path/to/models/h3-preview-vae-nocudnn/h3_preview_vae_tests": "27d524c22ce52b4073e1a85479303e5f581a4abb1b19f9ad08e5a0ce5e416d0b"
+  },
+  "source_sha256": {
+    "Makefile": "c9e62221917a190da97360f5b5867dfda94131cc6ff64bf97da825d40f6fccf0",
+    "h3.c": "2b2e0064d49b1c272b48ca873ede86d3809b3c80b2c848b631dab7c9c911dc14",
+    "h3.h": "12499b67eff5b80101ffcdcadeb6f1b4df2b5acdf2fc01e1266c9519d6c34c3f",
+    "h3_audio_vae.c": "51067b7103db56aae5b70740eaca2567c7b0a21be3de8ee7003fcf0d701e819a",
+    "h3_audio_vae.h": "0edfef929bdb23ddb93c1b2504b49e57c03471554c794fab68dd7f07ba70bb8b",
+    "h3_av_state.c": "88d449766e7365620daf3e3595699d31a6dc9763429decf20097d0b72e3b4097",
+    "h3_av_state.h": "3b303fe8ee168a51b38563196c51d72f6a17906d60d8439ce634b805a125ea90",
+    "h3_bridge.c": "ce07af0ec08eec8d929c132ef954f8f4e0ca9155d48bb48897f175e017056458",
+    "h3_bridge.h": "d4b0ffc0aef1e01c1f25794dd1b87597ef99eb068f746d66a63f0a1d2cdc8547",
+    "h3_cli.c": "1cb44ba6d09f653b713c07dab194f2a6f63f8d7dd9d4ab033e0fed072c3066ff",
+    "h3_cli.h": "9cefb5107b171cf1515aae0884420806bfea07a0e950f3cce0d65fffba5aebee",
+    "h3_cli_progress.c": "bee31d7fc57598a0f76ee798d0f0e31c4c0c40f0c8eda816c76efb3d8bcb20c5",
+    "h3_cli_progress.h": "01bedc32cc8f742d7a1fa725e64d1322c46147aed561ca0429dac13dd8831361",
+    "h3_cuda_attention.cuh": "0939c7e017cdbaae8cc6f31b3c758c7d2471a81c7dbbd5ab9cc2f053a56731ce",
+    "h3_cuda_conv.cuh": "199cd02bb7211e06a1e108780df045d2d707c8624037575f2123d0eb1047915c",
+    "h3_cuda_cudnn.cu": "288c3bdaa7f87ed537531a156455df915b632cb12cca987c4636d22d9eed2dc5",
+    "h3_cuda_cudnn.h": "bda06c06635fc4b9f19d3013f3450e3cfc3b72a772b970114982a97fd0d2787d",
+    "h3_cuda_dispatch.h": "05c845999ea342b67bfa97cb9c5d272168af782b78724e3cb7fa3217f3ccacfe",
+    "h3_cuda_fast_attention.cuh": "80fcd3f4fe4676b501f151f8ad4ce04ffa8764e518e79624a9daf550397ebb79",
+    "h3_cuda_fast_gemm.cuh": "05f3b931996d8960d6ef9b07d18cefa6aadd5b353e64629298b04cb66c7baaa9",
+    "h3_cuda_fast_ops.cuh": "d976c7c14f234ab1b435c399458e7505b7459ebd85c9bb1f77099930c5245fb3",
+    "h3_cuda_kernels.cuh": "2931622da00a7c8a4ff0163fc77c9a7e263ed8f0d75a02c6ca2fbda953893c28",
+    "h3_cuda_probe.c": "44cb00442a238c813901c56144091442fd71b4f85fe81c6c735a073f97909595",
+    "h3_cuda_reference_wrappers.cuh": "aacf8c0c909ab03c8d776347d9d5bdfd597ae9c1a32ccc8e0039087e6ea10267",
+    "h3_decode.c": "c69de001af4f3ae205c09fe54aba60c8ebe03b593cd0b9cb7a851651cbd77915",
+    "h3_delivery.c": "7e28327dd7d0aa235e61c8e34c2f474b7fff25fd1807105dab798099091a5c87",
+    "h3_delivery.h": "a5a39d986a217423631503e8e59ba66019373ae273a1a6e2f22233496ce88a04",
+    "h3_device.h": "3f2f6630d00834f87f0b6b923556ce87a4876b2858fa8e19b2b4fb17f9f9afd1",
+    "h3_digest.c": "c546f9e91617c5f5c8f80bcf7279985140850171cc4fcb3d55ec67d8375fb202",
+    "h3_digest.h": "8b23353d219698009a690ddd80bca8458df8dec0502bc0cec1c54ad60b48996c",
+    "h3_dit.c": "b4fc65098581d32f3cfca620b91ada35e19d926d8a486bbf7580f73f84bac4ec",
+    "h3_dit.h": "6666eefa88727c7f337c73e05d913daf2def1f0f46e19687bc5a21d8db354738",
+    "h3_dit_schedule.c": "99c37d213ae5aa98d7f801c7c767ec324381f14a616e91b50c8a05df57780f91",
+    "h3_dit_schedule.h": "4974003fae514f7ddd9b56db17b2f83d5c4c136fc77690c4cc10fa0f6b4daf49",
+    "h3_execution.c": "ca0f9a89969027a79085f9d0033ba567c01ec0c9e29974e745a707b40c753fdd",
+    "h3_execution.h": "2ab1843f9bd5699f132c65dba3805ff7bc8f117d3d0b6b4d37d8bdf5391cf25f",
+    "h3_ffmpeg.c": "df14e217d02de398df35c50cf708d5d95e7fa0182864beed9f25c79f0d2b6893",
+    "h3_ffmpeg.h": "5088590214bcf3c689dfef7e8d7dfdff77985dfd0557225d87573e6bb1af7139",
+    "h3_gpu.h": "1483add2c96c753cd07ea7495f845f1982ffa5d3117870c27054dcc9b123b6ca",
+    "h3_gpu.m": "93e05e89a4623c8db433c86e0c0b20e4fc5022ffb72eeda3b12fc95d50aee9fd",
+    "h3_gpu_cuda.cu": "47c7d2c1b863c648c2f2f80d730554f28bf135e1cb9a9e0230451519ec7be4bd",
+    "h3_host.c": "18e5a8a4137f0defd68ed2127c53b3c99ce74722827943259bb4f0a4b10be02e",
+    "h3_host.h": "50a53732ff92e4f0191d199a94221f6c333503ede28d8492d834248655ecb91d",
+    "h3_internal.h": "cd3ea225b06a970ebc1dd3c6ae883b97793db0b0782a9a75763a40106e131187",
+    "h3_memory.c": "14dcbca9f90f38bdb390c9190285a9a6ce187d615a6ba882956facaa00b193f1",
+    "h3_memory.h": "dd8d06314e11a84815687294ba2b80413f2a0265c7d0fdb30919241327ece8bf",
+    "h3_metal.h": "00241135c11315200b5d68ee9dc68cd96702ec24d39e2b18bb2d179edbfb44ca",
+    "h3_metal.m": "1e30560d9f9d339f254fdf838574c49c12abb78e972d638e49e3114306a34657",
+    "h3_multimodal.c": "f73a3302b1f7b8c1a7a2638b3f323de8795ee6df84d63ff4a59fdb70cfe75ef2",
+    "h3_multimodal.h": "fe63a7d15d44f6891220d4ea176403f35c94275ab6ec8b23717afb16a3b5c254",
+    "h3_platform.c": "bc06a5885af90cf7a1520614dcbf939360fc4d6a5530c6eb7e642adcc03699cc",
+    "h3_platform.h": "f5d2b4a9877fafda5609673e72a17e51fba886d321439bdf742f1f2fb279457a",
+    "h3_presentation.c": "75af065f82422f44044114d9cc42b6ab80dab89ce8d86b83bbd446fbd7c6f4e7",
+    "h3_preview.c": "69894b3ce6e6644fac88352f26e4340e50d92d6f2b76e1563ecb9ecf6581e81f",
+    "h3_preview.h": "c5111e1479adcaa0097611bce3c51d4b83acac904275d0b78f0c64a371d2c08d",
+    "h3_refvideo.c": "34d48336a524882d79a698732e2372ca3c5fed74801168a646e723ef054c95b3",
+    "h3_refvideo.h": "16f24bd3d282646d121c7c538344ad1601f3243813e33bcdb19720d245d131d7",
+    "h3_resize_metal.c": "0270f9590170e5a5b38f5769c2676d5052cf038d33fe069dd455d7f0c718116c",
+    "h3_resize_portable.c": "c230721341e80b09f40ad79e227d3a8e1e9f83ba0e08b520af4cc347c21a4358",
+    "h3_safetensors.c": "571125f776d7a0fd2c9720b686afdbcb7dfb6bae7fc770856d51ddc9130cab5f",
+    "h3_safetensors.h": "d7b48117aeba05698bc3591451783326d7234c8660e8a85e170c86535d73fec2",
+    "h3_sampler_file.c": "35c01d81b65af8197764da7624c7afc16d91caf4ee7be684b8e9f04cbb49f3d6",
+    "h3_sampler_state.c": "a572741e566aca742835bc74377f229046d31c48d4aea1f3424a402e42c62a66",
+    "h3_sampler_state.h": "a2ed5b5933b14a315ecc4ee653c5e945933d5480027271de5fd3cd27c348163e",
+    "h3_shader.c": "231a719aca48e079ae7999d66cb0c17c39a0534733e1a2059ecd543b50c973f8",
+    "h3_shader.h": "aef75594f7f21ac2c2d839df962f0731374e31a1b9231d3bc89d7fba6a08060a",
+    "h3_shaders.metal": "486e8c6b18f524936c936b512341a04181a3554c9772b05bd9b86080c1beae9a",
+    "h3_terminal.c": "d4a49423f6c543f81aae3ff1f66a8fef029d20dcc004dd07185401c45d963eef",
+    "h3_terminal.h": "de30040bce0148bef4679d6c95572666ad41019e138b35e1b47f7ea84313d907",
+    "h3_text_encoder.c": "0f55a057c6a964476bd8b5ff8f71ff333837a0a28f4982bf0eeaa3d92e624951",
+    "h3_text_encoder.h": "8fe4a4e129e42df4100719534fa6d8793226b6083631c0b79a030ffc23c3911e",
+    "h3_tiny_vae.c": "bcc482940668cc40f09cbb28aed3a7a9a2f9e109a21cc24f59fed6cf52fc9415",
+    "h3_tiny_vae.h": "cb6a1801b4f775b8363d8c87c21385331a19bbfa6457fc5d1ebe6c5d4a5451ff",
+    "h3_tiny_vae_cuda.cu": "84997a9909d2c7dac06979a81a082ae5c59fb66c030786dd44e0ecad200aa473",
+    "h3_tiny_vae_internal.h": "3e7c269305542191c731506213ab29f8458b5e5b7583e1b7cb201665a9b7661e",
+    "h3_tiny_vae_metal.m": "b47dc397cd51fed286d9a8cf3efcf9731d275109e8ac106ac1b9d26d9e05d0f0",
+    "h3_tokenizer.h": "3607647577c1bf8a85c0359027f24d94619776c827118975da71f2715aa66483",
+    "h3_tokenizer.m": "44156fa356af40bf707b164a3e7975549256c33f28ae8095584ef1ea23a17584",
+    "h3_tokenizer_portable.c": "ca35c10121cdb2ee002038786ab7ec4c2c4fc259166aa96fff87e70895d98a6a",
+    "h3_video_encoder.c": "d38dabc5a0af57e7f33dddae3c8267148bdd77e7030e17aad8ad039d8c66a494",
+    "h3_video_encoder.h": "f6979fdabf36938a4c92864228db467499edfba65836509fb8de6955feb3c476",
+    "h3_video_posterior.c": "1c84d6a4afd4dda85637bd0a364110c37f41659e6a9c56a6041ca2af013aa29b",
+    "h3_video_posterior.h": "dc147d67b7fc429d623cd528cdb8db8badfcf29edd9b8c999665a890556fcf17",
+    "h3_video_vae.c": "06505b94fb8b981003f68005b0f42ccda53c7e73621b624e756a045b97ef5144",
+    "h3_video_vae.h": "42c999eeae3c56800210cf320840c074cc3ac7332ac40ec25abb701cda36784a",
+    "h3_vision_encoder.c": "be9115a55484ae52c9504a6c227ae9b7f7b9b9e68aa4df837e9f9121eea9263f",
+    "h3_vision_encoder.h": "b158eee6fd3e91e3752d3a8e0e7a8367709dd752cb30d1ef72a07b307e5b410a",
+    "h3_weights.c": "d68476becd34dee90b78797ce9fb9025f65f3e222e01bb3f498b2d005d5f1fcc",
+    "h3_weights.h": "1593bb41730a13ad26d99fcf15863528ceb00b51ef8b482dc0ff2c9714e0bb2e",
+    "main.c": "10a5685b3e6bb6dc80cbedbb20bc9c253f9eda1a7daed22a0c817e46cce30626",
+    "tests/preview_vae_contacts.py": "a9bb8fcd545c1324df83f66c89576b848df5cdb64e3e7c357dfce53338fb9106",
+    "tests/preview_vae_cuda_gallery.py": "77e2fe306f1962cade136c893abe6ec692e9ee6620ef0e8030a4f87e9160e0c8",
+    "tests/preview_vae_decode.c": "40e485efff5bac2b4dbb261afb52920cd9025c9a39eeaefdbc033a76fe97bb5b",
+    "tests/preview_vae_finalize.py": "8afc5b72c3e947ebec3fcdb8a77a1f2829ef48b223e68e01ba7f13f5c0cd6cdb",
+    "tests/preview_vae_gallery.py": "ca6e832cbffe2faa8e387281a99d85a7ff6a8bbc12926b6afd066466147c3ebd",
+    "tests/preview_vae_generate.c": "97c98cd8ea5131d6f0f218e39dce124cba5deb25e7ac71f9ef3a5c1e8bf838de",
+    "tests/preview_vae_media_audit.py": "9263163506594af86908336330e3ba99aa6052ab10f54348e1eed08d8f5e7f21",
+    "tests/preview_vae_memory.m": "a5d0c97ea412092c6ff6e627214f4efd1e9329f7a5d982d5d492cb3205de99cf",
+    "tests/preview_vae_reference.py": "e288a2cf872b1f4953675cdf0d491a2f337c352e832f937edc00c9f08264bb59",
+    "tests/preview_vae_run.py": "1d8761f8058ded0af56f9cd15ff36b5397d12d4858a94309f0231af34077ae1d",
+    "tests/preview_vae_workflow.py": "d3a7da066624f5babf1b1cb988cc9089b3e1ab3ec3b37f9a4198ea327dcf4534",
+    "tests/test_preview.c": "d51d65cd161285d7917844a9b964f636183e5a3f59fb18e929e573771042b681",
+    "tests/test_preview_cache.c": "85d9d74d0d05b959de8ae4c4dc78d78826916ecffed6ce52cdc16c53f4e0adf9",
+    "tests/test_preview_sampler.c": "e4b947f0b31e788efd789cfdae31464bfec2bad8b75ae19aa1b38d167062c20e",
+    "tests/test_preview_vae.c": "2ac4a092bf589b04fae71dadc2dbb94acd30cd123b5dcace15ac0bdce4904c49",
+    "tests/test_preview_vae.py": "01a8863f837c9e1fd265e24f1a8fc88cb373682559fa886cbba521f0af001bec",
+    "scripts/download_preview_vae.py": "78fd8e723d7af9b600235efff287702287ac906e1df014c2af1ac6590076576b"
+  },
+  "budget": {
+    "path": "outputs/preview-vae/cuda-5090/budget.json",
+    "sha256": "1a211969faf72ab4573d45dfff87a4aa0efe0ca453d49e8b9ccbcd41423b2283",
+    "seconds": 1366.4013420711271,
+    "limit_seconds": 1800.0,
+    "attempts": 69,
+    "status_counts": {
+      "passed": 65,
+      "failed": 2,
+      "timeout": 2
+    }
+  },
+  "metal_followup_budget": {
+    "path": "outputs/preview-vae/metal/budget.json",
+    "seconds": 976.4332962934859,
+    "limit_seconds": 1200,
+    "attempts": 66,
+    "new_runs": [
+      {
+        "name": "cuda-port-metal-regression",
+        "command": [
+          "./h3_preview_vae_tests",
+          "gpu",
+          "models/taeh3.safetensors",
+          "0"
+        ],
+        "timeout": 120.0,
+        "status": "passed",
+        "started": 1789792640.464442,
+        "cwd": "/path/to/h3cli",
+        "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+        "input_sha256": {
+          "./h3_preview_vae_tests": "d710ba5e980181f2be8a8cfca12235ada48a82614160cb94e3ffe5576dc2ce70",
+          "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+        },
+        "environment": {
+          "H3_PROFILE": "1"
+        },
+        "seconds": 3.6228587499354035,
+        "returncode": 0,
+        "output_sha256": {
+          "./h3_preview_vae_tests": "d710ba5e980181f2be8a8cfca12235ada48a82614160cb94e3ffe5576dc2ce70",
+          "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+        }
+      },
+      {
+        "name": "cuda-shared-temporal-metal",
+        "command": [
+          "./h3_preview_vae_tests",
+          "gpu",
+          "outputs/preview-vae/metal/temporal.safetensors",
+          "2"
+        ],
+        "timeout": 120.0,
+        "status": "passed",
+        "started": 1789793812.3856971,
+        "cwd": "/path/to/h3cli",
+        "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+        "input_sha256": {
+          "./h3_preview_vae_tests": "88facbf97ff1fa55e7f0d0d4a25aeb587733c609a6ac0046aa399cbb5bb5e93a",
+          "outputs/preview-vae/metal/temporal.safetensors": "a546e38f0dc91b7e42115e620730da75f68e756dcdc1fdeacddad71328d336c1"
+        },
+        "environment": {},
+        "seconds": 3.210047292057425,
+        "returncode": 0,
+        "output_sha256": {
+          "./h3_preview_vae_tests": "88facbf97ff1fa55e7f0d0d4a25aeb587733c609a6ac0046aa399cbb5bb5e93a",
+          "outputs/preview-vae/metal/temporal.safetensors": "a546e38f0dc91b7e42115e620730da75f68e756dcdc1fdeacddad71328d336c1"
+        }
+      }
+    ]
+  },
+  "performance": [
+    {
+      "preset": "image05",
+      "route": "fast-full",
+      "load_seconds": 0.815497807,
+      "cold_seconds": 2.840987343,
+      "warm_seconds": 2.716045081,
+      "host_max_rss_bytes": 685977600,
+      "device_observed_bytes": 10728243200,
+      "log": "outputs/preview-vae/cuda-5090/warm-fast-full-image05.log",
+      "log_sha256": "5975ad594bbeb308a5f9e139ff7904b1c24a08e58576417f44b1bfe302e0391b"
+    },
+    {
+      "preset": "image05",
+      "route": "cudnn",
+      "load_seconds": 0.18555977,
+      "cold_seconds": 0.181448179,
+      "warm_seconds": 0.031747961,
+      "host_max_rss_bytes": 748879872,
+      "device_observed_bytes": 856948736,
+      "log": "outputs/preview-vae/cuda-5090/warm-cudnn-image05.log",
+      "log_sha256": "227a91913b2317696bcabc7031bee122cf5acb155589cd582226e697bc0ba0eb",
+      "warm_profile": {
+        "compute_seconds": 0.007602,
+        "transfer_seconds": 0.003201,
+        "device_owned_peak_bytes": 297021848,
+        "pinned_bytes": 26542080,
+        "scratch_bytes": 33554432,
+        "cached_plans": 24,
+        "plans_built": 0,
+        "cublas_calls": 0,
+        "cudnn_calls": 140
+      }
+    },
+    {
+      "preset": "image05",
+      "route": "cublas",
+      "load_seconds": 0.181237274,
+      "cold_seconds": 0.139046347,
+      "warm_seconds": 0.054886147,
+      "host_max_rss_bytes": 605216768,
+      "device_observed_bytes": 848560128,
+      "log": "outputs/preview-vae/cuda-5090/warm-cublas-image05.log",
+      "log_sha256": "694aae4e610bb291b786cc5d0f0edba53633f51784300b87e670805bff3f2072",
+      "warm_profile": {
+        "compute_seconds": 0.030712,
+        "transfer_seconds": 0.003178,
+        "device_owned_peak_bytes": 297021848,
+        "pinned_bytes": 26542080,
+        "scratch_bytes": 33554432,
+        "cached_plans": 0,
+        "plans_built": 0,
+        "cublas_calls": 362,
+        "cudnn_calls": 0
+      }
+    },
+    {
+      "preset": "detail",
+      "route": "fast-full",
+      "load_seconds": 0.781443772,
+      "cold_seconds": 2.192412461,
+      "warm_seconds": 2.076931367,
+      "host_max_rss_bytes": 844300288,
+      "device_observed_bytes": 10728243200,
+      "log": "outputs/preview-vae/cuda-5090/warm-fast-full-detail.log",
+      "log_sha256": "3a3842d17d9496a30331de7bab8b853b8272e6e42ef804f0f26564f1c9fbf497"
+    },
+    {
+      "preset": "detail",
+      "route": "cudnn",
+      "load_seconds": 0.18558629,
+      "cold_seconds": 0.194491259,
+      "warm_seconds": 0.057302327,
+      "host_max_rss_bytes": 758976512,
+      "device_observed_bytes": 1299447808,
+      "log": "outputs/preview-vae/cuda-5090/warm-cudnn-detail.log",
+      "log_sha256": "fda2fbfb7d0f853ed8f1814a207eef2c235f8b092ee1eb0ab33e382054ad9747",
+      "warm_profile": {
+        "compute_seconds": 0.012369,
+        "transfer_seconds": 0.003628,
+        "device_owned_peak_bytes": 730321304,
+        "pinned_bytes": 73728000,
+        "scratch_bytes": 33554432,
+        "cached_plans": 24,
+        "plans_built": 0,
+        "cublas_calls": 0,
+        "cudnn_calls": 70
+      }
+    },
+    {
+      "preset": "detail",
+      "route": "cublas",
+      "load_seconds": 0.180932314,
+      "cold_seconds": 0.174491585,
+      "warm_seconds": 0.082902658,
+      "host_max_rss_bytes": 699699200,
+      "device_observed_bytes": 1291059200,
+      "log": "outputs/preview-vae/cuda-5090/warm-cublas-detail.log",
+      "log_sha256": "3875e27024254924bfb0f3753f61b2d1af55b311109dfdc444a41647a99b6c6f",
+      "warm_profile": {
+        "compute_seconds": 0.035217,
+        "transfer_seconds": 0.003632,
+        "device_owned_peak_bytes": 730321304,
+        "pinned_bytes": 73728000,
+        "scratch_bytes": 33554432,
+        "cached_plans": 0,
+        "plans_built": 0,
+        "cublas_calls": 361,
+        "cudnn_calls": 0
+      }
+    }
+  ],
+  "cold_workflow": [
+    {
+      "mode": "full",
+      "seconds": 34.07771845499519,
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "-p",
+        "A person smiles gently in a quiet studio. Soft daylight, fixed camera.",
+        "--width",
+        "128",
+        "--height",
+        "128",
+        "--render-width",
+        "64",
+        "--render-height",
+        "64",
+        "--frames",
+        "22",
+        "--steps",
+        "2",
+        "--seed",
+        "72",
+        "--save-av-state",
+        "outputs/preview-vae/cuda-5090/cold-workflow/full.h3av",
+        "-o",
+        "outputs/preview-vae/cuda-5090/cold-workflow/full.mp4",
+        "--profile",
+        "--fast-cuda"
+      ],
+      "environment": {
+        "H3_CPU_SAMPLER": "1"
+      },
+      "state_sha256": "266d578a42a576aa9fd7eb797353e7cf13d46a14731072c54ffc7b0031c74184",
+      "mp4_sha256": "116ebe487d180fbb68b720fda783e2c0607670dc9d05556c15ac0bab594cf939"
+    },
+    {
+      "mode": "tiny",
+      "seconds": 33.366959451988805,
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "-p",
+        "A person smiles gently in a quiet studio. Soft daylight, fixed camera.",
+        "--width",
+        "128",
+        "--height",
+        "128",
+        "--render-width",
+        "64",
+        "--render-height",
+        "64",
+        "--frames",
+        "22",
+        "--steps",
+        "2",
+        "--seed",
+        "72",
+        "--save-av-state",
+        "outputs/preview-vae/cuda-5090/cold-workflow/tiny.h3av",
+        "-o",
+        "outputs/preview-vae/cuda-5090/cold-workflow/tiny.mp4",
+        "--profile",
+        "--preview-vae",
+        "--fast-cuda"
+      ],
+      "environment": {
+        "H3_CPU_SAMPLER": "1"
+      },
+      "state_sha256": "266d578a42a576aa9fd7eb797353e7cf13d46a14731072c54ffc7b0031c74184",
+      "mp4_sha256": "e4a08f5b50255ce39ddd97589a945a6a10b9ebe836410289f9336b9763defc51"
+    }
+  ],
+  "artifacts": {
+    "outputs/preview-vae/cuda-5090/quality/manifest.json": "ba54f75ec49c1fda8118620b070f950849bc2afec0678f5e24802419767e028c",
+    "outputs/preview-vae/cuda-5090/quality/joins.json": "81ad75abd1e3300253ffabd45c28e9f1a086a12d49c9f0497a2eff359172929b",
+    "outputs/preview-vae/cuda-5090/media-audit.json": "20474667a15eb42c5d8da1886c297c36e08a8544c9f8d68b3be0643976cfb928",
+    "outputs/preview-vae/cuda-5090/finalization.json": "efdc45f126aab6cbf0690bd0182991aa6958f410391ed9d8a834cde3f6836127",
+    "outputs/preview-vae/cuda-5090/cold-workflow/timing.json": "2ac1b13b572f620d634c9a7749af0e8dc2b74f670c8e074173c7ad33fd802cb6",
+    "outputs/preview-vae/cuda-5090/environment.json": "48d8f44b4b03c88bab8b875275dd831199effbb0c3bec239aae3e4bb826ce908",
+    "outputs/preview-vae/cuda-5090/quality/acceptance.json": "51422da10c4bcfae6d1bb56539df60a3aae017f990f572bbdf03eb74ccbec751"
+  },
+  "media_counts": {
+    "generated": 26,
+    "gallery": 40,
+    "joined": 3,
+    "finalized": 3
+  },
+  "limits": [
+    "Only RTX 5090 qualified by automated coverage",
+    "Vendor-wide racecheck timed out; filtered custom-kernel racecheck passed",
+    "Folded adapters unavailable on node",
+    "No production-length or largest-geometry stress test",
+    "Fast CUDA cross-process finalization RGB equality diagnostic only; exact default, states and audio retained"
+  ],
+  "runs": [
+    {
+      "name": "baseline-default-image05",
+      "command": [
+        "./outputs/preview-vae/cuda-5090/h3-before",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/image05-before-default.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789791784.9761896,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./outputs/preview-vae/cuda-5090/h3-before": "222d70df215d01dcd1e24ed9310201b813aaa951afa80c48bf3f79ca49b98410",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      },
+      "environment": {
+        "H3_PROFILE": "1"
+      },
+      "seconds": 38.259054165973794,
+      "returncode": 0,
+      "output_sha256": {
+        "./outputs/preview-vae/cuda-5090/h3-before": "222d70df215d01dcd1e24ed9310201b813aaa951afa80c48bf3f79ca49b98410",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279",
+        "outputs/preview-vae/cuda-5090/image05-before-default.mp4": "5f9fd21972ef01ad9b61a29a19c6982d9d3d0d649b5a7aa031be86d74283a828"
+      }
+    },
+    {
+      "name": "baseline-fast-image05",
+      "command": [
+        "./outputs/preview-vae/cuda-5090/h3-before",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "--profile",
+        "--fast-cuda",
+        "-o",
+        "outputs/preview-vae/cuda-5090/image05-before-fast.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789791823.2654889,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./outputs/preview-vae/cuda-5090/h3-before": "222d70df215d01dcd1e24ed9310201b813aaa951afa80c48bf3f79ca49b98410",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      },
+      "environment": {
+        "H3_PROFILE": "1"
+      },
+      "seconds": 9.32407695701113,
+      "returncode": 0,
+      "output_sha256": {
+        "./outputs/preview-vae/cuda-5090/h3-before": "222d70df215d01dcd1e24ed9310201b813aaa951afa80c48bf3f79ca49b98410",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279",
+        "outputs/preview-vae/cuda-5090/image05-before-fast.mp4": "e714f3c0fae279153deac9e6619cc4b38b3a0277e9af2a7fcb9f85999c901839"
+      }
+    },
+    {
+      "name": "host-contracts",
+      "command": [
+        "make",
+        "test-preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789791832.594912,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {},
+      "environment": {},
+      "seconds": 0.9150793930166401,
+      "returncode": 0,
+      "output_sha256": {}
+    },
+    {
+      "name": "cudnn-pattern",
+      "command": [
+        "./h3_preview_vae_tests",
+        "gpu",
+        "outputs/preview-vae/cuda-5090/pattern.safetensors",
+        "1"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789791833.549155,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "5344ab2567a4dfbe2049fefab1aa6ef9afd60f532714bddaf297b050b8b0456e",
+        "outputs/preview-vae/cuda-5090/pattern.safetensors": "0b6f7f5fb8fc04c2da0200550c834a53c4700eb8acb3ee3143638feeeb4f3d6d"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cudnn",
+        "H3_PROFILE": "1"
+      },
+      "seconds": 0.7642527249990962,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "5344ab2567a4dfbe2049fefab1aa6ef9afd60f532714bddaf297b050b8b0456e",
+        "outputs/preview-vae/cuda-5090/pattern.safetensors": "0b6f7f5fb8fc04c2da0200550c834a53c4700eb8acb3ee3143638feeeb4f3d6d"
+      }
+    },
+    {
+      "name": "cudnn-real",
+      "command": [
+        "./h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789791834.366057,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "5344ab2567a4dfbe2049fefab1aa6ef9afd60f532714bddaf297b050b8b0456e",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cudnn",
+        "H3_PROFILE": "1"
+      },
+      "seconds": 0.6644367040134966,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "5344ab2567a4dfbe2049fefab1aa6ef9afd60f532714bddaf297b050b8b0456e",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      }
+    },
+    {
+      "name": "cublas-pattern",
+      "command": [
+        "./h3_preview_vae_tests",
+        "gpu",
+        "outputs/preview-vae/cuda-5090/pattern.safetensors",
+        "1"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789791835.0847478,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "5344ab2567a4dfbe2049fefab1aa6ef9afd60f532714bddaf297b050b8b0456e",
+        "outputs/preview-vae/cuda-5090/pattern.safetensors": "0b6f7f5fb8fc04c2da0200550c834a53c4700eb8acb3ee3143638feeeb4f3d6d"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas",
+        "H3_PROFILE": "1"
+      },
+      "seconds": 0.4640567330061458,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "5344ab2567a4dfbe2049fefab1aa6ef9afd60f532714bddaf297b050b8b0456e",
+        "outputs/preview-vae/cuda-5090/pattern.safetensors": "0b6f7f5fb8fc04c2da0200550c834a53c4700eb8acb3ee3143638feeeb4f3d6d"
+      }
+    },
+    {
+      "name": "cublas-real",
+      "command": [
+        "./h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789791835.6034958,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "5344ab2567a4dfbe2049fefab1aa6ef9afd60f532714bddaf297b050b8b0456e",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas",
+        "H3_PROFILE": "1"
+      },
+      "seconds": 0.4640353430295363,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "5344ab2567a4dfbe2049fefab1aa6ef9afd60f532714bddaf297b050b8b0456e",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      }
+    },
+    {
+      "name": "tiny-pilot",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "--preview-vae",
+        "--profile",
+        "--fast-cuda",
+        "-o",
+        "outputs/preview-vae/cuda-5090/image05-tiny.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789791918.6373298,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      },
+      "environment": {
+        "H3_PROFILE": "1"
+      },
+      "seconds": 6.120967377035413,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279",
+        "outputs/preview-vae/cuda-5090/image05-tiny.mp4": "e041a24638b0aeb094836989f51d32f2fe1877e7dde7f54f19c45eebc7687716"
+      }
+    },
+    {
+      "name": "warm-cudnn-image05",
+      "command": [
+        "./h3_preview_vae_tests",
+        "replay",
+        "models/taeh3.safetensors",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "-"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789791924.8026094,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "2f2d2914d19f9e2f01677508207b3bdd0d2480b62f7d300fb2583278d399af03",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      },
+      "environment": {
+        "H3_PROFILE": "1"
+      },
+      "seconds": 0.5644153940374963,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "2f2d2914d19f9e2f01677508207b3bdd0d2480b62f7d300fb2583278d399af03",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      }
+    },
+    {
+      "name": "warm-cublas-image05",
+      "command": [
+        "./h3_preview_vae_tests",
+        "replay",
+        "models/taeh3.safetensors",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "-"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789791925.425819,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "2f2d2914d19f9e2f01677508207b3bdd0d2480b62f7d300fb2583278d399af03",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas",
+        "H3_PROFILE": "1"
+      },
+      "seconds": 0.5141898060101084,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "2f2d2914d19f9e2f01677508207b3bdd0d2480b62f7d300fb2583278d399af03",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      }
+    },
+    {
+      "name": "small-scratch",
+      "command": [
+        "./h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792041.879035,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas",
+        "H3_PREVIEW_CUDA_WORKSPACE_MB": "1",
+        "H3_PROFILE": "1"
+      },
+      "seconds": 0.5642663050093688,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      }
+    },
+    {
+      "name": "sanitizer-memcheck",
+      "command": [
+        "compute-sanitizer",
+        "--tool",
+        "memcheck",
+        "--leak-check",
+        "full",
+        "--error-exitcode",
+        "90",
+        "./h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792042.5004745,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 1.9161002480541356,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      }
+    },
+    {
+      "name": "sanitizer-racecheck",
+      "command": [
+        "compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--error-exitcode",
+        "90",
+        "./h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "timeout",
+      "started": 1789792044.4749074,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 120.0011327950051,
+      "returncode": -1,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      }
+    },
+    {
+      "name": "gallery-image05-cublas",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/image05.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/image05-cublas.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792164.497385,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 6.021432535955682,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279",
+        "outputs/preview-vae/cuda-5090/quality/image05-cublas.mp4": "002d54f3ea0f2423bbcc93522dba2e292649d059cbbcf144109da9f24c0aaffd"
+      }
+    },
+    {
+      "name": "gallery-image12-seed2-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792170.5592353,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2.h3av": "a1adb7f3de5963158ed18479e9e89e3a2114f0a6ecf542b86147845ac1231566"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 9.576514379994478,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2.h3av": "a1adb7f3de5963158ed18479e9e89e3a2114f0a6ecf542b86147845ac1231566",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2-full.mp4": "1b014bd625b377361f0f034598c62c7abee87d3515492dd50c79f001991caf7f"
+      }
+    },
+    {
+      "name": "gallery-image12-seed2-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792180.1692736,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2.h3av": "a1adb7f3de5963158ed18479e9e89e3a2114f0a6ecf542b86147845ac1231566"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 6.121625538973603,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2.h3av": "a1adb7f3de5963158ed18479e9e89e3a2114f0a6ecf542b86147845ac1231566",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2-tiny.mp4": "9e93aa8d53ec137cd38df1a7a380d83813fd0b30914978edf4ebaa26ef2372fb"
+      }
+    },
+    {
+      "name": "gallery-image12-seed2-cublas",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2-cublas.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792186.324703,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2.h3av": "a1adb7f3de5963158ed18479e9e89e3a2114f0a6ecf542b86147845ac1231566"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 6.1211721309809946,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2.h3av": "a1adb7f3de5963158ed18479e9e89e3a2114f0a6ecf542b86147845ac1231566",
+        "outputs/preview-vae/cuda-5090/quality/image12-seed2-cublas.mp4": "75976538ed240e05d1bc2416e40f69c23325c8bf85f403fa5e8c3cca9919add1"
+      }
+    },
+    {
+      "name": "gallery-images-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/images.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/images-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792192.4831145,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/images.h3av": "40bfa13ea6157cb744f97a0a2f214a3c6da21c57c359a208610ff3bab1ce0937"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 9.42473221902037,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/images.h3av": "40bfa13ea6157cb744f97a0a2f214a3c6da21c57c359a208610ff3bab1ce0937",
+        "outputs/preview-vae/cuda-5090/quality/images-full.mp4": "2d2a269eb2c24f463d134a1e6c6017a3a4c047c628c27e70fa51de5967b40846"
+      }
+    },
+    {
+      "name": "gallery-images-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/images.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/images-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792201.9406734,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/images.h3av": "40bfa13ea6157cb744f97a0a2f214a3c6da21c57c359a208610ff3bab1ce0937"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 6.121227303985506,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/images.h3av": "40bfa13ea6157cb744f97a0a2f214a3c6da21c57c359a208610ff3bab1ce0937",
+        "outputs/preview-vae/cuda-5090/quality/images-tiny.mp4": "43dbab9fe54a3b34247effc43c98fe7d06a5a50918cd4b65b21439e5b5d5aa5a"
+      }
+    },
+    {
+      "name": "gallery-images-cublas",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/images.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/images-cublas.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792208.0950975,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/images.h3av": "40bfa13ea6157cb744f97a0a2f214a3c6da21c57c359a208610ff3bab1ce0937"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 6.121185305994004,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/images.h3av": "40bfa13ea6157cb744f97a0a2f214a3c6da21c57c359a208610ff3bab1ce0937",
+        "outputs/preview-vae/cuda-5090/quality/images-cublas.mp4": "0b9f9e34736f5321ab1e62dd3d506ea20aa829c3096f50abae1e855736a479d9"
+      }
+    },
+    {
+      "name": "gallery-detail-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/detail.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/detail-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792214.252841,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 8.274794446013402,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14",
+        "outputs/preview-vae/cuda-5090/quality/detail-full.mp4": "bac8ba82f9f94c9261d608b4cdf9f28f0af1bc32409bc60b7089a272a3519be8"
+      }
+    },
+    {
+      "name": "gallery-detail-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/detail.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/detail-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792222.559401,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 5.721035347029101,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14",
+        "outputs/preview-vae/cuda-5090/quality/detail-tiny.mp4": "4bb5cfb506339b7b40dc7332cc8a040de8cb95972507c3144f095f898398421b"
+      }
+    },
+    {
+      "name": "gallery-detail-cublas",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/detail.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/detail-cublas.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792228.3125052,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 5.720978099969216,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14",
+        "outputs/preview-vae/cuda-5090/quality/detail-cublas.mp4": "cd4c228766df38e88de97c526435ca3a9a1f5e2435da41aeed926041a4b33f15"
+      }
+    },
+    {
+      "name": "gallery-chain1-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/chain1.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/chain1-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792234.0710082,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/chain1.h3av": "bc711dd1e02c48860187c724708c454eaccb1194915ebb9998e34e2fbfcb3ce7"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 11.728821695025545,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/chain1.h3av": "bc711dd1e02c48860187c724708c454eaccb1194915ebb9998e34e2fbfcb3ce7",
+        "outputs/preview-vae/cuda-5090/quality/chain1-full.mp4": "293f273bddc17ae6be445215ffaaa999cdaabac9ae83fbf803da032d8b170ee5"
+      }
+    },
+    {
+      "name": "gallery-chain1-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/chain1.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/chain1-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792245.8323374,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/chain1.h3av": "bc711dd1e02c48860187c724708c454eaccb1194915ebb9998e34e2fbfcb3ce7"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 6.571560241980478,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/chain1.h3av": "bc711dd1e02c48860187c724708c454eaccb1194915ebb9998e34e2fbfcb3ce7",
+        "outputs/preview-vae/cuda-5090/quality/chain1-tiny.mp4": "84c6afae360f2b4d37c8d0009eba6ea82a25c2da52e4336162e4b025e3b98ced"
+      }
+    },
+    {
+      "name": "gallery-chain1-cublas",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/chain1.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/chain1-cublas.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792252.4357438,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/chain1.h3av": "bc711dd1e02c48860187c724708c454eaccb1194915ebb9998e34e2fbfcb3ce7"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 6.621724143973552,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/chain1.h3av": "bc711dd1e02c48860187c724708c454eaccb1194915ebb9998e34e2fbfcb3ce7",
+        "outputs/preview-vae/cuda-5090/quality/chain1-cublas.mp4": "cc0b97ffb555012cc826359293c556715d3b929fa51a9d412300fa539114b98d"
+      }
+    },
+    {
+      "name": "gallery-chain2-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/chain2.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/chain2-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792259.0938318,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/chain2.h3av": "66a319569b78857b50cf5d9afc23595eba50795a5278c521704893b42fb7aa0b"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 11.628521270991769,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/chain2.h3av": "66a319569b78857b50cf5d9afc23595eba50795a5278c521704893b42fb7aa0b",
+        "outputs/preview-vae/cuda-5090/quality/chain2-full.mp4": "3dc2b23043ba21371fc947298877651288a191e3aff8096e56ec15119396487a"
+      }
+    },
+    {
+      "name": "fast-generation-invariance",
+      "command": [
+        "./h3_preview_vae_generate",
+        "MiniMax-H3",
+        "outputs/preview-vae/cuda-5090/invariance",
+        "invariance"
+      ],
+      "timeout": 300.0,
+      "status": "passed",
+      "started": 1789792270.7311337,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_generate": "ce60c023fc04a12cce2cb7fb6eb368da1ec19e4b7f858163991b19b0c28d37ef"
+      },
+      "environment": {
+        "H3_PROFILE": "1",
+        "H3_PREVIEW_TEST_FAST_CUDA": "1"
+      },
+      "seconds": 174.85332062200177,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_generate": "ce60c023fc04a12cce2cb7fb6eb368da1ec19e4b7f858163991b19b0c28d37ef"
+      }
+    },
+    {
+      "name": "gallery-chain2-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/chain2.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/chain2-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792445.5935984,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/chain2.h3av": "66a319569b78857b50cf5d9afc23595eba50795a5278c521704893b42fb7aa0b"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 6.572110740991775,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/chain2.h3av": "66a319569b78857b50cf5d9afc23595eba50795a5278c521704893b42fb7aa0b",
+        "outputs/preview-vae/cuda-5090/quality/chain2-tiny.mp4": "6fc573ab7e0996d9fb41ea9c7e66f3adea6074da31a30cf64a54732ae93e576b"
+      }
+    },
+    {
+      "name": "shared-default-regressions",
+      "command": [
+        "make",
+        "test"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792452.17247,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {},
+      "environment": {},
+      "seconds": 23.79704806196969,
+      "returncode": 0,
+      "output_sha256": {}
+    },
+    {
+      "name": "nocudnn-contracts",
+      "command": [
+        "/path/to/models/h3-preview-vae-nocudnn/h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792475.990384,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "/path/to/models/h3-preview-vae-nocudnn/h3_preview_vae_tests": "8e60cecc59dbd75559ebca62dcbf4d7c70dc5dde808a41439419e00f76100c5f",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      },
+      "environment": {},
+      "seconds": 0.46413103997474536,
+      "returncode": 0,
+      "output_sha256": {
+        "/path/to/models/h3-preview-vae-nocudnn/h3_preview_vae_tests": "8e60cecc59dbd75559ebca62dcbf4d7c70dc5dde808a41439419e00f76100c5f",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      }
+    },
+    {
+      "name": "fast-continuation-invariance",
+      "command": [
+        "./h3_preview_vae_generate",
+        "MiniMax-H3",
+        "outputs/preview-vae/cuda-5090/continuation",
+        "continuation"
+      ],
+      "timeout": 300.0,
+      "status": "passed",
+      "started": 1789792476.4760654,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_generate": "ce60c023fc04a12cce2cb7fb6eb368da1ec19e4b7f858163991b19b0c28d37ef"
+      },
+      "environment": {
+        "H3_PROFILE": "1",
+        "H3_PREVIEW_TEST_FAST_CUDA": "1"
+      },
+      "seconds": 68.92040059401188,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_generate": "ce60c023fc04a12cce2cb7fb6eb368da1ec19e4b7f858163991b19b0c28d37ef"
+      }
+    },
+    {
+      "name": "gallery-chain2-cublas",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/chain2.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/chain2-cublas.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792545.4056108,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/chain2.h3av": "66a319569b78857b50cf5d9afc23595eba50795a5278c521704893b42fb7aa0b"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 6.521605179004837,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/chain2.h3av": "66a319569b78857b50cf5d9afc23595eba50795a5278c521704893b42fb7aa0b",
+        "outputs/preview-vae/cuda-5090/quality/chain2-cublas.mp4": "95dec717717e2fdfe0362ac782753adb3cbf41f5b1140a466c968641d418d4e8"
+      }
+    },
+    {
+      "name": "cuda-regressions",
+      "command": [
+        "make",
+        "cuda-test"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792551.933492,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {},
+      "environment": {},
+      "seconds": 9.525047740025911,
+      "returncode": 0,
+      "output_sha256": {}
+    },
+    {
+      "name": "nocudnn-decode",
+      "command": [
+        "/path/to/models/h3-preview-vae-nocudnn/h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "--preview-vae",
+        "--profile",
+        "--fast-cuda",
+        "-o",
+        "outputs/preview-vae/cuda-5090/image05-nocudnn.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792561.4647734,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "/path/to/models/h3-preview-vae-nocudnn/h3": "378f40eeb37e957865f17ebef83a82968401e04e54d037a8a7a90fcc3f7cf1a5",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      },
+      "environment": {},
+      "seconds": 6.07110039005056,
+      "returncode": 0,
+      "output_sha256": {
+        "/path/to/models/h3-preview-vae-nocudnn/h3": "378f40eeb37e957865f17ebef83a82968401e04e54d037a8a7a90fcc3f7cf1a5",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279",
+        "outputs/preview-vae/cuda-5090/image05-nocudnn.mp4": "002d54f3ea0f2423bbcc93522dba2e292649d059cbbcf144109da9f24c0aaffd"
+      }
+    },
+    {
+      "name": "sanitizer-racecheck-native",
+      "command": [
+        "compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--kernel-name",
+        "regex:transform_input|activation|assemble_memory|upsample|expand_time|pixel_shuffle|im2col",
+        "--error-exitcode",
+        "90",
+        "./h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "failed",
+      "started": 1789792567.5591993,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 0.007594127033371478,
+      "returncode": 1,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      }
+    },
+    {
+      "name": "gallery-face-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/face.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/face-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792567.5886807,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/face.h3av": "217181e92f17f6fd9d643322ea26c0def897434de0773dc91535244b92be3458"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 6.822250973957125,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/face.h3av": "217181e92f17f6fd9d643322ea26c0def897434de0773dc91535244b92be3458",
+        "outputs/preview-vae/cuda-5090/quality/face-full.mp4": "c2bd3ef8aa74e773869b3374ff0c220d6cdcaabb1da8a50ebb071d32a7dcfb3b"
+      }
+    },
+    {
+      "name": "fast-cuda-regressions",
+      "command": [
+        "make",
+        "cuda-fast-test"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792574.4169962,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {},
+      "environment": {},
+      "seconds": 3.4690172309638,
+      "returncode": 0,
+      "output_sha256": {}
+    },
+    {
+      "name": "warm-fast-full-image05",
+      "command": [
+        "./h3_preview_vae_tests",
+        "replay",
+        "full",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "-"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792577.8918116,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      },
+      "environment": {
+        "H3_PROFILE": "1",
+        "H3_PREVIEW_TEST_FAST_CUDA": "1"
+      },
+      "seconds": 11.978782821039204,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      }
+    },
+    {
+      "name": "gallery-face-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/face.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/face-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792589.8788755,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/face.h3av": "217181e92f17f6fd9d643322ea26c0def897434de0773dc91535244b92be3458"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 5.971013686968945,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/face.h3av": "217181e92f17f6fd9d643322ea26c0def897434de0773dc91535244b92be3458",
+        "outputs/preview-vae/cuda-5090/quality/face-tiny.mp4": "7d97643e9689864d32d8f239ded7706f7d51f1ef60dfa04298417b769c7d7377"
+      }
+    },
+    {
+      "name": "warm-fast-full-detail",
+      "command": [
+        "./h3_preview_vae_tests",
+        "replay",
+        "full",
+        "outputs/preview-vae/metal/quality/detail.h3av",
+        "-"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792595.858638,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "outputs/preview-vae/metal/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      },
+      "environment": {
+        "H3_PROFILE": "1",
+        "H3_PREVIEW_TEST_FAST_CUDA": "1"
+      },
+      "seconds": 9.37468423199607,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "outputs/preview-vae/metal/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      }
+    },
+    {
+      "name": "gallery-face-cublas",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/face.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/face-cublas.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792605.2415555,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/face.h3av": "217181e92f17f6fd9d643322ea26c0def897434de0773dc91535244b92be3458"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 5.920480331988074,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/face.h3av": "217181e92f17f6fd9d643322ea26c0def897434de0773dc91535244b92be3458",
+        "outputs/preview-vae/cuda-5090/quality/face-cublas.mp4": "ebb055fc5f0bfa94eea9493b4e3d50d7a68ea899f00577d27f768a7ee9f9028e"
+      }
+    },
+    {
+      "name": "warm-cudnn-detail",
+      "command": [
+        "./h3_preview_vae_tests",
+        "replay",
+        "models/taeh3.safetensors",
+        "outputs/preview-vae/metal/quality/detail.h3av",
+        "-"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792611.1848593,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13",
+        "outputs/preview-vae/metal/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      },
+      "environment": {
+        "H3_PROFILE": "1"
+      },
+      "seconds": 0.6144242559676059,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13",
+        "outputs/preview-vae/metal/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      }
+    },
+    {
+      "name": "gallery-face20-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/face20.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/face20-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792611.8211925,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/face20.h3av": "a0c7b6cdf3df7cf5ae75fa33f492d876d18a8f9a9f41af523386b678f599a6ce"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 8.374948155018501,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/face20.h3av": "a0c7b6cdf3df7cf5ae75fa33f492d876d18a8f9a9f41af523386b678f599a6ce",
+        "outputs/preview-vae/cuda-5090/quality/face20-full.mp4": "e401667823fa188b46b2b757e94c91a6205d2ddb26c88d9f35a8666ec3d9df5e"
+      }
+    },
+    {
+      "name": "warm-cublas-detail",
+      "command": [
+        "./h3_preview_vae_tests",
+        "replay",
+        "models/taeh3.safetensors",
+        "outputs/preview-vae/metal/quality/detail.h3av",
+        "-"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792620.2190247,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13",
+        "outputs/preview-vae/metal/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas",
+        "H3_PROFILE": "1"
+      },
+      "seconds": 0.5643329790327698,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "fc1dc40f0f2b83ba09403b90f83db6a71f5c71548ef964551646378140b708d8",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13",
+        "outputs/preview-vae/metal/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      }
+    },
+    {
+      "name": "fast-finalization",
+      "command": [
+        "python3",
+        "tests/preview_vae_finalize.py"
+      ],
+      "timeout": 120.0,
+      "status": "failed",
+      "started": 1789792620.8022997,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "tests/preview_vae_finalize.py": "8da75cdbbf792503eb0dd34feb303586b2bbeb35db137f9115064f77fdaa606f"
+      },
+      "environment": {
+        "H3_PREVIEW_TEST_ROOT": "outputs/preview-vae/cuda-5090",
+        "H3_PROFILE": "1",
+        "H3_PREVIEW_TEST_FAST_CUDA": "1"
+      },
+      "seconds": 20.691304935025983,
+      "returncode": 1,
+      "output_sha256": {
+        "tests/preview_vae_finalize.py": "8da75cdbbf792503eb0dd34feb303586b2bbeb35db137f9115064f77fdaa606f"
+      }
+    },
+    {
+      "name": "gallery-face20-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/face20.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/face20-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792641.500015,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/face20.h3av": "a0c7b6cdf3df7cf5ae75fa33f492d876d18a8f9a9f41af523386b678f599a6ce"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "auto"
+      },
+      "seconds": 5.72105906100478,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/face20.h3av": "a0c7b6cdf3df7cf5ae75fa33f492d876d18a8f9a9f41af523386b678f599a6ce",
+        "outputs/preview-vae/cuda-5090/quality/face20-tiny.mp4": "736d1408283cab4ef29fd08ed5ad6eb20fa1854f02fcdcd146538563bc3bacf6"
+      }
+    },
+    {
+      "name": "gallery-face20-cublas",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/cuda-5090/quality/face20.h3av",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/quality/face20-cublas.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792647.2542646,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/face20.h3av": "a0c7b6cdf3df7cf5ae75fa33f492d876d18a8f9a9f41af523386b678f599a6ce"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 5.720369721995667,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "595d1514d02f18775da4eb32164307d1e91e44844a2e4cc63ed978194c251469",
+        "outputs/preview-vae/cuda-5090/quality/face20.h3av": "a0c7b6cdf3df7cf5ae75fa33f492d876d18a8f9a9f41af523386b678f599a6ce",
+        "outputs/preview-vae/cuda-5090/quality/face20-cublas.mp4": "c27f03b8873728111cdb118dedfff3cfc2955637493e1b2daf3f918c99df7500"
+      }
+    },
+    {
+      "name": "gallery-media-validation",
+      "command": [
+        "/usr/bin/python3",
+        "/path/to/models/h3-preview-vae/tests/preview_vae_cuda_gallery.py",
+        "validate"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792653.0124166,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "/usr/bin/python3": "1d3cf64f97cadc79fdc6fe2496a21b7b456cb94211978cfef5a65f616af74fd5",
+        "/path/to/models/h3-preview-vae/tests/preview_vae_cuda_gallery.py": "77e2fe306f1962cade136c893abe6ec692e9ee6620ef0e8030a4f87e9160e0c8"
+      },
+      "environment": {},
+      "seconds": 5.470923597982619,
+      "returncode": 0,
+      "output_sha256": {
+        "/usr/bin/python3": "1d3cf64f97cadc79fdc6fe2496a21b7b456cb94211978cfef5a65f616af74fd5",
+        "/path/to/models/h3-preview-vae/tests/preview_vae_cuda_gallery.py": "77e2fe306f1962cade136c893abe6ec692e9ee6620ef0e8030a4f87e9160e0c8"
+      }
+    },
+    {
+      "name": "sanitizer-racecheck-native-corrected",
+      "command": [
+        "compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--kernel-name",
+        "regex=transform_input|activation|assemble_memory|upsample|expand_time|pixel_shuffle|im2col",
+        "--error-exitcode",
+        "90",
+        "./h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792756.460761,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "41680c35c1761f09d3045e00c15ef63e54155fc1cc8f95e3dd299d93af1989dd",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 49.874599536007736,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "41680c35c1761f09d3045e00c15ef63e54155fc1cc8f95e3dd299d93af1989dd",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      }
+    },
+    {
+      "name": "sanitizer-memcheck-cudnn",
+      "command": [
+        "compute-sanitizer",
+        "--tool",
+        "memcheck",
+        "--leak-check",
+        "full",
+        "--error-exitcode",
+        "90",
+        "./h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792806.3939998,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "41680c35c1761f09d3045e00c15ef63e54155fc1cc8f95e3dd299d93af1989dd",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cudnn"
+      },
+      "seconds": 2.7170021799975075,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "41680c35c1761f09d3045e00c15ef63e54155fc1cc8f95e3dd299d93af1989dd",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      }
+    },
+    {
+      "name": "delivery-failure-cancellation",
+      "command": [
+        "./h3_preview_vae_tests",
+        "delivery-errors",
+        "outputs/preview-vae/cuda-5090/invariance/tiny.h3av"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792809.154517,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "41680c35c1761f09d3045e00c15ef63e54155fc1cc8f95e3dd299d93af1989dd",
+        "outputs/preview-vae/cuda-5090/invariance/tiny.h3av": "266d578a42a576aa9fd7eb797353e7cf13d46a14731072c54ffc7b0031c74184"
+      },
+      "environment": {
+        "H3_PROFILE": "1",
+        "H3_PREVIEW_TEST_FAST_CUDA": "1"
+      },
+      "seconds": 32.552770249021705,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "41680c35c1761f09d3045e00c15ef63e54155fc1cc8f95e3dd299d93af1989dd",
+        "outputs/preview-vae/cuda-5090/invariance/tiny.h3av": "266d578a42a576aa9fd7eb797353e7cf13d46a14731072c54ffc7b0031c74184"
+      }
+    },
+    {
+      "name": "default-final-regression",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/image05-after-default.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792841.7377634,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "5a7d787de08eefea6ebec21709d124383277211625721b0bc12f6f4f58543214",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      },
+      "environment": {},
+      "seconds": 38.21028999600094,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "5a7d787de08eefea6ebec21709d124383277211625721b0bc12f6f4f58543214",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279",
+        "outputs/preview-vae/cuda-5090/image05-after-default.mp4": "5f9fd21972ef01ad9b61a29a19c6982d9d3d0d649b5a7aa031be86d74283a828"
+      }
+    },
+    {
+      "name": "bridge-stream-buffer-diagnostic",
+      "command": [
+        "./h3_preview_vae_tests",
+        "replay",
+        "full",
+        "outputs/preview-vae/cuda-5090/continuation/bridge-tiny.h3av",
+        "-"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789792897.8437643,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "41680c35c1761f09d3045e00c15ef63e54155fc1cc8f95e3dd299d93af1989dd",
+        "outputs/preview-vae/cuda-5090/continuation/bridge-tiny.h3av": "55eff02d1496477235eb8a7e7990735218795076c13d12158dba831e3aa0fa96"
+      },
+      "environment": {
+        "H3_PROFILE": "1",
+        "H3_PREVIEW_TEST_FAST_CUDA": "1"
+      },
+      "seconds": 1.4151944930199534,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "41680c35c1761f09d3045e00c15ef63e54155fc1cc8f95e3dd299d93af1989dd",
+        "outputs/preview-vae/cuda-5090/continuation/bridge-tiny.h3av": "55eff02d1496477235eb8a7e7990735218795076c13d12158dba831e3aa0fa96"
+      }
+    },
+    {
+      "name": "cold-workflow",
+      "command": [
+        "python3",
+        "tests/preview_vae_workflow.py"
+      ],
+      "timeout": 300.0,
+      "status": "passed",
+      "started": 1789792968.8305244,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "tests/preview_vae_workflow.py": "d3a7da066624f5babf1b1cb988cc9089b3e1ab3ec3b37f9a4198ea327dcf4534"
+      },
+      "environment": {
+        "H3_PREVIEW_TEST_ROOT": "outputs/preview-vae/cuda-5090",
+        "H3_PROFILE": "1",
+        "H3_PREVIEW_TEST_FAST_CUDA": "1"
+      },
+      "seconds": 67.61190480896039,
+      "returncode": 0,
+      "output_sha256": {
+        "tests/preview_vae_workflow.py": "d3a7da066624f5babf1b1cb988cc9089b3e1ab3ec3b37f9a4198ea327dcf4534"
+      }
+    },
+    {
+      "name": "cache-model-switch",
+      "command": [
+        "./h3_preview_vae_generate",
+        "MiniMax-H3",
+        "outputs/preview-vae/cuda-5090/cache",
+        "cache"
+      ],
+      "timeout": 300.0,
+      "status": "passed",
+      "started": 1789793036.4705563,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_generate": "b5824c740598e5434ed24bc5d20631af8eedb465c2022d9934fc4e634886f3a4"
+      },
+      "environment": {
+        "H3_PREVIEW_TEST_PATTERN": "outputs/preview-vae/cuda-5090/pattern.safetensors",
+        "H3_PROFILE": "1",
+        "H3_PREVIEW_TEST_FAST_CUDA": "1"
+      },
+      "seconds": 38.318205715972,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_generate": "b5824c740598e5434ed24bc5d20631af8eedb465c2022d9934fc4e634886f3a4"
+      }
+    },
+    {
+      "name": "fast-finalization-contract",
+      "command": [
+        "python3",
+        "tests/preview_vae_finalize.py"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789793074.7952278,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "tests/preview_vae_finalize.py": "8afc5b72c3e947ebec3fcdb8a77a1f2829ef48b223e68e01ba7f13f5c0cd6cdb"
+      },
+      "environment": {
+        "H3_PREVIEW_TEST_ROOT": "outputs/preview-vae/cuda-5090",
+        "H3_PROFILE": "1",
+        "H3_PREVIEW_TEST_FAST_CUDA": "1"
+      },
+      "seconds": 20.688181802048348,
+      "returncode": 0,
+      "output_sha256": {
+        "tests/preview_vae_finalize.py": "8afc5b72c3e947ebec3fcdb8a77a1f2829ef48b223e68e01ba7f13f5c0cd6cdb"
+      }
+    },
+    {
+      "name": "reference-matrix",
+      "command": [
+        "./h3_preview_vae_generate",
+        "MiniMax-H3",
+        "outputs/preview-vae/cuda-5090/features",
+        "matrix"
+      ],
+      "timeout": 300.0,
+      "status": "timeout",
+      "started": 1789793095.4891958,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_generate": "b5824c740598e5434ed24bc5d20631af8eedb465c2022d9934fc4e634886f3a4"
+      },
+      "environment": {
+        "H3_PROFILE": "1",
+        "H3_PREVIEW_TEST_FAST_CUDA": "1"
+      },
+      "seconds": 300.09552789799636,
+      "returncode": -1,
+      "output_sha256": {
+        "./h3_preview_vae_generate": "b5824c740598e5434ed24bc5d20631af8eedb465c2022d9934fc4e634886f3a4"
+      }
+    },
+    {
+      "name": "tiny-with-default-cuda",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "--preview-vae",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/image05-tiny-default-cuda.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789793395.5953696,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3": "5a7d787de08eefea6ebec21709d124383277211625721b0bc12f6f4f58543214",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      },
+      "environment": {},
+      "seconds": 30.048888083023485,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3": "5a7d787de08eefea6ebec21709d124383277211625721b0bc12f6f4f58543214",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279",
+        "outputs/preview-vae/cuda-5090/image05-tiny-default-cuda.mp4": "e041a24638b0aeb094836989f51d32f2fe1877e7dde7f54f19c45eebc7687716"
+      }
+    },
+    {
+      "name": "temporal-oracle-cudnn",
+      "command": [
+        "./h3_preview_vae_tests",
+        "gpu",
+        "outputs/preview-vae/cuda-5090/temporal.safetensors",
+        "2"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789793425.6696103,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "81bcb80a253f5759114b8b4edd8a750a9bb9846d1a4a202a491381d1d3956de2",
+        "outputs/preview-vae/cuda-5090/temporal.safetensors": "a546e38f0dc91b7e42115e620730da75f68e756dcdc1fdeacddad71328d336c1"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cudnn"
+      },
+      "seconds": 0.6643772959941998,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "81bcb80a253f5759114b8b4edd8a750a9bb9846d1a4a202a491381d1d3956de2",
+        "outputs/preview-vae/cuda-5090/temporal.safetensors": "a546e38f0dc91b7e42115e620730da75f68e756dcdc1fdeacddad71328d336c1"
+      }
+    },
+    {
+      "name": "final-native-contracts",
+      "command": [
+        "./h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789793426.3680582,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "81bcb80a253f5759114b8b4edd8a750a9bb9846d1a4a202a491381d1d3956de2",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      },
+      "environment": {
+        "H3_PROFILE": "1"
+      },
+      "seconds": 0.6643107309937477,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "81bcb80a253f5759114b8b4edd8a750a9bb9846d1a4a202a491381d1d3956de2",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      }
+    },
+    {
+      "name": "temporal-oracle-cublas",
+      "command": [
+        "./h3_preview_vae_tests",
+        "gpu",
+        "outputs/preview-vae/cuda-5090/temporal.safetensors",
+        "2"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789793427.0660756,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "81bcb80a253f5759114b8b4edd8a750a9bb9846d1a4a202a491381d1d3956de2",
+        "outputs/preview-vae/cuda-5090/temporal.safetensors": "a546e38f0dc91b7e42115e620730da75f68e756dcdc1fdeacddad71328d336c1"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 0.46412357897497714,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "81bcb80a253f5759114b8b4edd8a750a9bb9846d1a4a202a491381d1d3956de2",
+        "outputs/preview-vae/cuda-5090/temporal.safetensors": "a546e38f0dc91b7e42115e620730da75f68e756dcdc1fdeacddad71328d336c1"
+      }
+    },
+    {
+      "name": "reference-matrix-remainder",
+      "command": [
+        "./h3_preview_vae_generate",
+        "MiniMax-H3",
+        "outputs/preview-vae/cuda-5090/features",
+        "matrix"
+      ],
+      "timeout": 180.0,
+      "status": "passed",
+      "started": 1789793702.8910358,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_generate": "b5824c740598e5434ed24bc5d20631af8eedb465c2022d9934fc4e634886f3a4"
+      },
+      "environment": {
+        "H3_PREVIEW_START_CASE": "7",
+        "H3_PROFILE": "1",
+        "H3_PREVIEW_TEST_FAST_CUDA": "1"
+      },
+      "seconds": 96.1909637899953,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_generate": "b5824c740598e5434ed24bc5d20631af8eedb465c2022d9934fc4e634886f3a4"
+      }
+    },
+    {
+      "name": "nocudnn-final-temporal-contract",
+      "command": [
+        "/path/to/models/h3-preview-vae-nocudnn/h3_preview_vae_tests",
+        "gpu",
+        "outputs/preview-vae/cuda-5090/temporal.safetensors",
+        "2"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789793799.1026068,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "/path/to/models/h3-preview-vae-nocudnn/h3_preview_vae_tests": "27d524c22ce52b4073e1a85479303e5f581a4abb1b19f9ad08e5a0ce5e416d0b",
+        "outputs/preview-vae/cuda-5090/temporal.safetensors": "a546e38f0dc91b7e42115e620730da75f68e756dcdc1fdeacddad71328d336c1"
+      },
+      "environment": {
+        "H3_PREVIEW_CUDA_CONV": "cublas"
+      },
+      "seconds": 0.46410507505061105,
+      "returncode": 0,
+      "output_sha256": {
+        "/path/to/models/h3-preview-vae-nocudnn/h3_preview_vae_tests": "27d524c22ce52b4073e1a85479303e5f581a4abb1b19f9ad08e5a0ce5e416d0b",
+        "outputs/preview-vae/cuda-5090/temporal.safetensors": "a546e38f0dc91b7e42115e620730da75f68e756dcdc1fdeacddad71328d336c1"
+      }
+    },
+    {
+      "name": "complete-media-audit",
+      "command": [
+        "python3",
+        "tests/preview_vae_media_audit.py"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789793868.754426,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "tests/preview_vae_media_audit.py": "9263163506594af86908336330e3ba99aa6052ab10f54348e1eed08d8f5e7f21"
+      },
+      "environment": {
+        "H3_PREVIEW_TEST_ROOT": "outputs/preview-vae/cuda-5090"
+      },
+      "seconds": 2.0162815129733644,
+      "returncode": 0,
+      "output_sha256": {
+        "tests/preview_vae_media_audit.py": "9263163506594af86908336330e3ba99aa6052ab10f54348e1eed08d8f5e7f21"
+      }
+    },
+    {
+      "name": "final-build-contracts",
+      "command": [
+        "make",
+        "test-preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789793870.7969742,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {},
+      "environment": {},
+      "seconds": 0.9650098810088821,
+      "returncode": 0,
+      "output_sha256": {}
+    },
+    {
+      "name": "nocudnn-final-replay",
+      "command": [
+        "/path/to/models/h3-preview-vae-nocudnn/h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "--preview-vae",
+        "--fast-cuda",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/cuda-5090/nocudnn-final.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789793871.790065,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "/path/to/models/h3-preview-vae-nocudnn/h3": "44556b8e4a9a3ec126a8f13565fd2b1da6beb7ce95d7fc968ae682b67b77b413",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      },
+      "environment": {},
+      "seconds": 7.62244655599352,
+      "returncode": 0,
+      "output_sha256": {
+        "/path/to/models/h3-preview-vae-nocudnn/h3": "44556b8e4a9a3ec126a8f13565fd2b1da6beb7ce95d7fc968ae682b67b77b413",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279",
+        "outputs/preview-vae/cuda-5090/nocudnn-final.mp4": "002d54f3ea0f2423bbcc93522dba2e292649d059cbbcf144109da9f24c0aaffd"
+      }
+    },
+    {
+      "name": "cuda-policy-rejections",
+      "command": [
+        "python3",
+        "outputs/preview-vae/cuda-5090/policy_checks.py"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789793914.5020258,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "outputs/preview-vae/cuda-5090/policy_checks.py": "26323c0b12a3fc82e751d43782c3537d9aa853c678d4aa38243095397ea8d1c6"
+      },
+      "environment": {},
+      "seconds": 1.3151939029921778,
+      "returncode": 0,
+      "output_sha256": {
+        "outputs/preview-vae/cuda-5090/policy_checks.py": "26323c0b12a3fc82e751d43782c3537d9aa853c678d4aa38243095397ea8d1c6"
+      }
+    },
+    {
+      "name": "final-source-identity-contract",
+      "command": [
+        "./h3_preview_vae_tests",
+        "gpu",
+        "outputs/preview-vae/cuda-5090/temporal.safetensors",
+        "2"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "started": 1789793983.1780047,
+      "cwd": "/path/to/models/h3-preview-vae",
+      "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+      "input_sha256": {
+        "./h3_preview_vae_tests": "282722732ee24e4621c8ae371b05e81cb70d4c9679aa04eb1602d37a65a1f46a",
+        "outputs/preview-vae/cuda-5090/temporal.safetensors": "a546e38f0dc91b7e42115e620730da75f68e756dcdc1fdeacddad71328d336c1"
+      },
+      "environment": {},
+      "seconds": 0.7646259010070935,
+      "returncode": 0,
+      "output_sha256": {
+        "./h3_preview_vae_tests": "282722732ee24e4621c8ae371b05e81cb70d4c9679aa04eb1602d37a65a1f46a",
+        "outputs/preview-vae/cuda-5090/temporal.safetensors": "a546e38f0dc91b7e42115e620730da75f68e756dcdc1fdeacddad71328d336c1"
+      }
+    }
+  ]
+}

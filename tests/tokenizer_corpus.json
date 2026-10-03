@@ -1,0 +1,483 @@
+[
+  {
+    "name": "marker-0",
+    "text": "<d>",
+    "ids": [
+      151669
+    ]
+  },
+  {
+    "name": "marker-1",
+    "text": "</d>",
+    "ids": [
+      151670
+    ]
+  },
+  {
+    "name": "marker-2",
+    "text": "<|cutoff|>",
+    "ids": [
+      151671
+    ]
+  },
+  {
+    "name": "marker-3",
+    "text": "<|lyrics_start|>",
+    "ids": [
+      151672
+    ]
+  },
+  {
+    "name": "marker-4",
+    "text": "<|lyrics_end|>",
+    "ids": [
+      151673
+    ]
+  },
+  {
+    "name": "marker-5",
+    "text": "<|caption_start|>",
+    "ids": [
+      151674
+    ]
+  },
+  {
+    "name": "marker-6",
+    "text": "<|caption_end|>",
+    "ids": [
+      151675
+    ]
+  },
+  {
+    "name": "empty",
+    "text": "",
+    "ids": []
+  },
+  {
+    "name": "fox",
+    "text": "A red fox walking through snow",
+    "ids": [
+      32,
+      2518,
+      38835,
+      11435,
+      1526,
+      11794
+    ]
+  },
+  {
+    "name": "unicode",
+    "text": "Hello, WORLD!  2026\n中文 café's",
+    "ids": [
+      9707,
+      11,
+      50891,
+      0,
+      220,
+      220,
+      17,
+      15,
+      17,
+      21,
+      198,
+      104811,
+      51950,
+      594
+    ]
+  },
+  {
+    "name": "emoji",
+    "text": "🙂a!\n",
+    "ids": [
+      145080,
+      64,
+      4894
+    ]
+  },
+  {
+    "name": "nfc",
+    "text": "café 中文 🙂",
+    "ids": [
+      924,
+      58858,
+      72858,
+      16744,
+      27484
+    ]
+  },
+  {
+    "name": "im-start",
+    "text": "<|im_start|>",
+    "ids": [
+      151644
+    ]
+  },
+  {
+    "name": "qwen-chat",
+    "text": "<|im_start|>user\nHello<|im_end|>",
+    "ids": [
+      151644,
+      872,
+      198,
+      9707,
+      151645
+    ]
+  },
+  {
+    "name": "vision",
+    "text": "<|vision_start|><|image_pad|><|video_pad|><|vision_end|>",
+    "ids": [
+      151652,
+      151655,
+      151656,
+      151653
+    ]
+  },
+  {
+    "name": "tools",
+    "text": "<tool_call>{\"x\":1}</tool_call><think>yes</think>",
+    "ids": [
+      151657,
+      4913,
+      87,
+      788,
+      16,
+      92,
+      151658,
+      151667,
+      9693,
+      151668
+    ]
+  },
+  {
+    "name": "cinematic",
+    "text": "A cinematic close-up of a clockwork bird taking flight.",
+    "ids": [
+      32,
+      64665,
+      3265,
+      5239,
+      315,
+      264,
+      8866,
+      1778,
+      11958,
+      4633,
+      10971,
+      13
+    ]
+  },
+  {
+    "name": "control",
+    "text": "A woman looks at the camera and slowly walks across the room.",
+    "ids": [
+      32,
+      5220,
+      5868,
+      518,
+      279,
+      6249,
+      323,
+      13970,
+      22479,
+      3941,
+      279,
+      3054,
+      13
+    ]
+  },
+  {
+    "name": "garden",
+    "text": "The woman, fully clothed in a dress, walks slowly through a sunlit garden and waves. Steady camera and quiet outdoor ambience.",
+    "ids": [
+      785,
+      5220,
+      11,
+      7225,
+      27292,
+      291,
+      304,
+      264,
+      8511,
+      11,
+      22479,
+      13970,
+      1526,
+      264,
+      7015,
+      31635,
+      13551,
+      323,
+      16876,
+      13,
+      3360,
+      7604,
+      6249,
+      323,
+      11340,
+      15789,
+      8873,
+      1835,
+      13
+    ]
+  },
+  {
+    "name": "ordinary-cutoff",
+    "text": "<cutoff>",
+    "ids": [
+      63889,
+      27440,
+      29
+    ]
+  },
+  {
+    "name": "similar",
+    "text": "<D>hello</D> <|cutoff |> <d",
+    "ids": [
+      29061,
+      29,
+      14990,
+      522,
+      35,
+      29,
+      82639,
+      66,
+      27440,
+      58721,
+      366,
+      67
+    ]
+  },
+  {
+    "name": "presentation",
+    "text": "<Picture 1>: <Video 2>: <0.5 seconds><Audio 1>: ",
+    "ids": [
+      21604,
+      3826,
+      220,
+      16,
+      26818,
+      366,
+      10724,
+      220,
+      17,
+      26818,
+      366,
+      15,
+      13,
+      20,
+      6486,
+      1784,
+      14755,
+      220,
+      16,
+      26818,
+      220
+    ]
+  },
+  {
+    "name": "dialogue",
+    "text": "<d>[English] Hello there.</d>",
+    "ids": [
+      151669,
+      58,
+      22574,
+      60,
+      21927,
+      1052,
+      13,
+      151670
+    ]
+  },
+  {
+    "name": "mixed",
+    "text": "prefix<d>Hello</d>suffix",
+    "ids": [
+      11849,
+      151669,
+      9707,
+      151670,
+      26786
+    ]
+  },
+  {
+    "name": "adjacent-dialogue",
+    "text": "<d>Hello</d>",
+    "ids": [
+      151669,
+      9707,
+      151670
+    ]
+  },
+  {
+    "name": "dialogue-prompt",
+    "text": "A woman says: <d>[English] Hello there.</d>",
+    "ids": [
+      32,
+      5220,
+      2727,
+      25,
+      220,
+      151669,
+      58,
+      22574,
+      60,
+      21927,
+      1052,
+      13,
+      151670
+    ]
+  },
+  {
+    "name": "cutoff",
+    "text": "A man says: <d>[English] Stop.</d><|cutoff|>",
+    "ids": [
+      32,
+      883,
+      2727,
+      25,
+      220,
+      151669,
+      58,
+      22574,
+      60,
+      14215,
+      13,
+      151670,
+      151671
+    ]
+  },
+  {
+    "name": "lyrics",
+    "text": "intro<|lyrics_start|>Hello world<|lyrics_end|>outro",
+    "ids": [
+      36442,
+      151672,
+      9707,
+      1879,
+      151673,
+      411,
+      299
+    ]
+  },
+  {
+    "name": "captions",
+    "text": "x<|caption_start|>你好🙂<|caption_end|>y",
+    "ids": [
+      87,
+      151674,
+      108386,
+      145080,
+      151675,
+      88
+    ]
+  },
+  {
+    "name": "multiple",
+    "text": "<|lyrics_start|>one<|lyrics_end|><|caption_start|>two<|caption_end|><d>three</d><d>four</d><|cutoff|>",
+    "ids": [
+      151672,
+      603,
+      151673,
+      151674,
+      19789,
+      151675,
+      151669,
+      27856,
+      151670,
+      151669,
+      34024,
+      151670,
+      151671
+    ]
+  },
+  {
+    "name": "all-adjacent",
+    "text": "<d></d><|cutoff|><|lyrics_start|><|lyrics_end|><|caption_start|><|caption_end|>",
+    "ids": [
+      151669,
+      151670,
+      151671,
+      151672,
+      151673,
+      151674,
+      151675
+    ]
+  },
+  {
+    "name": "repeated",
+    "text": "<d><d>Hello</d></d><|cutoff|><|cutoff|>",
+    "ids": [
+      151669,
+      151669,
+      9707,
+      151670,
+      151670,
+      151671,
+      151671
+    ]
+  },
+  {
+    "name": "dialogue-render",
+    "text": "A woman looks at the camera and says:\n<d>[English] Where are you going?</d>",
+    "ids": [
+      32,
+      5220,
+      5868,
+      518,
+      279,
+      6249,
+      323,
+      2727,
+      510,
+      151669,
+      58,
+      22574,
+      60,
+      10967,
+      525,
+      498,
+      2087,
+      30,
+      151670
+    ]
+  },
+  {
+    "name": "cutoff-render",
+    "text": "A woman looks at the camera and says:\n<d>[English] Wait, don't—</d><|cutoff|>",
+    "ids": [
+      32,
+      5220,
+      5868,
+      518,
+      279,
+      6249,
+      323,
+      2727,
+      510,
+      151669,
+      58,
+      22574,
+      60,
+      13824,
+      11,
+      1513,
+      944,
+      2293,
+      151670,
+      151671
+    ]
+  },
+  {
+    "name": "unicode-adjacent",
+    "text": "é<d>中文🙂</d>é",
+    "ids": [
+      963,
+      151669,
+      104811,
+      145080,
+      151670,
+      963
+    ]
+  }
+]

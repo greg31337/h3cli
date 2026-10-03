@@ -1,0 +1,6 @@
+# Versions used by the local official Qwen runner; native kernel tests need none.
+numpy==2.5.3
+torch==2.14.0
+transformers==5.17.0
+safetensors==0.8.0
+Pillow==12.3.0

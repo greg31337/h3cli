@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "user_instruction": "accept current result and continue",
+  "scope": "Accept measured M4 dense FP16 performance for continued M2 qualification; do not change original measured pass/fail or waive operator/range/perceptual checks.",
+  "recorded_steady_speedup": 1.0488107432929357,
+  "original_required_speedup": 1.1,
+  "binary_sha256": "65ecc16cdaa79f30ca9a63d2db5e7e491c4f326c105efa24672f99a3e1cabbdb",
+  "evidence_sha256": {
+    "outputs/metal-native-m2-243/integrated/workflows/index.json": "dba6e333f76431aae4b193b1981a4bbfcf27e4ac5fafee5d30a4f2d2d031dbef",
+    "outputs/metal-native-m2-243/integrated/diagnostics.json": "f56740e1abde54c177da8605c41f71ad58bc31578464fa88b5ca27848d28ad91",
+    "tests/metal_fp16_model_limits.json": "84ca16df91ad21f2799518f8f86eb5b4264238c87d639b5ac6762eaed0d8d810"
+  },
+  "geometry": [
+    640,
+    480,
+    243
+  ],
+  "maximum_evaluations": 6
+}

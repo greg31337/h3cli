@@ -1,0 +1,2 @@
+# Historical output encoder: regression tests only, never packaged in h3cli.
+imageio-ffmpeg==0.5.1 --hash=sha256:5289f75c7f755b499653f3209fea4efd1430cba0e39831c381aad2d458f7a316

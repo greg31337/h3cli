@@ -1,0 +1,9 @@
+# Analysis only; renderer has no Python dependency.
+torch==2.14.0
+torchvision==0.29.0
+numpy==2.5.3
+opencv-python-headless==5.0.0.93
+Pillow==12.3.0
+lpips==0.1.4
+scipy==1.18.1
+tqdm==4.70.1

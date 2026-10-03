@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "frozen_before_candidate_measurement": true,
+  "operator": {
+    "relative_l2_max": 0.01,
+    "max_abs_over_reference_peak_max": 0.02,
+    "cpu_sample_error_over_value_peak_max": 0.005,
+    "nonfinite_values": 0,
+    "guard_changes": 0,
+    "input_changes": 0,
+    "invalid_input_output_changes": 0
+  },
+  "performance": {
+    "adapter_inclusive_median_speedup_min": 1.10,
+    "conservative_min_reference_over_max_candidate_min": 1.0,
+    "balanced_rounds": 6,
+    "required_fixtures": ["synthetic-22426", "block0", "block24", "block49", "references-243", "continuation192-243"]
+  },
+  "scope": "Identical BF16 source values: scaled half conversion is exact when admitted; heads risking half subnormal loss recover from original BF16 with FP32 operands. P rounds to half for PV, with FP32 accumulation and denominator. BF16 final rounding is included. Model trajectory drift is a separate measurement."
+}

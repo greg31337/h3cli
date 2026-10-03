@@ -1,0 +1,36 @@
+--- a/src/denoise/attention.h
++++ b/src/denoise/attention.h
+@@ -7,7 +7,7 @@
+ enum { H3_ATTENTION_DEFAULT=0, H3_ATTENTION_SAGE2=1, H3_ATTENTION_SAGE3=2 };
+ #define H3_ATTENTION_VERSION 1
+ /* Shape-only, fixed-budget plan. No free-memory-dependent arithmetic choices. */
+-#define H3_ATTENTION_PLAN_VERSION 1
++#define H3_ATTENTION_PLAN_VERSION 9001 /* isolated sensitivity study only */
+ #define H3_ATTENTION_WORKSPACE_BYTES ((size_t)512*1024*1024)
+ const char *h3_attention_name(int mode);
+ int h3_attention_parse(const char *text,int *mode);
+--- a/src/cuda/gpu_cuda.cu
++++ b/src/cuda/gpu_cuda.cu
+@@ -1132,8 +1132,21 @@
+     if(g->profiling&&g->attention_shapes.emplace((int)H3_GPU_BF16,1,seq,heads,dim,head_major).second)
+         fprintf(stderr,"h3cli: attention shape phase=main-DiT requested=%s effective=%s recipe=%d plan=%d S=%u H=%u D=%u head_major=%d\n",
+             h3_attention_name(g->attention_mode),h3_attention_name(g->attention_mode),H3_ATTENTION_VERSION,H3_ATTENTION_PLAN_VERSION,seq,heads,dim,head_major);
++    // Diagnostic-only patch: never applied to the delivered CUDA binary.
++    const char *study=getenv("H3_TEST_ATTENTION_SENSITIVITY");
++    int effective=g->attention_mode;
++    if(study) {
++        const char *last_text=getenv("H3_TEST_ATTENTION_LAST_STEP");
++        char *end=nullptr;long last=last_text?strtol(last_text,&end,10):-1;
++        bool edges=!strcmp(study,"endpoints-and-edge-blocks");
++        if(g->attention_mode!=2||(!edges&&strcmp(study,"endpoints"))||
++           !last_text||end==last_text||*end||last<1)
++            return h3_gpu_set_error(g,"invalid diagnostic attention sensitivity selection");
++        if(step==0||step==last||(edges&&(block<4||block>=46)))effective=1;
++        if(block==0&&step==0)fprintf(stderr,"h3cli: TEST-ONLY attention sensitivity=%s last_step=%ld plan=%d\n",study,last,H3_ATTENTION_PLAN_VERSION);
++    }
+     profile_scope timing(g,1);
+-    if(!h3_sage_run(g->sage,g->attention_mode,tensor_pointer(out),tensor_pointer(q),tensor_pointer(k),tensor_pointer(v),seq,heads,scale,head_major!=0,g->error,sizeof(g->error))) {
++    if(!h3_sage_run(g->sage,effective,tensor_pointer(out),tensor_pointer(q),tensor_pointer(k),tensor_pointer(v),seq,heads,scale,head_major!=0,g->error,sizeof(g->error))) {
+         g->deferred_error=true;return 0;
+     }
+     g->stats.attention_dispatches++;

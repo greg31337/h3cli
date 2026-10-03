@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "status": "frozen before fast-v2 optimization; not a claim of completed qualification",
+  "reference": "accepted SGLang arithmetic 4",
+  "cases": {
+    "primary": "original C0 prompt, seed 42, 640x480, 124 frames, six evaluations",
+    "conditioned": "R1 ordered portrait.jpg plus reference.mp4 from preserved conditioning corpus",
+    "held_out": ["H0", "H1", "H2", "F2", "R0", "R1", "continuation"],
+    "performance": "640x480, 243 frames, six evaluations, three interleaved pairs",
+    "high_resolution": "1344x768, 362 frames, max image, at most two evaluations; execution only"
+  },
+  "required_combinations": {
+    "attention": ["dense", "sage2++", "sage3", "sol"],
+    "projection": ["bf16", "fp8", "nvfp4"]
+  },
+  "gates": {
+    "finite": true,
+    "complete_frames_audio_and_evaluations": true,
+    "every_frame_ssim_min": 0.90,
+    "every_frame_lpips_alex_v01_max": 0.10,
+    "temporal_error_rms_max": 0.03,
+    "audio_relative_l2_max": 0.05,
+    "audio_cosine_min": 0.995,
+    "av_duration_error_samples_max": 0,
+    "default_speedup_target": 1.05,
+    "unexplained_other_timing_boundary_regression_max": 1.05,
+    "peak_vram_ratio_max": 1.05,
+    "process_limit_bytes": 118111600640
+  },
+  "measurement": ["process wall", "conditioning", "denoising", "full decode", "time to playable", "peak VRAM", "host RAM and pinned allocations"],
+  "rules": [
+    "No threshold relaxation after candidate failures; retain rejected candidates",
+    "Reference gate is stricter and independent; no transfer of historical waivers",
+    "Pair complete clips, worst frames and audio in HTML; automated gates do not prove semantic/perceptual identity",
+    "Record identity/action/texture/flicker/audio review as unreviewed until observations exist; do not wait for human review",
+    "No multiplication of unmeasured speedups or qualification through fallback-only execution"
+  ]
+}

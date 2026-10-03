@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "scope": "M6 Q8-only experiment; frozen before model benchmarks; no inherited acceptance",
+  "geometry": [640, 480, 243],
+  "blocks": 50,
+  "cases": {"B1": 1, "B5": 5, "B6": 6},
+  "maximum_evaluations": 6,
+  "weight_recipe": 1,
+  "group_size": 64,
+  "operator_relative_l2_max": 0.006,
+  "real_projection_relative_l2_max": 0.03,
+  "B1_velocity_relative_l2_max": 0.05,
+  "B5_maximum_step_time_ratio": 1.05,
+  "weight_storage_ratio_max": 0.54,
+  "B6_perceptual_contract": "tests/metal_reference_contract.json",
+  "promotion": "All execution/range checks, B1 velocity screens, B5 memory/time gates, and B6 perceptual screens must pass; remains opt-in regardless. Native simdgroup and MPSGraph-dequant are measured separately.",
+  "not_qualified": ["50-step trajectory equivalence", "held-out conditioning corpus", "Q8 plus ANE", "Q8 SSD streaming", "M5-specific INT8 arithmetic"]
+}

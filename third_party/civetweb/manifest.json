@@ -1,0 +1,25 @@
+{
+  "upstream": "https://github.com/civetweb/civetweb",
+  "version": "v1.16",
+  "archive": "https://codeload.github.com/civetweb/civetweb/tar.gz/refs/tags/v1.16",
+  "archive_sha256": "f0e471c1bf4e7804a6cfb41ea9d13e7d623b2bcc7bc1e2a4dd54951a24d60285",
+  "files": {
+    "LICENSE.md": "bc24af9ffb777f4842f8556ac752efd5ea212c55d2eccfae58cc2c2a24ea1f03",
+    "include/civetweb.h": "81d2b455f4880a31a6f1f94770825f9dd914adfa92ab16663c992058eb1bfa1a",
+    "src/civetweb.c": "2dc7a2a9e613f975271ff733facb8587af25274db39cd83df410d06a05d7433a",
+    "src/handle_form.inl": "bddad9e1e9d0ec227cf3ad3ca6bd44ffacf44bd756f631527d2b5798c4e36fbf",
+    "src/http2.inl": "6fbfebde37e42c230b326bccb28893a685f6c48222e3390ba39f749a7d261f67",
+    "src/match.inl": "606e7add6599a97105e35af20c7f6f2dbbef13444ccabfb02567ccf8ec0f92ba",
+    "src/md5.inl": "0b9c95a45d00c4aa74c2ef0de24baad7f9961a95c3d5835a262a31173d0c3916",
+    "src/response.inl": "e6455d9739845593e18c3ae756b6791cb051f57fafd40806b65ba56e2ff7b20b",
+    "src/sha1.inl": "8955644bf6aa8ffdae8a3ab61d09eac1d8bfe0abd160edf83fbe8e1a357151e8",
+    "src/sort.inl": "2a371807ed7e4b6cf078251dd36df4ea3385becafdc4dd0c50d39f5258e59f6e",
+    "src/timer.inl": "dfb39732ea7a105eaa385154a3a1ac4f5a71ae9c29401a5c9a388c3d9d06f012"
+  },
+  "upstream_files": {
+    "include/civetweb.h": "e3a12c0a659b3bc6f75aa67799232ca343572dcb3add8b2475666633fa4afad3",
+    "src/civetweb.c": "e572a29680c063b6202377131cee65f238fc801692a57ec7797fdad381fde786",
+    "src/match.inl": "1f575b361135b13c377fa84b6d5f9b6faf8b6c6416dfec476509d09a7eb743e3"
+  },
+  "local_changes": "Rename the optional-interface macro and WebSocket wrapper helpers; clarify the interface comment. These interfaces remain disabled in h3cli."
+}

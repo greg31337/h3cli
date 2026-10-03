@@ -1,0 +1,23 @@
+{
+  "purpose": "Native reproduction of pinned BF16 K-mean arithmetic; no Torch runtime dependency",
+  "version": "2.8.0+cu128",
+  "revision": "a1cb3cc05d46d198467bebbb6e8fba50a325d4e7",
+  "source_sha256": {
+    "ATen/native/cuda/Reduce.cuh": "36bdd7066e2eb0210e26a12b4630538c400af07c83a8b5c5b1ef0239569fbea9",
+    "ATen/native/SharedReduceOps.h": "f15afc530453699262a93a8131582c4fab84f2b90dbf51fdbc20e32e7b7d4036"
+  },
+  "qualified_device": {
+    "sm_count": 170,
+    "max_threads_per_sm": 1536
+  },
+  "plan": {
+    "heads": 56,
+    "head_dim": 128,
+    "output_vector_size": 4,
+    "accumulators": 4,
+    "block_threads": 128,
+    "input_lanes": 4,
+    "target_ctas_per_output": 37
+  },
+  "license": "LICENSE.PyTorch"
+}

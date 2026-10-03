@@ -1,0 +1,720 @@
+#include "src/host.h"
+#include "src/h3.h"
+
+
+#include <float.h>
+#include <limits.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static const int h3_frame_per_token[5] = {1, 4, 4, 4, 4};
+static const double h3_frame_rescale = 5.0 / 3.0;
+
+int h3_video_time_boundary_frames(int temporal_index) {
+    if (temporal_index < 0) return -1;
+    int64_t frames = (int64_t)(temporal_index / 5) * 17;
+    for (int i = 0; i < temporal_index % 5; i++) frames += h3_frame_per_token[i];
+    return frames <= INT_MAX ? (int)frames : -1;
+}
+
+int h3_continuation_context(int frames, h3_denoise_prefix *prefix) {
+    if (!prefix || frames < 39 || (frames - 39) % 51) return 0;
+    int64_t k = (frames - 39) / 51;
+    int64_t video = 12 + 15*k, audio = 65 + 85*k;
+    if (video > INT_MAX || audio > INT_MAX) return 0;
+    prefix->video_prefix_t = (int)video;
+    prefix->audio_prefix_t = (int)audio;
+    return 1;
+}
+
+float h3_prefix_timestep(h3_target_row_class kind, float sigma_v, float sigma_a) {
+    switch (kind) {
+    case H3_ROW_GENERATED_VIDEO: return 1.0f-sigma_v;
+    case H3_ROW_GENERATED_AUDIO: return 1.0f-sigma_a;
+    case H3_ROW_PRESERVED_VIDEO: return fmaxf(1.0f-sigma_v,0.999f);
+    case H3_ROW_PRESERVED_AUDIO: return 1.0f;
+    default: break;
+    }
+    return NAN;
+}
+
+h3_target_row_class h3_prefix_row_class(h3_denoise_prefix p,
+    int audio, size_t row, int latent_h, int latent_w, int audio_t) {
+    if (audio) return audio_t > 0 && row % (size_t)audio_t < (size_t)p.audio_prefix_t ?
+        H3_ROW_PRESERVED_AUDIO : H3_ROW_GENERATED_AUDIO;
+    size_t spatial=(size_t)(latent_h/2)*(size_t)(latent_w/2);
+    return spatial && row/spatial < (size_t)p.video_prefix_t ?
+        H3_ROW_PRESERVED_VIDEO : H3_ROW_GENERATED_VIDEO;
+}
+
+void h3_prefix_mask_velocity(h3_denoise_prefix p, int video_t,
+    int latent_h, int latent_w, int audio_t, float *video, float *audio) {
+    size_t hw=(size_t)latent_h*(size_t)latent_w;
+    for (size_t c=0;c<24;c++) memset(video+c*(size_t)video_t*hw,0,
+        (size_t)p.video_prefix_t*hw*sizeof(float));
+    for (size_t c=0;c<64;c++) memset(audio+c*(size_t)audio_t,0,
+        (size_t)p.audio_prefix_t*sizeof(float));
+}
+
+int h3_prefix_euler_step(h3_denoise_prefix p, int video_t,
+    int latent_h, int latent_w, int audio_t, float *video, float *audio,
+    const float *vv, const float *av, float sv, float nv, float sa, float na) {
+    if (!video || !audio || !vv || !av || video_t<1 || audio_t<1 ||
+        latent_h<1 || latent_w<1 || p.video_prefix_t<0 || p.video_prefix_t>video_t ||
+        p.audio_prefix_t<0 || p.audio_prefix_t>audio_t) return 0;
+    size_t hw=(size_t)latent_h*(size_t)latent_w;
+    /* Skip protected positions entirely: even signed zero is preserved. */
+    for (size_t c=0;c<24;c++) {
+        size_t offset=(c*(size_t)video_t+(size_t)p.video_prefix_t)*hw;
+        if (!h3_euler_velocity_step(video+offset,vv+offset,
+            (size_t)(video_t-p.video_prefix_t)*hw,sv,nv)) return 0;
+    }
+    for (size_t c=0;c<64;c++) {
+        size_t offset=c*(size_t)audio_t+(size_t)p.audio_prefix_t;
+        if (!h3_euler_velocity_step(audio+offset,av+offset,
+            (size_t)(audio_t-p.audio_prefix_t),sa,na)) return 0;
+    }
+    return 1;
+}
+
+int h3_align_frame_count(int requested) {
+    int value = requested < 5 ? 5 : requested;
+    int remainder = (value - 5) % 17;
+    if (remainder < 0) remainder += 17;
+    if (remainder != 0) {
+        if (value > INT_MAX - (17-remainder)) return INT_MAX;
+        value += 17 - remainder;
+    }
+    return value;
+}
+
+int h3_video_latent_t(int frame_count) {
+    if (frame_count <= 5) return 2;
+    return ((frame_count - 5) / 17) * 5 + 2;
+}
+
+int h3_video_encoder_latent_t(int frame_count) {
+    return frame_count > 0 ? (frame_count + 3) / 4 : 0;
+}
+
+h3_temporal_shape h3_temporal(int requested_frames) {
+    h3_temporal_shape result;
+    result.frame_count = h3_align_frame_count(requested_frames);
+    result.video_t = h3_video_latent_t(result.frame_count);
+    result.audio_t = (int)llround((double)result.frame_count *
+                                  H3_AUDIO_LATENT_FPS / H3_FPS);
+    return result;
+}
+
+void h3_latent_canvas(int width, int height, int *latent_w, int *latent_h) {
+    if (latent_w) *latent_w = width / H3_VAE_SPATIAL_RATIO;
+    if (latent_h) *latent_h = height / H3_VAE_SPATIAL_RATIO;
+}
+
+int h3_adapt_canvas(int width, int height, int *adapted_w, int *adapted_h) {
+    if (width <= 0 || height <= 0 || !adapted_w || !adapted_h) return 0;
+    double ratio = (double)width / (double)height;
+    double nominal_w;
+    double nominal_h;
+    if (ratio >= 1.0) {
+        nominal_w = 768.0 * ratio;
+        nominal_h = 768.0;
+    } else {
+        nominal_w = 768.0;
+        nominal_h = 768.0 / ratio;
+    }
+    double pixels = nominal_w * nominal_h;
+    if (pixels > H3_MAX_PIXELS) {
+        double scale = sqrt((double)H3_MAX_PIXELS / pixels);
+        nominal_w *= scale;
+        nominal_h *= scale;
+    }
+    int out_w = (int)(nearbyint(nominal_w / H3_CANVAS_MULTIPLE) *
+                      H3_CANVAS_MULTIPLE);
+    int out_h = (int)(nearbyint(nominal_h / H3_CANVAS_MULTIPLE) *
+                      H3_CANVAS_MULTIPLE);
+    *adapted_w = out_w < H3_CANVAS_MULTIPLE ? H3_CANVAS_MULTIPLE : out_w;
+    *adapted_h = out_h < H3_CANVAS_MULTIPLE ? H3_CANVAS_MULTIPLE : out_h;
+    return 1;
+}
+
+static int reference_match_canvas(int width, int height,
+    int target_width, int target_height, int *adapted_w, int *adapted_h) {
+    if (width < 1 || height < 1 || target_width < 1 || target_height < 1 ||
+        !adapted_w || !adapted_h) return 0;
+    double target_area = (double)target_width * target_height;
+    double source_area = (double)width * height;
+    double scale = fmin(1.0, sqrt(target_area / source_area));
+    double out_w = nearbyint((double)width * scale / H3_CANVAS_MULTIPLE) *
+                   H3_CANVAS_MULTIPLE;
+    double out_h = nearbyint((double)height * scale / H3_CANVAS_MULTIPLE) *
+                   H3_CANVAS_MULTIPLE;
+    if (out_w < H3_CANVAS_MULTIPLE) out_w = H3_CANVAS_MULTIPLE;
+    if (out_h < H3_CANVAS_MULTIPLE) out_h = H3_CANVAS_MULTIPLE;
+    if (out_w > INT_MAX || out_h > INT_MAX) return 0;
+    *adapted_w = (int)out_w;
+    *adapted_h = (int)out_h;
+    return 1;
+}
+
+const char *h3_reference_image_size_name(int mode) {
+    switch (mode) {
+    case H3_REFERENCE_IMAGE_MATCH: return "match";
+    case H3_REFERENCE_IMAGE_MAX: return "max";
+    case H3_REFERENCE_IMAGE_HIGH: return "high";
+    default: return "unknown";
+    }
+}
+
+int h3_reference_image_resolve(int width, int height, int target_width,
+    int target_height, int mode, h3_reference_image_shape *shape,
+    char *error, size_t error_size) {
+    const char *reason = "invalid source dimensions or output pointer";
+    if (shape) memset(shape, 0, sizeof(*shape));
+    if (error && error_size) error[0] = '\0';
+    if (!shape || width < 1 || height < 1) goto invalid;
+    int w, h;
+    if (mode == H3_REFERENCE_IMAGE_MATCH) {
+        reason = "invalid target canvas or overflowing match dimensions";
+        if (!reference_match_canvas(width, height, target_width, target_height,
+                                    &w, &h)) goto invalid;
+    } else if (mode == H3_REFERENCE_IMAGE_MAX || mode == H3_REFERENCE_IMAGE_HIGH) {
+        reason = "source aspect ratio must be within 1:4 to 4:1";
+        if ((int64_t)width > 4 * (int64_t)height ||
+            (int64_t)height > 4 * (int64_t)width) goto invalid;
+        int short_edge = width < height ? width : height;
+        int long_edge = width > height ? width : height;
+        uint64_t edge = (uint64_t)(mode == H3_REFERENCE_IMAGE_MAX ? short_edge : long_edge);
+        int dimensions[2] = {width, height}, resolved[2];
+        for (int i = 0; i < 2; i++) {
+            /* Exact rational nearest-even rounding of dimension*2048/edge/32. */
+            uint64_t numerator = (uint64_t)dimensions[i] * 64u;
+            uint64_t grid = numerator / edge, remainder = numerator % edge;
+            grid += remainder * 2 > edge || (remainder * 2 == edge && (grid & 1u));
+            resolved[i] = (int)(grid ? grid * 32u : 32u);
+        }
+        w = resolved[0]; h = resolved[1];
+    } else {
+        reason = "unknown sizing policy";
+        goto invalid;
+    }
+    uint64_t patches = (uint64_t)(w / 16) * (uint64_t)(h / 16);
+    reason = "resolved image exceeds 65536 vision patches";
+    if (patches > H3_REFERENCE_IMAGE_MAX_PATCHES) goto invalid;
+    *shape = (h3_reference_image_shape){w, h, (size_t)patches, (size_t)patches / 4};
+    return 1;
+invalid:
+    if (error && error_size) snprintf(error, error_size, "reference image %s: %s",
+        h3_reference_image_size_name(mode), reason);
+    return 0;
+}
+
+int h3_reference_image_canvas(int width, int height,
+    int target_width, int target_height, int max_short_edge, int *out_w, int *out_h) {
+    if (!out_w || !out_h || (max_short_edge != 0 && max_short_edge != 2048)) return 0;
+    h3_reference_image_shape shape;
+    if (!h3_reference_image_resolve(width,height,target_width,target_height,
+        max_short_edge ? H3_REFERENCE_IMAGE_MAX : H3_REFERENCE_IMAGE_MATCH,
+        &shape,NULL,0)) return 0;
+    *out_w=shape.width; *out_h=shape.height; return 1;
+}
+
+int h3_reference_video_canvas(int width, int height,
+                              int *adapted_w, int *adapted_h) {
+    if (width < 1 || height < 1 || !adapted_w || !adapted_h ||
+        !h3_adapt_canvas(width, height, adapted_w, adapted_h)) return 0;
+    double source_area = (double)width * (double)height;
+    double target_area = (double)*adapted_w * (double)*adapted_h;
+    if (source_area < target_area) {
+        int out_w = (int)(nearbyint((double)width / H3_CANVAS_MULTIPLE) *
+                          H3_CANVAS_MULTIPLE);
+        int out_h = (int)(nearbyint((double)height / H3_CANVAS_MULTIPLE) *
+                          H3_CANVAS_MULTIPLE);
+        *adapted_w = out_w < H3_CANVAS_MULTIPLE ? H3_CANVAS_MULTIPLE : out_w;
+        *adapted_h = out_h < H3_CANVAS_MULTIPLE ? H3_CANVAS_MULTIPLE : out_h;
+    }
+    return 1;
+}
+
+double h3_time_shift_sigma(double sigma, double from_shift, double to_shift) {
+    double base = sigma / (from_shift + sigma * (1.0 - from_shift));
+    return to_shift * base / (1.0 + (to_shift - 1.0) * base);
+}
+
+double h3_time_shift_slope(double sigma, double from_shift, double to_shift) {
+    double base = sigma / (from_shift + sigma * (1.0 - from_shift));
+    double a = 1.0 + (from_shift - 1.0) * base;
+    double b = 1.0 + (to_shift - 1.0) * base;
+    return to_shift * a * a / (from_shift * b * b);
+}
+
+static float h3_shifted_sigma(int index, int steps, float shift) {
+    int base_index = (index * 1000) / steps;
+    float base = (float)(1000 - base_index) / 1000.0f;
+    return shift * base / (1.0f + (shift - 1.0f) * base);
+}
+
+int h3_schedule_build(int steps, h3_sigma_schedule *schedule) {
+    if (!schedule || steps < 1 || steps > H3_MAX_STEPS) return 0;
+    memset(schedule, 0, sizeof(*schedule));
+    schedule->steps = steps;
+    for (int index = 0; index < steps; index++) {
+        schedule->video[index] = h3_shifted_sigma(
+            index, steps, (float)H3_VIDEO_SIGMA_SHIFT);
+        schedule->audio[index] = h3_shifted_sigma(
+            index, steps, (float)H3_AUDIO_SIGMA_SHIFT);
+    }
+    schedule->video[steps] = 0.0f;
+    schedule->audio[steps] = 0.0f;
+    return 1;
+}
+
+int h3_serving_schedule_build(int evaluations, h3_sigma_schedule *schedule) {
+    if (!schedule || evaluations < 1 || evaluations > H3_MAX_STEPS) return 0;
+    memset(schedule, 0, sizeof(*schedule));
+    schedule->steps = evaluations;
+    float denominator = (float)evaluations;
+    for (int index = 0; index <= evaluations; index++) {
+        float base = 1.0f - (float)index / denominator;
+        schedule->video[index] = (float)H3_VIDEO_SIGMA_SHIFT * base /
+            (1.0f + ((float)H3_VIDEO_SIGMA_SHIFT - 1.0f) * base);
+        schedule->audio[index] = (float)H3_AUDIO_SIGMA_SHIFT * base /
+            (1.0f + ((float)H3_AUDIO_SIGMA_SHIFT - 1.0f) * base);
+    }
+    schedule->video[evaluations] = 0.0f;
+    schedule->audio[evaluations] = 0.0f;
+    return 1;
+}
+
+typedef struct {
+    h3_layout *layout;
+    size_t position_capacity;
+    size_t segment_capacity;
+    char *error;
+    size_t error_size;
+} h3_layout_builder;
+
+static int h3_builder_fail(h3_layout_builder *builder, const char *message) {
+    if (builder->error && builder->error_size) {
+        snprintf(builder->error, builder->error_size, "%s", message);
+    }
+    return 0;
+}
+
+static int h3_reserve_positions(h3_layout_builder *builder, size_t add) {
+    h3_layout *layout = builder->layout;
+    if (add > SIZE_MAX - layout->seq_len) {
+        return h3_builder_fail(builder, "layout row count overflow");
+    }
+    size_t wanted = layout->seq_len + add;
+    if (wanted <= builder->position_capacity) return 1;
+    size_t capacity = builder->position_capacity ? builder->position_capacity : 256;
+    while (capacity < wanted) {
+        if (capacity > SIZE_MAX / 2) {
+            capacity = wanted;
+            break;
+        }
+        capacity *= 2;
+    }
+    h3_position *positions = realloc(layout->positions,
+                                     capacity * sizeof(*positions));
+    if (!positions) return h3_builder_fail(builder, "out of memory for positions");
+    layout->positions = positions;
+    builder->position_capacity = capacity;
+    return 1;
+}
+
+static int h3_reserve_segment(h3_layout_builder *builder) {
+    h3_layout *layout = builder->layout;
+    if (layout->segment_count < builder->segment_capacity) return 1;
+    size_t capacity = builder->segment_capacity ? builder->segment_capacity * 2 : 16;
+    h3_segment *segments = realloc(layout->segments,
+                                   capacity * sizeof(*segments));
+    if (!segments) return h3_builder_fail(builder, "out of memory for segments");
+    layout->segments = segments;
+    builder->segment_capacity = capacity;
+    return 1;
+}
+
+static int h3_emit(h3_layout_builder *builder, h3_segment_kind kind,
+                   const h3_position *positions, size_t count) {
+    h3_layout *layout = builder->layout;
+    if (!h3_reserve_positions(builder, count) || !h3_reserve_segment(builder)) {
+        return 0;
+    }
+    size_t start = layout->seq_len;
+    if (count) memcpy(layout->positions + start, positions, count * sizeof(*positions));
+    layout->seq_len += count;
+    layout->segments[layout->segment_count++] =
+        (h3_segment){start, layout->seq_len, kind};
+    return 1;
+}
+
+static int h3_frame_grid(int latent_h, int latent_w, h3_position **positions,
+                         size_t *count, double **w_axis, size_t *w_count) {
+    if (latent_h < 2 || latent_w < 2 || latent_h % 2 || latent_w % 2) return 0;
+    size_t nh = (size_t)latent_h / 2;
+    size_t nw = (size_t)latent_w / 2;
+    if (nh > SIZE_MAX / nw) return 0;
+    size_t total = nh * nw;
+    h3_position *grid = malloc(total * sizeof(*grid));
+    double *widths = malloc(nw * sizeof(*widths));
+    if (!grid || !widths) {
+        free(grid);
+        free(widths);
+        return 0;
+    }
+    double area = sqrt((double)latent_h * (double)latent_w);
+    double ratio_h = latent_h / area;
+    double ratio_w = latent_w / area;
+    double step_h = ratio_h / (double)nh;
+    double step_w = ratio_w / (double)nw;
+    double base_h = (1.0 - ratio_h) / 2.0;
+    double base_w = (1.0 - ratio_w) / 2.0;
+    for (size_t column = 0; column < nw; column++) {
+        widths[column] = ((double)column * step_w + base_w) * 32.0;
+    }
+    size_t offset = 0;
+    for (size_t row = 0; row < nh; row++) {
+        double hh = ((double)row * step_h + base_h) * 32.0;
+        for (size_t column = 0; column < nw; column++) {
+            grid[offset++] = (h3_position){0.0, hh, widths[column]};
+        }
+    }
+    *positions = grid;
+    *count = total;
+    *w_axis = widths;
+    *w_count = nw;
+    return 1;
+}
+
+static double h3_video_span_sum(int latent_t) {
+    double sum = 0.0;
+    for (int index = 0; index < latent_t; index++) {
+        sum += h3_frame_rescale * h3_frame_per_token[index % 5];
+    }
+    return sum;
+}
+
+static h3_position *h3_audio_grid(double cursor, int audio_t,
+                                  double low, double high, size_t *count) {
+    if (audio_t < 0 || (size_t)audio_t > SIZE_MAX / (2 * sizeof(h3_position))) {
+        return NULL;
+    }
+    size_t rows = (size_t)audio_t * 2;
+    h3_position *grid = malloc((rows ? rows : 1) * sizeof(*grid));
+    if (!grid) return NULL;
+    for (int index = 0; index < audio_t; index++) {
+        grid[index] = (h3_position){cursor + index, 0.0, low};
+        grid[(size_t)audio_t + (size_t)index] =
+            (h3_position){cursor + index, 0.0, high};
+    }
+    *count = rows;
+    return grid;
+}
+
+static h3_position *h3_video_grid(double cursor, int latent_t,
+                                  const h3_position *frame, size_t frame_rows,
+                                  size_t *count) {
+    if (latent_t < 0 || (size_t)latent_t > SIZE_MAX / frame_rows) return NULL;
+    size_t rows = (size_t)latent_t * frame_rows;
+    h3_position *grid = malloc((rows ? rows : 1) * sizeof(*grid));
+    if (!grid) return NULL;
+    size_t offset = 0;
+    double time = cursor;
+    for (int index = 0; index < latent_t; index++) {
+        for (size_t spatial = 0; spatial < frame_rows; spatial++) {
+            grid[offset++] = (h3_position){time, frame[spatial].h, frame[spatial].w};
+        }
+        time += h3_frame_rescale * h3_frame_per_token[index % 5];
+    }
+    *count = rows;
+    return grid;
+}
+
+static int layout_build(const h3_layout_spec *spec, h3_layout *layout, int still,
+                    char *error, size_t error_size) {
+    if (!spec || !layout) return 0;
+    memset(layout, 0, sizeof(*layout));
+    if (error && error_size) error[0] = '\0';
+    h3_layout_builder builder = {layout, 0, 0, error, error_size};
+    if (spec->text_len < 1 || spec->latent_t < 1 || spec->audio_t < 0 ||
+        (!still && spec->frame_count < 5)) {
+        return h3_builder_fail(&builder, "invalid target layout dimensions");
+    }
+    if (spec->keyframe_count && spec->reference_count) {
+        return h3_builder_fail(&builder, "keyframes and references are mutually exclusive");
+    }
+
+    h3_position *frame = NULL;
+    double *w_axis = NULL;
+    size_t frame_rows = 0;
+    size_t w_count = 0;
+    if (!h3_frame_grid(spec->latent_h, spec->latent_w, &frame, &frame_rows,
+                       &w_axis, &w_count)) {
+        return h3_builder_fail(&builder, "invalid latent canvas or out of memory");
+    }
+
+    h3_position *text = malloc((size_t)spec->text_len * sizeof(*text));
+    if (!text) goto oom;
+    for (int index = 0; index < spec->text_len; index++) {
+        text[index] = (h3_position){(double)index, 0.0, 0.0};
+    }
+    if (!h3_emit(&builder, H3_SEG_TEXT, text, (size_t)spec->text_len)) {
+        free(text);
+        goto fail;
+    }
+    free(text);
+
+    double cursor = (double)spec->text_len;
+    for (size_t index = 0; index < spec->keyframe_count; index++) {
+        double condition_time;
+        if (spec->keyframes[index] == 0) {
+            condition_time = (double)spec->text_len;
+        } else if (spec->keyframes[index] == spec->frame_count - 1) {
+            condition_time = (double)spec->text_len +
+                             h3_video_span_sum(spec->latent_t) - h3_frame_rescale;
+        } else {
+            h3_builder_fail(&builder, "only first and last keyframes are valid");
+            goto fail;
+        }
+        for (size_t row = 0; row < frame_rows; row++) frame[row].t = condition_time;
+        if (!h3_emit(&builder, H3_SEG_COND, frame, frame_rows)) goto fail;
+        layout->img_cond_rows += frame_rows;
+    }
+
+    for (size_t index = 0; index < spec->reference_count; index++) {
+        const h3_layout_ref *reference = &spec->references[index];
+        if (reference->kind == H3_LAYOUT_REF_IMAGE) {
+            h3_position *ref_frame = NULL;
+            double *ref_w = NULL;
+            size_t ref_rows = 0;
+            size_t ref_w_count = 0;
+            if (!h3_frame_grid(reference->latent_h, reference->latent_w,
+                               &ref_frame, &ref_rows, &ref_w, &ref_w_count)) goto oom;
+            for (size_t row = 0; row < ref_rows; row++) ref_frame[row].t = cursor;
+            int ok = h3_emit(&builder, H3_SEG_REF_IMAGE, ref_frame, ref_rows);
+            free(ref_frame);
+            free(ref_w);
+            if (!ok) goto fail;
+            layout->img_cond_rows += ref_rows;
+            cursor += 1.0;
+        } else if (reference->kind == H3_LAYOUT_REF_AUDIO) {
+            size_t rows = 0;
+            h3_position *audio = h3_audio_grid(cursor, reference->audio_t,
+                                               w_axis[0], w_axis[w_count - 1], &rows);
+            if (!audio) goto oom;
+            int ok = 1;
+            if (rows) ok = h3_emit(&builder, H3_SEG_REF_AUDIO, audio, rows);
+            free(audio);
+            if (!ok) goto fail;
+            layout->audio_cond_rows += rows;
+            cursor += reference->audio_t;
+        } else if (reference->kind == H3_LAYOUT_REF_VIDEO) {
+            h3_position *ref_frame = NULL;
+            double *ref_w = NULL;
+            size_t ref_rows = 0;
+            size_t ref_w_count = 0;
+            if (!h3_frame_grid(reference->latent_h, reference->latent_w,
+                               &ref_frame, &ref_rows, &ref_w, &ref_w_count)) goto oom;
+            if (reference->audio_t > 0) {
+                size_t audio_rows = 0;
+                h3_position *audio = h3_audio_grid(cursor, reference->audio_t,
+                                                   ref_w[0], ref_w[ref_w_count - 1],
+                                                   &audio_rows);
+                if (!audio) {
+                    free(ref_frame);
+                    free(ref_w);
+                    goto oom;
+                }
+                int ok = h3_emit(&builder, H3_SEG_REF_AUDIO, audio, audio_rows);
+                free(audio);
+                if (!ok) {
+                    free(ref_frame);
+                    free(ref_w);
+                    goto fail;
+                }
+                layout->audio_cond_rows += audio_rows;
+            }
+            size_t video_rows = 0;
+            h3_position *video = h3_video_grid(cursor, reference->latent_t,
+                                               ref_frame, ref_rows, &video_rows);
+            free(ref_frame);
+            free(ref_w);
+            if (!video) goto oom;
+            int ok = h3_emit(&builder, H3_SEG_REF_IMAGE, video, video_rows);
+            free(video);
+            if (!ok) goto fail;
+            layout->img_cond_rows += video_rows;
+            double video_span = h3_video_span_sum(reference->latent_t);
+            cursor += fmax((double)reference->audio_t, video_span);
+        } else {
+            h3_builder_fail(&builder, "unknown reference layout type");
+            goto fail;
+        }
+    }
+
+    size_t audio_rows = 0;
+    h3_position *audio = h3_audio_grid(cursor, spec->audio_t,
+                                       w_axis[0], w_axis[w_count - 1], &audio_rows);
+    if (!audio) goto oom;
+    if (!h3_emit(&builder, H3_SEG_AUDIO, audio, audio_rows)) {
+        free(audio);
+        goto fail;
+    }
+    free(audio);
+
+    size_t video_rows = 0;
+    h3_position *video = h3_video_grid(cursor, spec->latent_t,
+                                       frame, frame_rows, &video_rows);
+    if (!video) goto oom;
+    if (!h3_emit(&builder, H3_SEG_VIDEO, video, video_rows)) {
+        free(video);
+        goto fail;
+    }
+    free(video);
+
+    layout->img_target_rows = video_rows;
+    layout->audio_target_rows = audio_rows;
+    layout->signature[0] = spec->text_len;
+    layout->signature[1] = spec->latent_t;
+    layout->signature[2] = spec->latent_h;
+    layout->signature[3] = spec->latent_w;
+    layout->signature[4] = spec->audio_t;
+    free(frame);
+    free(w_axis);
+    return 1;
+
+oom:
+    h3_builder_fail(&builder, "out of memory while building layout");
+fail:
+    free(frame);
+    free(w_axis);
+    h3_layout_free(layout);
+    return 0;
+}
+
+void h3_layout_free(h3_layout *layout) {
+    if (!layout) return;
+    free(layout->segments);
+    free(layout->positions);
+    memset(layout, 0, sizeof(*layout));
+}
+
+const char *h3_segment_name(h3_segment_kind kind) {
+    switch (kind) {
+        case H3_SEG_TEXT: return "text";
+        case H3_SEG_COND: return "cond";
+        case H3_SEG_REF_IMAGE: return "ref_img";
+        case H3_SEG_REF_AUDIO: return "ref_audio";
+        case H3_SEG_AUDIO: return "audio";
+        case H3_SEG_VIDEO: return "video";
+    }
+    return "unknown";
+}
+
+uint32_t h3_rng_u32(h3_rng *rng) {
+    uint64_t old_state = rng->state;
+    rng->state = old_state * UINT64_C(6364136223846793005) + rng->increment;
+    uint32_t shifted = (uint32_t)(((old_state >> 18u) ^ old_state) >> 27u);
+    uint32_t rotation = (uint32_t)(old_state >> 59u);
+    return (shifted >> rotation) | (shifted << ((-(int32_t)rotation) & 31));
+}
+
+void h3_rng_seed(h3_rng *rng, uint64_t seed) {
+    memset(rng, 0, sizeof(*rng));
+    rng->increment = (seed << 1u) | 1u;
+    (void)h3_rng_u32(rng);
+    rng->state += seed ^ UINT64_C(0x9e3779b97f4a7c15);
+    (void)h3_rng_u32(rng);
+}
+
+float h3_rng_normal(h3_rng *rng) {
+    if (rng->has_spare) {
+        rng->has_spare = 0;
+        return rng->spare;
+    }
+    double u1 = ((double)h3_rng_u32(rng) + 1.0) / 4294967297.0;
+    double u2 = ((double)h3_rng_u32(rng) + 0.5) / 4294967296.0;
+    double radius = sqrt(-2.0 * log(u1));
+    double angle = 2.0 * 3.14159265358979323846 * u2;
+    rng->spare = (float)(radius * sin(angle));
+    rng->has_spare = 1;
+    return (float)(radius * cos(angle));
+}
+
+void h3_rng_fill_normal(h3_rng *rng, float *values, size_t count) {
+    for (size_t index = 0; index < count; index++) {
+        values[index] = h3_rng_normal(rng);
+    }
+}
+
+
+static double h3_phi1(double value) {
+    return expm1(value) / value;
+}
+
+int h3_res_step(float *output, const float *sample, const float *denoised,
+                const float *old_denoised, size_t count,
+                const float *sigmas, int step, int total_steps) {
+    if (!output || !sample || !denoised || !sigmas || step < 0 ||
+        total_steps < 1 || step >= total_steps) return 0;
+    double sigma = sigmas[step];
+    double next = sigmas[step + 1];
+    if (!(sigma > next && next >= 0.0)) return 0;
+    if (!old_denoised || next == 0.0) {
+        double delta = next - sigma;
+        for (size_t index = 0; index < count; index++) {
+            double derivative = ((double)sample[index] - denoised[index]) / sigma;
+            output[index] = (float)((double)sample[index] + derivative * delta);
+        }
+        return 1;
+    }
+    if (step == 0) return 0;
+    double t = -log(sigma);
+    double t_next = -log(next);
+    double t_previous = -log(sigmas[step - 1]);
+    double h = t_next - t;
+    double c2 = (t_previous - t) / h;
+    double phi1 = h3_phi1(-h);
+    double phi2 = (phi1 - 1.0) / -h;
+    double b1 = phi1 - phi2 / c2;
+    double b2 = phi2 / c2;
+    double decay = exp(-h);
+    for (size_t index = 0; index < count; index++) {
+        output[index] = (float)(decay * sample[index] + h *
+            (b1 * denoised[index] + b2 * old_denoised[index]));
+    }
+    return 1;
+}
+
+int h3_euler_velocity_step(float *sample, const float *velocity, size_t count,
+                           float sigma, float sigma_next) {
+    if (!sample || !velocity || !isfinite(sigma) || !isfinite(sigma_next) ||
+        !(sigma > sigma_next) || sigma_next < 0.0f) return 0;
+    float delta = sigma - sigma_next;
+    for (size_t index = 0; index < count; index++)
+        sample[index] = fmaf(delta, velocity[index], sample[index]);
+    return 1;
+}
+
+int h3_layout_build(const h3_layout_spec *spec,h3_layout *layout,char *error,size_t size) {
+    return layout_build(spec,layout,0,error,size);
+}
+/* Source-backed T=1 / auxiliary audio T=2; never calls video rounding. */
+int h3_still_layout_build(const h3_layout_spec *spec,h3_layout *layout,char *error,size_t size) {
+    if(!spec || spec->latent_t!=1 || spec->audio_t!=2 || spec->frame_count!=1 || spec->keyframe_count ||
+        (spec->reference_count && !spec->references)) {
+        if (error && size)
+            snprintf(error, size, "still layout requires T=1, auxiliary audio T=2, no anchors");
+        return 0;
+    }
+    for(size_t i=0;i<spec->reference_count;i++)if(spec->references[i].kind!=H3_LAYOUT_REF_IMAGE) {
+            if (error && size)
+                snprintf(error, size, "still layout requires image references");
+            return 0;
+    }
+    return layout_build(spec,layout,1,error,size);
+}

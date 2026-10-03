@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "user_instruction": "the results are acceptable; proceed to finish M2",
+  "followup_instruction": "Implement M2E layout fusion",
+  "scope": "Accept the measured 243-frame SOL recipe 1 B2 result and its observed quality/speed for continued M2E work. Preserve failed automated screens; no claim that unrun B5/B6 or held-out cases passed. Held-out M2 corpus remains deferred. Fusion must preserve accepted arithmetic and pass its own implementation/regression checks.",
+  "binary_sha256": "713d3038d23ca7df4ce128d521554e0b077c3ffb1abbd1247a465b923f46d48d",
+  "geometry": [
+    640,
+    480,
+    243
+  ],
+  "observed_evaluations": 2,
+  "maximum_test_evaluations": 6,
+  "mixed_recipe": 4,
+  "sol_recipe": 1,
+  "metal_options": {
+    "metal-attention-kernel": "steel-routed",
+    "metal-attention-dtype": "fp16",
+    "metal-tier": "reference",
+    "sol-q-block": 32,
+    "sol-kv-block": 64,
+    "sol-tau": 1.0,
+    "sol-dense-layers": 1,
+    "sol-dense-steps": 1,
+    "sol-dense-sigma": 0.99,
+    "sol-local-radius": 1,
+    "sol-min-exact": 0.75
+  },
+  "recorded_diagnostic_speedup": 1.086549902146946,
+  "original_required_speedup": 1.1,
+  "evidence_sha256": {
+    "outputs/metal-native-m4-sol-243/frozen/build-provenance.json": "e43e1cbdf10f0a2795fa4e88bfb0b50d22fa55f4ae3679a20c5d6e99ff0ed57f",
+    "outputs/metal-native-m4-sol-243/validation/index.json": "62f49599712bf98cff66f3541927503fcdfbf8a4209ef5f2bb1b6c523fe16355",
+    "outputs/metal-native-m4-sol-243/review/report.json": "0619bcaa2ca64000246f76d420333da2c3092fada1d5f048c1ebee20d188d8a8",
+    "outputs/metal-native-m4-sol-243/dense-B2/record.json": "a7281283e6d7b5bba4e2a6c62acb73c0bc674eb5012b476364e8a4def3b68180",
+    "outputs/metal-native-m4-sol-243/sol-B2/record.json": "4878d601e5650b892c7173fd42409e84709232a23fb0ac0af9ea73475266738b",
+    "tests/metal_sol_mixed_limits.json": "f37df6a81dd9c7299029c39067448c96ef8235b68e5ba86edffc3483a068992c"
+  }
+}

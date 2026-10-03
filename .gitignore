@@ -1,0 +1,40 @@
+# Local models, references, experiments, and generated media.
+misc/
+/models/
+outputs/
+.ruff_cache/
+
+# Private local configuration and signing/SSH credentials.
+/private/
+.env
+.env.*
+!.env.example
+!.env.template
+.ssh/
+.runpod/
+.credentials/
+*.key
+*.pem
+*.p12
+*.pfx
+*.mobileprovision
+
+# Compiler and test outputs.
+/bin/
+*.o
+*.d
+*.air
+*.metallib
+.cuda-build-config*
+__pycache__/
+.DS_Store
+
+# Offline LoRA environments, downloads, and generated checkpoints.
+lora/.venv/
+lora/downloads/
+lora/output/
+lora/**/*.safetensors
+lora/.*.tmp-*/
+lora/.*.backup-*/
+
+/src/metal/native_attention.inc

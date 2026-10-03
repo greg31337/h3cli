@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "status": "accepted",
+  "feature_status": "regular",
+  "accepted_by": "user",
+  "accepted_at_utc": "2026-09-27T15:15:03+00:00",
+  "user_statement": "the results are acceptable",
+  "scope": "Native dense BF16 latent upscaling on CUDA and Metal within the documented geometry, conditioning and resume limits.",
+  "comparison": "comparison-001",
+  "reviewed_report_sha256": "d11ba7285571e05d0fd39d4930d2675692acdccff95e138de69f482d6a74f04d",
+  "reviewed_index_sha256": "5557090b1d2ebd044ca13842aa139fee59d8dc9a4e0b0817b2bfbd8324860a3a",
+  "source_sha256": "d7d8638cc6b99259ab304b3aae66375cf86bf26f55b45eac2ad24eeb5209ffb6",
+  "comparison_binary_sha256": "0bf17c42869e61e9987d49b84cf646c5d5c97636b55d7f29c485b8ab3b395bac",
+  "manifest_sha256": "ce21046360cd91d8ff1d18d46f16b27105acc9fc8b72264f9ab85ef9a10b1d5e",
+  "gate_sha256": "ca613df3dbf618704e53fe9555bbb6d2b31835cab1e955cee8960b34b04d016d",
+  "videos": [
+    {
+      "pair": "768p",
+      "id": "L0",
+      "path": "768p/L0/video.mp4",
+      "sha256": "dc4853f1efd2a4841ddb71c6314f1224de9d88a7fd5b5ca2a53d439c0fd01fec"
+    },
+    {
+      "pair": "768p",
+      "id": "D0",
+      "path": "768p/D0/video.mp4",
+      "sha256": "2f7ec78d3ae5ddfe10f3386fb24a64a3b0ed94bb8a5aa99e3f23d87093e03b90"
+    },
+    {
+      "pair": "768p",
+      "id": "P0",
+      "path": "768p/P0/video.mp4",
+      "sha256": "b06372444fee183b5385f108a58ed550e58ddcd6041dc3c308336c9194fabad5"
+    },
+    {
+      "pair": "768p",
+      "id": "I4",
+      "path": "768p/I4/video.mp4",
+      "sha256": "623107dd87a0748c869c5a24de45cbd8c76261f70c5feaec31f64c1810c4b9c9"
+    },
+    {
+      "pair": "768p",
+      "id": "U0",
+      "path": "768p/U0/video.mp4",
+      "sha256": "352891992d74f99e3e1a97735c8eadca30c10cafb8bd71e003275cb6e33d8f10"
+    },
+    {
+      "pair": "768p",
+      "id": "U2",
+      "path": "768p/U2/video.mp4",
+      "sha256": "cd66e12433c76af5381cea8d356f5af2d1a50c73c1804d316cc982ccf3cd48c9"
+    },
+    {
+      "pair": "768p",
+      "id": "U4",
+      "path": "768p/U4/video.mp4",
+      "sha256": "01d179ba6641d5c707f745deac66314aff3d1bf72b258c34998c943bad2d07a0"
+    },
+    {
+      "pair": "1088p",
+      "id": "L0",
+      "path": "1088p/L0/video.mp4",
+      "sha256": "82fde8bd6dd83dea0ff08328bf82ee67183d61370ef27cf88fe288cef12e8cc2"
+    },
+    {
+      "pair": "1088p",
+      "id": "D0",
+      "path": "1088p/D0/video.mp4",
+      "sha256": "1f37ccfab6197dccbdc3cd3ab8c26558760b48fe12a44e421d0d1dbfd64f9b3f"
+    },
+    {
+      "pair": "1088p",
+      "id": "P0",
+      "path": "1088p/P0/video.mp4",
+      "sha256": "a18f9bde6bd8c4797467270f6ecb3cbcd47135a810cac41913c8c85150057dbe"
+    },
+    {
+      "pair": "1088p",
+      "id": "I4",
+      "path": "1088p/I4/video.mp4",
+      "sha256": "78c7e14a7dd6e23223202568949ed20fb1163320a668cb24ac4f8a3000e50d29"
+    },
+    {
+      "pair": "1088p",
+      "id": "U0",
+      "path": "1088p/U0/video.mp4",
+      "sha256": "913b152609af093207159a7e6fc6b71a3b773ddaa02b3fa28f5b8009df031b08"
+    },
+    {
+      "pair": "1088p",
+      "id": "U2",
+      "path": "1088p/U2/video.mp4",
+      "sha256": "f71af2f310ac1759c9a9b2f0f35ebd0e9e11ad8387c55e87af003e49548340e8"
+    },
+    {
+      "pair": "1088p",
+      "id": "U4",
+      "path": "1088p/U4/video.mp4",
+      "sha256": "9052d1344e9439962ea964ea6af83f85e8c6b51cdd1f2f82f59471f193898b4b"
+    }
+  ]
+}

@@ -1,0 +1,2271 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-18",
+  "scope": "Local Metal and shared host implementation; no remote hardware used",
+  "baseline_commit": "84ce9d1fcf0c755956e271b6f21bb2c3fee6476c",
+  "host": {
+    "device": "Apple M4 Max",
+    "physical_memory_gib": 128,
+    "recommended_gpu_gib": 107.5,
+    "gpu_family": 9,
+    "macos": "26.6.2 (25G83)",
+    "clang": "21.0.0",
+    "ffmpeg": "9.0.1"
+  },
+  "tiny_checkpoint": {
+    "revision": "62f7591f59dfbb4c3c02b7a621d180a9eeaba26c",
+    "sha256": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13",
+    "decoder_tensors": 64,
+    "decoder_parameters": 9868236,
+    "precision": "F16"
+  },
+  "reference": {
+    "revision": "430e52154e76b902c3cc17a16b3edc1fad790012",
+    "file_sha256": "81770cfa4d9aaef0d471733211847e6ba29135ea54f694b65e917299c5605a5d",
+    "mlx": "0.32.2"
+  },
+  "final_binary_sha256": "9f2be272580943a05e9a8005ecfdf0433cf9d13ee0639aa08b1442966802c635",
+  "source_sha256": {
+    "Makefile": "0c61d35cd8bdeb7e9cd7c45e2ad859fd74c716dfafd01a91f2287321fe00a289",
+    "h3.c": "012817674ae0c2fc1f67831b0bb6055af0abbfd5e787ccc30d617dfbbb11aed6",
+    "h3.h": "12499b67eff5b80101ffcdcadeb6f1b4df2b5acdf2fc01e1266c9519d6c34c3f",
+    "h3_audio_vae.c": "51067b7103db56aae5b70740eaca2567c7b0a21be3de8ee7003fcf0d701e819a",
+    "h3_audio_vae.h": "0edfef929bdb23ddb93c1b2504b49e57c03471554c794fab68dd7f07ba70bb8b",
+    "h3_av_state.c": "88d449766e7365620daf3e3595699d31a6dc9763429decf20097d0b72e3b4097",
+    "h3_av_state.h": "3b303fe8ee168a51b38563196c51d72f6a17906d60d8439ce634b805a125ea90",
+    "h3_bridge.c": "ce07af0ec08eec8d929c132ef954f8f4e0ca9155d48bb48897f175e017056458",
+    "h3_bridge.h": "d4b0ffc0aef1e01c1f25794dd1b87597ef99eb068f746d66a63f0a1d2cdc8547",
+    "h3_cli.c": "1cb44ba6d09f653b713c07dab194f2a6f63f8d7dd9d4ab033e0fed072c3066ff",
+    "h3_cli.h": "9cefb5107b171cf1515aae0884420806bfea07a0e950f3cce0d65fffba5aebee",
+    "h3_cli_progress.c": "bee31d7fc57598a0f76ee798d0f0e31c4c0c40f0c8eda816c76efb3d8bcb20c5",
+    "h3_cli_progress.h": "01bedc32cc8f742d7a1fa725e64d1322c46147aed561ca0429dac13dd8831361",
+    "h3_cuda_cudnn.h": "bda06c06635fc4b9f19d3013f3450e3cfc3b72a772b970114982a97fd0d2787d",
+    "h3_cuda_dispatch.h": "05c845999ea342b67bfa97cb9c5d272168af782b78724e3cb7fa3217f3ccacfe",
+    "h3_cuda_probe.c": "44cb00442a238c813901c56144091442fd71b4f85fe81c6c735a073f97909595",
+    "h3_decode.c": "c69de001af4f3ae205c09fe54aba60c8ebe03b593cd0b9cb7a851651cbd77915",
+    "h3_delivery.c": "e66250e35a3f1cb0bc4f96e09a6001dfc1564f5e79909a4ec42238edbc65c6fa",
+    "h3_delivery.h": "a5a39d986a217423631503e8e59ba66019373ae273a1a6e2f22233496ce88a04",
+    "h3_device.h": "3f2f6630d00834f87f0b6b923556ce87a4876b2858fa8e19b2b4fb17f9f9afd1",
+    "h3_digest.c": "c546f9e91617c5f5c8f80bcf7279985140850171cc4fcb3d55ec67d8375fb202",
+    "h3_digest.h": "8b23353d219698009a690ddd80bca8458df8dec0502bc0cec1c54ad60b48996c",
+    "h3_dit.c": "b4fc65098581d32f3cfca620b91ada35e19d926d8a486bbf7580f73f84bac4ec",
+    "h3_dit.h": "6666eefa88727c7f337c73e05d913daf2def1f0f46e19687bc5a21d8db354738",
+    "h3_dit_schedule.c": "99c37d213ae5aa98d7f801c7c767ec324381f14a616e91b50c8a05df57780f91",
+    "h3_dit_schedule.h": "4974003fae514f7ddd9b56db17b2f83d5c4c136fc77690c4cc10fa0f6b4daf49",
+    "h3_execution.c": "ca0f9a89969027a79085f9d0033ba567c01ec0c9e29974e745a707b40c753fdd",
+    "h3_execution.h": "2ab1843f9bd5699f132c65dba3805ff7bc8f117d3d0b6b4d37d8bdf5391cf25f",
+    "h3_ffmpeg.c": "df14e217d02de398df35c50cf708d5d95e7fa0182864beed9f25c79f0d2b6893",
+    "h3_ffmpeg.h": "5088590214bcf3c689dfef7e8d7dfdff77985dfd0557225d87573e6bb1af7139",
+    "h3_gpu.h": "1483add2c96c753cd07ea7495f845f1982ffa5d3117870c27054dcc9b123b6ca",
+    "h3_gpu.m": "93e05e89a4623c8db433c86e0c0b20e4fc5022ffb72eeda3b12fc95d50aee9fd",
+    "h3_host.c": "18e5a8a4137f0defd68ed2127c53b3c99ce74722827943259bb4f0a4b10be02e",
+    "h3_host.h": "50a53732ff92e4f0191d199a94221f6c333503ede28d8492d834248655ecb91d",
+    "h3_internal.h": "cd3ea225b06a970ebc1dd3c6ae883b97793db0b0782a9a75763a40106e131187",
+    "h3_memory.c": "14dcbca9f90f38bdb390c9190285a9a6ce187d615a6ba882956facaa00b193f1",
+    "h3_memory.h": "dd8d06314e11a84815687294ba2b80413f2a0265c7d0fdb30919241327ece8bf",
+    "h3_metal.h": "00241135c11315200b5d68ee9dc68cd96702ec24d39e2b18bb2d179edbfb44ca",
+    "h3_metal.m": "1e30560d9f9d339f254fdf838574c49c12abb78e972d638e49e3114306a34657",
+    "h3_multimodal.c": "f73a3302b1f7b8c1a7a2638b3f323de8795ee6df84d63ff4a59fdb70cfe75ef2",
+    "h3_multimodal.h": "fe63a7d15d44f6891220d4ea176403f35c94275ab6ec8b23717afb16a3b5c254",
+    "h3_platform.c": "bc06a5885af90cf7a1520614dcbf939360fc4d6a5530c6eb7e642adcc03699cc",
+    "h3_platform.h": "f5d2b4a9877fafda5609673e72a17e51fba886d321439bdf742f1f2fb279457a",
+    "h3_presentation.c": "75af065f82422f44044114d9cc42b6ab80dab89ce8d86b83bbd446fbd7c6f4e7",
+    "h3_preview.c": "69894b3ce6e6644fac88352f26e4340e50d92d6f2b76e1563ecb9ecf6581e81f",
+    "h3_preview.h": "c5111e1479adcaa0097611bce3c51d4b83acac904275d0b78f0c64a371d2c08d",
+    "h3_refvideo.c": "34d48336a524882d79a698732e2372ca3c5fed74801168a646e723ef054c95b3",
+    "h3_refvideo.h": "16f24bd3d282646d121c7c538344ad1601f3243813e33bcdb19720d245d131d7",
+    "h3_resize_metal.c": "0270f9590170e5a5b38f5769c2676d5052cf038d33fe069dd455d7f0c718116c",
+    "h3_resize_portable.c": "c230721341e80b09f40ad79e227d3a8e1e9f83ba0e08b520af4cc347c21a4358",
+    "h3_safetensors.c": "571125f776d7a0fd2c9720b686afdbcb7dfb6bae7fc770856d51ddc9130cab5f",
+    "h3_safetensors.h": "d7b48117aeba05698bc3591451783326d7234c8660e8a85e170c86535d73fec2",
+    "h3_sampler_file.c": "35c01d81b65af8197764da7624c7afc16d91caf4ee7be684b8e9f04cbb49f3d6",
+    "h3_sampler_state.c": "a572741e566aca742835bc74377f229046d31c48d4aea1f3424a402e42c62a66",
+    "h3_sampler_state.h": "a2ed5b5933b14a315ecc4ee653c5e945933d5480027271de5fd3cd27c348163e",
+    "h3_shader.c": "231a719aca48e079ae7999d66cb0c17c39a0534733e1a2059ecd543b50c973f8",
+    "h3_shader.h": "aef75594f7f21ac2c2d839df962f0731374e31a1b9231d3bc89d7fba6a08060a",
+    "h3_terminal.c": "d4a49423f6c543f81aae3ff1f66a8fef029d20dcc004dd07185401c45d963eef",
+    "h3_terminal.h": "de30040bce0148bef4679d6c95572666ad41019e138b35e1b47f7ea84313d907",
+    "h3_text_encoder.c": "0f55a057c6a964476bd8b5ff8f71ff333837a0a28f4982bf0eeaa3d92e624951",
+    "h3_text_encoder.h": "8fe4a4e129e42df4100719534fa6d8793226b6083631c0b79a030ffc23c3911e",
+    "h3_tiny_vae.c": "41de12123dc84137d8b6580243a37d890ccd00ac8dc974b954a48308c3ab2114",
+    "h3_tiny_vae.h": "8c1fb1220c0dae0cbeafec193cf74e52b978da8a11e0bbd7255f494a9cdd911f",
+    "h3_tiny_vae_internal.h": "3e7c269305542191c731506213ab29f8458b5e5b7583e1b7cb201665a9b7661e",
+    "h3_tiny_vae_metal.m": "b47dc397cd51fed286d9a8cf3efcf9731d275109e8ac106ac1b9d26d9e05d0f0",
+    "h3_tiny_vae_unavailable.c": "a0b4a0f2bd440db41a562438610e078644fd67dd6617282419b033ecaaeef147",
+    "h3_tokenizer.h": "3607647577c1bf8a85c0359027f24d94619776c827118975da71f2715aa66483",
+    "h3_tokenizer.m": "44156fa356af40bf707b164a3e7975549256c33f28ae8095584ef1ea23a17584",
+    "h3_tokenizer_portable.c": "ca35c10121cdb2ee002038786ab7ec4c2c4fc259166aa96fff87e70895d98a6a",
+    "h3_video_encoder.c": "d38dabc5a0af57e7f33dddae3c8267148bdd77e7030e17aad8ad039d8c66a494",
+    "h3_video_encoder.h": "f6979fdabf36938a4c92864228db467499edfba65836509fb8de6955feb3c476",
+    "h3_video_posterior.c": "1c84d6a4afd4dda85637bd0a364110c37f41659e6a9c56a6041ca2af013aa29b",
+    "h3_video_posterior.h": "dc147d67b7fc429d623cd528cdb8db8badfcf29edd9b8c999665a890556fcf17",
+    "h3_video_vae.c": "06505b94fb8b981003f68005b0f42ccda53c7e73621b624e756a045b97ef5144",
+    "h3_video_vae.h": "42c999eeae3c56800210cf320840c074cc3ac7332ac40ec25abb701cda36784a",
+    "h3_vision_encoder.c": "be9115a55484ae52c9504a6c227ae9b7f7b9b9e68aa4df837e9f9121eea9263f",
+    "h3_vision_encoder.h": "b158eee6fd3e91e3752d3a8e0e7a8367709dd752cb30d1ef72a07b307e5b410a",
+    "h3_weights.c": "d68476becd34dee90b78797ce9fb9025f65f3e222e01bb3f498b2d005d5f1fcc",
+    "h3_weights.h": "1593bb41730a13ad26d99fcf15863528ceb00b51ef8b482dc0ff2c9714e0bb2e",
+    "main.c": "2e6f8e7a0a752bac3f154dcd83bb8b3207b33399e290fb87feedcd7ea2d90a2b",
+    "scripts/download_preview_vae.py": "78fd8e723d7af9b600235efff287702287ac906e1df014c2af1ac6590076576b",
+    "tests/preview_vae_contacts.py": "a9bb8fcd545c1324df83f66c89576b848df5cdb64e3e7c357dfce53338fb9106",
+    "tests/preview_vae_decode.c": "40e485efff5bac2b4dbb261afb52920cd9025c9a39eeaefdbc033a76fe97bb5b",
+    "tests/preview_vae_finalize.py": "1d5092de39c8c74d43cb1dc0bab862bdac06786ecc9b7a5a8027f9552aba7747",
+    "tests/preview_vae_gallery.py": "ca6e832cbffe2faa8e387281a99d85a7ff6a8bbc12926b6afd066466147c3ebd",
+    "tests/preview_vae_generate.c": "4204f129e606eb8c03bc218d05665e7180c0c8b21ce65a6e4d76f125eff21c88",
+    "tests/preview_vae_media_audit.py": "28f2ae587845e28b8cb908627127d72f2d0ee92bdf34532a5ef87a2fdb938c9f",
+    "tests/preview_vae_memory.m": "a5d0c97ea412092c6ff6e627214f4efd1e9329f7a5d982d5d492cb3205de99cf",
+    "tests/preview_vae_reference.py": "e288a2cf872b1f4953675cdf0d491a2f337c352e832f937edc00c9f08264bb59",
+    "tests/preview_vae_run.py": "1d8761f8058ded0af56f9cd15ff36b5397d12d4858a94309f0231af34077ae1d",
+    "tests/preview_vae_workflow.py": "9e18f450420d1d2017aaff1c037bbdf9a71f95ad14da27a27e234e325c6e9994",
+    "tests/test_preview_vae.c": "fe77428f663afc7bdc3a7965f3bffc88002f681a91a9d99efb9d9f2a92144437",
+    "tests/test_preview_vae.py": "e61bab8a2192adee89cd372a76a8d1cf8cbcdb9d23fca3cd30b688a65bb5e205"
+  },
+  "budget": {
+    "path": "outputs/preview-vae/metal/budget.json",
+    "sha256": "7c83c55353606bcbc9c2083ba0738fc44188a15c98bb3db858942b2cf5910844",
+    "seconds": 969.6003902514931,
+    "limit_seconds": 1200,
+    "attempts": 64
+  },
+  "runs": [
+    {
+      "name": "reference-image05",
+      "command": [
+        "outputs/preview-vae/venv/bin/python",
+        "tests/preview_vae_reference.py",
+        "outputs/cuda-validation/b200/quality/fast/image05.h3av",
+        "outputs/preview-vae/metal/reference-image05.mp4",
+        "--audio",
+        "outputs/cuda-validation/b200/quality/fast/image05.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 1.691474417108111,
+      "returncode": 0
+    },
+    {
+      "name": "full-image05-before",
+      "command": [
+        "./h3_tilefix_decode",
+        "av",
+        "17",
+        "384",
+        "288",
+        "outputs/cuda-validation/b200/quality/fast/image05.h3av",
+        "outputs/preview-vae/metal/full-image05-before.f32",
+        "MiniMax-H3/Ref2VA/video_vae/source"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 11.838442916981876,
+      "returncode": 0
+    },
+    {
+      "name": "native-image05-pilot",
+      "command": [
+        "./h3_preview_vae_decode",
+        "models/taeh3.safetensors",
+        "outputs/cuda-validation/b200/quality/fast/image05.h3av",
+        "outputs/preview-vae/metal/native-image05-pilot.f32"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 1.8817383339628577,
+      "returncode": 0
+    },
+    {
+      "name": "decode-only-image05-pilot",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/cuda-validation/b200/quality/fast/image05.h3av",
+        "--decode-full-state",
+        "--preview-vae",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/decode-image05-pilot.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 4.784995167050511,
+      "returncode": 0
+    },
+    {
+      "name": "metal-pattern-contracts",
+      "command": [
+        "./h3_preview_vae_tests",
+        "gpu",
+        "outputs/preview-vae/metal/pattern.safetensors",
+        "1"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 3.873843541019596,
+      "returncode": 0
+    },
+    {
+      "name": "metal-real-contracts",
+      "command": [
+        "./h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 3.5605503750266507,
+      "returncode": 0
+    },
+    {
+      "name": "generation-invariance",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "./h3_preview_vae_generate",
+        "MiniMax-H3",
+        "outputs/preview-vae/metal/invariance",
+        "invariance"
+      ],
+      "timeout": 300.0,
+      "status": "passed",
+      "seconds": 42.899669499951415,
+      "returncode": 0
+    },
+    {
+      "name": "continuation-invariance",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "./h3_preview_vae_generate",
+        "MiniMax-H3",
+        "outputs/preview-vae/metal/continuation",
+        "continuation"
+      ],
+      "timeout": 180.0,
+      "status": "passed",
+      "seconds": 65.29142370796762,
+      "returncode": 0
+    },
+    {
+      "name": "gallery-image05-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/image05-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "failed",
+      "seconds": 0.3106435420922935,
+      "returncode": 1,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      }
+    },
+    {
+      "name": "gallery-image05-full-attempt2",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/image05-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 15.762491125031374,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      }
+    },
+    {
+      "name": "gallery-image05-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/image05.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/image05-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 4.37659933406394,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      }
+    },
+    {
+      "name": "gallery-image05-reference",
+      "command": [
+        "outputs/preview-vae/venv/bin/python",
+        "tests/preview_vae_reference.py",
+        "outputs/cuda-validation/b200/quality/fast/image05.h3av",
+        "outputs/preview-vae/metal/quality/image05-reference.mp4",
+        "--trim",
+        "0",
+        "--audio",
+        "outputs/preview-vae/metal/quality/image05-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.49429399997461587,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "outputs/preview-vae/venv/bin/python": "2d96eb826dc74db4fcd5da6dde045a6fa145e292e07e69d1bdd1a19fa90ffc22",
+        "tests/preview_vae_reference.py": "e288a2cf872b1f4953675cdf0d491a2f337c352e832f937edc00c9f08264bb59",
+        "outputs/cuda-validation/b200/quality/fast/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279",
+        "outputs/preview-vae/metal/quality/image05-full.mp4": "8bfb09d849a3baddc68a8207f9ba2625ec49bb3121cea4f3cbc2fa491f07a8aa"
+      }
+    },
+    {
+      "name": "gallery-image12-seed2-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/image12-seed2.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/image12-seed2-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 15.487294959020801,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/image12-seed2.h3av": "a1adb7f3de5963158ed18479e9e89e3a2114f0a6ecf542b86147845ac1231566"
+      }
+    },
+    {
+      "name": "gallery-image12-seed2-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/image12-seed2.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/image12-seed2-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 4.40936024999246,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/image12-seed2.h3av": "a1adb7f3de5963158ed18479e9e89e3a2114f0a6ecf542b86147845ac1231566"
+      }
+    },
+    {
+      "name": "gallery-image12-seed2-reference",
+      "command": [
+        "outputs/preview-vae/venv/bin/python",
+        "tests/preview_vae_reference.py",
+        "outputs/cuda-validation/b200/quality/fast/image12-seed2.h3av",
+        "outputs/preview-vae/metal/quality/image12-seed2-reference.mp4",
+        "--trim",
+        "0",
+        "--audio",
+        "outputs/preview-vae/metal/quality/image12-seed2-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.4837628749664873,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "outputs/preview-vae/venv/bin/python": "2d96eb826dc74db4fcd5da6dde045a6fa145e292e07e69d1bdd1a19fa90ffc22",
+        "tests/preview_vae_reference.py": "e288a2cf872b1f4953675cdf0d491a2f337c352e832f937edc00c9f08264bb59",
+        "outputs/cuda-validation/b200/quality/fast/image12-seed2.h3av": "a1adb7f3de5963158ed18479e9e89e3a2114f0a6ecf542b86147845ac1231566",
+        "outputs/preview-vae/metal/quality/image12-seed2-full.mp4": "3ee3fbf808ac992d91358cd06e8be39f2df4a8fc46f998cbde860317af64505c"
+      }
+    },
+    {
+      "name": "gallery-images-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/images.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/images-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 15.437911125016399,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/images.h3av": "40bfa13ea6157cb744f97a0a2f214a3c6da21c57c359a208610ff3bab1ce0937"
+      }
+    },
+    {
+      "name": "gallery-images-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/images.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/images-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 4.41862591705285,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/images.h3av": "40bfa13ea6157cb744f97a0a2f214a3c6da21c57c359a208610ff3bab1ce0937"
+      }
+    },
+    {
+      "name": "gallery-images-reference",
+      "command": [
+        "outputs/preview-vae/venv/bin/python",
+        "tests/preview_vae_reference.py",
+        "outputs/cuda-validation/b200/quality/fast/images.h3av",
+        "outputs/preview-vae/metal/quality/images-reference.mp4",
+        "--trim",
+        "0",
+        "--audio",
+        "outputs/preview-vae/metal/quality/images-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.37593600002583116,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "outputs/preview-vae/venv/bin/python": "2d96eb826dc74db4fcd5da6dde045a6fa145e292e07e69d1bdd1a19fa90ffc22",
+        "tests/preview_vae_reference.py": "e288a2cf872b1f4953675cdf0d491a2f337c352e832f937edc00c9f08264bb59",
+        "outputs/cuda-validation/b200/quality/fast/images.h3av": "40bfa13ea6157cb744f97a0a2f214a3c6da21c57c359a208610ff3bab1ce0937",
+        "outputs/preview-vae/metal/quality/images-full.mp4": "57a1ca3be5c42a9ed8f407174ccb0e1e3f373d98f18af8f6962c84a7b27cf2fb"
+      }
+    },
+    {
+      "name": "gallery-detail-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/detail.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/detail-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 12.828549124998972,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      }
+    },
+    {
+      "name": "gallery-detail-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/detail.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/detail-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 4.397052625077777,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      }
+    },
+    {
+      "name": "gallery-detail-reference",
+      "command": [
+        "outputs/preview-vae/venv/bin/python",
+        "tests/preview_vae_reference.py",
+        "outputs/cuda-validation/b200/quality/fast/detail.h3av",
+        "outputs/preview-vae/metal/quality/detail-reference.mp4",
+        "--trim",
+        "0",
+        "--audio",
+        "outputs/preview-vae/metal/quality/detail-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.5556386249372736,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "outputs/preview-vae/venv/bin/python": "2d96eb826dc74db4fcd5da6dde045a6fa145e292e07e69d1bdd1a19fa90ffc22",
+        "tests/preview_vae_reference.py": "e288a2cf872b1f4953675cdf0d491a2f337c352e832f937edc00c9f08264bb59",
+        "outputs/cuda-validation/b200/quality/fast/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14",
+        "outputs/preview-vae/metal/quality/detail-full.mp4": "8f67fbd9473941408beac39a1607225576301bd40117a7ec3881d28ec0ff4c35"
+      }
+    },
+    {
+      "name": "gallery-chain1-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/chain1.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/chain1-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 22.546743625076488,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/chain1.h3av": "bc711dd1e02c48860187c724708c454eaccb1194915ebb9998e34e2fbfcb3ce7"
+      }
+    },
+    {
+      "name": "gallery-chain1-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/chain1.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/chain1-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 4.509994541062042,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/chain1.h3av": "bc711dd1e02c48860187c724708c454eaccb1194915ebb9998e34e2fbfcb3ce7"
+      }
+    },
+    {
+      "name": "gallery-chain1-reference",
+      "command": [
+        "outputs/preview-vae/venv/bin/python",
+        "tests/preview_vae_reference.py",
+        "outputs/cuda-validation/b200/quality/fast/chain1.h3av",
+        "outputs/preview-vae/metal/quality/chain1-reference.mp4",
+        "--trim",
+        "0",
+        "--audio",
+        "outputs/preview-vae/metal/quality/chain1-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.4818431669846177,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "outputs/preview-vae/venv/bin/python": "2d96eb826dc74db4fcd5da6dde045a6fa145e292e07e69d1bdd1a19fa90ffc22",
+        "tests/preview_vae_reference.py": "e288a2cf872b1f4953675cdf0d491a2f337c352e832f937edc00c9f08264bb59",
+        "outputs/cuda-validation/b200/quality/fast/chain1.h3av": "bc711dd1e02c48860187c724708c454eaccb1194915ebb9998e34e2fbfcb3ce7",
+        "outputs/preview-vae/metal/quality/chain1-full.mp4": "dd17c8c14e4f060075d734c0412336cb0ca24fd2db7f0a4bf5fd20bfd3cd38ca"
+      }
+    },
+    {
+      "name": "gallery-chain2-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/chain2.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/chain2-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 22.517562666907907,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/chain2.h3av": "66a319569b78857b50cf5d9afc23595eba50795a5278c521704893b42fb7aa0b"
+      }
+    },
+    {
+      "name": "gallery-chain2-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/chain2.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/chain2-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 4.465265957987867,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/chain2.h3av": "66a319569b78857b50cf5d9afc23595eba50795a5278c521704893b42fb7aa0b"
+      }
+    },
+    {
+      "name": "gallery-chain2-reference",
+      "command": [
+        "outputs/preview-vae/venv/bin/python",
+        "tests/preview_vae_reference.py",
+        "outputs/cuda-validation/b200/quality/fast/chain2.h3av",
+        "outputs/preview-vae/metal/quality/chain2-reference.mp4",
+        "--trim",
+        "39",
+        "--audio",
+        "outputs/preview-vae/metal/quality/chain2-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.42174324998632073,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "outputs/preview-vae/venv/bin/python": "2d96eb826dc74db4fcd5da6dde045a6fa145e292e07e69d1bdd1a19fa90ffc22",
+        "tests/preview_vae_reference.py": "e288a2cf872b1f4953675cdf0d491a2f337c352e832f937edc00c9f08264bb59",
+        "outputs/cuda-validation/b200/quality/fast/chain2.h3av": "66a319569b78857b50cf5d9afc23595eba50795a5278c521704893b42fb7aa0b",
+        "outputs/preview-vae/metal/quality/chain2-full.mp4": "45465a5175f49a2aee71ae0abb80d548b239a900720dcea60e32272bf3e3bc79"
+      }
+    },
+    {
+      "name": "gallery-face-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/face.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/face-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 5.628100374946371,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/face.h3av": "217181e92f17f6fd9d643322ea26c0def897434de0773dc91535244b92be3458"
+      }
+    },
+    {
+      "name": "gallery-face-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/face.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/face-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 4.4923293750034645,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "ffdef4530b1e7443b8106d7d2428657bcd49f7e2e424ffda33a9e1f0669b3b03",
+        "outputs/preview-vae/metal/quality/face.h3av": "217181e92f17f6fd9d643322ea26c0def897434de0773dc91535244b92be3458"
+      }
+    },
+    {
+      "name": "gallery-face-reference",
+      "command": [
+        "outputs/preview-vae/venv/bin/python",
+        "tests/preview_vae_reference.py",
+        "outputs/bugfix1-validation/after-face.h3av",
+        "outputs/preview-vae/metal/quality/face-reference.mp4",
+        "--trim",
+        "0",
+        "--audio",
+        "outputs/preview-vae/metal/quality/face-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.327301291981712,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "outputs/preview-vae/venv/bin/python": "2d96eb826dc74db4fcd5da6dde045a6fa145e292e07e69d1bdd1a19fa90ffc22",
+        "tests/preview_vae_reference.py": "e288a2cf872b1f4953675cdf0d491a2f337c352e832f937edc00c9f08264bb59",
+        "outputs/bugfix1-validation/after-face.h3av": "217181e92f17f6fd9d643322ea26c0def897434de0773dc91535244b92be3458",
+        "outputs/preview-vae/metal/quality/face-full.mp4": "68c47085bcea0d5a02b16ea93db0083f5b867fccf96ba24d4fa7d2033a453b44"
+      }
+    },
+    {
+      "name": "gallery-media-validation",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/path/to/h3cli/tests/preview_vae_gallery.py",
+        "--validate",
+        "outputs/preview-vae/metal/quality"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 1.9727275829063728,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "/opt/homebrew/opt/python@3.14/bin/python3.14": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+        "/path/to/h3cli/tests/preview_vae_gallery.py": "a764abd8b0919cee927d0d9954b719a34dd4d3c32bd592d5389e372f9c335560"
+      }
+    },
+    {
+      "name": "feature-matrix",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "./h3_preview_vae_generate",
+        "MiniMax-H3",
+        "outputs/preview-vae/metal/features",
+        "matrix"
+      ],
+      "timeout": 300.0,
+      "status": "failed",
+      "seconds": 119.43585141608492,
+      "returncode": 1,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_generate": "cafac7e4c2b679bdfdc383be0a22a74484cec44404ffffa7599d225215bc22aa"
+      }
+    },
+    {
+      "name": "feature-matrix-remainder",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "H3_PREVIEW_START_CASE=5",
+        "./h3_preview_vae_generate",
+        "MiniMax-H3",
+        "outputs/preview-vae/metal/features",
+        "matrix"
+      ],
+      "timeout": 180.0,
+      "status": "failed",
+      "seconds": 4.683327708975412,
+      "returncode": 1,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_generate": "fec046afb1bbc4e1dcd50414df363efa5234bb6f74d058295525a4d9294700c4"
+      }
+    },
+    {
+      "name": "feature-video-audio-reuse",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "H3_PREVIEW_START_CASE=5",
+        "./h3_preview_vae_generate",
+        "MiniMax-H3",
+        "outputs/preview-vae/metal/features",
+        "matrix"
+      ],
+      "timeout": 240.0,
+      "status": "failed",
+      "seconds": 46.69078512501437,
+      "returncode": 1,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_generate": "7d9d60f80f253d2f1308e6f5cbdeed243dca83ff0e784b1baf47b3a45478422e"
+      }
+    },
+    {
+      "name": "feature-audio-reduction-reuse",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "H3_PREVIEW_START_CASE=6",
+        "./h3_preview_vae_generate",
+        "MiniMax-H3",
+        "outputs/preview-vae/metal/features",
+        "matrix"
+      ],
+      "timeout": 180.0,
+      "status": "passed",
+      "seconds": 108.96946691593621,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_generate": "4c5f6711cc535564467d89e513bc717ed712400b3f7f5da812097ae707933ca8"
+      }
+    },
+    {
+      "name": "full-stream-warm-image05",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "./h3_preview_vae_tests",
+        "replay",
+        "full",
+        "outputs/cuda-validation/b200/quality/fast/image05.h3av",
+        "outputs/preview-vae/metal/full-image05-stream.f32"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 44.33757070801221,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_tests": "25739e2a253dd987a7404333ff60c96603aa1e5261c321dd59283dc2eff88593",
+        "outputs/cuda-validation/b200/quality/fast/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      }
+    },
+    {
+      "name": "tiny-warm-image05",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "./h3_preview_vae_tests",
+        "replay",
+        "models/taeh3.safetensors",
+        "outputs/cuda-validation/b200/quality/fast/image05.h3av",
+        "-"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.845025832997635,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_tests": "d99b45ff27bf402c949081814cb948921380e6fa649c537ada5be1f8a32196b5",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13",
+        "outputs/cuda-validation/b200/quality/fast/image05.h3av": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279"
+      }
+    },
+    {
+      "name": "tiny-warm-detail",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "./h3_preview_vae_tests",
+        "replay",
+        "models/taeh3.safetensors",
+        "outputs/cuda-validation/b200/quality/fast/detail.h3av",
+        "-"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.5519709580112249,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_tests": "d99b45ff27bf402c949081814cb948921380e6fa649c537ada5be1f8a32196b5",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13",
+        "outputs/cuda-validation/b200/quality/fast/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      }
+    },
+    {
+      "name": "full-stream-warm-detail",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "./h3_preview_vae_tests",
+        "replay",
+        "full",
+        "outputs/cuda-validation/b200/quality/fast/detail.h3av",
+        "-"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 32.69859050004743,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_tests": "d99b45ff27bf402c949081814cb948921380e6fa649c537ada5be1f8a32196b5",
+        "outputs/cuda-validation/b200/quality/fast/detail.h3av": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14"
+      }
+    },
+    {
+      "name": "finalization-contracts",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "tests/preview_vae_finalize.py"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 16.248868792084977,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "/opt/homebrew/opt/python@3.14/bin/python3.14": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+        "tests/preview_vae_finalize.py": "1d5092de39c8c74d43cb1dc0bab862bdac06786ecc9b7a5a8027f9552aba7747"
+      }
+    },
+    {
+      "name": "gallery-joins",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "tests/preview_vae_gallery.py",
+        "--joins",
+        "outputs/preview-vae/metal/quality"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.9406262080883607,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "/opt/homebrew/opt/python@3.14/bin/python3.14": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+        "tests/preview_vae_gallery.py": "3b35d875bb8dfa39dbe2ef0117c6daba3e8d462e2e842e9af20c6cbeaf0e6e2f"
+      }
+    },
+    {
+      "name": "default-regressions",
+      "command": [
+        "make",
+        "test"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 21.70198466698639,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {}
+    },
+    {
+      "name": "final-native-contracts",
+      "command": [
+        "./h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 3.158599333022721,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_tests": "d99b45ff27bf402c949081814cb948921380e6fa649c537ada5be1f8a32196b5",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      }
+    },
+    {
+      "name": "adapter-turbo",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "./h3_preview_vae_generate",
+        "lora/output/Turbo",
+        "outputs/preview-vae/metal/adapter-turbo",
+        "adapter"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 53.00143012497574,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_generate": "4c5f6711cc535564467d89e513bc717ed712400b3f7f5da812097ae707933ca8"
+      }
+    },
+    {
+      "name": "adapter-realism",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "./h3_preview_vae_generate",
+        "lora/output/realism",
+        "outputs/preview-vae/metal/adapter-realism",
+        "adapter"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 52.30467933404725,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_generate": "4c5f6711cc535564467d89e513bc717ed712400b3f7f5da812097ae707933ca8"
+      }
+    },
+    {
+      "name": "cold-complete-workflow",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "tests/preview_vae_workflow.py"
+      ],
+      "timeout": 180.0,
+      "status": "passed",
+      "seconds": 52.91810762498062,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "/opt/homebrew/opt/python@3.14/bin/python3.14": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+        "tests/preview_vae_workflow.py": "9e18f450420d1d2017aaff1c037bbdf9a71f95ad14da27a27e234e325c6e9994"
+      }
+    },
+    {
+      "name": "gallery-contact-sheet",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "tests/preview_vae_contacts.py"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 1.1375328749418259,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "/opt/homebrew/opt/python@3.14/bin/python3.14": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+        "tests/preview_vae_contacts.py": "a9bb8fcd545c1324df83f66c89576b848df5cdb64e3e7c357dfce53338fb9106"
+      }
+    },
+    {
+      "name": "model-cache-switch",
+      "command": [
+        "env",
+        "H3_PROFILE=1",
+        "./h3_preview_vae_generate",
+        "MiniMax-H3",
+        "outputs/preview-vae/metal/model-cache",
+        "cache"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 27.69123641704209,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_generate": "422c8ff2ac32e91d746cdf3e78e6291e1dc4e8963b512a26de2b383442d4a1a4"
+      }
+    },
+    {
+      "name": "stream-delivery-cancellation",
+      "command": [
+        "./h3_preview_vae_tests",
+        "delivery-errors",
+        "outputs/preview-vae/metal/invariance/tiny.h3av"
+      ],
+      "timeout": 120.0,
+      "status": "failed",
+      "seconds": 4.561556291999295,
+      "returncode": -13,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_tests": "86c6be24324741f41f2e9eadcee7f76063c57970aa9046e53bc9bc89cdc9c626",
+        "outputs/preview-vae/metal/invariance/tiny.h3av": "708c6c443c4d32d124c38167124a7e18f6855cb73b12ebe099664847c74a75ad"
+      }
+    },
+    {
+      "name": "stream-delivery-cancellation-fixed",
+      "command": [
+        "./h3_preview_vae_tests",
+        "delivery-errors",
+        "outputs/preview-vae/metal/invariance/tiny.h3av"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 12.22078983404208,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_tests": "e5b18889674a6889660a33c1723a319633297abb93d760a6e123afba38081541",
+        "outputs/preview-vae/metal/invariance/tiny.h3av": "708c6c443c4d32d124c38167124a7e18f6855cb73b12ebe099664847c74a75ad"
+      }
+    },
+    {
+      "name": "metal-geometry-validation",
+      "command": [
+        "env",
+        "MTL_DEBUG_LAYER=1",
+        "./h3_preview_vae_tests",
+        "gpu",
+        "models/taeh3.safetensors",
+        "0"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 5.269979040953331,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_tests": "e5b18889674a6889660a33c1723a319633297abb93d760a6e123afba38081541",
+        "models/taeh3.safetensors": "4fd022bfcab08772fe0536b17ea1a3bbb5625be11e397868d1c5d891863d4c13"
+      }
+    },
+    {
+      "name": "metal-pattern-geometry-validation",
+      "command": [
+        "env",
+        "MTL_DEBUG_LAYER=1",
+        "./h3_preview_vae_tests",
+        "gpu",
+        "outputs/preview-vae/metal/pattern.safetensors",
+        "1"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 3.733801499940455,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_tests": "e5b18889674a6889660a33c1723a319633297abb93d760a6e123afba38081541",
+        "outputs/preview-vae/metal/pattern.safetensors": "0b6f7f5fb8fc04c2da0200550c834a53c4700eb8acb3ee3143638feeeb4f3d6d"
+      }
+    },
+    {
+      "name": "release-regressions",
+      "command": [
+        "make",
+        "test"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 22.284219708060846,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {}
+    },
+    {
+      "name": "gallery-face20-full",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/face20.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/face20-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 13.140278207953088,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "9f2be272580943a05e9a8005ecfdf0433cf9d13ee0639aa08b1442966802c635",
+        "outputs/preview-vae/metal/quality/face20.h3av": "a0c7b6cdf3df7cf5ae75fa33f492d876d18a8f9a9f41af523386b678f599a6ce"
+      }
+    },
+    {
+      "name": "gallery-face20-tiny",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/quality/face20.h3av",
+        "--profile",
+        "-o",
+        "outputs/preview-vae/metal/quality/face20-tiny.mp4",
+        "--preview-vae"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 4.395521291997284,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "9f2be272580943a05e9a8005ecfdf0433cf9d13ee0639aa08b1442966802c635",
+        "outputs/preview-vae/metal/quality/face20.h3av": "a0c7b6cdf3df7cf5ae75fa33f492d876d18a8f9a9f41af523386b678f599a6ce"
+      }
+    },
+    {
+      "name": "gallery-face20-reference",
+      "command": [
+        "outputs/preview-vae/venv/bin/python",
+        "tests/preview_vae_reference.py",
+        "outputs/preview-vae/corpus/face20.h3av",
+        "outputs/preview-vae/metal/quality/face20-reference.mp4",
+        "--trim",
+        "0",
+        "--audio",
+        "outputs/preview-vae/metal/quality/face20-full.mp4"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.5539219171041623,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "outputs/preview-vae/venv/bin/python": "2d96eb826dc74db4fcd5da6dde045a6fa145e292e07e69d1bdd1a19fa90ffc22",
+        "tests/preview_vae_reference.py": "e288a2cf872b1f4953675cdf0d491a2f337c352e832f937edc00c9f08264bb59",
+        "outputs/preview-vae/corpus/face20.h3av": "a0c7b6cdf3df7cf5ae75fa33f492d876d18a8f9a9f41af523386b678f599a6ce",
+        "outputs/preview-vae/metal/quality/face20-full.mp4": "ed286c0b9e7f613c92ca4f2938e473ba2165377b7083de732a32afac7939a505"
+      }
+    },
+    {
+      "name": "gallery-media-validation-attempt2",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/path/to/h3cli/tests/preview_vae_gallery.py",
+        "--validate",
+        "outputs/preview-vae/metal/quality"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 2.356712833046913,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "/opt/homebrew/opt/python@3.14/bin/python3.14": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+        "/path/to/h3cli/tests/preview_vae_gallery.py": "ca6e832cbffe2faa8e387281a99d85a7ff6a8bbc12926b6afd066466147c3ebd"
+      }
+    },
+    {
+      "name": "gallery-joins-attempt2",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/path/to/h3cli/tests/preview_vae_gallery.py",
+        "--joins",
+        "outputs/preview-vae/metal/quality"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.9491187919629738,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "/opt/homebrew/opt/python@3.14/bin/python3.14": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+        "/path/to/h3cli/tests/preview_vae_gallery.py": "ca6e832cbffe2faa8e387281a99d85a7ff6a8bbc12926b6afd066466147c3ebd"
+      }
+    },
+    {
+      "name": "all-decoder-cancellation",
+      "command": [
+        "./h3_preview_vae_tests",
+        "delivery-errors",
+        "outputs/preview-vae/metal/invariance/tiny.h3av"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 26.94920220808126,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3_preview_vae_tests": "f7470d711e4394ec134c6fae5c1c1aef3918be8fece58c26219c09e6fd51e19e",
+        "outputs/preview-vae/metal/invariance/tiny.h3av": "708c6c443c4d32d124c38167124a7e18f6855cb73b12ebe099664847c74a75ad"
+      }
+    },
+    {
+      "name": "asan-ubsan-host",
+      "command": [
+        "outputs/preview-vae/sanitizers/host-tests",
+        "host"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.48483370896428823,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "outputs/preview-vae/sanitizers/host-tests": "9e319feedf85a4d33fa57d38018a09c467965e7567f7aa08196ccbd3c90786ce"
+      }
+    },
+    {
+      "name": "asan-ubsan-model-files",
+      "command": [
+        "env",
+        "H3_PREVIEW_TEST_BINARY=outputs/preview-vae/sanitizers/host-tests",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "tests/test_preview_vae.py"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 0.20461754105053842,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "/opt/homebrew/opt/python@3.14/bin/python3.14": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+        "tests/test_preview_vae.py": "e61bab8a2192adee89cd372a76a8d1cf8cbcdb9d23fca3cd30b688a65bb5e205"
+      }
+    },
+    {
+      "name": "complete-contact-sheet",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "tests/preview_vae_contacts.py"
+      ],
+      "timeout": 120.0,
+      "status": "passed",
+      "seconds": 1.2917643329128623,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "/opt/homebrew/opt/python@3.14/bin/python3.14": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+        "tests/preview_vae_contacts.py": "a9bb8fcd545c1324df83f66c89576b848df5cdb64e3e7c357dfce53338fb9106"
+      }
+    },
+    {
+      "name": "platform-info",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--info"
+      ],
+      "timeout": 60.0,
+      "status": "passed",
+      "seconds": 0.04600637499243021,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "./h3": "9f2be272580943a05e9a8005ecfdf0433cf9d13ee0639aa08b1442966802c635"
+      }
+    },
+    {
+      "name": "generated-media-audit",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "tests/preview_vae_media_audit.py"
+      ],
+      "timeout": 60.0,
+      "status": "passed",
+      "seconds": 1.3185028330190107,
+      "returncode": 0,
+      "environment": {},
+      "input_sha256": {
+        "/opt/homebrew/opt/python@3.14/bin/python3.14": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+        "tests/preview_vae_media_audit.py": "28f2ae587845e28b8cb908627127d72f2d0ee92bdf34532a5ef87a2fdb938c9f"
+      }
+    }
+  ],
+  "decoder_measurements": [
+    {
+      "width": 288,
+      "height": 384,
+      "frames": 56,
+      "full": {
+        "load_seconds": 1.557486,
+        "cold_decode_sink_seconds": 10.631133,
+        "warm_decode_sink_seconds": 10.581465,
+        "max_host_rss_bytes": 9966993408
+      },
+      "tiny": {
+        "load_seconds": 0.060022,
+        "cold_decode_sink_seconds": 0.362627,
+        "warm_decode_sink_seconds": 0.118903,
+        "max_host_rss_bytes": 177766400,
+        "observed_metal_peak_bytes": 309133312
+      }
+    },
+    {
+      "width": 480,
+      "height": 640,
+      "frames": 22,
+      "full": {
+        "load_seconds": 0.754081,
+        "cold_decode_sink_seconds": 7.97929,
+        "warm_decode_sink_seconds": 7.939543,
+        "max_host_rss_bytes": 10122526720,
+        "observed_metal_at_delivery_peak_bytes": 10076569600
+      },
+      "tiny": {
+        "load_seconds": 0.036291,
+        "cold_decode_sink_seconds": 0.361863,
+        "warm_decode_sink_seconds": 0.123073,
+        "max_host_rss_bytes": 319176704,
+        "observed_metal_peak_bytes": 699318272
+      }
+    }
+  ],
+  "cold_complete_workflow": [
+    {
+      "mode": "full",
+      "seconds": 28.26503549993504,
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "-p",
+        "A person smiles gently in a quiet studio. Soft daylight, fixed camera.",
+        "--width",
+        "128",
+        "--height",
+        "128",
+        "--render-width",
+        "64",
+        "--render-height",
+        "64",
+        "--frames",
+        "22",
+        "--steps",
+        "2",
+        "--seed",
+        "72",
+        "--save-av-state",
+        "outputs/preview-vae/metal/cold-workflow/full.h3av",
+        "-o",
+        "outputs/preview-vae/metal/cold-workflow/full.mp4",
+        "--profile"
+      ],
+      "environment": {
+        "H3_CPU_SAMPLER": "1"
+      },
+      "state_sha256": "708c6c443c4d32d124c38167124a7e18f6855cb73b12ebe099664847c74a75ad",
+      "mp4_sha256": "3ce961ac6e231c678bdee0e4aebbfb4bfbafd9026bbf35aeb4a452bd89d64c92"
+    },
+    {
+      "mode": "tiny",
+      "seconds": 24.494349958957173,
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "-p",
+        "A person smiles gently in a quiet studio. Soft daylight, fixed camera.",
+        "--width",
+        "128",
+        "--height",
+        "128",
+        "--render-width",
+        "64",
+        "--render-height",
+        "64",
+        "--frames",
+        "22",
+        "--steps",
+        "2",
+        "--seed",
+        "72",
+        "--save-av-state",
+        "outputs/preview-vae/metal/cold-workflow/tiny.h3av",
+        "-o",
+        "outputs/preview-vae/metal/cold-workflow/tiny.mp4",
+        "--profile",
+        "--preview-vae"
+      ],
+      "environment": {
+        "H3_CPU_SAMPLER": "1"
+      },
+      "state_sha256": "708c6c443c4d32d124c38167124a7e18f6855cb73b12ebe099664847c74a75ad",
+      "mp4_sha256": "af2d6ac874fb3cfb761bfb49f887a741e34595714204a770ad12e22c78f43d11"
+    }
+  ],
+  "full_finalization": [
+    {
+      "state": "outputs/preview-vae/metal/invariance/tiny.h3av",
+      "state_sha256": "708c6c443c4d32d124c38167124a7e18f6855cb73b12ebe099664847c74a75ad",
+      "output": "outputs/preview-vae/metal/invariance/tiny-finalized.mp4",
+      "mp4_sha256": "3ce961ac6e231c678bdee0e4aebbfb4bfbafd9026bbf35aeb4a452bd89d64c92",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/invariance/tiny.h3av",
+        "-o",
+        "outputs/preview-vae/metal/invariance/tiny-finalized.mp4",
+        "--profile"
+      ],
+      "match": "exact decoded RGB/audio versus original generation"
+    },
+    {
+      "state": "outputs/preview-vae/metal/continuation/hard-tiny.h3av",
+      "state_sha256": "b64a9a6cc39029fb9902b6615567637b7ec37b5e55471d1065727f4a51a61223",
+      "output": "outputs/preview-vae/metal/continuation/hard-tiny-finalized.mp4",
+      "mp4_sha256": "0a6f4bd018304e235b0f81d2f52d27ea47fcfb9aac6f7e9bce068841b3735904",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/continuation/hard-tiny.h3av",
+        "-o",
+        "outputs/preview-vae/metal/continuation/hard-tiny-finalized.mp4",
+        "--profile"
+      ],
+      "match": "exact decoded RGB/audio versus original generation"
+    },
+    {
+      "state": "outputs/preview-vae/metal/continuation/bridge-tiny.h3av",
+      "state_sha256": "552b6d653c78c061981b4fc6acd6ae0929b4150d849bf13658a2db6bcf2e9d8d",
+      "output": "outputs/preview-vae/metal/continuation/bridge-tiny-finalized.mp4",
+      "mp4_sha256": "7f0690e29ffd36ae72b451850cb346ac3cdab06c7016cf51298ee0e0fc4fce49",
+      "command": [
+        "./h3",
+        "-d",
+        "MiniMax-H3",
+        "--decode-av-state",
+        "outputs/preview-vae/metal/continuation/bridge-tiny.h3av",
+        "-o",
+        "outputs/preview-vae/metal/continuation/bridge-tiny-finalized.mp4",
+        "--profile"
+      ],
+      "match": "exact decoded RGB/audio versus original generation"
+    }
+  ],
+  "original_decode_regression": {
+    "bytes": 74317824,
+    "sha256": "fd952b740049309ceb55e4101166986e541034b7962c1fb58187d37c72cf31e9",
+    "stream_sha256": "fd952b740049309ceb55e4101166986e541034b7962c1fb58187d37c72cf31e9"
+  },
+  "gallery": {
+    "path": "outputs/preview-vae/metal/quality/review.html",
+    "manifest_sha256": "3f6c505acd2e772258cf565200442cba916720edd43974cae517b38938be2fcb",
+    "human_acceptance": "accepted",
+    "corpus": [
+      {
+        "name": "image05",
+        "state": "outputs/cuda-validation/b200/quality/fast/image05.h3av",
+        "state_sha256": "ae574c42b470f46d1e6f56062fe27198cd665ee968cffb2708ffcc1288d6d279",
+        "geometry": [
+          288,
+          384,
+          56,
+          17,
+          24,
+          18,
+          93,
+          24,
+          32,
+          2
+        ],
+        "reference_files": {
+          "inputs/05.jpg": "4e0f2d688e9ed72a8c97a30dc326f12a4928ffb8dd3f5e79c59b998e9a97ddff"
+        },
+        "source_sha256": "2fc8a48f75a1453e88de06489519ff17b67a175973adb3c51394e510fadb43b9",
+        "width": 288,
+        "height": 384,
+        "frames": 56,
+        "trim": 0,
+        "replay_state": "outputs/preview-vae/metal/quality/image05.h3av",
+        "commands": {
+          "full": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/image05.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/image05-full.mp4"
+          ],
+          "tiny": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/image05.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/image05-tiny.mp4",
+            "--preview-vae"
+          ],
+          "reference": [
+            "outputs/preview-vae/venv/bin/python",
+            "tests/preview_vae_reference.py",
+            "outputs/cuda-validation/b200/quality/fast/image05.h3av",
+            "outputs/preview-vae/metal/quality/image05-reference.mp4",
+            "--trim",
+            "0",
+            "--audio",
+            "outputs/preview-vae/metal/quality/image05-full.mp4"
+          ]
+        },
+        "outputs": {
+          "full": {
+            "path": "outputs/preview-vae/metal/quality/image05-full.mp4",
+            "sha256": "8bfb09d849a3baddc68a8207f9ba2625ec49bb3121cea4f3cbc2fa491f07a8aa"
+          },
+          "tiny": {
+            "path": "outputs/preview-vae/metal/quality/image05-tiny.mp4",
+            "sha256": "baabc543a98f5554306016ecfa39d8128197c25dde2bba26e0e020e8c9de35a9"
+          },
+          "reference": {
+            "path": "outputs/preview-vae/metal/quality/image05-reference.mp4",
+            "sha256": "8face690dceb837dc65825e8f2422074d84ea90610c7e9cab227e5e52f027f76"
+          }
+        },
+        "model_compatibility_sha256": "0046f2b99169f9e4c41b289f07b8a4bf044b2e29eae46e56c5465560fb814548"
+      },
+      {
+        "name": "image12-seed2",
+        "state": "outputs/cuda-validation/b200/quality/fast/image12-seed2.h3av",
+        "state_sha256": "a1adb7f3de5963158ed18479e9e89e3a2114f0a6ecf542b86147845ac1231566",
+        "geometry": [
+          288,
+          384,
+          56,
+          17,
+          24,
+          18,
+          93,
+          24,
+          32,
+          2
+        ],
+        "reference_files": {
+          "inputs/12.jpg": "9848fbc2da61254877bab9fecea60bac67f6c94737c09683fa738337309956d5"
+        },
+        "source_sha256": "2fc8a48f75a1453e88de06489519ff17b67a175973adb3c51394e510fadb43b9",
+        "width": 288,
+        "height": 384,
+        "frames": 56,
+        "trim": 0,
+        "replay_state": "outputs/preview-vae/metal/quality/image12-seed2.h3av",
+        "commands": {
+          "full": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/image12-seed2.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/image12-seed2-full.mp4"
+          ],
+          "tiny": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/image12-seed2.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/image12-seed2-tiny.mp4",
+            "--preview-vae"
+          ],
+          "reference": [
+            "outputs/preview-vae/venv/bin/python",
+            "tests/preview_vae_reference.py",
+            "outputs/cuda-validation/b200/quality/fast/image12-seed2.h3av",
+            "outputs/preview-vae/metal/quality/image12-seed2-reference.mp4",
+            "--trim",
+            "0",
+            "--audio",
+            "outputs/preview-vae/metal/quality/image12-seed2-full.mp4"
+          ]
+        },
+        "outputs": {
+          "full": {
+            "path": "outputs/preview-vae/metal/quality/image12-seed2-full.mp4",
+            "sha256": "3ee3fbf808ac992d91358cd06e8be39f2df4a8fc46f998cbde860317af64505c"
+          },
+          "tiny": {
+            "path": "outputs/preview-vae/metal/quality/image12-seed2-tiny.mp4",
+            "sha256": "681cf5c3fcd43bb6dc4173377a19232c307bf4470470001b0bd1866d2cd61086"
+          },
+          "reference": {
+            "path": "outputs/preview-vae/metal/quality/image12-seed2-reference.mp4",
+            "sha256": "9102bf937435977b191bc6a14ba78d59c1b9abec6d1341f0f3223c8e14fb8f6a"
+          }
+        },
+        "model_compatibility_sha256": "0046f2b99169f9e4c41b289f07b8a4bf044b2e29eae46e56c5465560fb814548"
+      },
+      {
+        "name": "images",
+        "state": "outputs/cuda-validation/b200/quality/fast/images.h3av",
+        "state_sha256": "40bfa13ea6157cb744f97a0a2f214a3c6da21c57c359a208610ff3bab1ce0937",
+        "geometry": [
+          288,
+          384,
+          56,
+          17,
+          24,
+          18,
+          93,
+          24,
+          32,
+          2
+        ],
+        "reference_files": {
+          "inputs/12.jpg": "9848fbc2da61254877bab9fecea60bac67f6c94737c09683fa738337309956d5",
+          "inputs/body1.jpg": "e827f90c515e52c77b2447498b029ebb8fdf5579e7c33f1b1925f7608275c0d4"
+        },
+        "source_sha256": "2fc8a48f75a1453e88de06489519ff17b67a175973adb3c51394e510fadb43b9",
+        "width": 288,
+        "height": 384,
+        "frames": 56,
+        "trim": 0,
+        "replay_state": "outputs/preview-vae/metal/quality/images.h3av",
+        "commands": {
+          "full": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/images.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/images-full.mp4"
+          ],
+          "tiny": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/images.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/images-tiny.mp4",
+            "--preview-vae"
+          ],
+          "reference": [
+            "outputs/preview-vae/venv/bin/python",
+            "tests/preview_vae_reference.py",
+            "outputs/cuda-validation/b200/quality/fast/images.h3av",
+            "outputs/preview-vae/metal/quality/images-reference.mp4",
+            "--trim",
+            "0",
+            "--audio",
+            "outputs/preview-vae/metal/quality/images-full.mp4"
+          ]
+        },
+        "outputs": {
+          "full": {
+            "path": "outputs/preview-vae/metal/quality/images-full.mp4",
+            "sha256": "57a1ca3be5c42a9ed8f407174ccb0e1e3f373d98f18af8f6962c84a7b27cf2fb"
+          },
+          "tiny": {
+            "path": "outputs/preview-vae/metal/quality/images-tiny.mp4",
+            "sha256": "60b0a33ef86455647191d04b8164ce5fd5dad813b67416d369e30750569699bd"
+          },
+          "reference": {
+            "path": "outputs/preview-vae/metal/quality/images-reference.mp4",
+            "sha256": "bfee16c6b001a9c15218fb5cb964bb60e988e8e401b688f877ec0fa268b703cc"
+          }
+        },
+        "model_compatibility_sha256": "0046f2b99169f9e4c41b289f07b8a4bf044b2e29eae46e56c5465560fb814548"
+      },
+      {
+        "name": "detail",
+        "state": "outputs/cuda-validation/b200/quality/fast/detail.h3av",
+        "state_sha256": "dc9fe38562e271a5ea8d887d07513def2a2368bc8608eea7567e1b584e589e14",
+        "geometry": [
+          480,
+          640,
+          22,
+          7,
+          40,
+          30,
+          37,
+          24,
+          32,
+          2
+        ],
+        "reference_files": {
+          "inputs/05.jpg": "4e0f2d688e9ed72a8c97a30dc326f12a4928ffb8dd3f5e79c59b998e9a97ddff"
+        },
+        "source_sha256": "2fc8a48f75a1453e88de06489519ff17b67a175973adb3c51394e510fadb43b9",
+        "width": 480,
+        "height": 640,
+        "frames": 22,
+        "trim": 0,
+        "replay_state": "outputs/preview-vae/metal/quality/detail.h3av",
+        "commands": {
+          "full": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/detail.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/detail-full.mp4"
+          ],
+          "tiny": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/detail.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/detail-tiny.mp4",
+            "--preview-vae"
+          ],
+          "reference": [
+            "outputs/preview-vae/venv/bin/python",
+            "tests/preview_vae_reference.py",
+            "outputs/cuda-validation/b200/quality/fast/detail.h3av",
+            "outputs/preview-vae/metal/quality/detail-reference.mp4",
+            "--trim",
+            "0",
+            "--audio",
+            "outputs/preview-vae/metal/quality/detail-full.mp4"
+          ]
+        },
+        "outputs": {
+          "full": {
+            "path": "outputs/preview-vae/metal/quality/detail-full.mp4",
+            "sha256": "8f67fbd9473941408beac39a1607225576301bd40117a7ec3881d28ec0ff4c35"
+          },
+          "tiny": {
+            "path": "outputs/preview-vae/metal/quality/detail-tiny.mp4",
+            "sha256": "9e8d8d3d79d539f559fd72fd94d583718346478a1ded676a562bb85d23676f53"
+          },
+          "reference": {
+            "path": "outputs/preview-vae/metal/quality/detail-reference.mp4",
+            "sha256": "5a8b07282ee1504e5e04603fe8dec66b9ba198bb49535477987bd836e7e08631"
+          }
+        },
+        "model_compatibility_sha256": "0046f2b99169f9e4c41b289f07b8a4bf044b2e29eae46e56c5465560fb814548"
+      },
+      {
+        "name": "chain1",
+        "state": "outputs/cuda-validation/b200/quality/fast/chain1.h3av",
+        "state_sha256": "bc711dd1e02c48860187c724708c454eaccb1194915ebb9998e34e2fbfcb3ce7",
+        "geometry": [
+          288,
+          384,
+          90,
+          27,
+          24,
+          18,
+          150,
+          24,
+          32,
+          2
+        ],
+        "reference_files": {
+          "inputs/05.jpg": "4e0f2d688e9ed72a8c97a30dc326f12a4928ffb8dd3f5e79c59b998e9a97ddff"
+        },
+        "source_sha256": "2fc8a48f75a1453e88de06489519ff17b67a175973adb3c51394e510fadb43b9",
+        "width": 288,
+        "height": 384,
+        "frames": 90,
+        "trim": 0,
+        "replay_state": "outputs/preview-vae/metal/quality/chain1.h3av",
+        "commands": {
+          "full": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/chain1.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/chain1-full.mp4"
+          ],
+          "tiny": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/chain1.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/chain1-tiny.mp4",
+            "--preview-vae"
+          ],
+          "reference": [
+            "outputs/preview-vae/venv/bin/python",
+            "tests/preview_vae_reference.py",
+            "outputs/cuda-validation/b200/quality/fast/chain1.h3av",
+            "outputs/preview-vae/metal/quality/chain1-reference.mp4",
+            "--trim",
+            "0",
+            "--audio",
+            "outputs/preview-vae/metal/quality/chain1-full.mp4"
+          ]
+        },
+        "outputs": {
+          "full": {
+            "path": "outputs/preview-vae/metal/quality/chain1-full.mp4",
+            "sha256": "dd17c8c14e4f060075d734c0412336cb0ca24fd2db7f0a4bf5fd20bfd3cd38ca"
+          },
+          "tiny": {
+            "path": "outputs/preview-vae/metal/quality/chain1-tiny.mp4",
+            "sha256": "d18f6472b8135c08d5132efc6f81b4dbcf4fdb670cf9cc88f2ba945f04a1ad8f"
+          },
+          "reference": {
+            "path": "outputs/preview-vae/metal/quality/chain1-reference.mp4",
+            "sha256": "4957495799b055f19de4fe220bf21e1ec5405db91844f2b9c93bc396443f7d13"
+          }
+        },
+        "model_compatibility_sha256": "0046f2b99169f9e4c41b289f07b8a4bf044b2e29eae46e56c5465560fb814548"
+      },
+      {
+        "name": "chain2",
+        "state": "outputs/cuda-validation/b200/quality/fast/chain2.h3av",
+        "state_sha256": "66a319569b78857b50cf5d9afc23595eba50795a5278c521704893b42fb7aa0b",
+        "geometry": [
+          288,
+          384,
+          90,
+          27,
+          24,
+          18,
+          150,
+          24,
+          32,
+          2
+        ],
+        "reference_files": {
+          "inputs/05.jpg": "4e0f2d688e9ed72a8c97a30dc326f12a4928ffb8dd3f5e79c59b998e9a97ddff",
+          "outputs/cuda-validation/b200/quality/fast/chain1.h3av": "bc711dd1e02c48860187c724708c454eaccb1194915ebb9998e34e2fbfcb3ce7"
+        },
+        "source_sha256": "2fc8a48f75a1453e88de06489519ff17b67a175973adb3c51394e510fadb43b9",
+        "width": 288,
+        "height": 384,
+        "frames": 51,
+        "trim": 39,
+        "replay_state": "outputs/preview-vae/metal/quality/chain2.h3av",
+        "commands": {
+          "full": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/chain2.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/chain2-full.mp4"
+          ],
+          "tiny": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/chain2.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/chain2-tiny.mp4",
+            "--preview-vae"
+          ],
+          "reference": [
+            "outputs/preview-vae/venv/bin/python",
+            "tests/preview_vae_reference.py",
+            "outputs/cuda-validation/b200/quality/fast/chain2.h3av",
+            "outputs/preview-vae/metal/quality/chain2-reference.mp4",
+            "--trim",
+            "39",
+            "--audio",
+            "outputs/preview-vae/metal/quality/chain2-full.mp4"
+          ]
+        },
+        "outputs": {
+          "full": {
+            "path": "outputs/preview-vae/metal/quality/chain2-full.mp4",
+            "sha256": "45465a5175f49a2aee71ae0abb80d548b239a900720dcea60e32272bf3e3bc79"
+          },
+          "tiny": {
+            "path": "outputs/preview-vae/metal/quality/chain2-tiny.mp4",
+            "sha256": "acafe7683d82339ac899aa3618030f19800d240af45eba9e34cfaf7401e40bd6"
+          },
+          "reference": {
+            "path": "outputs/preview-vae/metal/quality/chain2-reference.mp4",
+            "sha256": "1cdee2c8ee5e7d7df4a15c221c69b295faf55b93d40bede64012ac4ff3cf94dc"
+          }
+        },
+        "model_compatibility_sha256": "0046f2b99169f9e4c41b289f07b8a4bf044b2e29eae46e56c5465560fb814548"
+      },
+      {
+        "name": "face",
+        "state": "outputs/bugfix1-validation/after-face.h3av",
+        "state_sha256": "217181e92f17f6fd9d643322ea26c0def897434de0773dc91535244b92be3458",
+        "reference_files": {
+          "inputs/face1.jpg": "f2eb2de0cbe99aa3cd9a474575fa0a97f93b6ee2124401f55cc3a3fdbdc171b0"
+        },
+        "source_evidence": "docs/bugfix1-validation.md; seed 72, 128x128, 56 frames, six steps, FL2VA",
+        "width": 128,
+        "height": 128,
+        "frames": 56,
+        "trim": 0,
+        "replay_state": "outputs/preview-vae/metal/quality/face.h3av",
+        "commands": {
+          "full": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/face.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/face-full.mp4"
+          ],
+          "tiny": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/face.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/face-tiny.mp4",
+            "--preview-vae"
+          ],
+          "reference": [
+            "outputs/preview-vae/venv/bin/python",
+            "tests/preview_vae_reference.py",
+            "outputs/bugfix1-validation/after-face.h3av",
+            "outputs/preview-vae/metal/quality/face-reference.mp4",
+            "--trim",
+            "0",
+            "--audio",
+            "outputs/preview-vae/metal/quality/face-full.mp4"
+          ]
+        },
+        "outputs": {
+          "full": {
+            "path": "outputs/preview-vae/metal/quality/face-full.mp4",
+            "sha256": "68c47085bcea0d5a02b16ea93db0083f5b867fccf96ba24d4fa7d2033a453b44"
+          },
+          "tiny": {
+            "path": "outputs/preview-vae/metal/quality/face-tiny.mp4",
+            "sha256": "e551a2aec3ffa22be0bdf7c1dfc1fb4760e0ea39ebcab7aa31160501d07d5dc0"
+          },
+          "reference": {
+            "path": "outputs/preview-vae/metal/quality/face-reference.mp4",
+            "sha256": "1f04fcac49c7c7e3e03e59e6831459416e16aea028423101f2205f0fd5af1ccd"
+          }
+        },
+        "model_compatibility_sha256": "0046f2b99169f9e4c41b289f07b8a4bf044b2e29eae46e56c5465560fb814548"
+      },
+      {
+        "name": "face20",
+        "state": "outputs/preview-vae/corpus/face20.h3av",
+        "state_sha256": "a0c7b6cdf3df7cf5ae75fa33f492d876d18a8f9a9f41af523386b678f599a6ce",
+        "reference_files": {
+          "inputs/face1.jpg": "f2eb2de0cbe99aa3cd9a474575fa0a97f93b6ee2124401f55cc3a3fdbdc171b0"
+        },
+        "source_sha256": "b28889977fce0861947ba4466718ff3318d098be4d957625b12fb22c29e01335",
+        "source_evidence": "20-step ordinary M4 baseline, Ref2VA face1",
+        "ref2va": 1,
+        "width": 480,
+        "height": 640,
+        "frames": 22,
+        "trim": 0,
+        "replay_state": "outputs/preview-vae/metal/quality/face20.h3av",
+        "commands": {
+          "full": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/face20.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/face20-full.mp4"
+          ],
+          "tiny": [
+            "./h3",
+            "-d",
+            "MiniMax-H3",
+            "--decode-av-state",
+            "outputs/preview-vae/metal/quality/face20.h3av",
+            "--profile",
+            "-o",
+            "outputs/preview-vae/metal/quality/face20-tiny.mp4",
+            "--preview-vae"
+          ],
+          "reference": [
+            "outputs/preview-vae/venv/bin/python",
+            "tests/preview_vae_reference.py",
+            "outputs/preview-vae/corpus/face20.h3av",
+            "outputs/preview-vae/metal/quality/face20-reference.mp4",
+            "--trim",
+            "0",
+            "--audio",
+            "outputs/preview-vae/metal/quality/face20-full.mp4"
+          ]
+        },
+        "outputs": {
+          "full": {
+            "path": "outputs/preview-vae/metal/quality/face20-full.mp4",
+            "sha256": "ed286c0b9e7f613c92ca4f2938e473ba2165377b7083de732a32afac7939a505"
+          },
+          "tiny": {
+            "path": "outputs/preview-vae/metal/quality/face20-tiny.mp4",
+            "sha256": "dfc2eb2c450636dfe758315bb725f8a225c962a548c9fc52de434033eb2719ba"
+          },
+          "reference": {
+            "path": "outputs/preview-vae/metal/quality/face20-reference.mp4",
+            "sha256": "6a37e89e1fab7ba31ee6e63e0c7fa32bb2827bb7fd22f453fa889354b006f7ba"
+          }
+        },
+        "model_compatibility_sha256": "0046f2b99169f9e4c41b289f07b8a4bf044b2e29eae46e56c5465560fb814548"
+      }
+    ],
+    "joins": [
+      {
+        "mode": "full",
+        "command": [
+          "ffmpeg",
+          "-v",
+          "error",
+          "-y",
+          "-i",
+          "outputs/preview-vae/metal/quality/chain1-full.mp4",
+          "-i",
+          "outputs/preview-vae/metal/quality/chain2-full.mp4",
+          "-filter_complex",
+          "[0:a]atrim=duration=3.75,asetpts=PTS-STARTPTS[a0];[1:a]atrim=duration=2.125,asetpts=PTS-STARTPTS[a1];[0:v][a0][1:v][a1]concat=n=2:v=1:a=1[v][a]",
+          "-map",
+          "[v]",
+          "-map",
+          "[a]",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "fast",
+          "-crf",
+          "6",
+          "-pix_fmt",
+          "yuv420p",
+          "-c:a",
+          "aac",
+          "-b:a",
+          "192k",
+          "-movflags",
+          "+faststart",
+          "outputs/preview-vae/metal/quality/joined-full.mp4"
+        ],
+        "sha256": "827e3b1788940be0f1bb7c162f70a34194b25068d4a66b272b49196fe787b182"
+      },
+      {
+        "mode": "tiny",
+        "command": [
+          "ffmpeg",
+          "-v",
+          "error",
+          "-y",
+          "-i",
+          "outputs/preview-vae/metal/quality/chain1-tiny.mp4",
+          "-i",
+          "outputs/preview-vae/metal/quality/chain2-tiny.mp4",
+          "-filter_complex",
+          "[0:a]atrim=duration=3.75,asetpts=PTS-STARTPTS[a0];[1:a]atrim=duration=2.125,asetpts=PTS-STARTPTS[a1];[0:v][a0][1:v][a1]concat=n=2:v=1:a=1[v][a]",
+          "-map",
+          "[v]",
+          "-map",
+          "[a]",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "fast",
+          "-crf",
+          "6",
+          "-pix_fmt",
+          "yuv420p",
+          "-c:a",
+          "aac",
+          "-b:a",
+          "192k",
+          "-movflags",
+          "+faststart",
+          "outputs/preview-vae/metal/quality/joined-tiny.mp4"
+        ],
+        "sha256": "cea719e981d88bc11b6ea12a12f1f98831438e678f6e26438871464936878f78"
+      },
+      {
+        "mode": "reference",
+        "command": [
+          "ffmpeg",
+          "-v",
+          "error",
+          "-y",
+          "-i",
+          "outputs/preview-vae/metal/quality/chain1-reference.mp4",
+          "-i",
+          "outputs/preview-vae/metal/quality/chain2-reference.mp4",
+          "-filter_complex",
+          "[0:a]atrim=duration=3.75,asetpts=PTS-STARTPTS[a0];[1:a]atrim=duration=2.125,asetpts=PTS-STARTPTS[a1];[0:v][a0][1:v][a1]concat=n=2:v=1:a=1[v][a]",
+          "-map",
+          "[v]",
+          "-map",
+          "[a]",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "fast",
+          "-crf",
+          "6",
+          "-pix_fmt",
+          "yuv420p",
+          "-c:a",
+          "aac",
+          "-b:a",
+          "192k",
+          "-movflags",
+          "+faststart",
+          "outputs/preview-vae/metal/quality/joined-reference.mp4"
+        ],
+        "sha256": "1caa708ff284667461b155a078c7b81e7011b55cd337a2832bc20a59751a9a16"
+      }
+    ],
+    "acceptance": {
+      "date": "2026-09-18",
+      "reviewer": "user",
+      "statement": "confirmed in review the quality is acceptable",
+      "scope": "Reviewed local Metal preview corpus and continuation joins; CUDA and other hardware remain unqualified",
+      "manifest_sha256": "3f6c505acd2e772258cf565200442cba916720edd43974cae517b38938be2fcb",
+      "joined_outputs_sha256": {
+        "full": "827e3b1788940be0f1bb7c162f70a34194b25068d4a66b272b49196fe787b182",
+        "tiny": "cea719e981d88bc11b6ea12a12f1f98831438e678f6e26438871464936878f78",
+        "reference": "1caa708ff284667461b155a078c7b81e7011b55cd337a2832bc20a59751a9a16"
+      }
+    }
+  },
+  "generated_media_audit": {
+    "path": "outputs/preview-vae/metal/media-audit.json",
+    "count": 30,
+    "sha256": "9e6a4fe7f3160ccf75909814871225e5bc46414ab23fa144381c49e50eaa32e5"
+  },
+  "pending": [
+    "T014 CUDA convolutions/plans and qualification",
+    "T015 CUDA remaining operations and qualification"
+  ],
+  "limitations": [
+    "CUDA and other Apple GPUs not tested",
+    "Ten standard-suite external oracle fixture groups unavailable",
+    "No forced device OOM or production-length stress run",
+    "One bounded warm decoder repeat; no confidence intervals",
+    "Early continuation/source.json preview_seconds invalid and excluded",
+    "Two-step smoke generation does not establish perceptual quality",
+    "Checked cross-backend tasks cover local Metal/shared host portions only"
+  ]
+}

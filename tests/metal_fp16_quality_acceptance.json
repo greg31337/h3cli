@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "user_instruction": "the quality is acceptable, proceed forward",
+  "scope": "Accept the observed 243-frame production-VAE B6 quality of the current M4 mixed FP16 recipe and continue forward. Retain frozen quality metrics as diagnostics for this unchanged recipe; execution, finiteness, range handling, conditioning and exact continuation-prefix checks remain required. Do not claim human observations for unreviewed cases.",
+  "binary_sha256": "804268f8b63420c504918712abdec944953a81c51b7a88ee27d92989b14546b7",
+  "geometry": [
+    640,
+    480,
+    243
+  ],
+  "maximum_evaluations": 6,
+  "mixed_recipe": 4,
+  "accepted_index": "outputs/metal-native-m2-243/continued/qualification/index.json",
+  "strict_screen_pass": false,
+  "evidence_sha256": {
+    "tests/metal_reference_contract.json": "b74ea300c9d354873077bfae8d97f45684ade093672c15f1f35dddd870a815e4",
+    "outputs/metal-native-m2-243/continued/quality-contract-freeze.json": "f860be08958f0ecdaa9ddfd99fd77b0bc9d799eec1551f07260416784a0be22a",
+    "outputs/metal-native-m2-243/continued/qualification/index.json": "c667603fed15a3fb5fbc01bd5756458654b8ff11019ea5b3597bb887a757486c",
+    "outputs/metal-native-m2-243/continued/qualification/calibration/quality/metrics.json": "ee8da7cf3c77f07c046bcea9b30f58b36f65e7f300799e07044cfcc692a2bd59",
+    "outputs/metal-native-m2-243/continued/qualification/calibration/fp16/record.json": "1080793de25e5eb5967784d8da0c7ea4b42fedaf4e187a01e6517d1533f6d770"
+  },
+  "followup_instruction": "Start conservative SOL next",
+  "remaining_corpus": "Deferred by user: remaining M2 held-out conditioning/continuation renders and conditioned range coverage."
+}

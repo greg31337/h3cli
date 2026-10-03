@@ -1,0 +1,15 @@
+{
+  "diffusers": "0.40.0",
+  "torch": "2.14.0",
+  "source": "https://github.com/huggingface/diffusers/blob/v0.40.0/src/diffusers/modular_pipelines/minimax_h3/before_denoise.py",
+  "source_sha256": "530b007c1d689c3ee1fc1690527f5253522d2da6b44dd326bec99faaf9f72fff",
+  "generator": "tests/refvideo_encoder_oracle.py --stage layout",
+  "fixtures": {
+    "layout-audio-video-image.safetensors": "1a448bd5cea8fb52fd8f334a4c367d912b2c630490f7ff6b878873f57afebe50",
+    "layout-image-video.safetensors": "269c06532a7bee6d7a500ccf733e26213f917825dffaaa1e8cb46a647289f8bf",
+    "layout-released56.safetensors": "a6dacf367f9cd9daec27568ecdad57c95e6e0f49c57825b28ebd6c756cdeb46b",
+    "layout-three-videos.safetensors": "134398eaa7926e5a95a236112da773cbd36a3d129d5efb67635b2782b29ca806",
+    "layout-two-videos.safetensors": "476baa7d8909c5711224c15c789a5a35205123ac7bdac27708bc871c3d9fad18",
+    "layout-video-audio.safetensors": "41f678ef0a823f34cff3d3aad20f8dd82086040c60230e01079cf919e3c1e47d"
+  }
+}

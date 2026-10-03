@@ -1,0 +1,83 @@
+{
+  "architecture": "arm64",
+  "deployment_target": "26.0",
+  "ffmpeg_configure": [
+    "--disable-debug",
+    "--disable-doc",
+    "--disable-autodetect",
+    "--enable-gpl",
+    "--enable-libx264",
+    "--enable-zlib",
+    "--enable-static",
+    "--disable-shared",
+    "--arch=aarch64",
+    "--cc=clang",
+    "--cxx=clang++",
+    "--extra-cflags=-arch arm64 -mmacosx-version-min=26.0",
+    "--extra-ldflags=-arch arm64 -mmacosx-version-min=26.0",
+    "--pkg-config-flags=--static"
+  ],
+  "schema": 1,
+  "source_date_epoch": 1790726400,
+  "toolchain": {
+    "clang": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
+    "linker": {
+      "architectures": [
+        "armv6",
+        "armv7",
+        "armv7s",
+        "arm64",
+        "arm64e",
+        "arm64_32",
+        "i386",
+        "x86_64",
+        "x86_64h",
+        "armv6m",
+        "armv7k",
+        "armv7m",
+        "armv7em",
+        "armv8m.main",
+        "armv8.1m.main"
+      ],
+      "lto": {
+        "runtime_api_version": 30,
+        "static_api_version": 30,
+        "version_string": "LLVM version 21.0.0"
+      },
+      "tapi": {
+        "version": "21.0.0",
+        "version_string": "Apple TAPI version 21.0.0 (tapi-2100.3.8.1)"
+      },
+      "version": "27037.1"
+    },
+    "pkg_config": "3.0.7",
+    "sdk_build": "26A425",
+    "sdk_inventory_sha256": "848809186b88a3c94e83fe962506bb5bf6831c971e0a3a718c1b6ca9240a5ab7",
+    "sdk_version": "27.0",
+    "tools": {
+      "ar": "85d15bd3999895f659e8a483b17ea9ab44b924c8e0b3026abfe359f2de02cbd7",
+      "clang": "1590ac950a3d627817d09ade5cb60b2115f17a72182a3141e010b4bcc482a0c9",
+      "ld": "374d9f0713bce2c8a9e1e82bde51615d5433516a10d99b63107eb6ee70542e4c",
+      "make": "fe709619aab6d3b280cc22cb06d14432b3fa5fa7eb323e8d4817071410760f1b",
+      "strip": "e0d9859a299233c4b2bd48a21f55bb00e575e175eef9193616d3af8660fc846d"
+    }
+  },
+  "x264": {
+    "name": "x264-b35605ace3ddf7c1a5d67a2eb553f034aef41d55.tar.gz",
+    "revision": "b35605ace3ddf7c1a5d67a2eb553f034aef41d55",
+    "sha256": "cd71a7515b0e9a012e1ac9b1f8415bebcaf6fc97d4db32286642ac4c0fbe24f9",
+    "size": 1040327,
+    "url": "https://code.videolan.org/videolan/x264/-/archive/b35605ace3ddf7c1a5d67a2eb553f034aef41d55/x264-b35605ace3ddf7c1a5d67a2eb553f034aef41d55.tar.gz"
+  },
+  "x264_configure": [
+    "--host=aarch64-apple-darwin",
+    "--enable-static",
+    "--disable-cli",
+    "--disable-opencl",
+    "--disable-lsmash",
+    "--disable-swscale",
+    "--disable-ffms",
+    "--extra-cflags=-arch arm64 -mmacosx-version-min=26.0",
+    "--extra-ldflags=-arch arm64 -mmacosx-version-min=26.0"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "scope": "Fixed source, face/body references, seed and cached conditioning; 24 source frames plus 48 delivered continuation frames at 24 fps; full 20-step CPU oracle",
+  "selection_seed": 72,
+  "confirmation_seed": 73,
+  "subject_roi_xyxy": [0.25, 0.20, 0.99, 0.98],
+  "background": "top 23 percent or left 25 percent, excluding a four-pixel border",
+  "flow": {"algorithm": "Farneback", "pyr_scale": 0.5, "levels": 3, "winsize": 15, "iterations": 3, "poly_n": 7, "poly_sigma": 1.5, "flags": 0},
+  "metric": "Upper-decile spatial mean of motion-compensated flow acceleration and jerk in the subject ROI; continuity score = sqrt(mean(acceleration^2) + 0.25*mean(jerk^2)). Units are pixels per frame squared/cubed; report the components separately.",
+  "gates": {
+    "primary_continuity_ratio_max": 0.90,
+    "changed_action_geomean_ratio_max": 0.90,
+    "unchanged_continuity_ratio_max": 1.10,
+    "unchanged_continuity_absolute_slack_px": 0.02,
+    "motion_amplitude_ratio_min": 0.70,
+    "sharpness_ratio_min": 0.85,
+    "background_deformation_ratio_max": 1.20,
+    "background_deformation_absolute_slack_px": 0.05,
+    "camera_motion_ratio_max": 1.20,
+    "camera_motion_absolute_slack_px": 0.25,
+    "background_color_delta_extra_max": 3.0,
+    "background_contrast_ratio_min": 0.85,
+    "background_contrast_ratio_max": 1.15
+  },
+  "visual_review_required": ["scene", "background", "character", "color", "camera", "action_adherence", "body_integrity", "transition"],
+  "completion": "Primary action must pass on selection and confirmation seeds; unchanged prompt must pass both seeds; changed-action aggregate must pass; all chosen comparisons require a recorded visual review without major degradation. Numerical proxies alone cannot establish character identity or action quality.",
+  "conditional_tasks": "Token reduction remains disabled; T060 is not activated. GPU/reuse acceptance is separate from the motion-quality gate. Failed quality gates keep the feature unqualified and T065 open."
+}

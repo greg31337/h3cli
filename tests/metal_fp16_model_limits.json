@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "geometry": [640, 480, 243],
+  "maximum_evaluations": 6,
+  "command_blocks": 5,
+  "minimum_b5_steady_speedup": 1.10,
+  "minimum_nonoverlap_speedup": 1.0,
+  "maximum_tracked_metal_bytes": 103079215104,
+  "nonfinite_values": 0,
+  "invalid_attention_heads": 0,
+  "quality_policy": "Legacy BF16 trajectory limits remain diagnostics. These performance/stability limits do not constitute the uncalibrated T153 perceptual contract or qualify Reference."
+}

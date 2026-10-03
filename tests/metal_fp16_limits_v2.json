@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "frozen_before_candidate_measurement": true,
+  "operator": {
+    "relative_l2_max": 0.01,
+    "max_abs_over_reference_peak_max": 0.02,
+    "cpu_sample_error_over_value_peak_max": 0.005,
+    "nonfinite_values": 0,
+    "guard_changes": 0,
+    "input_changes": 0,
+    "invalid_input_output_changes": 0
+  },
+  "performance": {
+    "adapter_inclusive_median_speedup_min": 1.1,
+    "conservative_min_reference_over_max_candidate_min": 1.0,
+    "balanced_rounds": 6,
+    "required_fixtures": [
+      "synthetic-22426",
+      "block0",
+      "block24",
+      "block49",
+      "references-243",
+      "continuation192-243"
+    ]
+  },
+  "scope": "Operator gates are unchanged from version 1. Compare against MPSGraph on identical converted inputs, with BF16 source drift reported separately. Recipe 2 allows counted half-normal underflow only with score perturbation bound <=1e-4; per-head V perturbation bound is reported. Larger score risk recovers from BF16 inputs with FP32 operands. FP32 softmax/accumulation and half P operands remain explicit.",
+  "previous_limits_sha256": "e7ada44498c63c9743ee8f2d3d0180b6f395e697046761cde7b35f0452709999",
+  "range_policy": {
+    "version": 2,
+    "scaled_max_exponent": 12,
+    "minimum_half_operand_exponent": -14,
+    "maximum_score_perturbation_bound": 0.0001,
+    "output_commit": "all-head-finite-or-unchanged"
+  }
+}

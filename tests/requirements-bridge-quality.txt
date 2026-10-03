@@ -1,0 +1,5 @@
+# Workspace-local optical flow and frame analysis. The model does not use these.
+numpy==2.5.3
+opencv-python-headless==5.0.0.93
+Pillow==12.3.0
+matplotlib==3.11.2

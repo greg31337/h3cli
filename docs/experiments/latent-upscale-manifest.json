@@ -1,0 +1,179 @@
+{
+  "schema": 1,
+  "status": "frozen protocol; implementation pending",
+  "recipe": 1,
+  "frames": 90,
+  "fps": 24,
+  "source_steps": 50,
+  "direct_steps": 50,
+  "seed": 42,
+  "prompt": "Cinematic medium shot of a woman passionately playing a grand piano in a sunlit concert hall. Her fingers move across the keys as the camera slowly glides sideways. Warm natural lighting, realistic details, flowing piano music.",
+  "precision": "dense BF16",
+  "pairs": [
+    {
+      "id": "768p",
+      "source": [
+        672,
+        384
+      ],
+      "target": [
+        1344,
+        768
+      ],
+      "cases": [
+        {
+          "id": "L0",
+          "method": "source",
+          "evaluations": 50,
+          "start_video_sigma": null,
+          "output": "768p/L0/video.mp4",
+          "audio": "generated"
+        },
+        {
+          "id": "D0",
+          "method": "direct",
+          "evaluations": 50,
+          "start_video_sigma": null,
+          "output": "768p/D0/video.mp4",
+          "audio": "generated"
+        },
+        {
+          "id": "P0",
+          "method": "pixel-lanczos",
+          "evaluations": 0,
+          "start_video_sigma": null,
+          "output": "768p/P0/video.mp4",
+          "audio": "source bytes"
+        },
+        {
+          "id": "I4",
+          "method": "latent-bilinear",
+          "evaluations": 4,
+          "start_video_sigma": 0.25,
+          "output": "768p/I4/video.mp4",
+          "audio": "source bytes"
+        },
+        {
+          "id": "U0",
+          "method": "learned",
+          "evaluations": 0,
+          "start_video_sigma": null,
+          "output": "768p/U0/video.mp4",
+          "audio": "source bytes"
+        },
+        {
+          "id": "U2",
+          "method": "learned",
+          "evaluations": 2,
+          "start_video_sigma": 0.25,
+          "output": "768p/U2/video.mp4",
+          "audio": "source bytes"
+        },
+        {
+          "id": "U4",
+          "method": "learned",
+          "evaluations": 4,
+          "start_video_sigma": 0.25,
+          "output": "768p/U4/video.mp4",
+          "audio": "source bytes"
+        }
+      ]
+    },
+    {
+      "id": "1088p",
+      "source": [
+        960,
+        544
+      ],
+      "target": [
+        1920,
+        1088
+      ],
+      "cases": [
+        {
+          "id": "L0",
+          "method": "source",
+          "evaluations": 50,
+          "start_video_sigma": null,
+          "output": "1088p/L0/video.mp4",
+          "audio": "generated"
+        },
+        {
+          "id": "D0",
+          "method": "direct",
+          "evaluations": 50,
+          "start_video_sigma": null,
+          "output": "1088p/D0/video.mp4",
+          "audio": "generated"
+        },
+        {
+          "id": "P0",
+          "method": "pixel-lanczos",
+          "evaluations": 0,
+          "start_video_sigma": null,
+          "output": "1088p/P0/video.mp4",
+          "audio": "source bytes"
+        },
+        {
+          "id": "I4",
+          "method": "latent-bilinear",
+          "evaluations": 4,
+          "start_video_sigma": 0.25,
+          "output": "1088p/I4/video.mp4",
+          "audio": "source bytes"
+        },
+        {
+          "id": "U0",
+          "method": "learned",
+          "evaluations": 0,
+          "start_video_sigma": null,
+          "output": "1088p/U0/video.mp4",
+          "audio": "source bytes"
+        },
+        {
+          "id": "U2",
+          "method": "learned",
+          "evaluations": 2,
+          "start_video_sigma": 0.25,
+          "output": "1088p/U2/video.mp4",
+          "audio": "source bytes"
+        },
+        {
+          "id": "U4",
+          "method": "learned",
+          "evaluations": 4,
+          "start_video_sigma": 0.25,
+          "output": "1088p/U4/video.mp4",
+          "audio": "source bytes"
+        }
+      ]
+    }
+  ],
+  "execution": {
+    "serial": true,
+    "ordinary_max_evaluations": 6,
+    "render_timeout_seconds": 7200,
+    "transfer_timeout_seconds": 1200,
+    "no_successful_repeats": true,
+    "source_model_identity": "metadata only",
+    "stage_timings": [
+      "conditioning",
+      "source_denoise",
+      "state_io",
+      "upscaler_load",
+      "upscaler_forward",
+      "condition_retarget",
+      "refinement_prepare",
+      "refinement_denoise",
+      "audio_decode",
+      "video_decode",
+      "mux"
+    ],
+    "failure_ledger": "attempts.jsonl",
+    "fresh_job_cost": "state_io + upscaler_load + upscaler_forward + condition_retarget + refinement_prepare + refinement_denoise + audio_decode + video_decode + mux",
+    "end_to_end_cost": "source generation without preview + fresh_job_cost",
+    "pixel_baseline": "Lanczos scale of L0 with preserved audio stream",
+    "noise": "one persisted F32 video tensor per target; shared by I4/U2/U4",
+    "human_visual_review": "pending"
+  }
+}

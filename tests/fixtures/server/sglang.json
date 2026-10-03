@@ -1,0 +1,16 @@
+{
+  "provenance": {
+    "repository": "https://github.com/sgl-project/sglang",
+    "commit": "7ee7bef79decaf78f7669994f74e6f75c7784c14",
+    "paths": [
+      "python/sglang/multimodal_gen/runtime/entrypoints/openai/protocol.py",
+      "python/sglang/multimodal_gen/runtime/entrypoints/openai/video_api.py",
+      "python/sglang/multimodal_gen/runtime/pipelines_core/stages/model_specific_stages/minimax_h3/video_adapter.py",
+      "python/sglang/multimodal_gen/runtime/pipelines_core/stages/model_specific_stages/minimax_h3/resolved_plan.py",
+      "python/sglang/multimodal_gen/configs/sample/sampling_params.py"
+    ],
+    "note": "Small authored contract fixtures derived from the pinned protocol; no upstream inference or numerical parity claim."
+  },
+  "canonical": {"model":"MiniMaxAI/MiniMax-H3","prompt":"A red wooden toy boat floating on a quiet pond.","task":"t2va","conditions":[],"target":{"short_edge":256,"aspect_ratio":"1:1","duration_seconds":4},"num_inference_steps":3,"quality":"extra-high","seed":42},
+  "conflicting": {"model":"missing-overridden-model","prompt":"ignored prompt","task":"t2va","target":{"short_edge":768,"aspect_ratio":"16:9","duration_seconds":10},"num_inference_steps":51,"quality":"high","seed":[1],"h3cli":"-d models/MiniMax-H3 -p 'A red wooden toy boat floating on a quiet pond.' --quality extra-high --width 256 --height 256 --frames 22 --steps 2 --seed 42"}
+}

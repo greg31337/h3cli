@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "oracle": {"sglang": "0.5.20", "torch": "2.13.0+cu130", "hardware": "RTX PRO 5000 72GB SM120", "source_baseline": "e69a3a42c7dac1910493aab2fd65bf89b7b76ad9"},
+  "scope": "non-fast CUDA, original BF16 checkpoint, dense full-depth joint AV, full VAE",
+  "primary": [
+    {"id": "C0", "width": 640, "height": 480, "frames": 124, "evaluations": 6, "sigma_points": 7, "seed": 42},
+    {"id": "C1", "width": 640, "height": 480, "frames": 362, "evaluations": 6, "sigma_points": 7, "seed": 42},
+    {"id": "C2", "width": 640, "height": 480, "frames": 124, "evaluations": 50, "sigma_points": 51, "seed": 42}
+  ],
+  "held_out": [
+    {"id": "H0", "frames": 124, "evaluations": 6, "seed": 917, "prompt": "Close-up of a watchmaker carefully turning the tiny gears of an antique mechanical watch with both hands. Detailed fingers, brass textures, soft workshop lighting, a steady camera and quiet ticking."},
+    {"id": "H1", "frames": 124, "evaluations": 6, "seed": 2027, "prompt": "A tracking camera follows two cyclists riding side by side along a tree-lined street after rain. Their wheels turn, reflections move across wet cobblestones, textured jackets flutter, and street ambience is audible."},
+    {"id": "H2", "frames": 124, "evaluations": 6, "seed": 123456, "prompt": "A woman with curly hair and a man in a checked shirt prepare vegetables together at a kitchen counter. Natural faces and hand movements, detailed woven fabric, gentle camera movement and soft kitchen sounds."}
+  ],
+  "gates": {
+    "exact_inputs": "bitwise after documented lossless layout adaptation and explicit position dtype conversion",
+    "operation": {"finite": true, "relative_l2_max": 0.005, "cosine_min": 0.99998, "absolute_max_per_reference_rms": 0.02, "absolute_floor": 0.00001},
+    "full_velocity": {"relative_l2_max": 0.01, "cosine_min": 0.99995},
+    "trajectory": {"relative_l2_max": 0.01, "cosine_min": 0.99995},
+    "decoded_video": {"every_frame_psnr_db_min": 40.0, "every_frame_gaussian_ssim_min": 0.99, "every_frame_lpips_alex_v01_max": 0.01, "temporal_error_rms_max": 0.0025, "worst_64x64_region_psnr_db_min": 35.0},
+    "decoded_audio": {"same_sample_count": true, "relative_l2_max": 0.01, "cosine_min": 0.99995, "finite": true},
+    "performance": {"interleaved_pairs_per_primary": 3, "generation_ratio_max": 1.05, "denoising_ratio_max": 1.05, "full_vae_ratio_max": 1.05, "peak_vram_ratio_max": 1.05, "sampling_gap_seconds_max": 0.1},
+    "fast_isolation": {"version": 1, "deterministic_fixtures": "unchanged", "time_ratio_max": 1.05, "peak_vram_ratio_max": 1.05}
+  },
+  "rules": ["No threshold relaxation following a candidate failure", "Instrumented runs cannot qualify speed", "Oracle repeatability must pass for all primary cases", "Free-running and teacher-forced results remain separate", "Media validity alone never establishes parity", "No hashing of H3 model weights"]
+}

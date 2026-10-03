@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "target": "RTX 5090 SM120",
+  "calibration_seeds": [
+    1001,
+    1002
+  ],
+  "held_out_seeds": [
+    12001,
+    12002,
+    12003
+  ],
+  "prompts": [
+    "A person in a blue jacket walks through a sunny park. Birds sing softly.",
+    "A woman in a green coat faces the camera and says: Welcome to our garden. Her voice is clear and natural.",
+    "A man in a red sweater sings a short cheerful melody while walking beside a lake. Gentle water sounds are audible."
+  ],
+  "references": [
+    "inputs/1.jpg",
+    "inputs/2.jpg",
+    "inputs/face1.jpg",
+    "inputs/body1.jpg"
+  ],
+  "short_shapes": [
+    [
+      288,
+      384,
+      56
+    ],
+    [
+      480,
+      640,
+      22
+    ]
+  ],
+  "target_shape": [
+    1344,
+    768,
+    243
+  ],
+  "turbo_strength": 1.0,
+  "turbo_steps": 8,
+  "base_steps": 20,
+  "continuation_context": 39,
+  "component_lengths": [
+    1,
+    15,
+    16,
+    17,
+    63,
+    64,
+    65,
+    127,
+    128,
+    129,
+    257,
+    2281,
+    18225,
+    73402
+  ],
+  "port_relative_l2_limit": 0.01,
+  "model_numeric_limits": null,
+  "numeric_limit_policy": "Before held-out evaluation, freeze 1.25 times calibration maxima plus 1e-7 for each attention mode, projection and query domain. Final AV-latent limits also retain hard ceilings of relative L2 0.1 and max absolute 1.0. Report failures as unqualified, independently of port parity and human quality review.",
+  "quality_review": [
+    "identity",
+    "detail",
+    "motion",
+    "flicker",
+    "prompt adherence",
+    "speech clarity",
+    "voice identity",
+    "audio distortion",
+    "lip sync",
+    "continuation seam"
+  ],
+  "performance": {
+    "component_warmups": 1,
+    "component_samples": 3,
+    "target_pairs": 2,
+    "additional_pair_if_noisy": true,
+    "target_timeout_seconds": 3000
+  },
+  "human_review_status": "pending"
+}

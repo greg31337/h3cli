@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "status": "accepted",
+  "accepted_on": "2026-09-28",
+  "reviewer": "user",
+  "statement": "the results are acceptable",
+  "scope": "Reported BF16 CUDA adaptive-cache and SubBlock continuation/bridge results: frozen V01\u2013V14 comparison, shared source clips and three-segment functional diagnostic.",
+  "decision_level": "Overall results accepted; individual playback/listening actions and criterion scores were not separately supplied.",
+  "completed_tasks": {
+    "first": "ACB001",
+    "last": "ACB036",
+    "count": 36
+  },
+  "quality_gates_closed": [
+    "ACB034"
+  ],
+  "evidence": {
+    "report": "docs/cuda/adaptive-continuation-results.md",
+    "manifest": "outputs/adaptive-continuation/run01/comparison01/manifest.json",
+    "manifest_sha256": "2db3641cdca13349f63f49d373bc13e81eb343e91bde06821a01c9192801ec9e",
+    "final_gate": "outputs/adaptive-continuation/run01/final-gate02/result.json",
+    "production_binary_sha256": "fa469fa8675f01688aeeb8d8992e906dd9568239aacc6c48ec3df1033b3a403e",
+    "media": [
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/S01.mp4",
+        "sha256": "04b1c495bdf861fba13ecd9a2d9cf2a7c334103609d93e5bdc95291cb32586a6"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/S02.mp4",
+        "sha256": "392e94acb59a2ebf5b8b3235fbbfb7552c292502b2346c66af5b3b5466144b22"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V01.mp4",
+        "sha256": "c7a5a76fa02bb9050d9451ea66a999c02cee01f70558b9e20696c2c94573be04"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V02.mp4",
+        "sha256": "b0942db573be29be511cb91f98c29bd03c7f6d1b065fcc47cb3dbe888f6de03e"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V03.mp4",
+        "sha256": "dab74e8df7c5760ec55a7b225eb71398bb8344901938430b79401cb7d4a7bb58"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V04.mp4",
+        "sha256": "d3eed77ae6a7a219b9466f85ff3a5aa90c310083bc464a66eb53b0d53ac0271c"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V05.mp4",
+        "sha256": "12c767e79728881c2165cfc39a3526c6e1631753c68a88709c2bbe6e631af3ac"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V06.mp4",
+        "sha256": "f040934f3db953cbd33d05db5319fb4f029759cc47ed97a0de5b703d09c74914"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V07.mp4",
+        "sha256": "13d26dffa990c60aa117d1bc030dc3a32086ba0b95b861e03ff06485ab11928a"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V08.mp4",
+        "sha256": "eb70e84b36fde3530978de49036ae4e51be86085fad45fa18e17ef5e5a8aed25"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V09.mp4",
+        "sha256": "2090a6140d73b301fb8230d86a6e6e27508b051458a8d7e4ab9e11ccab407d9e"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V10.mp4",
+        "sha256": "26d41b050fbaf4cf5382ae50fc20be8f367d884fb4542e05e7ed47210e604bf8"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V11.mp4",
+        "sha256": "0ebfb263158cc7c6c0a4738cc2f79de61aa4c425b21f33779b25348a999161bb"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V12.mp4",
+        "sha256": "0e1ed72482e60bf2fd61724e92d35d970957544de858e5f5502b282d6e81d63f"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V13.mp4",
+        "sha256": "43a9df9d0f9087c6a6e67d463403cc46997333519da0ab478b2d85649876cc86"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/comparison01/V14.mp4",
+        "sha256": "dcf1db183c81f74a5390dc4e31846d87c95ee53e000c987c8de49c3250ee4769"
+      },
+      {
+        "path": "outputs/adaptive-continuation/run01/supplement01/chain-review.mp4",
+        "sha256": "51f9faec96aefdc73b28e6d1b1185db5204971efa305cff7452c2eed42a180aa"
+      }
+    ]
+  },
+  "limits": [
+    "Acceptance applies to the recorded results; future rerenders require their own review.",
+    "Recorded coverage, performance and diagnostic limitations remain unchanged."
+  ],
+  "execution_default": "unchanged; adaptive cache and SubBlock remain opt-in"
+}

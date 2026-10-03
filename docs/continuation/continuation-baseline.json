@@ -1,0 +1,205 @@
+{
+  "commit": "948c748e1ce4c619c85f716224b436ac0a139bee",
+  "device": "Apple M4 Max / 128 GiB",
+  "steps": 20,
+  "width": 256,
+  "height": 256,
+  "host_checks": 1768,
+  "cases": {
+    "t2va": [
+      "outputs/continuation-validation/baseline/h3",
+      "-d",
+      "MiniMax-H3",
+      "-p",
+      "A person turns toward the camera and waves, natural daylight, steady camera, quiet outdoor ambience.",
+      "--width",
+      "256",
+      "--height",
+      "256",
+      "--frames",
+      "56",
+      "--steps",
+      "20",
+      "--seed",
+      "42",
+      "-o",
+      "outputs/continuation-validation/baseline/t2va.mp4"
+    ],
+    "fl2va": [
+      "outputs/continuation-validation/baseline/h3",
+      "-d",
+      "MiniMax-H3",
+      "-p",
+      "A person turns toward the camera and waves, natural daylight, steady camera, quiet outdoor ambience.",
+      "--width",
+      "256",
+      "--height",
+      "256",
+      "--frames",
+      "56",
+      "--steps",
+      "20",
+      "--seed",
+      "42",
+      "--first-frame",
+      "inputs/face1.jpg",
+      "-o",
+      "outputs/continuation-validation/baseline/fl2va.mp4"
+    ],
+    "image-ref2va": [
+      "outputs/continuation-validation/baseline/h3",
+      "-d",
+      "MiniMax-H3",
+      "-p",
+      "A person turns toward the camera and waves, natural daylight, steady camera, quiet outdoor ambience.",
+      "--width",
+      "256",
+      "--height",
+      "256",
+      "--frames",
+      "56",
+      "--steps",
+      "20",
+      "--seed",
+      "42",
+      "--ref-image",
+      "inputs/face1.jpg",
+      "--ref-image",
+      "inputs/body1.jpg",
+      "-o",
+      "outputs/continuation-validation/baseline/image-ref2va.mp4"
+    ],
+    "video-ref2va": [
+      "outputs/continuation-validation/baseline/h3",
+      "-d",
+      "MiniMax-H3",
+      "-p",
+      "A person turns toward the camera and waves, natural daylight, steady camera, quiet outdoor ambience.",
+      "--width",
+      "256",
+      "--height",
+      "256",
+      "--frames",
+      "56",
+      "--steps",
+      "20",
+      "--seed",
+      "42",
+      "--ref-video",
+      "outputs/continuation-validation/reference.mp4",
+      "-o",
+      "outputs/continuation-validation/baseline/video-ref2va.mp4"
+    ],
+    "audio-ref2va": [
+      "outputs/continuation-validation/baseline/h3",
+      "-d",
+      "MiniMax-H3",
+      "-p",
+      "A person turns toward the camera and waves, natural daylight, steady camera, quiet outdoor ambience.",
+      "--width",
+      "256",
+      "--height",
+      "256",
+      "--frames",
+      "56",
+      "--steps",
+      "20",
+      "--seed",
+      "42",
+      "--ref-image",
+      "inputs/face1.jpg",
+      "--ref-audio",
+      "outputs/continuation-validation/reference.wav",
+      "-o",
+      "outputs/continuation-validation/baseline/audio-ref2va.mp4"
+    ]
+  },
+  "results": {
+    "t2va": {
+      "returncode": 0,
+      "seconds": 101.15795278549194,
+      "sha256": "bb6c95e41b68cc4c6b418f750b2ed226e75d46a08ee208da6a9469d27a5ec2c1"
+    },
+    "fl2va": {
+      "returncode": 0,
+      "seconds": 110.71242022514343,
+      "sha256": "2453f91ecbb1bedcf63113ab7f1cd7338f5bde86708bdb992afd5958a6aa5037"
+    },
+    "image-ref2va": {
+      "returncode": 0,
+      "seconds": 121.06909322738647,
+      "sha256": "6b3740c829408b47e34550d82233bc4fad0e8b1551ae5317780a792ab32c8609"
+    },
+    "video-ref2va": {
+      "returncode": 0,
+      "seconds": 199.14131498336792,
+      "sha256": "1c091150ab1c2df46a7b47ea7c27b98f39918615bc7bb68a046bb9687efdeefd"
+    },
+    "audio-ref2va": {
+      "returncode": 0,
+      "seconds": 127.53628492355347,
+      "sha256": "1adfe146462bee0d3e5c4b5d03b462997200b3eb130f5d392f7dd826f5ac3072"
+    }
+  },
+  "input_sha256": {
+    "inputs/12.jpg": "9848fbc2da61254877bab9fecea60bac67f6c94737c09683fa738337309956d5",
+    "inputs/face1.jpg": "f2eb2de0cbe99aa3cd9a474575fa0a97f93b6ee2124401f55cc3a3fdbdc171b0",
+    "inputs/face2.jpg": "3e9eb59718d1f9ab39db957b859ace513bd61c031d255fe714d2da4bd853499c",
+    "inputs/body2.jpg": "1e160d512b2f4959f6afe898e480cd464ef82efec1af69d71ca2ac0013a88f71",
+    "inputs/body1.jpg": "e827f90c515e52c77b2447498b029ebb8fdf5579e7c33f1b1925f7608275c0d4"
+  },
+  "fixed_conditioning_regressions": {
+    "fl2va": {
+      "passed": true,
+      "hashes": {
+        "condition-video": "eb753f25227ed786ecfd0e37255bd56cd0d61353ddacc232294c2edbf31d69cc",
+        "text": "85d6cf19a3af3aca21bb9ef8db8ecfaf7904a1995136f85d04f646cfe64c287d",
+        "video": "bb4dea8ab2a6dd8b7249b9eb3168957e832ef62fc13329e69c435c6a8cd400a7",
+        "audio": "58621047ac6762bd4eb8593ba56f01c442e00b3ec285e73cab4b53f2c04737c2",
+        "mp4": "0ad0bc5fe56001abea4cfcb0146efde2d76b3a7daddc676e7cc7b92fa17812e8"
+      }
+    },
+    "image-ref2va": {
+      "passed": true,
+      "hashes": {
+        "condition-video": "0e9b585a9dcd993a0f28d8e9a26ee5b4ab02941cffc5f22df5f7dfc56be3958f",
+        "text": "cdaa44bc05c77baa7dffcbf30cc1b17bc834ebf06f09e0a95c92f5ba77ede305",
+        "video": "90758bab516e1a510c3b8ff3546aded2dfef7b30b544cacc7371e89382b2238d",
+        "audio": "8b8b01b67604192137b7dda76e2a4a8d583c6fd042fae463282b70b76fc13df4",
+        "mp4": "05e6bf9918d3d8f61a599b4d702e37369cd4cbabeb5ae4f5abb6011fa49a4c31"
+      }
+    },
+    "video-ref2va": {
+      "passed": true,
+      "hashes": {
+        "condition-video": "2ab5352bef46eb0be7eb3946d77f24abf6074762f71b8173eef881d1ed6b1f2e",
+        "condition-audio": "016555af841893f5e9beb00d95e242fd3967209f13211340e52f7cf95b1517c3",
+        "text": "014d109f8e4053904f183782eeef00f7091d9b79597c1c66a3705ba667d1fc97",
+        "video": "acd79a00a6f4899dea2ca11fb32936f001d9c7bf19443c18b0dedbc8e543d57c",
+        "audio": "6cc8addfad8c564cdb57184a283171637568af9f527f0f97a7c67943134e2f20",
+        "mp4": "a09032dcbf3dbb7b3a9c00c469660b3341c5a352d01b61e74cf5a9050d92dfbe"
+      }
+    },
+    "audio-ref2va": {
+      "passed": true,
+      "hashes": {
+        "condition-video": "45b14f5eccc623cc20649a9b6ae3ab60467790a77d0f67fba01423fb7221891a",
+        "condition-audio": "e40808b340228fd8faaf934669199ba4f329ecf66f3067ffe2b13bbcf61ec520",
+        "text": "7e213608e06c68936f35b4b454f9c2b87241c33f826bee70bf0b94512b4a25f9",
+        "video": "54625838eedb2295cad8490118ff2b4d5c8026eb5888d801b5a4502a98ef38d0",
+        "audio": "283a0db554eb1ca34b02f72b1d3fc58e79fb1eab7da302517c3f2a3575ae4dc4",
+        "mp4": "88cfe5323ea718df360eeab38f90a220bf5ec1ea2a16e79a0610ef0119f2a3bb"
+      }
+    },
+    "t2va": {
+      "passed": true,
+      "hashes": {
+        "text": "aeee0dcded8bfbab0502955b6d51de0fe333969a0fcd59e871ae4e58b2a3880b",
+        "video": "8a5448f6b413ce86875543a2c019a56864bf18fe2695c0e3749c5e6481d2f842",
+        "audio": "6bd096d9a0b77b56160b9e33b1ecfedaf25372db91a02f48a4e7f74c52bfd701",
+        "mp4": "bb6c95e41b68cc4c6b418f750b2ed226e75d46a08ee208da6a9469d27a5ec2c1"
+      }
+    }
+  },
+  "regression_note": "Cold multimodal encoder outputs vary in the original implementation. Identical captured text/reference conditioning produces bit-identical original/current final AV latents and MP4s in all four conditioned modes. Cold T2VA is byte-identical."
+}

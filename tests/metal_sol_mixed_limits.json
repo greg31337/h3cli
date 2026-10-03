@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "scope": "Bounded M4 conservative SOL recipe 1 experiment; freeze before real-QKV tuning. Historical M1 operator and preliminary SOL numerical screens are retained; M2 user acceptance does not waive incremental SOL loss.",
+  "geometry": [640, 480, 243],
+  "maximum_evaluations": 6,
+  "operator": {"cpu_oracle_relative_l2_max": 0.01, "protected_relative_l2_max": 0.01, "max_abs_over_reference_peak_max": 0.02, "nonfinite_values": 0, "guard_changes": 0, "input_changes": 0, "invalid_input_output_changes": 0},
+  "initial_sweep": {"minimum_exact": [0.9, 0.75, 0.5], "tau": 1.0, "q_block": 32, "kv_block": 64, "dense_layers": 1, "local_radius": 1},
+  "component_screen": {"relative_l2_max": 0.05, "cosine_min": 0.998, "incremental_median_speedup_min": 1.10},
+  "B1_screen": {"video_velocity_relative_l2_max": 0.05, "audio_velocity_relative_l2_max": 0.05, "finite_full_execution": true},
+  "B5": {"incremental_steady_median_speedup_min": 1.10, "comparison": "identical binary dense FP16; above measured variability"},
+  "B6": {"evaluations": 6, "decoder": "production", "contract": "tests/metal_reference_contract.json", "require_incremental_dense_and_reference_plus_comparisons": true},
+  "stop": "Stop the bounded sweep after the listed settings. If none passes both component quality and speed, retain dense and record a SOL implementation result without production qualification. B1 integration may still be measured diagnostically; B5/B6 promotion is conditional. Remaining M2 held-out corpus stays deferred by the user."
+}

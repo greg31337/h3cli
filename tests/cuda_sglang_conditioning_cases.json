@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "purpose": "Frozen conditioning corpus; input-only diagnostics precede full six-evaluation renders",
+  "fixtures": {
+    "first.png": "Frame 0 of retained oracle C0-r1, original 640x480 RGB canvas",
+    "last.png": "Frame 123 of retained oracle C0-r1, original 640x480 RGB canvas",
+    "portrait.jpg": "Recorded portrait fixture from the original input collection, before AI-generated replacements; Ref2VA max maps to the oracle 2048-pixel short edge",
+    "reference.mp4": "First 1 second of retained oracle C0-r1, including its original audio; exact command/checksums retained"
+  },
+  "cases": [
+    {"id":"F0","task":"fl2va","seed":42,"frames":124,"evaluations":6,"prompt":"Cinematic video of a woman passionately playing a grand piano. The camera slowly glides sideways. Flowing piano music.","conditions":[{"type":"image","uri":"first.png","role":"keyframe","frame_index":0}]},
+    {"id":"F1","task":"fl2va","seed":42,"frames":124,"evaluations":6,"prompt":"Cinematic video of a woman passionately playing a grand piano. The camera slowly glides sideways. Flowing piano music.","conditions":[{"type":"image","uri":"last.png","role":"keyframe","frame_index":-1}]},
+    {"id":"F2","task":"fl2va","seed":42,"frames":124,"evaluations":6,"prompt":"Cinematic video of a woman passionately playing a grand piano. The camera slowly glides sideways. Flowing piano music.","conditions":[{"type":"image","uri":"first.png","role":"keyframe","frame_index":0},{"type":"image","uri":"last.png","role":"keyframe","frame_index":-1}]},
+    {"id":"R0","task":"ref2va","seed":42,"frames":124,"evaluations":6,"prompt":"Cinematic video of the woman in <Picture 1> passionately playing a grand piano. Realistic hands and warm natural lighting. Flowing piano music.","conditions":[{"type":"image","uri":"portrait.jpg","role":"reference"}]},
+    {"id":"R1","task":"ref2va","seed":42,"frames":124,"evaluations":6,"prompt":"The woman in <Picture 1> plays a grand piano with the movement and atmosphere shown in <Video 1>. Realistic details and flowing piano music.","conditions":[{"type":"image","uri":"portrait.jpg","role":"reference"},{"type":"video","uri":"reference.mp4","role":"reference"}]}
+  ]
+}

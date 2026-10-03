@@ -1,0 +1,599 @@
+### 1 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation] The target video shows <Subject 1> walking along a quiet suburban sidewalk and approaching a rotating lawn sprinkler.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video is a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in natural late-afternoon outdoor daylight. The camera moves in a low, smooth rear-three-quarter tracking shot at the cat's walking speed.
+[Shot 1] <Subject 1> walks at an unhurried pace along a tree-lined suburban sidewalk beside lawns, hedges, mailboxes, and detached homes. Its tail moves naturally and its ears react to birds and distant traffic. Near the end, <Subject 1> approaches a driveway where a rotating lawn sprinkler sends a fan of water across the sidewalk. The cat slows several steps before the wet pavement and watches the sweeping spray, ending still facing forward toward the sprinkler. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic suburban sounds: soft pawsteps on concrete, light wind in leaves, birds, distant road traffic, and the increasingly audible hiss and tick of the sprinkler. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 2 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing toward the sprinkler, timing the moving spray, crossing the driveway, and heading toward a nearby park entrance.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the same low rear-three-quarter tracking motion, then trucks slightly sideways as the cat crosses the driveway.
+[Shot 1] <Subject 1> continues slowing in front of the same rotating sprinkler while the spray sweeps across the sidewalk exactly as at the end of the preceding segment. For roughly the opening two seconds, the cat watches one more pass of the water and shifts its weight forward. Then <Subject 1> times the spray, trots across the damp driveway just after the water swings away, and resumes its relaxed walk beneath mature maples toward a green-painted neighborhood park gate. The segment ends as the cat reaches the open gate and begins to pass through it. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic suburban-to-park sounds: the same sprinkler hiss at first, wet pawsteps, birds, leaf rustle, and gradually softer traffic. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 3 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing through the park gate onto a gravel path and following windblown leaves toward an open meadow.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the inherited low tracking shot through the gate, then makes a gentle sideward arc as the path curves.
+[Shot 1] <Subject 1> continues passing through the same green park gate, with the opening two seconds preserving the cat's forward stride and the gate position. The sidewalk becomes a pale gravel path beneath tall trees. A small cluster of dry leaves skitters across the path in a breeze; <Subject 1> briefly quickens its steps and follows them with curious attention. The path curves out from the trees toward an open grassy meadow. The segment ends at the meadow edge as one leaf tumbles into the grass directly ahead. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic park sounds: gravel pawsteps, wind through leaves, birds, a distant lawn mower, and faint city traffic. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 4 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing after a windblown leaf across the meadow, briefly reacting to a distant child, and heading toward a pond.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the low curved tracking movement beside the cat, then performs a small slow arc as the cat veers through the grass.
+[Shot 1] <Subject 1> continues at the meadow edge with the same dry leaf tumbling just ahead of <Subject 1>. For roughly the opening two seconds, the cat follows the leaf through short grass at the same pace and direction. The leaf flips sideways and the cat makes one playful, restrained pounce, then resumes walking. Far across the meadow, a distant off-screen child (S1) calls, <d>[English] Look, Mom, a cat!</d>. <Subject 1> pauses, turns one ear toward the voice, then calmly continues toward a small pond with reeds. The segment ends near the first patch of reeds. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic open-park sounds: grass brushing the paws, breeze, songbirds, distant playground activity, and the single distant child's line; no other intelligible speech. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 5 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing along the pond edge, watching ducks on the water, and approaching a small wooden footbridge.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the same low forward follow beside the reeds, then shifts into a smooth lateral tracking shot parallel to the shoreline.
+[Shot 1] <Subject 1> continues beside the same pond reeds, preserving the cat's position and forward movement for the opening two seconds. Two ducks glide several meters out on the water. <Subject 1> stops briefly and watches them with alert ears but does not stalk or chase. The cat turns back to the gravel path and walks along the shoreline toward a short wooden footbridge over a narrow inlet. The segment ends with one front paw placed on the first weathered bridge plank. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic pond sounds: water lapping softly, ducks splashing and giving quiet calls, reeds in the breeze, gravel pawsteps, and birds overhead. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 6 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing onto the wooden footbridge, crossing the inlet, and reaching a fence with low stacked stones.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the low lateral tracking angle for the first steps onto the bridge, then eases behind the cat and follows straight across.
+[Shot 1] <Subject 1> continues from the exact moment <Subject 1>'s front paw rests on the first bridge plank. During the opening two seconds, the cat steps fully onto the bridge while the same pond and reeds remain behind. It walks across the narrow wooden span, glancing through the railing at moving water below. On the far side, the path meets a long wooden fence beside several low landscape stones. <Subject 1> leaves the bridge, walks to the stones, and begins climbing. The segment ends with its front paws on the lowest stone. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic pond-and-bridge sounds: wooden paw taps, soft creaks, flowing inlet water, reeds, birds, and light wind. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 7 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing up the stacked stones, climbing onto the fence, and balancing along the fence top.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues close behind at low height, then smoothly tilts and pedestals upward with the cat as it climbs.
+[Shot 1] <Subject 1> continues with <Subject 1>'s front paws already on the lowest landscape stone. For roughly the opening two seconds, the cat completes the same upward motion, stepping from stone to stone toward the fence. It stretches, hooks its front paws over the wooden top rail, and climbs onto the fence with controlled feline movement. The cat balances with tail extended, then begins walking along the broad fence top toward a nearby garden shed. The segment ends beside the shed roof as it prepares for a short jump. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic backyard sounds: claws lightly contacting wood, fence creaks, leaves, birds, a distant dog bark, and faint neighborhood ambience. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 8 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing along the fence, making a short jump onto a garden shed roof, and approaching a trellis.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues elevated alongside the fence, then tilts slightly down to follow the short jump and rises into a roof-level track.
+[Shot 1] <Subject 1> continues with <Subject 1> balanced on the fence beside the same garden shed. During the opening two seconds, it takes the final careful steps along the rail and lowers its body for the jump. The cat makes a short natural leap onto the shed roof and lands softly, then walks across the weathered shingles. At the far edge, a sturdy wooden trellis rises toward the lower edge of a detached garage roof. <Subject 1> tests the trellis with one paw and begins climbing. The segment ends halfway up, body angled toward the garage roof. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic backyard roof sounds: a soft landing on shingles, light claw scrapes on wood, breeze, birds, and muted neighborhood noise. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 9 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing up the trellis, climbing onto the garage roof, and reaching the roof ridge.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the upward tilt and pedestal movement beside the trellis, then levels into a steady roof-height tracking shot.
+[Shot 1] <Subject 1> continues with <Subject 1> halfway up the same wooden trellis. The opening two seconds preserve the same climbing motion and paw placement. The cat climbs the remaining distance, reaches over the gutter, and pulls itself onto the garage roof. It pauses on the sloped shingles, then walks diagonally upward with secure footing. The camera glides parallel to the roofline as the cat reaches the ridge. The segment ends with <Subject 1> stepping onto the ridge and beginning to walk toward a brick chimney. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic rooftop sounds: claws softly ticking on shingles, wind across the roof, rustling trees, distant birds, and faint traffic below. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 10 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing along the garage roof ridge toward a chimney and noticing an orange tabby cat.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the same roof-height side tracking movement while gradually revealing the chimney and the other cat.
+[Shot 1] <Subject 1> continues with <Subject 1> already walking along the same roof ridge toward the brick chimney. For the opening two seconds, its gait, tail balance, camera speed, and roof perspective remain unchanged. The cat advances along the ridge. When it passes the chimney, an orange tabby becomes visible several meters ahead on the same roof, sitting calmly near the opposite slope. <Subject 1> slows and raises its head; the orange tabby also becomes attentive. Neither cat acts aggressively. The segment ends with both cats facing one another at a comfortable distance. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic rooftop ambience: steady breeze, distant birds, occasional traffic below, soft paw contact on shingles, and one quiet cat chirp near the end. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 11 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing the rooftop encounter, approaching the orange tabby for a brief cautious greeting, then beginning to follow it.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues at the same roof height with a slow forward push, then tracks gently sideways as the two cats move.
+[Shot 1] <Subject 1> continues with <Subject 1> and the orange tabby facing each other in the same positions. During the opening two seconds, both remain relaxed while <Subject 1> takes the first cautious step forward. The cats approach slowly, pause, and briefly sniff noses and cheeks in a calm greeting. The orange tabby turns away and starts walking along the ridge past the chimney. <Subject 1> follows for two or three curious steps. The segment ends with the orange tabby continuing ahead and <Subject 1> just behind. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic rooftop sounds: breeze, subtle paw taps, a soft friendly cat trill, leaves in nearby trees, and distant neighborhood ambience. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 12 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing behind the orange tabby until it leaves for a neighboring roof, then beginning a careful descent.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the same roof-level tracking beside the cats, then smoothly pans and tilts downward with <Subject 1>.
+[Shot 1] <Subject 1> continues with the orange tabby walking a few steps ahead of <Subject 1> along the same ridge. For the opening two seconds, both maintain the same direction and pace. The orange tabby reaches a narrow gap, makes an easy jump onto a neighboring lower roof, and continues out of view. <Subject 1> stops rather than following, watches for a moment, then turns toward a sturdy trellis beside the garage. The cat walks down the roof slope and starts descending. The segment ends as <Subject 1>'s front paws reach the top of a wooden fence below. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic roof-to-yard sounds: breeze, shingle pawsteps, one soft landing from the other cat in the distance, wood creaks, and birds. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 13 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing down from the roof to the fence and alley, then walking toward an open community-garden gate.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the same downward tilt and descending motion, then settles back to cat height in a smooth rear-three-quarter follow.
+[Shot 1] <Subject 1> continues with <Subject 1>'s front paws already on the fence top beneath the trellis. During the opening two seconds, the cat completes the same descent and transfers its weight onto the fence. It steps along the rail, drops lightly to the quiet alley pavement, and resumes walking. The alley contains garage doors, climbing vines, and patches of sun. A breeze moves vine leaves near an open community-garden gate ahead. <Subject 1> follows the alley, passes through the gate, and the segment ends just inside the garden. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic alley sounds: a soft landing, pawsteps on pavement, vine leaves, distant birds, faint traffic, and a loose metal latch lightly tapping. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 14 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing into the community garden, walking between raised beds, and noticing a gray tabby cat.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the low follow through the garden gate, then drifts into a gentle lateral tracking shot between raised beds.
+[Shot 1] <Subject 1> continues with <Subject 1> just inside the same community-garden gate. For the opening two seconds, it walks forward between the first raised beds with the gate still visible behind. The cat explores a narrow path bordered by herbs, tomato vines, flowers, and damp soil. Droplets fall from a slow irrigation line. As <Subject 1> rounds a planter corner, a gray tabby becomes visible sitting on the wooden edge of a raised bed. Both cats notice each other and slow. The segment ends with them facing one another calmly across the path. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic garden sounds: soft soil and gravel pawsteps, bees, birds, dripping irrigation water, leaves, and distant neighborhood ambience. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 15 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing the garden encounter, exchanging a brief greeting with the gray tabby, then turning toward an open greenhouse.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the same low lateral composition, makes a small slow push toward the greeting, then pans smoothly toward the greenhouse.
+[Shot 1] <Subject 1> continues with <Subject 1> and the gray tabby calmly facing each other beside the same raised bed. The opening two seconds preserve their distance and relaxed posture while <Subject 1> takes a cautious step closer. The cats meet briefly, sniff noses, and pass shoulder to shoulder without aggression. The gray tabby slips beneath a gap in the garden fence and disappears. <Subject 1> watches it leave, then notices an open greenhouse door a few meters away. The cat walks between two planters toward it. The segment ends as its front paws cross the threshold. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic garden sounds: birds, bees, leaves, a faint friendly cat trill, gravel pawsteps, and a light greenhouse-door creak. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 16 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing through the greenhouse, exploring rows of plants, and following a butterfly toward the far door.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues forward at cat height through the threshold, then becomes a slow smooth tracking shot between plant benches.
+[Shot 1] <Subject 1> continues with <Subject 1>'s front paws crossing the same greenhouse threshold. For the opening two seconds, the cat completes that step and moves fully inside while the doorway remains behind. Natural daylight filters through translucent panels onto rows of leafy plants, hanging vines, and damp concrete. The cat walks down the center aisle and looks up at water droplets falling from a leaf. A pale butterfly flutters across the aisle and drifts toward an open door at the far end. <Subject 1> follows at a curious walk. The segment ends as the butterfly passes outside and the cat reaches the far doorway. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic greenhouse sounds: soft pawsteps on damp concrete, water drips, faint leaf rustle, insects, and muffled outdoor birds. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 17 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing out of the greenhouse onto a creek-side trail and approaching stepping stones.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the same forward tracking through the far doorway, then eases to the cat's side as the creek comes into view.
+[Shot 1] <Subject 1> continues with <Subject 1> at the far greenhouse doorway while the same butterfly moves just outside. During the opening two seconds, the cat steps through the doorway and follows it onto a narrow creek-side path. The butterfly rises above the vegetation and drifts away; <Subject 1> watches, then continues along the path. A shallow creek appears beside ferns and stones. Ahead, broad stepping stones cross to the opposite bank. The cat approaches carefully, studies the moving water, and extends one front paw onto the first stone. The segment ends at that exact first step. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic creek-trail sounds: running water growing louder, birds, insects, breeze through ferns, and soft dirt pawsteps. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 18 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing onto the creek stepping stones, crossing the shallow water, and heading toward a pedestrian underpass.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues beside the cat at low height, gliding parallel to the stones, then swings gently behind as it climbs the far bank.
+[Shot 1] <Subject 1> continues from the exact moment <Subject 1>'s front paw rests on the first stepping stone. For roughly the opening two seconds, the cat transfers its weight onto that stone while the same water flows around it. It crosses one broad stone at a time with careful balanced steps, pauses briefly to watch a ripple, then completes the crossing without entering the water. On the far side it climbs a short dirt bank and follows the path toward a concrete pedestrian underpass beneath a quiet road. The segment ends as <Subject 1> reaches the shadow line and begins to enter. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic creek sounds: flowing water, light splashes against stones, paw taps on rock, birds, and increasingly hollow ambience near the underpass. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 19 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing into the pedestrian underpass, walking through its echoing shade, and emerging onto a grassy rail-trail corridor.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the same rear follow into the shade, keeps a stable low height through the tunnel, and brightens gradually toward the exit.
+[Shot 1] <Subject 1> continues with <Subject 1> crossing the same shadow line into the pedestrian underpass. During the opening two seconds, it takes several steady steps inside while the bright creek-side path remains behind. The cat walks through the short tunnel, its pawsteps echoing lightly. Daylight grows ahead. <Subject 1> exits into a grassy linear trail bordered by a secure railway fence and wild vegetation. A distant train horn is audible well away from the cat. The segment ends with the cat fully outside, turning onto the trail. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic underpass-to-trail sounds: echoing pawsteps, a few water drips, airflow through the tunnel, then open birds and wind with a distant train horn. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 20 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing along the rail-trail while a distant train moves behind the fence, then approaching stairs to a pedestrian overpass.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues low behind and slightly to the side, matching the cat's pace while keeping the railway safely in the background.
+[Shot 1] <Subject 1> continues with <Subject 1> turning onto the same grassy rail-trail. For the opening two seconds, it settles into a steady walk with the underpass receding behind. Far beyond the secure fence, a passenger train begins moving parallel to the trail at a distance, visible between grasses and posts. The cat notices the motion, pauses for half a beat, then keeps walking calmly. The path rises toward a staircase leading to a pedestrian overpass above the tracks. <Subject 1> reaches the base and looks upward. The segment ends as one paw touches the first stair. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic rail-trail sounds: wind in tall grass, birds, pawsteps, distant wheel rumble and train horn behind the fence, and faint road noise. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 21 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing up the pedestrian-overpass stairs as the train passes below, pausing at the railing, and beginning to cross.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the inherited follow and smoothly tilts upward with the cat, pedestaling alongside the stairs before leveling on the deck.
+[Shot 1] <Subject 1> continues from the first stair with <Subject 1> already beginning its climb. During the opening two seconds, the cat takes several more steps upward at the same pace while the camera rises with it. It reaches the pedestrian overpass deck as the train passes below, safely separated by the structure. <Subject 1> pauses beside the railing, watches the moving train for a moment, then turns and walks across the bridge. The segment ends near the far side as the cat starts down the opposite staircase. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic overpass sounds: rhythmic train rumble below, wind across the bridge, metal stair paw taps, birds, and traffic in the distance. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 22 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing down the far staircase into a quiet service lane where a loose paper bag skitters into the cat's path.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues beside the descending cat, then lowers smoothly back to cat height and tracks forward into the lane.
+[Shot 1] <Subject 1> continues with <Subject 1> already starting down the far overpass staircase. For roughly the opening two seconds, it descends several steps while the train sound fades behind. The cat reaches ground level and enters a quiet service lane behind an outdoor market that is being packed away; empty crates and folded tables sit well off the path. A gust catches a lightweight brown paper bag and sends it skittering across the pavement. <Subject 1> notices and slows. The bag tumbles once more and catches against a curb directly in front of the cat, where the segment ends. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic service-lane sounds: stair paw taps fading into pavement steps, wind, awning fabric flutter, paper scraping and rustling, and distant city ambience. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 23 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing with the paper bag at the curb, batting it once, following it as the wind rolls it away, and entering a courtyard.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the same low tracking position, makes a small playful arc around the cat and bag, then follows forward.
+[Shot 1] <Subject 1> continues with the same paper bag caught at the curb directly in front of <Subject 1>. During the opening two seconds, the cat leans forward, sniffs, and gives the bag one light paw tap. A fresh gust frees it and sends it rolling and bouncing down the lane. <Subject 1> follows with a quick playful trot for several meters. The bag rolls through an open archway into a small sunlit courtyard with a low stone fountain. The cat follows through the arch. Near the fountain the wind dies, the bag settles beside the base, and <Subject 1> stops facing the water. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic courtyard-transition sounds: paper rustle and scraping, quick pawsteps, wind through the archway, then softly splashing fountain water and birds. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 24 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing beside the fountain, investigating the water, watching pigeons lift away, and climbing onto a low brick wall.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues low and close beside the cat, then arcs gently around the fountain before tracking toward the wall.
+[Shot 1] <Subject 1> continues with <Subject 1> facing the same low stone fountain while the paper bag remains settled beside its base. For roughly the opening two seconds, the cat steps closer to the water and watches the falling stream. It touches the wet stone edge with one paw. A few pigeons drinking on the far side flutter upward and away; the cat looks up but does not chase. <Subject 1> circles past the fountain and walks toward a low brick wall bordering the courtyard. It places both front paws on the wall and climbs onto the broad top. The segment ends looking toward an exterior metal stair. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic courtyard sounds: fountain splash, pigeons cooing and wingbeats, pawsteps on stone, breeze, and distant traffic. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 25 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing along the brick wall to an exterior metal stair and climbing onto its first landing.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues at wall height beside the cat, then tilts and pedestals upward smoothly as the cat moves onto the stair.
+[Shot 1] <Subject 1> continues with <Subject 1> standing on the same low brick wall and looking toward the exterior metal stair. The opening two seconds preserve that orientation as the cat begins walking along the wall top. It reaches where the wall meets the lower edge of the sturdy stair structure, steps onto a broad metal tread, and starts climbing. The cat ascends several steps with confident footing while warm daylight glints on the rails. The segment ends as <Subject 1> steps onto the first landing and turns toward the next flight. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic courtyard-and-stair sounds: fountain fading behind, light metallic paw taps, breeze, birds, and a faint rail vibration. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 26 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing from the first landing, climbing the exterior stairs to the rooftop, and stepping into warm late-afternoon light.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the same upward pedestal and tracking movement, then levels smoothly as the cat emerges onto the rooftop.
+[Shot 1] <Subject 1> continues with <Subject 1> on the first landing turning toward the next flight. During the opening two seconds, it begins climbing while the camera rises at the same pace. The cat ascends the final flight and passes through an already open rooftop access gate. The frame opens onto a broad safe flat roof with vents, low parapets, and angled solar panels. <Subject 1> steps into warm late-afternoon sunlight, pauses, then begins walking between two vents toward the brighter side. The segment ends with the cat fully on the rooftop, moving steadily forward. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic rooftop-entry sounds: metal stair taps fading into soft roof-surface pawsteps, steady breeze, birds, and distant urban traffic. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 27 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing across the flat rooftop and encountering a calm black cat near a solar panel.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues at cat height in a smooth roof-level side track, gradually revealing the solar panel and the second cat.
+[Shot 1] <Subject 1> continues with <Subject 1> walking steadily across the same flat rooftop between vents. For the opening two seconds, its pace, direction, camera spacing, and warm light remain unchanged. As it rounds a low vent, a calm black cat becomes visible sitting in shade beside an angled solar panel. <Subject 1> slows but does not approach too closely. The black cat turns its head; both remain relaxed. After a quiet moment, <Subject 1> sits several feet away, and the two cats look out across the rooftops in the same direction. The segment ends with both cats still. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic rooftop sounds: wind, distant birds and traffic, a soft ventilation hum, subtle pawsteps, and one faint cat chirp. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 28 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing beside the black cat as it gets up and leaves, then following sunlight across the rooftop while the first raindrops begin.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the quiet roof-level composition, then resumes a gentle lateral tracking movement after the other cat departs.
+[Shot 1] <Subject 1> continues with <Subject 1> and the black cat sitting several feet apart near the same solar panel. During the opening two seconds, both hold the shared rooftop view. The black cat stands, stretches once, and walks behind the panel out of sight. <Subject 1> watches, then gets up and follows a bright reflection sliding across the roof as a thin cloud passes the sun. A few isolated raindrops begin to darken the roof membrane. The cat pauses, looks upward, and flicks one ear. The segment ends with <Subject 1> turning toward the sheltered space beneath the raised solar-panel structure. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic rooftop sounds: steady wind, ventilation hum, distant traffic, soft pawsteps, and the first sparse raindrops tapping the roof and panel. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 29 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing as light rain begins, moving beneath the raised solar-panel shelter, waiting briefly, and peering out as the shower eases.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the same roof-level tracking turn, lowers slightly with the cat into shelter, and makes a slow small push while it waits.
+[Shot 1] <Subject 1> continues with <Subject 1> turning toward the same raised solar-panel structure as scattered raindrops mark the roof. For the opening two seconds, the cat walks directly toward the shelter while the rain continues at the same light intensity. It ducks beneath the dry overhang and sits, protected from the brief shower. Water beads and runs from the panel edge while the cat calmly watches the roof beyond. The rain quickly thins. <Subject 1> rises, takes two steps toward the edge of the shelter, and peers out at the wet reflective surface. The segment ends just as it prepares to step into the open. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic rainy rooftop sounds: light rain tapping solar panels, small drips from panel edges, wind, ventilation hum, and distant softened traffic. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 30 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing out from the shelter onto the wet roof and beginning to descend an ivy-covered trellis into a walled garden.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues low beside the cat as it leaves shelter, tracks across the wet roof, then tilts downward in one smooth motion at the trellis.
+[Shot 1] <Subject 1> continues with <Subject 1> peering from beneath the solar panel as the shower ends. During the opening two seconds, the cat takes its first steps out onto the same wet roof while the last drops fall from the panel edge. It walks across shallow puddles reflecting bright sky and nearby chimneys, heading toward an ivy-covered trellis beside the parapet. A distant child on a balcony briefly calls, <d>[English] Mom, look, the cat!</d>. <Subject 1> continues undisturbed, steps onto the trellis, and starts climbing down. The segment ends with the cat partway into the ivy. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic post-rain rooftop sounds: occasional drips, wet pawsteps, breeze, distant traffic, returning birds, and the single distant child's line. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 31 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing down the ivy-covered trellis, reaching the walled garden, and moving through ornamental grasses into a hedge passage.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the inherited downward tilt beside the trellis, then settles smoothly back to cat height and follows through the garden.
+[Shot 1] <Subject 1> continues with <Subject 1> already partway down the same ivy-covered trellis. For roughly the opening two seconds, it keeps descending with the same controlled paw placements while wet leaves brush its sides. The cat reaches the garden wall, steps down onto a stone ledge, and drops lightly onto soft soil. It walks through tall ornamental grasses still carrying rain droplets. A small wind-driven garden pinwheel turns slowly near the path. <Subject 1> passes it, follows a narrow flagstone route, and enters a passage between two neatly trimmed hedges. The segment ends with the cat moving into the hedge corridor. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic walled-garden sounds: wet leaves brushing fur, a soft landing on soil, dripping foliage, birds, breeze, and the faint dry clicking of a garden pinwheel. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 32 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing through the hedge passage and entering a sculpture garden where mirrored metal spheres reflect the cat and sky.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues at cat height through the narrow corridor, then makes a slow smooth arc around the nearest mirrored sphere.
+[Shot 1] <Subject 1> continues with <Subject 1> moving into the same hedge passage. During the opening two seconds, the cat advances between the wet green walls at the same relaxed walking speed. The corridor opens into a small sculpture garden containing polished stainless-steel spheres at ground level. Their curved surfaces reflect the sky, hedges, and a distorted image of the cat. <Subject 1> approaches one sphere, stops, studies its own moving reflection, then shifts one step sideways and watches the reflected cat shift too. After a curious pause, it walks around the sphere toward a vine-covered arch, where the segment ends. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic garden sounds: damp flagstone pawsteps, water drops from hedges, birds, breeze, and subtle leaf movement; no voices. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 33 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing around the mirrored sphere, passing through a vine arch, and following a grassy path toward a shallow stone streambed.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the slow arc around the sphere, then straightens into a low front-side tracking shot through the arch.
+[Shot 1] <Subject 1> continues with <Subject 1> circling the same mirrored sphere toward the vine-covered arch. For the opening two seconds, the moving reflection and cat remain aligned with the prior action. The cat passes beneath the arch and emerges onto a narrow grassy path. Sunlight breaks through wet leaves in moving patches, and <Subject 1> follows one shifting bright spot for a few playful steps before returning to its steady walk. A shallow landscaped streambed of smooth stones appears ahead with a thin ribbon of runoff. The cat reaches the first broad stone and begins stepping in, ending with its front paws on the rock. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic post-rain garden sounds: wet leaves, birds, grass brushing paws, faint trickling water, and occasional droplets falling from the vine arch. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 34 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing across the shallow stone streambed and climbing onto a fallen log that spans a small creek.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues parallel to the cat at low height across the stones, then tilts slightly upward and tracks alongside the log.
+[Shot 1] <Subject 1> continues with <Subject 1>'s front paws already on the first broad stone in the same shallow streambed. During the opening two seconds, the cat shifts its weight onto the rock and takes the next careful step. It moves from stone to stone while a thin ribbon of water trickles below. The streambed leads into a slightly wilder garden edge where a sturdy fallen log spans a narrow creek channel. <Subject 1> steps from the last stone onto the log, tests the bark with one paw, and begins walking along its broad upper surface with its tail extended for balance. The segment ends a short distance out on the log. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic stream sounds: trickling water, paw taps on stone changing to claws on bark, birds, insects, and a gentle breeze. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 35 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing along the fallen log over the creek, reaching the mossy bank, and noticing a rabbit at a safe distance.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the side-on tracking movement along the log, keeping the creek visible below, then eases forward as the cat reaches the bank.
+[Shot 1] <Subject 1> continues with <Subject 1> already walking along the same fallen log over the creek. For roughly the opening two seconds, the cat takes several balanced steps with its tail held out exactly as before. It reaches the far end, jumps a short distance onto a mossy bank, and pauses. Several meters ahead, a small rabbit is visible near low shrubs. <Subject 1> becomes attentive but remains still and watches rather than chasing. The rabbit pauses, then hops toward thicker vegetation. The cat relaxes and begins walking along the bank toward a small wooden footbridge. The segment ends with the bridge just ahead. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic woodland-edge sounds: creek water, bark and moss under paws, birds, insects, leaves, and the soft rustle of the rabbit moving through ground cover. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 36 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing while the rabbit moves away, walking onto a small wooden footbridge, and following swirling leaves toward a hedge-maze entrance.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues low behind the cat toward the bridge, then tracks smoothly across while a few leaves move through the foreground.
+[Shot 1] <Subject 1> continues with <Subject 1> walking away from the mossy bank as the rabbit disappears into the same shrubs. During the opening two seconds, the cat keeps the same relaxed pace toward the wooden footbridge. It steps onto the bridge and crosses above the narrow creek. A mild breeze lifts several damp leaves, swirling them briefly across the planks and then toward the path beyond. <Subject 1> follows the moving leaves and continues off the bridge. Ahead is the entrance to a low ornamental hedge maze. The cat reaches the opening and steps inside, ending just past the entrance. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic bridge-and-garden sounds: creek water below, wooden paw taps, leaves skittering in the breeze, birds, and insects. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 37 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing into the hedge maze, weaving through turns, and choosing the right-hand path at a fork.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues directly behind at cat height, then gradually pedestals slightly higher only enough to keep the cat visible around the hedges.
+[Shot 1] <Subject 1> continues with <Subject 1> just inside the same hedge-maze entrance. For the opening two seconds, it walks deeper between the hedges with the bridge faintly visible behind. The cat follows the narrow path through two gentle bends, occasionally brushing close to wet leaves. The camera remains physically continuous and rises only slightly when a hedge would hide the cat. At a fork, <Subject 1> stops, looks left, then right, and turns into the right-hand passage. It continues several steps around another curve. The segment ends moving steadily toward a brighter opening. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic hedge-maze sounds: close leaf rustle, soft gravel pawsteps, droplets, birds beyond the hedges, and a light breeze. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 38 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing down the right-hand hedge passage, emerging from the maze, and stepping onto a small gazebo deck with wind bells.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the slightly raised follow through the final hedge turn, then lowers gradually to cat height as the cat emerges.
+[Shot 1] <Subject 1> continues with <Subject 1> moving along the same right-hand hedge corridor toward the bright opening. During the opening two seconds, it follows the curve with the same pace and camera relation. The cat exits the maze into an open garden clearing. A small wooden gazebo stands ahead with simple hanging wind bells under its roof edge. <Subject 1> crosses a short patch of grass, climbs two shallow steps, and walks onto the gazebo deck. A breeze gently stirs the bells. The cat pauses near the center, then starts toward the far steps. The segment ends with it still on the deck facing the grassy path beyond. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic garden-clearing sounds: grass and wood pawsteps, breeze, delicate wind-bell tones, birds, and leaves; no music or voices. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 39 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing across the gazebo deck, descending onto a grassy hill path, and following moving kite shadows uphill.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues at deck height behind the cat, follows it down the steps, then shifts into a smooth trailing shot up the gentle hill.
+[Shot 1] <Subject 1> continues with <Subject 1> already crossing the same gazebo deck toward the far steps. For roughly the opening two seconds, it takes the last deck steps while the wind bells continue softly behind. The cat descends onto a grassy path that climbs a gentle hill. High overhead, distant kites outside the frame cast occasional moving shadows across the grass. <Subject 1> notices one shadow glide past and follows it for a few steps before continuing naturally uphill. The neighborhood begins to appear below between trees. The segment ends only a few paces from a flat sun-warmed stone near the hilltop. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic hill sounds: wind through grass, fading wind bells, birds, soft pawsteps, and distant neighborhood traffic far below. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A
+
+### 40 ###
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> continuing the final steps to the hilltop, settling on a warm stone, and calmly surveying the neighborhood after the adventure.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and overall appearance.
+detailed_description:
+The target video continues directly from the preceding video as a photorealistic, cinematic, uninterrupted realistic single shot of <Subject 1> in the same natural late-afternoon daylight. The opening roughly two seconds preserve the exact ending state of the preceding segment: the same cat pose and direction of travel, the same environment and object positions, and continuous camera height, framing, motion, exposure, and ambient sound. The camera continues the same trailing uphill movement, then makes a slow gentle arc around the seated cat and gradually pulls back.
+[Shot 1] <Subject 1> continues with <Subject 1> only a few paces from the same flat stone near the hilltop. During the opening two seconds, the cat completes the same uphill walk while the neighborhood remains visible between trees below. It steps onto the sun-warmed stone, turns once, and sits facing the view. The cat's tail curls naturally beside its paws as it watches treetops, roofs, and the distant park it crossed earlier. Far away on a roofline, another cat is visible only as a small quiet silhouette, echoing the earlier encounters. The camera slowly arcs to a three-quarter view and pulls back slightly, ending on <Subject 1> calmly surveying the neighborhood. Keep the movement physically continuous throughout this single shot; the new action develops only after the inherited opening state, with no cut, time jump, teleportation, or unexplained change of direction.
+overall_soundscape:
+Only natural diegetic hilltop sounds: steady breeze through grass and trees, birds, very distant traffic, and the cat's soft breathing; no dialogue. Ambient sound carries smoothly through the continuation boundary. No narration and no added sound effects.
+non_diegetic_music:
+N/A

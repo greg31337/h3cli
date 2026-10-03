@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "model": "models/MiniMax-H3",
+  "calibration_steps": 2,
+  "render_pairs": [
+    {
+      "id": "R1",
+      "width": 640,
+      "height": 480,
+      "frames": 243,
+      "references": [],
+      "image_size": "match",
+      "pair_minutes": 20,
+      "steps": 2,
+      "seed": 4242
+    },
+    {
+      "id": "R2",
+      "width": 640,
+      "height": 480,
+      "frames": 243,
+      "references": [
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I06",
+        "I07",
+        "I08",
+        "I09"
+      ],
+      "image_size": "match",
+      "pair_minutes": 25,
+      "steps": 2,
+      "seed": 4242
+    },
+    {
+      "id": "R3",
+      "width": 640,
+      "height": 480,
+      "frames": 243,
+      "references": [
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I06",
+        "I07",
+        "I08",
+        "I09"
+      ],
+      "image_size": "max",
+      "pair_minutes": 35,
+      "steps": 2,
+      "seed": 4242
+    },
+    {
+      "id": "R4",
+      "width": 640,
+      "height": 480,
+      "frames": 158,
+      "references": [
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I06",
+        "I07",
+        "I08",
+        "I09",
+        "V3a",
+        "V3b",
+        "V3c"
+      ],
+      "image_size": "max",
+      "pair_minutes": 40,
+      "steps": 2,
+      "seed": 4242
+    },
+    {
+      "id": "R5",
+      "width": 1344,
+      "height": 768,
+      "frames": 243,
+      "references": [],
+      "image_size": "match",
+      "pair_minutes": 50,
+      "steps": 2,
+      "seed": 4242
+    },
+    {
+      "id": "R6",
+      "width": 1344,
+      "height": 768,
+      "frames": 362,
+      "references": [
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I06",
+        "I07",
+        "I08",
+        "I09"
+      ],
+      "image_size": "max",
+      "pair_minutes": 85,
+      "steps": 2,
+      "seed": 4242
+    }
+  ]
+}

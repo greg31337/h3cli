@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "recipe": 2,
+  "frozen_before_model_tuning": true,
+  "representative_geometry": [640, 480, 243],
+  "dense_component": {"relative_l2": 0.01, "synthetic_max_abs": 0.05, "real_max_abs_peak_fraction": 0.02},
+  "dense_model": {"relative_l2": 0.02, "min_cosine": 0.999},
+  "sol_component": {"relative_l2": 0.05, "min_cosine": 0.998},
+  "sol_block": {"relative_l2": 0.02, "min_cosine": 0.999},
+  "sol_model_video": {"relative_l2": 0.05, "min_cosine": 0.998},
+  "sol_model_audio": {"relative_l2": 0.05, "min_cosine": 0.998},
+  "protected_attention_rows": {"relative_l2": 0.01, "max_abs_peak_fraction": 0.02},
+  "sol_minimum_whole_step_speedup": 1.10,
+  "timing_policy": "Matched B1 then B5; require >=1.10 median speedup and savings larger than the observed within-run steady-step range. Repeat balanced runs when that margin is not clear.",
+  "production": "B1/B5 numerical acceptance is limited to those evaluations. B6 accumulation and decoded Ref2VA/continuation/A-V quality remain separate production gates."
+}

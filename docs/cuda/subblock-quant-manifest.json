@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "width": 640,
+  "height": 480,
+  "frames": 90,
+  "steps": 50,
+  "fps": 24,
+  "seed": 42,
+  "prompt": "Cinematic medium shot of a woman passionately playing a grand piano in a sunlit concert hall. Her fingers move across the keys as the camera slowly glides sideways. Warm natural lighting, realistic details, flowing piano music.",
+  "decoder": "full",
+  "timeout_seconds": 7200,
+  "recipe": 1,
+  "weight_mode": "resident",
+  "packing_recipe": 2,
+  "quantized_execution_recipe": 4,
+  "subblock_execution_recipe": 2,
+  "subblock_kernel_recipe": 1,
+  "subblock_plan": 1,
+  "subblock_sparsity": 0.75,
+  "output_root": "outputs/subblock-quant",
+  "variants": [
+    {
+      "id": "F8-D0",
+      "group": "fp8",
+      "baseline": "F8-D0",
+      "args": []
+    },
+    {
+      "id": "F8-Q",
+      "group": "fp8",
+      "baseline": "F8-D0",
+      "args": [
+        "--cuda-denoise-quant",
+        "fp8"
+      ]
+    },
+    {
+      "id": "F8-S75",
+      "group": "fp8",
+      "baseline": "F8-D0",
+      "args": [
+        "--cuda-denoise-quant",
+        "fp8",
+        "--cuda-attention",
+        "subblock",
+        "--subblock-sparsity",
+        "0.75"
+      ]
+    },
+    {
+      "id": "F4-D0",
+      "group": "nvfp4",
+      "baseline": "F4-D0",
+      "args": []
+    },
+    {
+      "id": "F4-Q",
+      "group": "nvfp4",
+      "baseline": "F4-D0",
+      "args": [
+        "--cuda-denoise-quant",
+        "nvfp4"
+      ]
+    },
+    {
+      "id": "F4-S75",
+      "group": "nvfp4",
+      "baseline": "F4-D0",
+      "args": [
+        "--cuda-denoise-quant",
+        "nvfp4",
+        "--cuda-attention",
+        "subblock",
+        "--subblock-sparsity",
+        "0.75"
+      ]
+    }
+  ]
+}

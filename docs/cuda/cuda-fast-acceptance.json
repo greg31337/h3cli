@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "status": "accepted",
+  "accepted_on": "2026-09-17",
+  "reviewer": "user",
+  "statement": "I confirm that quality is very good and acceptable; proceed accordingly",
+  "scope": "Documented opt-in --fast-cuda workflow and existing bounded validation corpus on RTX PRO 6000 SM120, with the recorded representative M4 handoff coverage.",
+  "decision_level": "workflow; individual playback/listening actions and criterion scores were not separately supplied",
+  "completed_tasks": {
+    "first": "T121",
+    "last": "T164",
+    "count": 44
+  },
+  "quality_gates_closed": [
+    "T131",
+    "T135",
+    "T137",
+    "T139",
+    "T140",
+    "T152",
+    "T153",
+    "T154",
+    "T155",
+    "T161",
+    "T164"
+  ],
+  "evidence": {
+    "report": "docs/cuda-fast-validation.md",
+    "corpus_snapshot": "outputs/fast-cuda/quality-acceptance.json"
+  },
+  "limits": [
+    "Future rerenders require their own review.",
+    "Unshipped kernels and untested hardware are not separately accepted.",
+    "No long-form quality or production-length speedup claim.",
+    "Existing missing-fixture and hardware-counter limitations remain recorded."
+  ],
+  "execution_default": "unchanged; --fast-cuda remains opt-in",
+  "hardware_followups": [
+    {
+      "status": "visual_quality_accepted",
+      "accepted_on": "2026-09-18",
+      "reviewer": "user",
+      "statement": "both 3090 and 5090 videos look good",
+      "hardware": [
+        "RTX 3090 (SM86)",
+        "RTX 5090 (SM120)"
+      ],
+      "scope": "Visual quality of the existing bounded RTX 3090 and RTX 5090 validation outputs at their recorded settings.",
+      "decision_level": "Overall visual approval; individual clip scores, full-speed playback actions and audio listening were not separately supplied.",
+      "evidence": [
+        {
+          "report": "docs/cuda-3090-qualification.md",
+          "corpus_snapshot": "outputs/cuda-validation/rtx3090/quality-acceptance.json"
+        },
+        {
+          "report": "docs/cuda-5090-qualification.md",
+          "corpus_snapshot": "outputs/cuda-validation/rtx5090/quality-acceptance.json"
+        }
+      ],
+      "limits": [
+        "Two-step smoke and functional outputs remain functional evidence only.",
+        "Compact ten-step previews retain their recorded reduced-settings scope.",
+        "Approval does not extend to future rerenders, untested settings or long-form output."
+      ]
+    },
+    {
+      "status": "visual_audio_quality_accepted",
+      "accepted_on": "2026-09-18",
+      "reviewer": "user",
+      "statement": "H200 videos look and sound good",
+      "hardware": [
+        "H200 (SM90)"
+      ],
+      "scope": "Video and audio quality of the existing six matched 20-step H200 default/fast pairs at their recorded settings.",
+      "decision_level": "Overall video and audio approval; individual clip scores and playback speed were not separately supplied.",
+      "quality_gates_closed": [
+        "T192 (H200 portion)",
+        "T194 (H200 portion)"
+      ],
+      "evidence": [
+        {
+          "report": "docs/cuda-h200-qualification.md",
+          "corpus_snapshot": "outputs/cuda-validation/h200/quality-acceptance.json"
+        }
+      ],
+      "limits": [
+        "Additional video-reference and decoder galleries are outside the frozen six-pair decision.",
+        "Two-step smoke outputs remain functional evidence only.",
+        "Approval does not extend to future rerenders, untested settings or long-form output.",
+        "This H200 decision does not cover B200; B200 has its own qualification and quality decision.",
+        "The skipped Metal-to-H200 check and other recorded coverage limits remain unchanged."
+      ]
+    },
+    {
+      "status": "visual_audio_quality_accepted",
+      "accepted_on": "2026-09-18",
+      "reviewer": "user",
+      "statement": "B200 videos look and sound good",
+      "hardware": [
+        "B200 (SM100)"
+      ],
+      "scope": "Video and audio quality of the existing six matched 20-step B200 default/fast pairs at their recorded settings.",
+      "decision_level": "Overall video and audio approval; individual clip scores and playback speed were not separately supplied.",
+      "quality_gates_closed": [
+        "T187 (B200 portion)",
+        "T192 (B200 portion)",
+        "T194 (B200 portion)"
+      ],
+      "evidence": [
+        {
+          "report": "docs/cuda-b200-qualification.md",
+          "corpus_snapshot": "outputs/cuda-validation/b200/quality-acceptance.json"
+        }
+      ],
+      "limits": [
+        "Two-step functional clips, decoder outputs and the timing repeat are outside the frozen six-pair decision.",
+        "Approval does not extend to future rerenders, untested settings or long-form output.",
+        "The H200-to-B200 state handoff remains pending transfer permission and a follow-up rendering allowance under T188.",
+        "The skipped Metal-to-H200 check and other recorded coverage limits remain unchanged."
+      ]
+    }
+  ]
+}

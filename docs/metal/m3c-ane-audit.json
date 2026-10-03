@@ -1,0 +1,122 @@
+{
+  "revision": "f34e2cc3a3adae759eea254419f436f5b7800057",
+  "files": [
+    {
+      "path": "LICENSE",
+      "bytes": 11338,
+      "sha256": "da1a325757e207244cd589713ce51febe3859aab6034f34afbccd57eb96cb53a"
+    },
+    {
+      "path": "NOTICE",
+      "bytes": 672,
+      "sha256": "a58393c97bac82375a4e3acc982bc9497b5157e8b9ddf22f4f039490f1d7b09a"
+    },
+    {
+      "path": "apple-silicon/coreml/ane-emitter.cc",
+      "bytes": 24949,
+      "sha256": "716eeba4bae259cad274e972b5259d50c69bd10d87ea51512777d2a7437ce53f"
+    },
+    {
+      "path": "apple-silicon/coreml/ane-emitter.h",
+      "bytes": 8569,
+      "sha256": "52579ea057f6f48ce8a27da8093ddf99614b54fa17fbe6bb3c00d40fb147c70f"
+    },
+    {
+      "path": "apple-silicon/coreml/ane-worker.cc",
+      "bytes": 4067,
+      "sha256": "75ab29229aa3f3cacc2ea4699ec2521513db14997e66628f7c69af8b22ef6908"
+    },
+    {
+      "path": "apple-silicon/coreml/ane-worker.h",
+      "bytes": 2630,
+      "sha256": "8d1d661f7d26e1e3a85c982e1f1711b807d4939d1dd7251fe8127556183a55ad"
+    },
+    {
+      "path": "apple-silicon/coreml/coreml-cpp/CoreMLPrivate.hpp",
+      "bytes": 14469,
+      "sha256": "13340eb4ec52fe98b54fe117a24a537a570bf4b8aed40e61123ba9ba6b67703c"
+    },
+    {
+      "path": "apple-silicon/coreml/coreml-cpp/coreml-private.cc",
+      "bytes": 7887,
+      "sha256": "6a111f48bfab3bb8b706d01a19a3af6a27ffa19af52b5f60575cd97e6bb36a66"
+    },
+    {
+      "path": "apple-silicon/coreml/coreml-model-manager.cc",
+      "bytes": 28896,
+      "sha256": "696b5fb57013087cecc601fa4da04e6e3a74222d10a8ecab679c5f71bd31d0d4"
+    },
+    {
+      "path": "generative-models/minimax-h3/metal-minimax-h3-transformer.cc",
+      "bytes": 316175,
+      "sha256": "1166f2e47533002ff35e83ba80abc34f58bfcb0ea1ac1f126a832730d8c5571d"
+    },
+    {
+      "path": "generative-models/shared/ane-ffn.cc",
+      "bytes": 38182,
+      "sha256": "c36d0901dba80d4a4d7aef6815d282710680302a6721cbb92a4bc09f5ca57ee8"
+    },
+    {
+      "path": "generative-models/shared/ane-ffn.h",
+      "bytes": 16211,
+      "sha256": "e9c3744a292e67dc656a8cae01dd57196498597b65f787d2abbb2defcb0e1af9"
+    },
+    {
+      "path": "generative-models/shared/ane-module.cc",
+      "bytes": 20934,
+      "sha256": "4c658b1c821811608cba590c589f72b2ff08cc3886c86060fc29a85f562a2bb5"
+    },
+    {
+      "path": "generative-models/shared/ane-module.h",
+      "bytes": 14237,
+      "sha256": "49fc9900bf98fc8a7b3ebde7dcc6506d216b2531251a72a0ac8a409273cce107"
+    },
+    {
+      "path": "generative-models/shared/ane-tier.cc",
+      "bytes": 9349,
+      "sha256": "f7f8c9367e044fa1b606610592b4cdf84a621784f3545ee1f91429ac32d02ee9"
+    },
+    {
+      "path": "generative-models/shared/ane-tier.h",
+      "bytes": 9123,
+      "sha256": "6579b79e6e4e5f29acdf82ed684c29c99772fa405b674c4a04ced3bf0647b479"
+    },
+    {
+      "path": "tests/unit-tests/ane-boundary.cc",
+      "bytes": 9543,
+      "sha256": "04b53e9f71d40f44bac5911a0c9749cd26f1037d9f79aa62cf2f6f3d8cd07ea2"
+    },
+    {
+      "path": "tests/unit-tests/ane-emitter.cc",
+      "bytes": 10409,
+      "sha256": "f5a9c838c52e70677d163ee2632fe1887912a4052f028f7b7055d6552a34e84f"
+    },
+    {
+      "path": "tests/unit-tests/ane-module.cc",
+      "bytes": 150297,
+      "sha256": "e7ea718dea22bd11749a73c168bebb98879f13ba71ba5bfd4b7fbfd407829b77"
+    }
+  ],
+  "adapted_files": [
+    {
+      "path": "third_party/vpipe-ane/LICENSE",
+      "sha256": "da1a325757e207244cd589713ce51febe3859aab6034f34afbccd57eb96cb53a"
+    },
+    {
+      "path": "third_party/vpipe-ane/NOTICE",
+      "sha256": "a58393c97bac82375a4e3acc982bc9497b5157e8b9ddf22f4f039490f1d7b09a"
+    },
+    {
+      "path": "third_party/vpipe-ane/README.md",
+      "sha256": "9f8455e3984f19a0fd46d9de84cf08af1fa912bcfdd9304d32514b378b9149ab"
+    },
+    {
+      "path": "third_party/vpipe-ane/ane-emitter.cpp",
+      "sha256": "9c58c090e23bae56360a583f0b1dd5a6ce423d36680869eecd75071f821fa00b"
+    },
+    {
+      "path": "third_party/vpipe-ane/ane-emitter.h",
+      "sha256": "ad4a107818a8416ea824e9b1434fa9d49ad589d68a1dd2871cdc08442a377a76"
+    }
+  ]
+}

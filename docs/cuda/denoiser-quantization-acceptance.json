@@ -1,0 +1,425 @@
+{
+  "schema": 1,
+  "date": "2026-09-19",
+  "starting_revision": "f4893c70a1c86ebe2c8f801a64ea72091d6ddd4f",
+  "evidence_root": "outputs/quant-5090",
+  "budget": {
+    "seconds": 9162.283990260039,
+    "limit": null,
+    "extensions": [
+      {
+        "type": "unlimited",
+        "previous_limit": 3600,
+        "seconds_spent": 3575.0871810149984,
+        "time": 1789806695.3659368,
+        "case": "followup-prepare-fp8"
+      }
+    ]
+  },
+  "quality": {
+    "date": "2026-09-19",
+    "recipe": 1,
+    "exceptions": [],
+    "rotation": null,
+    "correction": null,
+    "scope": "six held-out fast-CUDA/full-VAE triplets; both primary geometries, base Ref2VA/FL2VA",
+    "decisions": {
+      "fp8": {
+        "status": "accepted",
+        "user_response": "Accept FP8 quality",
+        "media": {
+          "detail": "5e75eec77ff206fcb9480cd0cd579570137ac917375b40dec9317f3c2ea68865",
+          "face": "f307522e6facc704b7ce192f4f67c9ae9195f9fb7831f4ea5826b0dbeeeb58f4",
+          "first-last": "fd6b7e2b583b700064258e89a5699fedf6f725cd4e4a75c234d3fdf5cf3bba69",
+          "image12": "a72bc389a61c234a1e15d7be500de8c27f6bd28ba486382b7652a33e2ad2f852",
+          "images": "49a264969e564842f749c013e5899ee45029d9cdf71e01670f43d7af273d2c29",
+          "video-audio": "110cba2dd5af7493166b4575e6b212b75f7afb9a0659255cd01e05279570c72b"
+        }
+      },
+      "nvfp4": {
+        "status": "accepted",
+        "user_response": "Accept NVFP4 quality",
+        "media": {
+          "detail": "251a16a1ba2dff05867b136143c334b9061ce9b37ab3fd0608b8becc921d6b8b",
+          "face": "0b05a5e4a752edcbf9048fb111cc95581b2f65b6d6013016e6fa4c366200f752",
+          "first-last": "57997c3e62b993b26bda706bfd4f6be28f4a89acbe749e1761d2e6fdf544b6a3",
+          "image12": "a93b0eac8ab4a14d637d2e77587b5d1a266c66b5713248503d112c0d36d2f9db",
+          "images": "38536a15d3afa8a5d70e0eac4f673a49df388c64fc03ee0f6a0561ccd82037a9",
+          "video-audio": "7faf321b52e645ab8bb9a32f1890674b5a01f8d653d530556bdee09192ce4343"
+        }
+      }
+    },
+    "gallery_manifest_sha256": "f7893c4748ed3d49d6db08258cc863435ef715a7d49bc321d7ff62dd2d4f5b5f",
+    "profile": {
+      "recipe": 1,
+      "blocks": 50,
+      "projections": [
+        "attn.qkv_proj",
+        "attn.out_proj",
+        "mlp.fc1",
+        "mlp.fc2"
+      ],
+      "fp8": "E4M3 W8A8 tensorwide dynamic activation/offline weight amax",
+      "nvfp4": "E2M1 W4A4 VEC16 E4M3 block scales, tensorwide factor, 128x4 scale tiling",
+      "output": "BF16",
+      "accumulation": "FP32",
+      "exceptions": [],
+      "rotations": [],
+      "correction": null,
+      "attention": "existing fast-CUDA policy",
+      "vae": "full",
+      "steps": 20,
+      "reuse": 1,
+      "core_reuse": 1,
+      "token_reduction": false
+    },
+    "profile_sha256": "fbc03e3f71aff76e5d2a54d52a073f6bedc11d7611d80ab1d7797f59f0607a19"
+  },
+  "artifacts": {
+    "budget.json": "7de7b8e118f33cda055b0b7ab058dfaa66ddb34a7c851de150e717e9a7fdda76",
+    "environment.json": "4803db433d3ad1eb84a86923e3ba515258496aadc211efd8626b504e47d1e832",
+    "media-index.json": "5c4b310ffb86bed5de05206b8da43150147c4f02129eed9223dcf8f0afe0a79c",
+    "quality/manifest.json": "f7893c4748ed3d49d6db08258cc863435ef715a7d49bc321d7ff62dd2d4f5b5f",
+    "quality/acceptance.json": "c2cc1ec75e26b872b3571b07965b3cb62ce1e071c923bbbb72817c639d0c37af",
+    "quality/review.html": "a99efcc6b2e77d5dfe3e9d9a89e89fceb7052e03d2122f0ce4d668e6106b87d1",
+    "continuation-joins.json": "0528724fbdd2d20e26b61a8a7bbd8d1a75b0787cc437d1aded4af1caca51eeb4",
+    "continuation-review.html": "dee609b1d35fdd68df113082f835ff317f6f217877e91f370672dba8b188fb6d",
+    "followup/acceptance.json": "d3c466800dccbf0458aa0f1107f2f7a07a727d56346fd3848b754d39bace38a4",
+    "followup/adapter-cache-identities.json": "5b9735f1504946b50a745f8bcd9362082a8dd3008fc343462aa4603dc52360c4",
+    "followup/authorization-environment.json": "7963a3f1ef4e566b7ea79485f1180637686e4762e07491c6e595938fac28568e",
+    "followup/build-workflow-fixedplans.log": "5c2598e253fcfef5d3ee78f2dd4ad6f71ec3e7a452ad7e8dd2b827baff81d787",
+    "followup/build-workflow.log": "f960ac902db6f6773312928b126f2a3d9768a52f147c07f22daedda5a07bfad7",
+    "followup/host-contracts-final.log": "88788305598ecf415558cabbfab5a441c1bd01202805d7de9053e9ddca35d1aa",
+    "followup/host-contracts.log": "917e6d37dcde1d3eab6050f077a4353059ede8c8f7b76f3591d0eab56e2be67f",
+    "followup/lora-host-final.log": "765b0645617e3f42ff35d314d86122b0483bb48ebf5df4f4d30df7ba9725cb0b",
+    "followup/python-requirements.txt": "630865f101a76267292ac343c2ed11b7b207c78c9db14cda4610d8c92cd7077f",
+    "followup/python-setup.log": "300285b69a33214eded1d6df499c839815d68e940e535381182f1cc433551b71",
+    "followup/review-manifest.json": "043f422b48b46e9ef48e00b641b9d3fdbe0c7d765f10a0bf9efe88ebc0e6161e",
+    "followup/review.html": "8b82291abb772ded6eacc415eba307dba0ad0d7fd42079de1c9b580ee7a77697",
+    "followup/turbo-05-fold-manifest.json": "3c543f4227125685dbf8d1b6e43860460ec157c028aed7aad5cdd64afd51e127",
+    "followup/turbo-1-fold-manifest.json": "a0252c3b93bf9e6b1b7aaa0f2fbc7fa03a97630eb28d70444b14ab980b20718c",
+    "followup/turbo-inspect.log": "5a6a3202d2b96d8a062a2cd5b162cfc2e62ef9578321dc23cf82c370e10ed6df",
+    "followup/turbo1-assemble.log": "860e01e4a344a5847a389474a8497a10e6e324f54802c8d6454e90f1d4ba94bd"
+  },
+  "models": {
+    "Ref2VA": [
+      "2eed3a9f8c38f909ca8919cb6b744ceebb1bfe070bc4937244bfece87970f4d1"
+    ],
+    "FL2VA": [
+      "a6bc7b573eb0be84340a85949dd8d21f68929a501bfdea2f90aaa85f4f92b7df"
+    ]
+  },
+  "builds": {
+    "h3.identity": {
+      "binary": "h3",
+      "sha256": "e5add3341b510c51cfebd4de8f9cfbfa64ba42ddb5104e39eb8d0c86f4079759",
+      "build_ids": [
+        "0.1.0-dev;source=44d4cb4eca2ca0d202b8f7dc316ec3e4bac6b1e663eec664b0e65eefdf4a0a0b;git=unknown;gcc=13.3.0;portable=2d1a6b0e71287e34a4c3871baa3674562e3ee2773816d579ec1fb7dbb0d5c18f"
+      ]
+    },
+    "h3-baseline.identity": {
+      "binary": "outputs/quant-5090/h3-baseline",
+      "sha256": "ba5e501cb2614a500407134e5623882ef9b5a352e80dbff8f0629fa4e3f61441",
+      "build_ids": [
+        "0.1.0-dev;source=5e88fc31162d6b24c5724031f67340d8117d59dbc351bcbde71e8595834a8d06;git=unknown;gcc=13.3.0;portable=06c773466a57ca6a59c6c0b1cdc59b94c608711d8e545d78e2885146273123bf"
+      ]
+    },
+    "h3-quality-candidate.identity": {
+      "binary": "outputs/quant-5090/h3-quality-candidate",
+      "sha256": "57658eba9dccf6ea91d9fcd859639c84f03279b20e30e6244d5d57c6732d4b39",
+      "build_ids": [
+        "0.1.0-dev;source=5e7d86ea32465b6e15fff5612572c5af630f3594a43848960476268c59679020;git=unknown;gcc=13.3.0;portable=95de31cc9b8a8bb22848a269682f7104970740add2d0d680f02baab98e0a0431"
+      ]
+    }
+  },
+  "media": {
+    "complete_decodes": 117,
+    "finite_states": 101,
+    "black_flags": []
+  },
+  "coverage_limits": [
+    "One warmed repeat per mode/preset, no long/high-resolution render or other-GPU qualification.",
+    "Initial pilot records predate per-run source inventories; immutable binary hashes, build IDs and final-state model fingerprints provide retrospective links.",
+    "Model directories are immutable per context; adapter changes were tested through separate contexts and a return to the original context.",
+    "Follow-up synccheck/racecheck filter owned quant_ kernels; full memcheck includes unfiltered lifecycle and pressure execution.",
+    "Turbo scale 1.0 has full off/FP8/NVFP4 render coverage; scale 0.5 has full NVFP4 generation and four-family FP8/NVFP4 operator/cache checks."
+  ],
+  "followup": {
+    "checks": {
+      "standalone_preparation": {
+        "passed": true,
+        "cases": [
+          "followup-prepare-fp8",
+          "followup-prepare-nvfp4"
+        ]
+      },
+      "model_variants": {
+        "passed": true,
+        "cases": [
+          "followup-variants-fixedplans-fp8",
+          "followup-variants-fixedplans-nvfp4"
+        ]
+      },
+      "adapter_contexts": {
+        "passed": true,
+        "cases": [
+          "followup-adapters-fixedplans-fp8",
+          "followup-adapters-fixedplans-nvfp4"
+        ]
+      },
+      "pre_vae_reclamation": {
+        "passed": true,
+        "cases": [
+          "followup-reclaim-fp8",
+          "followup-reclaim-nvfp4"
+        ]
+      },
+      "sanitizers": {
+        "passed": true,
+        "cases": [
+          "followup-memcheck-lifecycle-fp8",
+          "followup-memcheck-pressure-fp8",
+          "followup-synccheck-lifecycle-fp8",
+          "followup-racecheck-lifecycle-fp8",
+          "followup-memcheck-lifecycle-nvfp4",
+          "followup-memcheck-pressure-nvfp4",
+          "followup-synccheck-lifecycle-nvfp4",
+          "followup-racecheck-lifecycle-nvfp4"
+        ]
+      },
+      "turbo": {
+        "passed": true,
+        "cases": [
+          "followup-turbo-1-off",
+          "followup-turbo-1-fp8",
+          "followup-turbo-1-nvfp4",
+          "followup-cache-identities",
+          "followup-turbo-05-nvfp4",
+          "followup-scale-1-fp8",
+          "followup-scale-1-nvfp4",
+          "followup-scale-05-fp8",
+          "followup-scale-05-nvfp4"
+        ]
+      },
+      "continuation": {
+        "passed": true,
+        "cases": [
+          "followup-seam-off-source",
+          "followup-seam-off-hard",
+          "followup-seam-off-bridge",
+          "followup-seam-fp8-source",
+          "followup-seam-fp8-hard",
+          "followup-seam-fp8-bridge",
+          "followup-seam-nvfp4-source",
+          "followup-seam-nvfp4-hard",
+          "followup-seam-nvfp4-bridge",
+          "followup-review"
+        ]
+      }
+    },
+    "resolved_test_failures": {
+      "followup-adapters-fp8": {
+        "repeat": "followup-adapters-fixedplans-fp8",
+        "resolved": true,
+        "reason": "Exact-repeat identity assertion requires fixed GEMM selection when conditioning is rebuilt."
+      },
+      "followup-variants-fp8": {
+        "repeat": "followup-variants-fixedplans-fp8",
+        "resolved": true,
+        "reason": "Exact-repeat identity assertion requires fixed GEMM selection when conditioning is rebuilt."
+      }
+    },
+    "quality": {
+      "continuation": {
+        "status": "accepted",
+        "media": {
+          "continuation-hard": {
+            "off": "498d9405b08231d47a46781adced61ed7be8aebec61cbef4891a0120dc5dd765",
+            "fp8": "8d6018524eb875d9f605b9b2e51df5105a1b618b0cd13c2f7c931689268a3752",
+            "nvfp4": "adb39b876739f8fae1cb2ea5a92b28f915e6ea2ce8f7a7e18b688ab80a5b3483"
+          },
+          "continuation-bridge": {
+            "off": "ac39c2d90ce04ef3a68037365ceb82fb4f6bf024da74e8f70f5bf7468c7ab9fe",
+            "fp8": "83359fa1ae0de5eb0cabbe293361e131b8e3589bf7ff39c537ccef867a020a19",
+            "nvfp4": "c0507858a23451384f2c7b4fc292b0fae99a95fe8546b56d9d3d4f8a6ade117b"
+          }
+        }
+      },
+      "turbo": {
+        "status": "accepted",
+        "media": {
+          "turbo-strength-1": {
+            "off": "b678fbdfa4978ca6deca2cba0b8d6f71d54de7c011dfb674de5baecdaf61acc1",
+            "fp8": "260a8d9551957a3292cc307870537300a6f482dd0011f2155bbbaafac083b59d",
+            "nvfp4": "a6a26593a535e90d40e67964997bdc0f945f9b6ad1099f0f37b06c57687e12d1"
+          }
+        }
+      }
+    }
+  },
+  "decision": {
+    "fp8": {
+      "status": "go for opt-in base-model 5090 previews",
+      "quality": "accepted",
+      "denoise_speedups": {
+        "288": 4.890405300602103,
+        "480": 4.213809988896756
+      },
+      "baseline": "off"
+    },
+    "nvfp4": {
+      "status": "go for opt-in base-model 5090 previews",
+      "quality": "accepted",
+      "denoise_speedups": {
+        "288": 1.7961354167837111,
+        "480": 1.7722495083011944
+      },
+      "baseline": "fp8"
+    }
+  },
+  "index_sha256": "4e0e884a3c15b08d67fcd0359db3272655e035683439e7b27e15511a7d3f54a4",
+  "index_path": "outputs/quant-5090/validation-index.json",
+  "warm": {
+    "warm288-off": {
+      "first": {
+        "mp4_and_state_seconds": 62.590407,
+        "denoise_seconds": 29.84324,
+        "frames": 56,
+        "evaluations": 20
+      },
+      "warm": {
+        "mp4_and_state_seconds": 29.188642,
+        "denoise_seconds": 28.142654,
+        "frames": 56,
+        "evaluations": 20
+      },
+      "settings": "20 evaluations, 50 blocks, fast CUDA, tiny VAE, synchronous finite-latent callbacks, face1, seed72"
+    },
+    "warm288-fp8": {
+      "first": {
+        "mp4_and_state_seconds": 75.03465,
+        "denoise_seconds": 5.894316,
+        "frames": 56,
+        "evaluations": 20
+      },
+      "warm": {
+        "mp4_and_state_seconds": 6.811395,
+        "denoise_seconds": 5.754667,
+        "frames": 56,
+        "evaluations": 20
+      },
+      "settings": "20 evaluations, 50 blocks, fast CUDA, tiny VAE, synchronous finite-latent callbacks, face1, seed72"
+    },
+    "warm288-nvfp4": {
+      "first": {
+        "mp4_and_state_seconds": 62.528535,
+        "denoise_seconds": 3.356116,
+        "frames": 56,
+        "evaluations": 20
+      },
+      "warm": {
+        "mp4_and_state_seconds": 4.251534,
+        "denoise_seconds": 3.203916,
+        "frames": 56,
+        "evaluations": 20
+      },
+      "settings": "20 evaluations, 50 blocks, fast CUDA, tiny VAE, synchronous finite-latent callbacks, face1, seed72"
+    },
+    "warm480-nvfp4": {
+      "first": {
+        "mp4_and_state_seconds": 63.517118,
+        "denoise_seconds": 4.242323,
+        "frames": 22,
+        "evaluations": 20
+      },
+      "warm": {
+        "mp4_and_state_seconds": 4.737372,
+        "denoise_seconds": 4.095495,
+        "frames": 22,
+        "evaluations": 20
+      },
+      "settings": "20 evaluations, 50 blocks, fast CUDA, tiny VAE, synchronous finite-latent callbacks, face1, seed72"
+    },
+    "warm480-fp8": {
+      "first": {
+        "mp4_and_state_seconds": 74.988951,
+        "denoise_seconds": 7.385834,
+        "frames": 22,
+        "evaluations": 20
+      },
+      "warm": {
+        "mp4_and_state_seconds": 7.913616,
+        "denoise_seconds": 7.258239,
+        "frames": 22,
+        "evaluations": 20
+      },
+      "settings": "20 evaluations, 50 blocks, fast CUDA, tiny VAE, synchronous finite-latent callbacks, face1, seed72"
+    },
+    "warm480-off": {
+      "first": {
+        "mp4_and_state_seconds": 63.144519,
+        "denoise_seconds": 32.271259,
+        "frames": 22,
+        "evaluations": 20
+      },
+      "warm": {
+        "mp4_and_state_seconds": 31.282611,
+        "denoise_seconds": 30.58484,
+        "frames": 22,
+        "evaluations": 20
+      },
+      "settings": "20 evaluations, 50 blocks, fast CUDA, tiny VAE, synchronous finite-latent callbacks, face1, seed72"
+    }
+  },
+  "failures": [
+    {
+      "name": "native-nvfp4-1",
+      "status": "failed",
+      "seconds": 0.26390456402441487,
+      "timeout": 120,
+      "failure": "exit 1",
+      "binary_sha256": "0c043f4e84d05fdbbf01bb178c1160f80ea95f1b795f301e194065b32f4f0092",
+      "record": "native-nvfp4-1.json",
+      "record_sha256": "629e3b8d4e3e2947c093b6cd8fb7127be0300832749c7f0473540bf2baf0b3cb",
+      "log": "native-nvfp4-1.log",
+      "log_sha256": "1f2f9e0af9955d1b4ba7edcc65a0d2d7d81adf52c4f1a54ebcfeef8637fb3707"
+    },
+    {
+      "name": "workflow-switches",
+      "status": "failed",
+      "seconds": 300.10903189197415,
+      "timeout": 300,
+      "failure": "TimeoutExpired: Command '['./h3_quant_workflow', '/path/to/models/MiniMax-H3', '/path/to/h3-quant/packed', 'outputs/quant-5090/switches', 'fp8', 'switches']' timed out after 300 seconds",
+      "binary_sha256": "f2e83854ac4670706881ad046ea0ae80ebdf71aec70e0d1ba9e37fd2883c437b",
+      "record": "workflow-switches.json",
+      "record_sha256": "7b78a9df3e32f0792fe1b0649dc6104baea9dcc83ad711c8b5188a28b049a767",
+      "log": "workflow-switches.log",
+      "log_sha256": "ca10a2a794a223131de2ba445152128eb69135da939f36b7326fd926b2ac3114"
+    },
+    {
+      "name": "followup-adapters-fp8",
+      "status": "failed",
+      "seconds": 248.14508204499725,
+      "timeout": 300,
+      "failure": "exit 1",
+      "binary_sha256": "b7342fb70519b5067ada3b5505e78eebd6e80b4ee3f500707e9b13da46ef112a",
+      "record": "followup-adapters-fp8.json",
+      "record_sha256": "103c0de19c17dbbc306e338b5ba84efb49893389a46a77c367136da8f3f12f50",
+      "log": "followup-adapters-fp8.log",
+      "log_sha256": "aff4609890da701d7a9a1dcd4d24878d6301e81d15df204409f4d40093bd541e"
+    },
+    {
+      "name": "followup-variants-fp8",
+      "status": "failed",
+      "seconds": 207.48022973700427,
+      "timeout": 300,
+      "failure": "exit 1",
+      "binary_sha256": "b7342fb70519b5067ada3b5505e78eebd6e80b4ee3f500707e9b13da46ef112a",
+      "record": "followup-variants-fp8.json",
+      "record_sha256": "3ceda0c706a2ac0268d88e00bc31ed39c038bf66c9057f64820f0c9d49e3f32c",
+      "log": "followup-variants-fp8.log",
+      "log_sha256": "27014eabd4c6748273e684dd7a051460a7b17aa17d83efd2af1d6ecbe554b015"
+    }
+  ],
+  "run_count": 122
+}
