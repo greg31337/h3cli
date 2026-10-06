@@ -21,7 +21,7 @@ def main():
     for flag in ('model','integration','baseline','campaign','out'): p.add_argument('--'+flag,type=Path,required=True)
     a=p.parse_args(); root=Path(__file__).resolve().parents[1]; out=a.out.resolve(); out.mkdir(parents=True,exist_ok=False)
     model=str(a.model.resolve()); data=a.integration.resolve(); baseline=a.baseline.resolve(); campaign=a.campaign.resolve()
-    env=os.environ|{'H3_TEST_MAX_EVALUATIONS':'6','H3_TEST_SCHEDULE_STEPS':'6','H3_EXPERIMENT_TRACE':'1'}
+    env=os.environ|{'H3_TEST_MAX_EVALUATIONS':'6','H3_TEST_SCHEDULE_STEPS':'6','H3_EXPERIMENT_TRACE':'1','H3_VERBOSE':'1'}
     records=[];checks=[]
     def publish(complete=False):
         (out/'result.json').write_text(json.dumps(dict(complete=complete,passed=complete and all(r['passed'] for r in records+checks),

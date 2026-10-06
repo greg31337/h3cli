@@ -1,3 +1,4 @@
+#include "src/log.h"
 #include "src/memory.h"
 #include "src/vae/image_vae.h"
 #include "src/vae/video_vae.h"
@@ -871,7 +872,7 @@ int h3_video_vae_tile_pixels(int pixel_height, int pixel_width,
         }
     }
     if (getenv("H3_PROFILE")) {
-        fprintf(stderr, "h3cli: VideoVAE tile: %d px (%s)\n", selected, policy);
+        H3_VERBOSE("h3cli: VideoVAE tile: %d px (%s)\n", selected, policy);
         if (selected > TILE_PIXELS && !strcmp(policy, "explicit override"))
             fprintf(stderr, "h3cli: VideoVAE: %d px decoder tiles; "
                     "reconstruction may differ from the released "
@@ -1185,7 +1186,7 @@ h3_video_vae_decoder *h3_video_vae_decoder_load(
         tile_axis_build(latent_width * SPATIAL_RATIO, tile_pixels,
                         &decoder->x_axis, error, error_size);
     if (ok && getenv("H3_PROFILE"))
-        fprintf(stderr, "h3cli: resident video VAE tiles %dx%d at %d pixels\n",
+        H3_VERBOSE("h3cli: resident video VAE tiles %dx%d at %d pixels\n",
                 decoder->x_axis.count, decoder->y_axis.count, tile_pixels);
     vae_context *vae = &decoder->vae;
     if (ok) {
@@ -1397,7 +1398,7 @@ static int decode_chunked(const char *weight_directory,
         return 0;
     }
     if (getenv("H3_PROFILE"))
-        fprintf(stderr, "h3cli: video VAE tiles %dx%d at %d pixels\n",
+        H3_VERBOSE("h3cli: video VAE tiles %dx%d at %d pixels\n",
                 x_axis.count, y_axis.count, tile_pixels);
     vae_context vae;
     memset(&vae, 0, sizeof(vae));

@@ -24,6 +24,8 @@ LIB_C += src/vae/tiny_vae.c src/vae/video_vae.c src/vae/video_encoder.c src/vae/
 	src/cli/terminal.c src/conditioning/vision_encoder.c src/conditioning/multimodal.c
 COMMON_C := src/vae/image_vae.c $(LIB_C) src/media/delivery.c src/media/presentation.c src/media/decode.c src/platform.c src/cuda/cuda_policy.c src/weights/residency.c src/sglang/sglang.c src/sglang/sglang_media.c src/weights/quant.c src/weights/quant_cache.c src/weights/q8.c src/denoise/attention.c src/backend.c src/conditioning/conditioning.c src/upscale/upscale_state.c src/upscale/upscale_network.c src/upscale/upscale_plan.c src/upscale/upscale_refine.c src/upscale/upscale_runtime.c src/profile.c src/runtime/runtime.c src/denoise/sol.c src/cuda/cuda_sol_policy.c src/denoise/adaptive_cache.c src/denoise/subblock.c src/denoise/approximate.c
 
+COMMON_C += src/log.c
+
 .PHONY: test-weight-residency
 bin/weight_residency_test: tests/weight_residency.c src/weights/residency.c src/weights/residency.h | bin
 	$(CC) $(CPPFLAGS) $(CFLAGS) -I. tests/weight_residency.c src/weights/residency.c -o $@
@@ -672,8 +674,12 @@ test-bugfix1-sanitize: bin/libh3.a
 .PHONY: test-progress
 bin/progress_tests: tests/test_progress.o src/cli/cli_progress.o | bin
 	$(CC) $(LDFLAGS) -o $@ $^
-test-progress: bin/progress_tests
+bin/log_tests: tests/test_log.o src/log.o | bin
+	$(CC) $(LDFLAGS) -o $@ $^
+test-progress: bin/progress_tests bin/log_tests
 	./bin/progress_tests
+	./bin/log_tests
+	python3 tests/test_attention_log.py
 
 bin/progress_models_test: tests/progress_models.o $(LIB_OBJ) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)

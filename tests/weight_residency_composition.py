@@ -26,7 +26,7 @@ def main():
         placements=[('stream',None),('auto',2),('auto',None)] if a.group=='composition' else [('resident',None),('stream',None),('auto',None),('auto',a.packed_capacity)]
         for i,(mode,cap) in enumerate(placements):
             d=out/('%s-%s-%d'%(name,mode,i));d.mkdir();(d/'steps').mkdir();(d/'preparation').mkdir()
-            e=dict(os.environ);e.update(H3_TEST_MAX_EVALUATIONS='6',H3_CUDA_WEIGHT_MODE=mode,H3_TEST_NATIVE_STEP_DIR=str(d/'steps'),H3_TEST_SGLANG_DIR=str(d/'preparation'),H3_SGLANG_CAPTURE_STEPS='none',H3_EXPERIMENT_TRACE='1')
+            e=dict(os.environ);e.update(H3_TEST_MAX_EVALUATIONS='6',H3_CUDA_WEIGHT_MODE=mode,H3_TEST_NATIVE_STEP_DIR=str(d/'steps'),H3_TEST_SGLANG_DIR=str(d/'preparation'),H3_SGLANG_CAPTURE_STEPS='none',H3_EXPERIMENT_TRACE='1',H3_VERBOSE='1')
             for k in ['H3_TEST_CUDA_RESIDENT_BLOCKS','H3_TEST_CUDA_CAPACITY_BYTES','H3_CUDA_TEST_MEMORY_BUDGET']:e.pop(k,None)
             if cap is not None:e['H3_TEST_CUDA_RESIDENT_BLOCKS' if a.group=='composition' else 'H3_TEST_CUDA_CAPACITY_BYTES']=str(cap)
             w,h,frames=(640,480,56) if name=='continuation' else (256,256,22)

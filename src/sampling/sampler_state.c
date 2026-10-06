@@ -1,3 +1,4 @@
+#include "src/log.h"
 #include "src/sglang/sglang.h"
 #include "src/denoise/attention.h"
 #include "src/denoise/approximate.h"
@@ -214,7 +215,7 @@ static int diagnostic_env(const char *s) {
     if(!strncmp(s,"H3_OFFLINE=",strlen("H3_OFFLINE=")))return 1;
     /* Cache validation changes loading cost, not denoising arithmetic. */
     if(!strncmp(s,"H3_QUANT_VERIFY=",strlen("H3_QUANT_VERIFY=")))return 1;
-    const char *names[]={"H3_EXPERIMENT_TRACE=","H3_EXPERIMENT_TIMING=","H3_FULL_VAE_CUDA_GRAPH=","H3_PROFILE=","H3_PROFILE_COMPONENTS=","H3_PROFILE_REGIONS=","H3_METAL_SIGNPOSTS=","H3_DEBUG_","H3_BRIDGE_DIAGNOSTICS=","H3_PREVIEW_MODE=","H3_PREVIEW_DIAGNOSTICS=","H3_FFMPEG=","H3_FFPROBE=","H3_REGRESSION_","H3_TEST_", "H3_MODEL_DIR=", "H3_CUDA_DEVICE=", "H3_CUDA_WEIGHT_MODE=", "H3_CUDA_REGISTER_WEIGHTS=", "H3_CUDA_TEST_", "H3_CUDA_OUTPUT=", "H3_CUDA_CASES="};
+    const char *names[]={"H3_VERBOSE=","H3_EXPERIMENT_TRACE=","H3_EXPERIMENT_TIMING=","H3_FULL_VAE_CUDA_GRAPH=","H3_PROFILE=","H3_PROFILE_COMPONENTS=","H3_PROFILE_REGIONS=","H3_METAL_SIGNPOSTS=","H3_DEBUG_","H3_BRIDGE_DIAGNOSTICS=","H3_PREVIEW_MODE=","H3_PREVIEW_DIAGNOSTICS=","H3_FFMPEG=","H3_FFPROBE=","H3_REGRESSION_","H3_TEST_", "H3_MODEL_DIR=", "H3_CUDA_DEVICE=", "H3_CUDA_WEIGHT_MODE=", "H3_CUDA_REGISTER_WEIGHTS=", "H3_CUDA_TEST_", "H3_CUDA_OUTPUT=", "H3_CUDA_CASES="};
     for(size_t i=0;i<sizeof(names)/sizeof(*names);i++) if(!strncmp(s,names[i],strlen(names[i]))) return 1;
     return 0;
 }
@@ -733,10 +734,11 @@ size_t h3_sampler_prepared_bytes(const h3_sampler_state *s) {
     size_t n=0; for(size_t i=0;i<s->prepared.count;i++) n+=s->prepared.tensors[i].elements*2; return n;
 }
 void h3_sampler_log(const h3_sampler_state *s,const char *action,uint64_t bytes,double seconds) {
-    fprintf(stderr,"h3cli: checkpoint arithmetic=%d\n",s->params._arithmetic_recipe);
-    if(s->params.cuda_attention)fprintf(stderr,"h3cli: checkpoint attention=%s recipe=%u plan=%u\n",h3_attention_name(s->params.cuda_attention),s->attention_version,s->attention_plan);
-    if(s->params.cuda_denoise_quant)fprintf(stderr,"h3cli: checkpoint denoise quantization=%s recipe=%u\n",h3_quant_name(s->params.cuda_denoise_quant),s->quant_version);
-    fprintf(stderr,"h3cli: sampler %s: %s %s, geometry %dx%d / %d frames, schedule=%d completed=%d next=%d, sigma V=%.9g A=%.9g\n"
+    if (!h3_log_verbose()) return;
+    h3_log_printf("h3cli: checkpoint arithmetic=%d\n",s->params._arithmetic_recipe);
+    if(s->params.cuda_attention)h3_log_printf("h3cli: checkpoint attention=%s recipe=%u plan=%u\n",h3_attention_name(s->params.cuda_attention),s->attention_version,s->attention_plan);
+    if(s->params.cuda_denoise_quant)h3_log_printf("h3cli: checkpoint denoise quantization=%s recipe=%u\n",h3_quant_name(s->params.cuda_denoise_quant),s->quant_version);
+    h3_log_printf("h3cli: sampler %s: %s %s, geometry %dx%d / %d frames, schedule=%d completed=%d next=%d, sigma V=%.9g A=%.9g\n"
         "h3cli: sampler prefix V=%d A=%d, conditioning=%zu prepared=%zu checkpoint=%llu bytes, %.3f s\n",
         action,s->ref2va?"Ref2VA":"FL2VA",s->sampler_mode?"GPU-state":"CPU-state",s->render_width,s->render_height,s->aligned_frames,
         s->total_steps,s->next_step,s->next_step,(double)s->sigmas.video[s->next_step],(double)s->sigmas.audio[s->next_step],

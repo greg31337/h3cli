@@ -1,3 +1,4 @@
+#include "src/log.h"
 /* Native narrow DiT projections. Original implementation of the cuBLASLt
  * documented tensorwide FP8 and tiled VEC16 UE4M3 NVFP4 contracts. */
 extern "C" {
@@ -155,11 +156,11 @@ int h3_gpu_quant_configure(h3_gpu *g,int mode,const char *cache,uint64_t weights
     g->quant_diagnostics=getenv("H3_QUANT_DIAGNOSTICS")&&!strcmp(getenv("H3_QUANT_DIAGNOSTICS"),"1");
     g->quant_fault=h3_gpu_tensor_alloc(g,6,H3_GPU_U32,H3_GPU_DEVICE_ONLY);
     if(!g->quant_fault||!checked(g,cudaMemset(g->quant_fault->data,0,24),"quant finite flag"))return 0;
-    fprintf(stderr,"h3cli: DiT quantization=%s recipe=%d native cuBLASLt=%zu SM120 W%dA%d BF16-output FP32-accumulation weights=%s cache=%s verification=%s\n",
+    H3_VERBOSE("h3cli: DiT quantization=%s recipe=%d native cuBLASLt=%zu SM120 W%dA%d BF16-output FP32-accumulation weights=%s cache=%s verification=%s\n",
         h3_quant_name(mode),h3_quant_execution_recipe(mode,g->policy.adaptive_cache,g->policy.attention),cublasLtGetVersion(),mode==1?8:4,mode==1?8:4,
         g->quant_streaming?"compressed-stream":"compressed-resident",g->quant_cache.c_str(),
         g->quant_verify?"sha256-strict":"metadata-v2 (no weight hashing)");
-    if(g->policy.adaptive_cache)fprintf(stderr,"h3cli: adaptive quantization: block 0 projections BF16, blocks 1-49 %s, cache BF16, score FP32; packing recipe %d\n",h3_quant_name(mode),H3_QUANT_VERSION);
+    if(g->policy.adaptive_cache)H3_VERBOSE("h3cli: adaptive quantization: block 0 projections BF16, blocks 1-49 %s, cache BF16, score FP32; packing recipe %d\n",h3_quant_name(mode),H3_QUANT_VERSION);
     return 1;
 }
 static void quant_hash(const void *data,size_t bytes,unsigned char digest[32]) {

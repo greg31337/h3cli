@@ -1,3 +1,4 @@
+#include "src/log.h"
 #include "src/denoise/attention.h"
 #include "src/denoise/adaptive_cache.h"
 #include "src/denoise/approximate.h"
@@ -126,7 +127,8 @@ static void usage(const char *program) {
         "      --frames-dir PATH  Write generated frames as PPM files\n"
         "      --show             Display a frame after every denoising step (M5)\n"
         "      --zoom N           Terminal image zoom (default: 2 for Retina)\n"
-        "      --profile          Print per-phase GPU timing and allocation data\n"
+        "      --verbose          Include backend, allocation and execution diagnostics\n"
+        "      --profile          Include diagnostics and instrument GPU timings\n"
         "      --info             Inspect model/device without mapping weights\n"
         "      --cuda-device N    Select Linux CUDA device (default: 0)\n"
         "      --cuda-weight-mode auto|resident|stream\n"
@@ -298,9 +300,14 @@ static int cli_progress(const char *phase, int completed, int total,
                         void *opaque) {
     cli_state *state = opaque;
     if(cli_hooks&&cli_hooks->progress&&cli_hooks->progress(phase,completed,total,cli_hooks->opaque))return 1;
-    state->progress.phase_timing=h3_sglang_requested();
+    state->progress.phase_timing=h3_log_verbose();
     h3_cli_progress_update(&state->progress, stderr, phase, completed, total);
     return 0;
+}
+
+static void cli_log_line(void *opaque) {
+    cli_state *state = opaque;
+    h3_cli_progress_finish(&state->progress, stderr);
 }
 
 static int cli_frame(const h3_frame *frame, void *opaque) {
@@ -398,7 +405,8 @@ static int cli_execute(int argc, char **argv) {
     h3_params params = H3_PARAMS_DEFAULT;
     h3_reference references[12];
     size_t reference_count = 0;
-    cli_state cli = {.progress = {.completed = -1, .total = -1}};
+    cli_state cli = {.progress = {.completed = -1, .total = -1, .terminal = isatty(STDERR_FILENO)}};
+    h3_log_line_callback(cli_log_line, &cli);
     int show = 0;
     int profile = 0;
     int info = 0;
@@ -414,7 +422,7 @@ static int cli_execute(int argc, char **argv) {
             case OPT_UPSCALE_SEED: case OPT_UPSCALE_IMPORT: case OPT_UPSCALE_INSPECT: case OPT_STATE_ONLY:
             case OPT_DECODE_STILL: case OPT_IMAGE_VAE: case 'd': case 'o': case 'h': case OPT_STOP_AFTER: case OPT_SAVE_SAMPLER:
             case OPT_RESUME_SAMPLER: case OPT_PREVIEW_STOP: case OPT_FRAMES_DIR:
-            case OPT_SHOW: case OPT_ZOOM: case OPT_PROFILE: case OPT_INFO: case OPT_SAVE_AV_STATE:
+            case OPT_SHOW: case OPT_ZOOM: case OPT_PROFILE: case OPT_VERBOSE: case OPT_INFO: case OPT_SAVE_AV_STATE:
             case OPT_CUDA_DEVICE: case OPT_CUDA_WEIGHT_MODE:
             case OPT_PREVIEW_VAE: case OPT_NO_PREVIEW_VAE: case OPT_PREVIEW_VAE_MODEL: case OPT_DECODE_AV_STATE:
             case OPT_OUTPUT_QUALITY: case OPT_FFMPEG_CRF: case OPT_LOSSLESS_VIDEO:
@@ -748,6 +756,7 @@ static int cli_execute(int argc, char **argv) {
                 }
                 break;
             case OPT_PROFILE: profile = 1; break;
+            case OPT_VERBOSE: break; /* Scoped by h3_cli_run, before validation. */
             case OPT_INFO: info = 1; break;
             default: usage(argv[0]); return 2;
         }
@@ -775,7 +784,7 @@ static int cli_execute(int argc, char **argv) {
         if(!reuse_given)params.denoise_reuse=reuse;
         if(!preview_vae_given)params.preview_vae=h3_quality_presets[quality].preview;
         if(!params.adaptive_cache_set)params.adaptive_cache=adaptive;
-        if(!cli_quality_reported++)fprintf(stderr,"h3cli: quality=%s steps=%d reuse=%d core-reuse=%d layers=%d adaptive-cache=%s cuda-attention=%s cuda-denoise-quant=%s preview-vae=%s\n",
+        if(!cli_quality_reported++)H3_VERBOSE("h3cli: quality=%s steps=%d reuse=%d core-reuse=%d layers=%d adaptive-cache=%s cuda-attention=%s cuda-denoise-quant=%s preview-vae=%s\n",
             h3_quality_presets[quality].name,params.steps,params.denoise_reuse,params.core_reuse,params.dit_layers,
             h3_adaptive_name(params.adaptive_cache),h3_attention_name(params.cuda_attention),
             h3_quant_name(params.cuda_denoise_quant),params.preview_vae?"on":"off");
@@ -816,7 +825,7 @@ static int cli_execute(int argc, char **argv) {
         h3_upscale_plan *plan=h3_upscale_plan_create(source,error,sizeof(error));
         if(!plan){fprintf(stderr,"h3cli: %s\n",error);h3_upscale_source_free(source);return 1;}
         const h3_upscale_plan_info *pi=h3_upscale_plan_get_info(plan);
-        fprintf(inspect_upscale?stdout:stderr,"h3cli: upscale source=%dx%d target=%dx%d frames=%d video_T=%d audio_T=%d rows=%zu profile=%d semantic_view=source seed=%" PRIu64 "\n",
+        if (inspect_upscale || h3_log_verbose()) fprintf(inspect_upscale?stdout:stderr,"h3cli: upscale source=%dx%d target=%dx%d frames=%d video_T=%d audio_T=%d rows=%zu profile=%d semantic_view=source seed=%" PRIu64 "\n",
             pi->source_width,pi->source_height,pi->width,pi->height,pi->frames,pi->video_t,pi->audio_t,pi->sequence_rows,pi->geometry_profile,source->state->params.seed);
         if(inspect_upscale) {
             printf("source_sha256 ");for(int i=0;i<32;i++)printf("%02x",source->state->loaded_hash[i]);
@@ -1085,7 +1094,7 @@ static int cli_execute(int argc, char **argv) {
         continuation = h3_av_state_load(continue_from,error,sizeof(error));
         if (!continuation) { fprintf(stderr,"h3cli: %s: %s\n",continue_from,error); return 1; }
         params.continuation = continuation;
-        fprintf(stderr,"h3cli: continuation source: %s\n",continue_from);
+        if (!(cli_hooks && cli_hooks->validate_only)) H3_VERBOSE("h3cli: continuation source: %s\n",continue_from);
     }
     if(cli_hooks&&cli_hooks->validate_only) {
         int ok=1;
@@ -1141,7 +1150,7 @@ static int cli_execute(int argc, char **argv) {
                 (double)(generation_end.tv_nsec - generation_begin.tv_nsec) / 1e9;
             /* Include lazy weight loading, conditioning and media delivery.
              * Subtracting their costs would conceal the cold pipeline cost. */
-            fprintf(stderr, "h3cli: %s generation including lazy weights: %.6f s\n",
+            H3_VERBOSE("h3cli: %s generation including lazy weights: %.6f s\n",
                 (params.cuda_attention||params.cuda_denoise_quant)?"SGLang-base with explicit approximation":"reference",seconds);
         }
         if (!result) {
@@ -1198,20 +1207,31 @@ static int cli_parsed_run(int argc,char **argv,const h3_cli_hooks *hooks) {
     int status;
     if(setjmp(cli_parse_failure))status=2;
     else status=cli_execute(argc,argv);
+    h3_log_line_callback(NULL, NULL);
     free(cli_lora_args);cli_lora_args=NULL;cli_hooks=NULL;
     return status;
 }
 static volatile sig_atomic_t download_cancelled;
+typedef struct {
+    const h3_cli_hooks *hooks;
+    char phase[64];
+    double last_elapsed;
+} download_progress_state;
 
 static void download_signal(int number) { (void)number; download_cancelled = 1; }
 static int download_progress(const h3_model_progress *event, void *opaque) {
-    const h3_cli_hooks *hooks = opaque;
+    download_progress_state *state = opaque;
+    const h3_cli_hooks *hooks = state->hooks;
     if (download_cancelled) return 1;
     if (hooks && hooks->model_progress) return hooks->model_progress(event, hooks->opaque);
+    if (!h3_log_verbose() && !strcmp(state->phase, event->phase) &&
+        event->elapsed - state->last_elapsed < 5.0) return 0;
+    snprintf(state->phase, sizeof(state->phase), "%s", event->phase);
+    state->last_elapsed = event->elapsed;
     fprintf(stderr, "h3cli: %s %s; transferred %.1f / %.1f MiB, reused %.1f MiB (%.1fs)\n",
         event->phase, event->component, (double)event->completed/1048576.0,
         (double)event->total/1048576.0, (double)event->reused/1048576.0, event->elapsed);
-    if (!strcmp(event->phase,"models_ready"))
+    if (h3_log_verbose() && !strcmp(event->phase,"models_ready"))
         fprintf(stderr,"h3cli: model bytes downloaded=%" PRIu64 " reused=%" PRIu64 " required=%" PRIu64 "\n",
             event->completed,event->reused,event->total);
     return 0;
@@ -1250,6 +1270,7 @@ static int local_inputs(const h3_request *request, char *error, size_t size) {
     return 1;
 }
 int h3_cli_run(int argc, char **argv, const h3_cli_hooks *hooks) {
+    int previous_verbose = h3_log_exchange_verbose(-1);
     model_preparation_seconds=0;cli_quality_reported=0;
     h3_request request = {0}; h3_model_plan plan = {0};
     char error[1024] = {0}; char **effective = NULL;
@@ -1261,6 +1282,8 @@ int h3_cli_run(int argc, char **argv, const h3_cli_hooks *hooks) {
         if(cli_parsed_run(argc,argv,&validation))error[0]=0;
         status=2;goto done;
     }
+    if (h3_request_get(&request, "verbose") || h3_request_get(&request, "profile"))
+        h3_log_exchange_verbose(1);
     if (h3_request_get(&request, "help")) { usage(argv[0]); status = 0; goto done; }
     int prefetch=h3_request_get(&request,"download-models")!=NULL;
     int list=h3_request_get(&request,"list-models")!=NULL;
@@ -1276,7 +1299,8 @@ int h3_cli_run(int argc, char **argv, const h3_cli_hooks *hooks) {
         effective=copied?h3_request_argv(&validation_request,&count):NULL;h3_request_free(&validation_request);
         if(!effective)goto done;
         h3_cli_hooks validation=hooks?*hooks:(h3_cli_hooks){0};validation.validate_only=1;
-        status=cli_parsed_run(count,effective,&validation);h3_argv_free(effective);effective=NULL;
+        status=cli_parsed_run(count,effective,&validation);
+        h3_argv_free(effective);effective=NULL;
         if(status)goto done;
     }
     if(!h3_models_resolve(&request,&plan,error,sizeof(error))){status=2;goto done;}
@@ -1294,7 +1318,8 @@ int h3_cli_run(int argc, char **argv, const h3_cli_hooks *hooks) {
     action.sa_handler = download_signal; sigemptyset(&action.sa_mask);
     if (!hooks) { sigaction(SIGINT, &action, &old_int); sigaction(SIGTERM, &action, &old_term); }
     double preparing_began=h3_av_now();
-    int ready = h3_models_prepare(&plan, download_progress, (void *)hooks, error, sizeof(error));
+    download_progress_state download_state = {.hooks = hooks};
+    int ready = h3_models_prepare(&plan, download_progress, &download_state, error, sizeof(error));
     model_preparation_seconds=h3_av_now()-preparing_began;
     if(model_preparation_seconds>=.1)fprintf(stderr,"h3cli: model preparation %.3f s\n",model_preparation_seconds);
     if (!hooks) { sigaction(SIGINT, &old_int, NULL); sigaction(SIGTERM, &old_term, NULL); }
@@ -1303,6 +1328,7 @@ int h3_cli_run(int argc, char **argv, const h3_cli_hooks *hooks) {
     status = cli_parsed_run(count, effective, hooks);
 done:
     if (*error) fprintf(stderr, "h3cli: %s\n", error);
+    h3_log_exchange_verbose(previous_verbose);
     h3_argv_free(effective); h3_models_plan_free(&plan); h3_request_free(&request);
     return status;
 }

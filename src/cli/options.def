@@ -116,3 +116,4 @@ H3_OPTION("cuda-denoise-quant-cache", OPT_DENOISE_QUANT_CACHE, 1, STRING, CACHE,
 H3_OPTION("cuda-denoise-quant-verify", OPT_DENOISE_QUANT_VERIFY, 0, BOOL, NONE, 0, "cuda-denoise-quant-verify", 0, 1.7976931348623157e308, NULL, "false", "cuda", "generation")
 H3_OPTION("cuda-weight-mode", OPT_CUDA_WEIGHT_MODE, 1, ENUM, NONE, 0, "cuda-weight-mode", 0, 1.7976931348623157e308, "auto|resident|stream", "auto", "cuda", "generation")
 H3_OPTION("help", 'h', 0, BOOL, NONE, 0, "help", 0, 1.7976931348623157e308, NULL, "false", "all", "all")
+H3_OPTION("verbose", OPT_VERBOSE, 0, BOOL, NONE, 0, "verbose", 0, 1.7976931348623157e308, NULL, "false", "all", "all")

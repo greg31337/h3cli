@@ -377,7 +377,7 @@ def prepare(args):
 
 
 def command(c, manifest, output):
-    args = ['./bin/h3cli','-d',manifest['settings']['model'],'-p',c['prompt'],
+    args = ['./bin/h3cli','--verbose','-d',manifest['settings']['model'],'-p',c['prompt'],
             '--width',str(c['width']),'--height',str(c['height']),
             '--frames',str(c['frames']),'--steps',str(c['steps']),'--seed',str(c['seed']),
             '--reuse','1','--core-reuse','1','--cuda-device','0',

@@ -57,16 +57,17 @@ def main():
     lines = terminal_lines(raw)
     (OUT / 'terminal.txt').write_text('\n'.join(lines) + '\n')
     assert not re.search(r'\b0/[01]\b', raw)
+    assert '\r' not in raw and 'phase start' not in raw
     for phase in ['reference vision preparation', 'DiT initialization']:
-        assert any(line.startswith(phase) and line.endswith('1/1') for line in lines), phase
-    assert any(line.startswith('video VAE encoder') and line.endswith('1/1') for line in lines)
+        assert any(line.startswith(phase) and re.search(r'\b1/1\s+\([0-9.]+ s\)$', line) for line in lines), phase
+    assert any(line.startswith('video VAE encoder') and re.search(r'\b1/1\s+\([0-9.]+ s\)$', line) for line in lines)
     assert 'loading...' in raw and 'starting...' in raw
     for phase in ['video VAE load', 'video VAE decode']:
         rows = [line for line in lines if line.startswith(phase)]
-        assert len(rows) == 1, (phase, rows)
-    assert any(line.startswith('video VAE load') and line.endswith('36/36') for line in lines)
+        assert 2 <= len(rows) <= 2 + int(wall_seconds / 5), (phase, rows)
+    assert any(line.startswith('video VAE load') and re.search(r'\b36/36\s+\([0-9.]+ s\)$', line) for line in lines)
     # 56 frames = three temporal chunks; 128px fits one spatial tile.
-    assert any(line.startswith('video VAE decode') and line.endswith('108/108') for line in lines)
+    assert any(line.startswith('video VAE decode') and re.search(r'\b108/108\s+\([0-9.]+ s\)$', line) for line in lines)
     timing = re.fullmatch(r'h3(?:cli)?: total wall time: (\d+\.\d{2}) s', lines[-1])
     assert timing, lines[-1]
     reported_seconds = float(timing[1])
@@ -78,7 +79,8 @@ def main():
     (OUT / 'cli-results.json').write_text(json.dumps(dict(command=cmd,
         mp4_sha256=sha(OUT / 'face.mp4'), av_state_sha256=sha(OUT / 'face.h3av'),
         mp4_identical=True, av_state_identical=True, completed_progress=True,
-        vae_load_lines=1, vae_decode_lines=1, vae_decode_blocks=108,
+        vae_load_lines=sum(line.startswith('video VAE load') for line in lines),
+        vae_decode_lines=sum(line.startswith('video VAE decode') for line in lines), vae_decode_blocks=108,
         reported_wall_seconds=reported_seconds, measured_wall_seconds=wall_seconds), indent=2) + '\n')
     print('PASS real CLI progress, total wall time, and bit-identical MP4/AV state')
 

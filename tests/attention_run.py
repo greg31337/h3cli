@@ -85,7 +85,7 @@ def run(name,command,output,timeout,environment=None):
     output=Path(output);output.mkdir(parents=True,exist_ok=True)
     log=output/(name+'.log');record=output/(name+'.json')
     if record.exists():raise RuntimeError(f'refusing to overwrite recorded job {record}')
-    env={**os.environ,**(environment or {})}
+    env={**os.environ,**(environment or {}),'H3_VERBOSE':'1'}
     start=time.monotonic();started=time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())
     try:binary_hash=sha(command[0])
     except (OSError,IsADirectoryError):binary_hash=None
@@ -98,12 +98,13 @@ def run(name,command,output,timeout,environment=None):
             pid,status,usage=os.wait4(p.pid,os.WNOHANG)
             now=time.monotonic();max_observation_gap=max(max_observation_gap,now-last_observation);last_observation=now
             chunk=carry+watcher.read().decode('utf-8',errors='replace')
-            for match in re.finditer(r'\r(denoise enqueue|denoise|audio VAE|tiny video VAE)\s+[^\r\n]*',chunk):
+            # Carry partial writes across reads; recognize both redirected logs
+            # and terminal redraws without observing completed lines twice.
+            boundary=max(chunk.rfind('\r'),chunk.rfind('\n'))
+            complete,carry=chunk[:boundary+1],chunk[boundary+1:]
+            for match in re.finditer(r'(?:^|[\r\n])(denoise enqueue|denoise|audio VAE|tiny video VAE)\s+[^\r\n]*',complete):
                 phase=match[1];entry=observed.setdefault(phase,{'first_seconds':now-start})
                 entry['last_seconds']=now-start
-            # Only retain an incomplete trailing progress line; complete lines
-            # must not be observed again when the child writes nothing new.
-            carry=chunk[chunk.rfind('\r'):] if chunk.endswith('\r') else ''
             if pid:break
             if time.monotonic()>=next_sample and sys.platform!='darwin':
                 next_sample=time.monotonic()+1

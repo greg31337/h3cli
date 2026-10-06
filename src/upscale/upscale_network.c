@@ -1,3 +1,4 @@
+#include "src/log.h"
 /* Native LBH full-context graph. Weight/source notices: THIRD_PARTY_NOTICES.md. */
 #include "src/upscale/upscale_network.h"
 #include "src/upscale/upscale_gpu.h"
@@ -102,7 +103,7 @@ h3_upscale_model *h3_upscale_model_load(const char *path,char *e,size_t n) {
         m->stats.weights_bytes+=t->data_end-t->data_begin;
     }
     m->stats.load_seconds=h3_av_now()-begin;
-    fprintf(stderr,"h3cli: latent upscaler: recipe=1 full-context BF16 weights=%llu load=%.6fs sha256=%s\n",
+    H3_VERBOSE("h3cli: latent upscaler: recipe=1 full-context BF16 weights=%llu load=%.6fs sha256=%s\n",
         (unsigned long long)m->stats.weights_bytes,m->stats.load_seconds,up_artifact_hash);
     goto done;
 bad:h3_upscale_model_free(m);m=NULL;
@@ -258,7 +259,7 @@ float *h3_upscale_volume(h3_upscale_model *m,const float *input,int time,int hei
     if(progress&&progress("latent upscale",40,40,opaque)){fail(e,n,"cancelled after transfer");goto failed;}
     m->stats.forward_seconds+=h3_av_now()-begin;
     h3_gpu_stats stats;h3_gpu_get_stats(g,&stats);m->stats.peak_gpu_bytes=stats.peak_live_bytes;
-    fprintf(stderr,"h3cli: latent upscale %dx%dx%d -> %dx%dx%d: %.6fs, packing=%llu peak_gpu=%llu\n",
+    H3_VERBOSE("h3cli: latent upscale %dx%dx%d -> %dx%dx%d: %.6fs, packing=%llu peak_gpu=%llu\n",
         time,height,width,time,th,tw,h3_av_now()-begin,(unsigned long long)m->stats.workspace_bytes,
         (unsigned long long)m->stats.peak_gpu_bytes);
     goto done;

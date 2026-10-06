@@ -1,3 +1,4 @@
+#include "src/log.h"
 /* Default SGLang video VAE. Working tensors/residuals stay FP32.
  * FP16 matrix/attention operations retain the qualified rounding boundaries.
  * Plans/workspace belong to this decoder/device and are never shared with DiT. */
@@ -22,7 +23,7 @@ int h3_gpu_video_vae_configure(h3_gpu *g,int reserved) {
     uint32_t zero=0;
     if(!g->vae_fault)g->vae_fault=h3_gpu_tensor_from_u32(g,&zero,1);
     if(!g->vae_fault)return -1;
-    fprintf(stderr,"h3cli: full VAE: SGLang FP16 block matrices/attention, FP32 residuals; tile_batch=1\n");
+    H3_VERBOSE("h3cli: full VAE: SGLang FP16 block matrices/attention, FP32 residuals; tile_batch=1\n");
     return 0;
 #endif
 }
@@ -186,7 +187,7 @@ int h3_gpu_video_graph_end(h3_gpu *g) {
         fprintf(stderr,"h3cli: full VAE graph unavailable (%s); retrying ordinary tile\n",cudaGetErrorString(status));return 0;
     }
     if(!checked(g,cudaGraphLaunch(g->vae_graph,g->compute),"VAE captured tile"))return -1;
-    fprintf(stderr,"h3cli: full VAE captured fixed tile graph; one graph per decoder\n");return 1;
+    H3_VERBOSE("h3cli: full VAE captured fixed tile graph; one graph per decoder\n");return 1;
 }
 
 int h3_gpu_video_qkv(h3_gpu *g,h3_gpu_tensor *q,h3_gpu_tensor *k,h3_gpu_tensor *v,

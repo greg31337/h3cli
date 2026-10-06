@@ -1,3 +1,4 @@
+#include "src/log.h"
 #include "src/upscale/upscale.h"
 #include "src/sampling/sampler_state.h"
 #include "src/sampling/av_state.h"
@@ -98,7 +99,7 @@ h3_upscale_transfer *h3_upscale_transfer_create(const h3_upscale_source *source,
     begin = h3_av_now();
     if(!h3_upscale_retarget(source,p,model,&t->conditions,progress,opaque,e,n))goto bad;
     t->retarget_seconds=h3_av_now()-begin;h3_upscale_model_free(model);
-    fprintf(stderr,"h3_upscale_transfer {\"recipe\":%d,\"load_seconds\":%.9g,\"forward_seconds\":%.9g,\"retarget_seconds\":%.9g}\n",
+    H3_VERBOSE("h3_upscale_transfer {\"recipe\":%d,\"load_seconds\":%.9g,\"forward_seconds\":%.9g,\"retarget_seconds\":%.9g}\n",
         recipe,t->load_seconds,t->forward_seconds,t->retarget_seconds);return t;
 bad:h3_upscale_model_free(model);h3_upscale_transfer_free(t);return NULL;
 }
@@ -155,11 +156,11 @@ h3_sampler_state *h3_upscale_initialize(const h3_upscale_source *source,const h3
             fail(e,n,"shared comparison noise has a different parent, geometry, seed or RNG recipe");goto bad;
         }
         memcpy(s->original_video_noise,shared->original_video_noise,s->video_elements*4);s->video_rng=shared->video_rng;
-        fprintf(stderr,"h3cli: adopted persisted target video noise; no new video draws\n");
+        H3_VERBOSE("h3cli: adopted persisted target video noise; no new video draws\n");
     }
     else if(params._arithmetic_recipe) {if(!h3_sglang_normal(params.seed,s->original_video_noise,s->video_elements)){fail(e,n,"video RNG failed");goto bad;}}
     else h3_rng_fill_normal(&s->video_rng,s->original_video_noise,s->video_elements);
-    fprintf(stderr,"h3_upscale_noise_time {\"seconds\":%.9g,\"reused\":%d}\n",h3_av_now()-noise_begin,t->noise_source!=NULL);
+    H3_VERBOSE("h3_upscale_noise_time {\"seconds\":%.9g,\"reused\":%d}\n",h3_av_now()-noise_begin,t->noise_source!=NULL);
     s->video_random_count=s->video_elements;s->audio_random_count=0;
     h3_sampler_hash(s->original_video_noise,s->video_elements*4,s->upscale.noise_hash);
     for(size_t i=0;i<s->video_elements;i++)s->video[i]=(1.f-o->sigma)*t->video[i]+o->sigma*s->original_video_noise[i];

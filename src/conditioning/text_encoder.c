@@ -1,3 +1,4 @@
+#include "src/log.h"
 #include "src/memory.h"
 #include "src/conditioning/text_encoder.h"
 
@@ -702,7 +703,7 @@ static int text_encode_bf16_impl(
     int prefetch_layers = prefetch_threads > 0 && layer_count > 1;
     int prefetch_depth = prefetch_layers ? text_prefetch_depth(gpu) : 0;
     if (h3_sglang_requested())
-        fprintf(stderr,"h3cli: shared Qwen prefetch lanes=%d depth=%d\n",prefetch_threads,prefetch_depth);
+        H3_VERBOSE("h3cli: shared Qwen prefetch lanes=%d depth=%d\n",prefetch_threads,prefetch_depth);
     text_prefetch_slot slots[6];
     memset(slots, 0, sizeof(slots));
     text_layer_weights weights;

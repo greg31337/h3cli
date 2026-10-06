@@ -1,0 +1,363 @@
+Swiss Alps flight: twenty adjacent stages of one continuous upstream route.
+The prose repeats the visual rules so each independently conditioned segment receives them.
+The opening state of every later segment matches the preceding segment's ending state.
+
+### 1 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Enter the high valley. Establish the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin already in motion; there is no takeoff or opening transition.
+[Shot 1] The camera is already flying forward above the last scattered Swiss stone pines on the lower lip of a single high Alpine valley. Follow a narrow silver meltwater stream upstream, with its near channel just right of center. Keep about eighty meters above the ground and move at a steady twelve meters per second. A grassy shelf opens beyond the pines; a pale oval boulder sits beside the stream on that shelf. Advance only far enough for the last three tall pines to drift toward the bottom edge.
+End state: The last three pine crowns occupy the bottom edge; the pale oval boulder is ahead just right of center beside the stream, and the grassy shelf fills the middle distance.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 2 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Leave the pines behind. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The last three pine crowns occupy the bottom edge; the pale oval boulder is ahead just right of center beside the stream, and the grassy shelf fills the middle distance. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Continue the same forward glide as the three pine crowns leave the bottom of frame through parallax. Approach the pale oval boulder without changing the camera angle. The stream curves gently left beyond it, and small gray stones become visible along the grassy bank. Begin a very shallow leftward yaw to follow that existing bend; keep the wings-level horizon and steady forward speed.
+End state: The pale oval boulder is at lower right, the stream's shallow left bend lies directly ahead, and a low crescent of gray stones borders the left bank.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 3 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Follow the first stream bend. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The pale oval boulder is at lower right, the stream's shallow left bend lies directly ahead, and a low crescent of gray stones borders the left bank. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Pass the oval boulder on its left so it slips out at lower right. Continue the shallow leftward arc above the stream, keeping the gray stone crescent along the left bank. Let foreground grasses move backward naturally. Beyond the crescent, the same stream straightens between two grassy hummocks. Gradually finish the yaw while approaching the hummocks; do not swing around to look back.
+End state: The gray stone crescent is at lower left; two grassy hummocks frame the straight stream ahead, with the taller hummock on the right.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 4 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Cross the grassy hummocks. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The gray stone crescent is at lower left; two grassy hummocks frame the straight stream ahead, with the taller hummock on the right. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Fly forward between the same two hummocks, maintaining roughly eighty meters of ground clearance. The taller right hummock drifts outward to the right while the shorter left one drifts left. Beyond them the stream divides around a narrow gravel bar with three pale rocks at its upstream tip. The far dark valley wall remains on the right; no new mountain range appears.
+End state: The two hummocks lie at the lower corners, the narrow gravel bar is centered ahead, and three pale rocks mark its far tip.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 5 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Approach the gravel bar. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The two hummocks lie at the lower corners, the narrow gravel bar is centered ahead, and three pale rocks mark its far tip. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Advance above the left branch of the stream alongside the gravel bar. The three pale rocks at its far tip grow slowly larger. Fine shallow channels glint in the same sunlight and retain their positions on the bar. A rust-colored patch of alpine shrubs on the left bank becomes clearer beyond the rocks. The route remains a single slow upstream glide.
+End state: The three pale rocks are just below center; the left stream branch leads toward a rust-colored shrub patch on the left bank, and a thin diagonal rock rib is visible farther ahead.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 6 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Pass the three rocks. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The three pale rocks are just below center; the left stream branch leads toward a rust-colored shrub patch on the left bank, and a thin diagonal rock rib is visible farther ahead. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Let the three rocks pass beneath the camera and slide down out of view. Follow the left stream branch as it rejoins the main channel beyond the gravel bar. The rust-colored shrub patch approaches along the left side. Start a gentle rise with the terrain while preserving the same ground clearance; the diagonal rock rib already ahead grows larger, with a clear low opening where the water crosses it.
+End state: The rust-colored shrub patch occupies lower left; the diagonal rock rib crosses the middle of frame, with the stream's low opening slightly right of center.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 7 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Approach the rock rib. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The rust-colored shrub patch occupies lower left; the diagonal rock rib crosses the middle of frame, with the stream's low opening slightly right of center. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Continue toward the opening in the same diagonal rock rib. The shrubs drift down the left edge and the rib's layered gray surface resolves naturally with approach. Follow the stream through the broad low notch, keeping ample clearance above the rock. A small white cascade is visible through the notch; it becomes gradually more distinct without an abrupt reveal or camera tilt.
+End state: The low notch is directly ahead between the two ends of the diagonal rib; a small white cascade is visible just beyond it, and the right end of the rib occupies the lower right.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 8 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Clear the low notch. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The low notch is directly ahead between the two ends of the diagonal rib; a small white cascade is visible just beyond it, and the right end of the rib occupies the lower right. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Glide over the low notch and continue upstream with the same heading. Let the two ends of the rock rib move outward and below the camera. Approach the small cascade, whose water flows toward and beneath the approaching camera. A flat wet apron of dark stone lies at its base. Rise gently along the valley floor without slowing, diving, or changing focal length.
+End state: The rib has moved to the bottom corners; the wet dark-stone apron is below center, and the short cascade is centered just ahead beneath a broad smooth rock shelf.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 9 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Rise above the cascade. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The rib has moved to the bottom corners; the wet dark-stone apron is below center, and the short cascade is centered just ahead beneath a broad smooth rock shelf. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Continue the gentle rise over the wet apron toward the same short cascade. Pass above the cascade lip with safe clearance while looking at the same fixed shallow downward angle. The broad smooth shelf beyond the lip gradually fills the foreground. The stream runs across this shelf from a partly hidden lake outlet ahead; first reveal only a narrow sliver of turquoise water behind its low gravel rim.
+End state: The cascade lip is at the bottom edge, the smooth rock shelf fills the foreground, and a narrow turquoise sliver appears beyond the low gravel rim ahead.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 10 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Reveal the lake outlet. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The cascade lip is at the bottom edge, the smooth rock shelf fills the foreground, and a narrow turquoise sliver appears beyond the low gravel rim ahead. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Fly over the same smooth shelf toward the gravel rim. Allow the turquoise sliver to widen naturally into the near end of a small elongated alpine lake as the changing viewpoint clears the rim. The outlet stays just right of center below the flight path. A pale triangular rock stands beside the left shore, and the farther lake surface extends along the established valley axis.
+End state: The lake outlet is at lower right; turquoise water fills the middle of frame, and the pale triangular shoreline rock is ahead on the left.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 11 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Follow the left lakeshore. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The lake outlet is at lower right; turquoise water fills the middle of frame, and the pale triangular shoreline rock is ahead on the left. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Move upstream over the lake's left margin toward the same triangular rock. Follow the shore's very broad rightward curve with only a small gradual yaw, retaining a level horizon. Gentle parallel ripples keep their direction and spacing across the blue-green water. The right-hand dark cliff remains across the lake. A short pale shingle tongue projects into the water just beyond the triangular rock.
+End state: The triangular rock sits at lower left beside the water; the pale shingle tongue is ahead left of center, and the lake's far gravel shore remains in the distance.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 12 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Pass the shingle tongue. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The triangular rock sits at lower left beside the water; the pale shingle tongue is ahead left of center, and the lake's far gravel shore remains in the distance. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Continue the broad shoreline arc as the triangular rock slides out at lower left. Pass above the root of the pale shingle tongue, keeping open water to the right. The far gravel shore approaches steadily; a small braided inlet can already be seen entering the lake near its left half. Finish the shallow yaw gradually so forward travel aligns with that inlet.
+End state: The shingle tongue occupies the lower left edge; the far gravel shore lies ahead across the upper half of the water, with the braided inlet slightly left of center.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 13 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Approach the lake inlet. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The shingle tongue occupies the lower left edge; the far gravel shore lies ahead across the upper half of the water, with the braided inlet slightly left of center. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Fly across the remaining short reach of lake toward the same braided inlet. Keep the far gravel shore fixed in its spatial relationship to the cliffs and twin summit. The turquoise water becomes shallower near the inlet, showing pale underwater gravel. Two small stream channels separated by a wedge of silt resolve ahead. Beyond them a low gray moraine ridge is already visible.
+End state: Shallow turquoise water lies below the camera; two inlet channels and their central silt wedge fill the middle distance, and the low gray moraine ridge sits beyond them.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 14 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Cross the inlet delta. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: Shallow turquoise water lies below the camera; two inlet channels and their central silt wedge fill the middle distance, and the low gray moraine ridge sits beyond them. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Cross the same shoreline and follow the right inlet channel upstream alongside the central silt wedge. Water gives way to pale wet gravel beneath the flight path through normal forward movement. The lake recedes toward the bottom of the frame without a backward camera turn. Ahead, the right channel curves gently left toward a broad gap in the low moraine ridge.
+End state: Wet gravel fills the foreground, the central silt wedge is at lower left, and the right inlet channel leads toward a broad gap in the moraine ridge ahead.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 15 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Follow the meltwater channel. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: Wet gravel fills the foreground, the central silt wedge is at lower left, and the right inlet channel leads toward a broad gap in the moraine ridge ahead. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Continue over the right channel as it bends gently left across the gravel. Make a matching small left yaw, keeping the horizon level and the same apparent travel speed. Approach the broad moraine gap rather than climbing suddenly over its crest. A large angular charcoal boulder sits on the gap's right shoulder; keep that boulder to the right of the flight path.
+End state: The broad moraine gap is centered ahead; the angular charcoal boulder is on its right shoulder, and the meltwater channel runs beneath the center of the camera.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 16 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Enter the moraine gap. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The broad moraine gap is centered ahead; the angular charcoal boulder is on its right shoulder, and the meltwater channel runs beneath the center of the camera. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Fly forward into the same broad gap with ample clearance, allowing the charcoal boulder to approach along the right side. The moraine banks spread toward the lower corners. Through the gap, gradually reveal the low blue-white toe of a small valley glacier feeding the channel. Keep the glacier at its existing distance; the camera must not jump onto or across the ice.
+End state: The charcoal boulder occupies lower right, the moraine banks frame the lower corners, and the blue-white glacier toe is visible ahead at the head of the meltwater channel.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 17 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Approach the glacier forefield. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The charcoal boulder occupies lower right, the moraine banks frame the lower corners, and the blue-white glacier toe is visible ahead at the head of the meltwater channel. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Pass the charcoal boulder on its left and emerge over the same open gravel forefield. Follow the meltwater channel toward the glacier toe, slowly gaining height with the slope. Distinct dark bands of debris run along the ice edges, and a single shallow diagonal blue seam is visible near the center of its low leading surface. Approach only the near apron of ice.
+End state: The gravel forefield lies below, the low glacier toe fills the middle distance, and the shallow diagonal blue seam is visible just beyond the toe slightly right of center.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 18 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Clear the glacier toe. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The gravel forefield lies below, the low glacier toe fills the middle distance, and the shallow diagonal blue seam is visible just beyond the toe slightly right of center. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Maintain the gentle climb while passing safely above the glacier's low leading apron. Let gravel move down out of frame as blue-white ice enters from ahead. Keep the shallow diagonal blue seam to the right of the flight path. Its shape remains fixed as it grows through approach, with narrow gray debris streaks aligned up-valley along the same glacier.
+End state: Blue-white ice now fills the foreground; the diagonal blue seam is at lower right, and narrow gray debris streaks extend ahead toward a low rounded ice rise.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 19 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Follow the ice toward the rise. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: Blue-white ice now fills the foreground; the diagonal blue seam is at lower right, and narrow gray debris streaks extend ahead toward a low rounded ice rise. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Continue above the same gently sloping ice surface, keeping steady clearance and heading. Let the diagonal seam leave at lower right. Follow the parallel gray debris streaks toward the low rounded ice rise already in view. Rise gradually with that surface; more of the same twin summit and its connecting saddle becomes visible above the rise through natural parallax, without a zoom or tilt.
+End state: The gray debris streaks converge toward the rounded ice rise directly ahead; the same twin summit stands center-left and its connecting saddle remains to the right.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A
+
+### 20 ###
+subject_definitions:
+One connected high valley in the Swiss Alps, viewed from an unobstructed forward-facing aerial camera. A recognizable twin snow summit stays on the distant horizon center-left, a lower saddle stays to its right, and a dark layered cliff bounds the valley on the right. Advance only through the nearby terrain described in this segment, traveling a short distance upstream within this same valley.
+summary:
+Open the upper-valley panorama. Continue the same forward flight through the same valley.
+retention_analysis:
+Fully preserve the twin summit, right-hand cliff, connected watercourse, morning lighting, camera lens, and direction of travel. Nearby landmarks leave the frame only through continuous parallax.
+detailed_description:
+Photorealistic natural aerial footage, one uninterrupted shot, fixed wide 24 mm lens, level horizon near the upper third and a fixed shallow downward viewing angle. Smooth forward flight at about twelve meters per second, roughly eighty meters above the local terrain, with only gradual climbs and gentle route-following yaw. Clear early-morning light comes from off-screen left throughout, with cool shadows to the right, a pale blue sky, and the same thin distant haze. Preserve terrain shapes, colors, scale, exposure, speed, and camera attitude across the boundary.
+Begin in the inherited ending view, without resetting the camera or rearranging terrain: The gray debris streaks converge toward the rounded ice rise directly ahead; the same twin summit stands center-left and its connecting saddle remains to the right. Treat the inherited image as authoritative if small terrain details differ from the description; do not reset the view to correct them. Continue the inherited movement immediately, allowing new terrain to enter only as the camera advances.
+[Shot 1] Glide smoothly above the same rounded ice rise at the inherited speed and angle. As the rise moves beneath the camera, reveal a little more of the continuous upper glacier basin, bounded by the same dark right wall and twin summit. Keep the morning sun, snow texture, horizon, and scale unchanged. Let the panorama open only through forward travel; keep flying steadily through the final frame without braking, orbiting, fading, or a closing title.
+End state: The rounded rise lies at the bottom edge; the upper glacier basin extends ahead, and the camera is still moving smoothly forward toward the same twin summit and saddle.
+No cuts, dissolves, time jumps, teleportation, orbit, reverse travel, abrupt banking, zoom, lens change, weather change, or sudden alteration of mountain silhouettes. No visible aircraft, cockpit, propellers, people, buildings, text, or graphics.
+overall_soundscape:
+A soft, steady bed of natural high-altitude airflow throughout. Keep wind level and tone consistent across segments, with no gust impact, engine, rotor, voices, narration, or sudden sound cue. Ground-level water sounds remain distant and unobtrusive at this flight height.
+non_diegetic_music:
+N/A

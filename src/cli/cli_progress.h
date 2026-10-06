@@ -5,12 +5,21 @@
 
 typedef struct {
     char phase[64];
+    double started;
+} h3_cli_phase_time;
+
+typedef struct {
+    char phase[64];
     int active;
     int completed;
     int total;
     double phase_started;
     double step_started;
     int phase_timing;
+    int terminal;
+    int line_open;
+    double last_draw;
+    h3_cli_phase_time pending[32];
 } h3_cli_progress_state;
 
 /* CLI progress output. Zero totals are indeterminate. */

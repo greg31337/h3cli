@@ -1,3 +1,4 @@
+#include "src/log.h"
 #include "src/upscale/upscale.h"
 #include "src/internal.h"
 #include "src/sampling/sampler_state.h"
@@ -51,7 +52,7 @@ h3_result *h3_upscale_execute(h3_ctx *ctx,const h3_upscale_source *source,const 
             snprintf(r->presentation.upscale_artifact_sha256+2*i,3,"%02x",transfer->artifact_hash[i]);
         }
         if(!h3_presentation_validate(&r->presentation,&av->info,ctx->error,sizeof(ctx->error))){h3_result_free(r);return NULL;}
-        fprintf(stderr,"h3cli: upscale K=0: no video/audio noise draws; no DiT evaluations\n");
+        H3_VERBOSE("h3cli: upscale K=0: no video/audio noise draws; no DiT evaluations\n");
         if(o->state_only)return r;
         h3_result *delivered=h3_decode_av_owned(ctx->model_dir,av,&r->presentation,&o->delivery,ctx->error,sizeof(ctx->error));
         r->av_state=NULL;h3_result_free(r);return delivered;

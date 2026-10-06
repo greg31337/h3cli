@@ -47,8 +47,28 @@ class CLI(unittest.TestCase):
         self.assertIn('--resume-sampler-state PATH', result.stderr)
         self.assertIn('--decode-av-state PATH', result.stderr)
         self.assertIn('--decode-still-latent PATH', result.stderr)
+        self.assertIn('--verbose', result.stderr)
         self.assertNotIn('interactive', result.stderr.lower())
         self.assertIn('default: models/MiniMaxH3', result.stderr)
+
+    def test_verbose_is_not_a_generation_option_and_errors_stay_visible(self):
+        with tempfile.TemporaryDirectory() as directory:
+            missing = str(Path(directory)/'missing')
+            for verbose in ([], ['--verbose']):
+                for operation in (['--decode-av-state', missing], ['--upscale-state', missing]):
+                    result = self.run_cli(*verbose, *operation, '--offline')
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn('cannot open', result.stderr)
+                    self.assertNotIn('controls conflict', result.stderr)
+                    self.assertNotIn('generation requires', result.stderr)
+
+    def test_diagnostics_are_opt_in_and_validation_does_not_duplicate_them(self):
+        quiet = self.run_cli('--quality', 'preview')
+        verbose = self.run_cli('--quality', 'preview', '--verbose')
+        self.assertNotIn('h3cli: quality=', quiet.stderr)
+        self.assertEqual(verbose.stderr.count('h3cli: quality='), 1)
+        for result in (quiet, verbose):
+            self.assertIn('generation requires', result.stderr)
 
     def test_default_model_path_and_explicit_override(self):
         with tempfile.TemporaryDirectory() as directory:

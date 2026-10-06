@@ -36,7 +36,7 @@ def records():return [json.loads(p.read_text()) for p in sorted(ROOT.glob('runs/
 def spent(bucket):return sum(r['wall_seconds'] for r in records() if r['bucket']==bucket)
 def controlled(extra=None):
     env={k:v for k,v in os.environ.items() if not k.startswith('H3_')};env.update(OPENBLAS_NUM_THREADS='4',OMP_NUM_THREADS='4')
-    env.update(extra or {});return env
+    env.update(extra or {});env['H3_VERBOSE']='1';return env
 
 def source_identity():
     files=[]

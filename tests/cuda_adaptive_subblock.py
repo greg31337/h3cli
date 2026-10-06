@@ -129,7 +129,7 @@ def runtime(env):
 
 def render(source,out,model,m,variant,env):
     out.mkdir(parents=True,exist_ok=False)
-    cmd=[str(source/'bin/h3cli'),'-d',str(model),'-p',m['prompt'],'--seed','42','--width','640','--height','480','--frames','90','--steps','50',
+    cmd=[str(source/'bin/h3cli'),'--verbose','-d',str(model),'-p',m['prompt'],'--seed','42','--width','640','--height','480','--frames','90','--steps','50',
          '--save-av-state',str(out/'final.h3av'),'-o',str(out/'video.mp4'),*variant['args']]
     record=dict(passed=False,variant=variant,command=cmd,started_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()))
     write(out/'result.json',record)

@@ -901,6 +901,12 @@ int main(int argc,char **argv) {
     CHECK(!strcmp(online_identity,enabled_identity)&&!strcmp(online_identity,offline_identity));
     free(online_identity);free(enabled_identity);free(offline_identity);
     if(saved_offline){setenv("H3_OFFLINE",saved_offline,1);free(saved_offline);}else unsetenv("H3_OFFLINE");
+    const char *verbose=getenv("H3_VERBOSE");char *saved_verbose=verbose?strdup(verbose):NULL;
+    unsetenv("H3_VERBOSE");char *quiet_identity=h3_sampler_environment();
+    setenv("H3_VERBOSE","1",1);char *verbose_identity=h3_sampler_environment();
+    CHECK(quiet_identity&&verbose_identity&&!strcmp(quiet_identity,verbose_identity));
+    free(quiet_identity);free(verbose_identity);
+    if(saved_verbose){setenv("H3_VERBOSE",saved_verbose,1);free(saved_verbose);}else unsetenv("H3_VERBOSE");
     setenv("H3_DISABLE_FUSED_MLP","1\nH3_DISABLE_FUSED_PATCH_CAST=1",1);
     h3_sampler_state *nested_environment=fixture(directory,0,0,1);
     setenv("H3_DISABLE_FUSED_MLP","1",1); setenv("H3_DISABLE_FUSED_PATCH_CAST","1",1);

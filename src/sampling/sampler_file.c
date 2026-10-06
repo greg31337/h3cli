@@ -1,3 +1,4 @@
+#include "src/log.h"
 #include "src/sglang/sglang.h"
 /* .h3sample v2: explicit LE scalars and lossless IEEE/BF16 tensor payloads.
  * Bounds/integrity validation precedes deserialization and model allocation. */
@@ -502,7 +503,7 @@ static h3_sampler_state *load_state(const char *path,int source,uint64_t budget,
                 if(!h3_adaptive_plan_admit(&plan,budget,error,size))goto invalid;
                 s->params.adaptive_cache_max_bytes=budget;
             }
-            fprintf(stderr,"h3cli: adaptive checkpoint source=%s ceiling=%llu persistent=%zu rows=%zu\n",
+            H3_VERBOSE("h3cli: adaptive checkpoint source=%s ceiling=%llu persistent=%zu rows=%zu\n",
                 explicit_budget?"override":"saved",
                 (unsigned long long)s->params.adaptive_cache_max_bytes,plan.persistent_bytes,s->full_sequence);
         }
@@ -549,7 +550,7 @@ static int save_state(const h3_sampler_state *state,const char *path,int source,
         preflight+=ENTRY+measure.length;writer_bytes+=measure.length;
     }
     if(source&&preflight>(UINT64_C(2)<<30))return fail(error,size,"clean source exceeds 2 GiB bound before writer allocation");
-    if(state->params.adaptive_cache)fprintf(stderr,"h3cli: checkpoint preflight file=%llu writer-copy=%llu adaptive-export=%llu bytes\n",
+    if(state->params.adaptive_cache)H3_VERBOSE("h3cli: checkpoint preflight file=%llu writer-copy=%llu adaptive-export=%llu bytes\n",
         (unsigned long long)preflight,(unsigned long long)writer_bytes,(unsigned long long)state->adaptive_elements*4);
     buffer payload[SECTIONS+1]={0}; unsigned n=0; int ok=1;
     for(unsigned id=1;id<=SECTIONS;id++) if(present(id,state)) { payload[id].ok=1; section(&payload[id],id,section_version(id,state),&s); if(!payload[id].ok) ok=0; n++; }

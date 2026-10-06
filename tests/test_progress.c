@@ -23,7 +23,7 @@ static void screen(const char *raw, char *out) {
 }
 
 int main(void) {
-    h3_cli_progress_state state = {0}; char *raw = NULL; size_t size = 0;
+    h3_cli_progress_state state = {.terminal = 1}; char *raw = NULL; size_t size = 0;
     FILE *f = open_memstream(&raw, &size); CHECK(f);
     h3_cli_progress_update(&state, f, "reference vision preparation", 0, 1);
     CHECK(state.active && strstr(raw, "starting...") && !strstr(raw, "0/1"));
@@ -46,7 +46,7 @@ int main(void) {
     CHECK(strstr(visible, "video VAE encoder            9/9"));
     CHECK(!strstr(visible, "9/9   ng"));
     CHECK(!strstr(visible, "loading..."));
-    CHECK(strstr(visible, "reference vision preparation    1/1"));
+    CHECK(strstr(visible, "reference vision preparation 1/1"));
     CHECK(strstr(visible, "DiT initialization           1/1"));
     free(raw);
 
@@ -82,6 +82,32 @@ int main(void) {
     h3_cli_progress_update(&state, f, "denoise", 6, 6);
     CHECK(!strstr(raw + before, "last step:"));
     CHECK(fclose(f) == 0); free(raw);
+    /* Redirected output has no carriage returns or profiling records, and a
+     * large decode cannot flood the log with thousands of tiny updates. */
+    raw = NULL; size = 0; memset(&state, 0, sizeof(state));
+    f = open_memstream(&raw, &size); CHECK(f);
+    h3_cli_progress_update(&state, f, "video VAE decode", 0, 14000);
+    for (int i = 1; i <= 14000; i++)
+        h3_cli_progress_update(&state, f, "video VAE decode", i, 14000);
+    CHECK(!strchr(raw, '\r') && !strstr(raw, "monotonic") && !strstr(raw, "phase duration"));
+    CHECK(strstr(raw, "14000/14000") && strstr(raw, " s)") && size < 1000);
+    CHECK(fclose(f) == 0); free(raw);
+
+    /* Nested stages retain their original start, and verbose phase timing is
+     * available without turning on GPU profiling. */
+    raw = NULL; size = 0; memset(&state, 0, sizeof(state));
+    state.phase_timing = 1;
+    f = open_memstream(&raw, &size); CHECK(f);
+    h3_cli_progress_update(&state, f, "reference preparation", 0, 1);
+    state.pending[0].started -= 2;
+    h3_cli_progress_update(&state, f, "vision encoder", 0, 27);
+    h3_cli_progress_update(&state, f, "vision encoder", 27, 27);
+    h3_cli_progress_update(&state, f, "reference preparation", 1, 1);
+    CHECK(strstr(raw, "phase duration reference preparation: 2."));
+    CHECK(strstr(raw, "phase duration vision encoder:"));
+    CHECK(!state.pending[0].phase[0] && !state.pending[1].phase[0]);
+    CHECK(fclose(f) == 0); free(raw);
+
     printf("ok: %d progress rendering and lifecycle checks\n", checks);
     return 0;
 }

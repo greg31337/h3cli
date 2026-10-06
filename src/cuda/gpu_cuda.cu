@@ -1,3 +1,4 @@
+#include "src/log.h"
 #include "src/sglang/sglang.h"
 /* Linux single-device BF16 backend. Shared C owns model and sampler policy. */
 #include "src/gpu.h"
@@ -315,7 +316,7 @@ h3_gpu *h3_gpu_create(const char *shader,char *error,size_t size) {
 #ifndef H3_CUDA_USE_SGLANG_FLASH
         ok=h3_gpu_set_error(g,"SGLang reference requires a CUDA_SGLANG=1 build");
 #else
-        fprintf(stderr,"h3cli: SGLang CUDA reference recipe v%d; attention=%s; production unqualified\n",
+        H3_VERBOSE("h3cli: SGLang CUDA reference recipe v%d; attention=%s; production unqualified\n",
             H3_SGLANG_VERSION,"pinned dense FlashAttention BF16/FP32");
 #endif
     }
@@ -332,8 +333,8 @@ h3_gpu *h3_gpu_create(const char *shader,char *error,size_t size) {
     g->stats.pinned_bytes=g->stats.peak_pinned_bytes=2*g->bounce_bytes;
     static std::mutex log_mutex; static std::vector<int> logged;
     {std::lock_guard<std::mutex> lock(log_mutex);
-     if(std::find(logged.begin(),logged.end(),g->device)==logged.end()) {
-        fprintf(stderr,"h3cli: CUDA device %d: %s, SM%d%d, %.2f/%.2f GiB free/total, runtime %d driver %d; BF16/F32; %s; weight mode %s\n",g->device,info.name,info.cuda_compute_major,info.cuda_compute_minor,info.free_device_memory/1073741824.,info.device_memory/1073741824.,info.cuda_runtime_version,info.cuda_driver_version,g->dispatch.name,getenv("H3_CUDA_WEIGHT_MODE")?getenv("H3_CUDA_WEIGHT_MODE"):"auto");
+     if(h3_log_verbose() && std::find(logged.begin(),logged.end(),g->device)==logged.end()) {
+        H3_VERBOSE("h3cli: CUDA device %d: %s, SM%d%d, %.2f/%.2f GiB free/total, runtime %d driver %d; BF16/F32; %s; weight mode %s\n",g->device,info.name,info.cuda_compute_major,info.cuda_compute_minor,info.free_device_memory/1073741824.,info.device_memory/1073741824.,info.cuda_runtime_version,info.cuda_driver_version,g->dispatch.name,getenv("H3_CUDA_WEIGHT_MODE")?getenv("H3_CUDA_WEIGHT_MODE"):"auto");
         logged.push_back(g->device);
      }}
     return g;
@@ -373,20 +374,20 @@ void h3_gpu_free(h3_gpu *g) {
     if(g->copy)cudaStreamSynchronize(g->copy);
     collect_timings(g);
     h3_gpu_profile_mark(g,"complete");
-    if(g->dit_attention_configured)fprintf(stderr,"h3cli: main DiT attention counters requested=%s dense=%llu sage2=%llu sage3=%llu sol=%llu protected_bypass=%llu workspace=%zu\n",
+    if(g->dit_attention_configured)H3_VERBOSE("h3cli: main DiT attention counters requested=%s dense=%llu sage2=%llu sage3=%llu sol=%llu protected_bypass=%llu workspace=%zu\n",
         h3_attention_name(g->attention_mode),(unsigned long long)g->main_dense_calls,
         (unsigned long long)g->sage_stats.calls[1],(unsigned long long)g->sage_stats.calls[2],
         (unsigned long long)g->sol_stats.calls,(unsigned long long)g->sol_bypass,
         (g->sage_workspace?g->sage_workspace->bytes:0)+(g->sol_workspace?g->sol_workspace->bytes:0)+(g->subblock_workspace?g->subblock_workspace->bytes:0));
-    if(g->sglang_reference)fprintf(stderr,"h3cli: shared exact substitutions %s: mode=%s mapped_weight_entries=%llu copied_weight_entries=%llu fused_vae_qkv_casts=%llu separate_vae_qkv_casts=%llu\n",
+    if(g->sglang_reference)H3_VERBOSE("h3cli: shared exact substitutions %s: mode=%s mapped_weight_entries=%llu copied_weight_entries=%llu fused_vae_qkv_casts=%llu separate_vae_qkv_casts=%llu\n",
         g->label.c_str(),"single",(unsigned long long)g->exact_mapped_weight_entries,
         (unsigned long long)g->exact_copied_weights,(unsigned long long)g->exact_fused_vae_cast_count,
         (unsigned long long)g->exact_separate_vae_casts);
-    if(g->sglang_reference)fprintf(stderr,"h3cli: reference allocation counters %s: peak_device_tensor_bytes=%llu peak_pinned_bytes=%llu host_weight_entries=%zu host_weight_read_bytes=%llu H2D_bytes=%llu D2H_bytes=%llu\n",
+    if(g->sglang_reference)H3_VERBOSE("h3cli: reference allocation counters %s: peak_device_tensor_bytes=%llu peak_pinned_bytes=%llu host_weight_entries=%zu host_weight_read_bytes=%llu H2D_bytes=%llu D2H_bytes=%llu\n",
         g->label.c_str(),(unsigned long long)g->stats.peak_live_bytes,(unsigned long long)g->stats.peak_pinned_bytes,
         g->sglang_host_weights.size(),(unsigned long long)g->sglang_host_read_bytes,
         (unsigned long long)g->stats.h2d_bytes,(unsigned long long)g->stats.d2h_bytes);
-    if(g->dit_attention_configured)fprintf(stderr,"h3cli: projection counters requested=%s recipe=%d native_calls=%llu cache_hits=%llu prepared=%llu\n",
+    if(g->dit_attention_configured)H3_VERBOSE("h3cli: projection counters requested=%s recipe=%d native_calls=%llu cache_hits=%llu prepared=%llu\n",
         h3_quant_name(g->quant_mode),h3_quant_execution_recipe(g->quant_mode,g->policy.adaptive_cache,g->policy.attention),
         (unsigned long long)g->quant_calls,(unsigned long long)g->quant_cache_hits,
         (unsigned long long)g->quant_cache_misses);
@@ -550,7 +551,7 @@ int h3_gpu_plan_weights(h3_gpu *g,uint64_t weights,uint64_t activations) {
     if(mode==H3_WEIGHTS_RESIDENT&&!fit){h3_gpu_set_error(g,"resident weights need %.2f GiB plus %.2f GiB activations/reserve; %.2f GiB free",weights/1073741824.,activations/1073741824.+reserve/1073741824.,free/1073741824.);return -1;}
     if(mode==H3_WEIGHTS_STREAM)fit=false;
     if(activations>free||reserve>free-activations){h3_gpu_set_error(g,"insufficient CUDA capacity for streamed activations/reserve");return -1;}
-    fprintf(stderr,"h3cli: CUDA packed weight planner: requested=%s effective=%s weights=%llu future=%llu reserve=%llu free=%llu live=%llu capacity_cap=%llu\n",
+    H3_VERBOSE("h3cli: CUDA packed weight planner: requested=%s effective=%s weights=%llu future=%llu reserve=%llu free=%llu live=%llu capacity_cap=%llu\n",
         h3_weight_mode_name(mode),fit?"resident":"stream",(unsigned long long)weights,(unsigned long long)activations,
         (unsigned long long)reserve,(unsigned long long)free,(unsigned long long)g->stats.live_bytes,(unsigned long long)g->weight_options.capacity_limit);
     return fit?0:1;
@@ -566,7 +567,7 @@ int h3_gpu_plan_bf16_weights(h3_gpu *g,uint64_t mask,uint64_t block,uint64_t fut
     if(retry_cap>=0&&(options.max_resident<0||retry_cap<options.max_resident))options.max_resident=retry_cap;
     uint64_t reserve=std::max<uint64_t>(1ull<<30,total/10);
     int ok=h3_weight_plan_build(plan,options,mask,block,available,g->stats.live_bytes,future,reserve,g->error,sizeof(g->error));
-    fprintf(stderr,"h3cli: CUDA BF16 weight planner: requested=%s effective=%s resident=%u/%u mask=%llx resident_bytes=%llu slots=%llu future=%llu reserve=%llu free=%llu live=%llu count_cap=%d capacity_cap=%llu retry_cap=%d%s\n",
+    H3_VERBOSE("h3cli: CUDA BF16 weight planner: requested=%s effective=%s resident=%u/%u mask=%llx resident_bytes=%llu slots=%llu future=%llu reserve=%llu free=%llu live=%llu count_cap=%d capacity_cap=%llu retry_cap=%d%s\n",
         h3_weight_mode_name(options.mode),ok?(plan->effective_mode==H3_WEIGHTS_AUTO?"partial":h3_weight_mode_name(plan->effective_mode)):"rejected",
         plan->resident_count,plan->active_count,(unsigned long long)plan->resident_mask,(unsigned long long)plan->resident_bytes,
         (unsigned long long)plan->slot_bytes,(unsigned long long)future,(unsigned long long)reserve,(unsigned long long)plan->free_bytes,
@@ -1546,7 +1547,7 @@ int h3_gpu_dit_attention_configure(h3_gpu *g,int mode) {
         g->subblock=h3_cuda_subblock_create(g->subblock_workspace->data,H3_ATTENTION_WORKSPACE_BYTES,g->compute,g->profiling||g->experiment_timing,g->error,sizeof(g->error));
         if(!g->subblock){h3_gpu_tensor_free(g->subblock_workspace);g->subblock_workspace=nullptr;return 0;}
         g->attention_mode=mode;g->dit_attention_configured=true;
-        fprintf(stderr,"h3cli: DiT attention=subblock recipe=%u plan=1 sparsity=%.9g warmup=%d probe=dense workspace_limit=%zu\n",h3_attention_execution_recipe(mode,g->policy.projection_precision),g->policy.subblock_sparsity,h3_subblock_warmup(g->policy.subblock_warmup),H3_ATTENTION_WORKSPACE_BYTES);
+        H3_VERBOSE("h3cli: DiT attention=subblock recipe=%u plan=1 sparsity=%.9g warmup=%d probe=dense workspace_limit=%zu\n",h3_attention_execution_recipe(mode,g->policy.projection_precision),g->policy.subblock_sparsity,h3_subblock_warmup(g->policy.subblock_warmup),H3_ATTENTION_WORKSPACE_BYTES);
         return 1;
     }
     if(mode==H3_ATTENTION_SOL) {
@@ -1557,7 +1558,7 @@ int h3_gpu_dit_attention_configure(h3_gpu *g,int mode) {
         g->sol=h3_cuda_sol_create(g->sol_workspace->data,H3_CUDA_SOL_WORKSPACE_BYTES,g->compute,g->profiling,g->error,sizeof(g->error));
         if(!g->sol){h3_gpu_tensor_free(g->sol_workspace);g->sol_workspace=nullptr;return 0;}
         g->attention_mode=mode;g->dit_attention_configured=true;
-        fprintf(stderr,"h3cli: DiT attention=sol recipe=%d plan=%d workspace_limit=%zu q=%d kv=%d min_exact=%.9g dense_steps=%d dense_layers=%d tau=%.9g local_radius=%d dense_sigma=%.9g\n",
+        H3_VERBOSE("h3cli: DiT attention=sol recipe=%d plan=%d workspace_limit=%zu q=%d kv=%d min_exact=%.9g dense_steps=%d dense_layers=%d tau=%.9g local_radius=%d dense_sigma=%.9g\n",
             H3_CUDA_SOL_VERSION,H3_CUDA_SOL_PLAN_VERSION,H3_CUDA_SOL_WORKSPACE_BYTES,g->sol_options.q_block,g->sol_options.kv_block,g->sol_options.min_exact,g->sol_options.dense_steps,g->sol_options.dense_layers,g->sol_options.tau,g->sol_options.local_radius,g->sol_options.dense_sigma);
         return 1;
     }
@@ -1566,7 +1567,7 @@ int h3_gpu_dit_attention_configure(h3_gpu *g,int mode) {
     g->sage=h3_sage_create(g->sage_workspace->data,H3_ATTENTION_WORKSPACE_BYTES,g->compute,g->profiling,g->error,sizeof(g->error));
     if(!g->sage){h3_gpu_tensor_free(g->sage_workspace);g->sage_workspace=nullptr;return 0;}
     g->attention_mode=mode;g->dit_attention_configured=true;
-    fprintf(stderr,"h3cli: DiT attention=%s recipe=%d plan=%d workspace_limit=%zu\n",h3_attention_name(mode),H3_ATTENTION_VERSION,H3_ATTENTION_PLAN_VERSION,H3_ATTENTION_WORKSPACE_BYTES);
+    H3_VERBOSE("h3cli: DiT attention=%s recipe=%d plan=%d workspace_limit=%zu\n",h3_attention_name(mode),H3_ATTENTION_VERSION,H3_ATTENTION_PLAN_VERSION,H3_ATTENTION_WORKSPACE_BYTES);
     return 1;
 }
 int h3_gpu_dit_sol_layout(h3_gpu *g,const h3_sol_layout *layout) {

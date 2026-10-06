@@ -59,7 +59,7 @@ def main():
         if budget<=0 or job.get('estimated_seconds',0)>budget:
             record=dict(job,status='deferred',started_unix=now,wall_seconds=0,reason='measured estimate exceeds remaining budget/reporting reserve')
             save(d/'record.json',record);ledger['entries'].append(dict(id=job['id'],started_unix=now,wall_seconds=0,status='deferred'));save(ledgerpath,ledger);continue
-        env=os.environ.copy();env.update(job.get('env',{}));env['H3_TEST_MAX_EVALUATIONS']='6'
+        env=os.environ.copy();env.update(job.get('env',{}));env['H3_TEST_MAX_EVALUATIONS']='6';env['H3_VERBOSE']='1'
         argv=job['argv'];record=dict(job,started_unix=now,cwd=os.getcwd(),status='running',measurement=('main-process RSS and physical footprint sampled at 1 Hz via proc_pid_rusage; unified GPU allocations reported by decoder, not discrete VRAM' if metal else 'whole-device VRAM and process RSS sampled at 1 Hz')+'; peaks between samples may be missed')
         binary=pathlib.Path(argv[0]);record['binary_sha256']=hashlib.file_digest(binary.open('rb'),'sha256').hexdigest() if binary.is_file() else None
         save(d/'request.json',record);peak=None if metal else 0;rss=0;footprint=0;wired=0;samples=[]

@@ -137,7 +137,7 @@ def main():
         env = os.environ.copy()
         assert not any(k.startswith('H3_TEST_') and k != 'H3_TEST_MAX_EVALUATIONS' for k in env)
         env = {k: v for k, v in env.items() if not k.startswith('H3_PROFILE')}
-        env |= {'H3_TEST_MAX_EVALUATIONS': '6', 'H3_EXPERIMENT_TRACE': '1', 'H3_EXPERIMENT_TIMING': '1'}
+        env |= {'H3_TEST_MAX_EVALUATIONS': '6', 'H3_EXPERIMENT_TRACE': '1', 'H3_EXPERIMENT_TIMING': '1', 'H3_VERBOSE': '1'}
         gate = json.loads(a.gate.read_text());source_hash = fingerprint(source_files(root))
         assert gate['passed'] and len(gate['files']) == 204 and gate['source_sha256'] == source_hash
         assert sha(a.weights) == '4f57821f5837f32f7142b67d815606dbd7550f194e5c769f7d6c3f83b146a5e6'

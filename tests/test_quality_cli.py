@@ -21,7 +21,7 @@ class QualityCLI(unittest.TestCase):
 
     def settings(self, *args):
         # No prompt: resolution is observable, but generation cannot start.
-        result = self.run_cli(*args)
+        result = self.run_cli("--verbose", *args)
         self.assertNotEqual(result.returncode, 0, result.stderr)
         match = re.search(r"^h3cli: quality=(.*)$", result.stderr, re.M)
         self.assertIsNotNone(match, result.stderr)

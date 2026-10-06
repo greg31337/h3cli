@@ -1,3 +1,4 @@
+#include "src/log.h"
 #include "src/sglang/sglang.h"
 #include "src/denoise/attention.h"
 #include "src/vae/image_vae.h"
@@ -952,7 +953,7 @@ static h3_video_vae_decoder *h3_acquire_video_decoder(
     if (ctx->cache_enabled && ctx->video_decoder &&
         ctx->video_decoder_key && !strcmp(ctx->video_decoder_key, key)) {
         *cached = 1;
-        fprintf(stderr, "h3cli: video VAE cache hit\n");
+        H3_VERBOSE("h3cli: video VAE cache hit\n");
         return ctx->video_decoder;
     }
     if (ctx->cache_enabled) {
@@ -973,7 +974,7 @@ static h3_video_vae_decoder *h3_acquire_video_decoder(
     ctx->video_decoder = decoder;
     ctx->video_decoder_key = key_copy;
     *cached = 1;
-    fprintf(stderr, "h3cli: video VAE cache miss; decoder retained\n");
+    H3_VERBOSE("h3cli: video VAE cache miss; decoder retained\n");
     return decoder;
 }
 
@@ -1193,7 +1194,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
             params->bridge_max_strength,params->bridge_profile,&bridge,NULL,0,ctx->error,sizeof(ctx->error))) return NULL;
         if (getenv("H3_PROFILE")) fprintf(stderr,"h3cli: bridge profile construction %.6f s, %zu bytes\n",h3_av_now()-started,sizeof(bridge));
     }
-    if (has_continuation) fprintf(stderr,
+    if (has_continuation) H3_VERBOSE(
         "h3cli: continuation raw=%d frames, protected=%d frames / %d video steps / %d audio ticks (%.3f s), net-new=%d frames (%.3f s)\n"
         "h3cli: mode=%s, explicit references=%zu, prefix trimming=%s\n",
         temporal.frame_count,context_frames,prefix.video_prefix_t,prefix.audio_prefix_t,
@@ -1204,7 +1205,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     h3_image_vae_info image_info={0};
     if(params->still) {
         if(!h3_image_vae_inspect(params->image_vae,&image_info,ctx->error,sizeof(ctx->error)))return NULL;
-        fprintf(stderr,"h3cli: single-still: video T=1, auxiliary audio T=2 (generated and discarded), dense BF16, 50 blocks\n");
+        H3_VERBOSE("h3cli: single-still: video T=1, auxiliary audio T=2 (generated and discarded), dense BF16, 50 blocks\n");
         /* A still never retains a video decoder beside its own final decoder. */
         h3_video_vae_decoder_free(ctx->video_decoder);ctx->video_decoder=NULL;
         free(ctx->video_decoder_key);ctx->video_decoder_key=NULL;
@@ -1326,7 +1327,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     for (size_t i = 0; i < params->reference_count; i++) {
         int is_video = resume ? resume->references[i].kind == H3_LAYOUT_REF_VIDEO :
             (params->references[i].kind == H3_REFERENCE_VIDEO || params->references[i].kind == H3_REFERENCE_VIDEO_AUDIO);
-        if (is_video) fprintf(stderr, "h3cli: Ref2VA video %zu pipeline=%s\n", i + 1,
+        if (is_video) H3_VERBOSE("h3cli: Ref2VA video %zu pipeline=%s\n", i + 1,
             "released-v1");
     }
     conditioning_key = resume ? strdup("serialized-conditioning") : h3_conditioning_key(
@@ -1392,7 +1393,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     if(resume && !h3_sampler_prepared_key(resume,resume_key)) { h3_set_error(ctx,"cannot identify prepared checkpoint state"); goto cleanup; }
     if(ctx->dit && !h3_dit_placement_compatible(ctx->dit,params->ssd_streaming)) {
         h3_dit_free(ctx->dit);ctx->dit=NULL;free(ctx->dit_key);ctx->dit_key=NULL;ctx->dit_sampler_key_ready=0;
-        fprintf(stderr,"h3cli: invalidated retained DiT weight placement\n");
+        H3_VERBOSE("h3cli: invalidated retained DiT weight placement\n");
     }
     int resume_live=resume && ctx->cache_enabled && ctx->dit && ctx->dit_sampler_key_ready && !memcmp(resume_key,ctx->dit_sampler_key,32);
     if (ctx->cache_enabled && ctx->dit &&
@@ -1409,7 +1410,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
         free(ctx->dit_key); ctx->dit_key = NULL; ctx->dit_sampler_key_ready = 0;
         h3_video_vae_decoder_free(ctx->video_decoder); ctx->video_decoder = NULL;
         free(ctx->video_decoder_key); ctx->video_decoder_key = NULL;
-        fprintf(stderr, "h3cli: evicted GPU caches to make room for conditioning\n");
+        H3_VERBOSE("h3cli: evicted GPU caches to make room for conditioning\n");
     }
     char detail[512];
     if(params->save_conditioning || params->load_conditioning) {
@@ -1465,7 +1466,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
             layout_references,resume->reference_count,conditioned)) {
             h3_set_error(ctx,"cannot restore serialized conditioning cache"); goto cleanup;
         }
-        fprintf(stderr,"h3cli: restored exact conditioning; tokenizer, text/vision and reference encoders skipped\n");
+        H3_VERBOSE("h3cli: restored exact conditioning; tokenizer, text/vision and reference encoders skipped\n");
     } else if (loaded_conditioning) {
         text=loaded_conditioning->text;memset(&loaded_conditioning->text,0,sizeof(loaded_conditioning->text));
         condition_video_rows=loaded_conditioning->video;loaded_conditioning->video=NULL;
@@ -1481,7 +1482,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
             layout_references,params->reference_count,conditioned)) {
             h3_set_error(ctx,"cannot retain loaded conditioning");goto cleanup;
         }
-        fprintf(stderr,"h3cli: h3cond hit; tokenizer, text/vision and reference encoders skipped\n");
+        H3_VERBOSE("h3cli: h3cond hit; tokenizer, text/vision and reference encoders skipped\n");
     } else if (conditioning_hit) {
         size_t cached_reference_count = 0;
         if (!h3_conditioning_cache_load(
@@ -1497,7 +1498,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
             if (params->last_frame)
                 keyframes[keyframe_count++] = temporal.frame_count - 1;
         }
-        fprintf(stderr, "h3cli: conditioning cache hit\n");
+        H3_VERBOSE("h3cli: conditioning cache hit\n");
     } else {
     if (visual_capacity) {
         condition_pixels = calloc(visual_capacity, sizeof(*condition_pixels));
@@ -1568,7 +1569,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
                 }
                 media_width = image_shape.width; media_height = image_shape.height;
                 total_image_patches += image_shape.patches; /* at most nine admitted images */
-                fprintf(stderr,"h3cli: reference image %zu size=%s source=%dx%d canvas=%dx%d patches=%zu image-batch-patches=%zu\n",
+                H3_VERBOSE("h3cli: reference image %zu size=%s source=%dx%d canvas=%dx%d patches=%zu image-batch-patches=%zu\n",
                     index + 1,h3_reference_image_size_name(params->reference_image_size),
                     source_width,source_height,media_width,media_height,image_shape.patches,total_image_patches);
                 int pixels_ok=params->_arithmetic_recipe ?
@@ -1615,7 +1616,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
                 condition_vae_frames[visual_count] = video_plan.vae_frames;
                 condition_latent_t[visual_count] = video_plan.latent_t;
                 condition_audio_limits[visual_count] = video_plan.soundtrack_samples;
-                fprintf(stderr, "h3cli: reference video %zu: pipeline=%s normalized-frames=%d VAE-frames=%d latent-T=%d posterior-seed=%s\n",
+                H3_VERBOSE("h3cli: reference video %zu: pipeline=%s normalized-frames=%d VAE-frames=%d latent-T=%d posterior-seed=%s\n",
                     index + 1, h3_refvideo_pipeline_name(video_plan.pipeline),
                     video_plan.frames, video_plan.vae_frames, video_plan.latent_t,
                     "42");
@@ -2058,7 +2059,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
                 conditioned))
             fprintf(stderr, "h3cli: warning: could not retain conditioning cache\n");
         else
-            fprintf(stderr, "h3cli: conditioning cache miss; stored exact BF16\n");
+            H3_VERBOSE("h3cli: conditioning cache miss; stored exact BF16\n");
     }
     }
     if(params->save_conditioning) {
@@ -2140,20 +2141,20 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     h3_adaptive_plan adaptive_plan;
     if(!h3_adaptive_plan_recipe(params->adaptive_cache,delivery.adaptive_version,layout.seq_len,5376,params->adaptive_cache_max_bytes,
         &adaptive_plan,detail,sizeof(detail))) {h3_set_error(ctx,"%s",detail);goto cleanup;}
-    if(params->adaptive_cache)fprintf(stderr,"h3cli: adaptive resources source=%s ceiling=%llu device=%zu persistent=%zu rows=%zu\n",
+    if(params->adaptive_cache)H3_VERBOSE("h3cli: adaptive resources source=%s ceiling=%llu device=%zu persistent=%zu rows=%zu\n",
         resume?"restored/override":params->adaptive_cache_max_bytes?"explicit":"default",
         (unsigned long long)h3_adaptive_budget(params->adaptive_cache_max_bytes),adaptive_plan.bytes,adaptive_plan.persistent_bytes,layout.seq_len);
     if (bridge_mode) {
         layout.bridge = &bridge;
-        fprintf(stderr,"h3cli: continuation mode=bridge, profile=%s, max strength=%.6g\n"
+        H3_VERBOSE("h3cli: continuation mode=bridge, profile=%s, max strength=%.6g\n"
             "h3cli: bridge=%d video steps / %d frames (%.6f s); exact=%d steps / %d frames (%.6f s)\n"
             "h3cli: audio bridge ticks=[0,%d), exact=[%d,%d); audio bridge duration=%.6f s\n"
             "h3cli: video bridge masks:",h3_bridge_profile_name(bridge.type),(double)bridge.max_strength,
             bridge.video_bridge_t,bridge.bridge_frames,(double)bridge.bridge_frames/H3_FPS,
             bridge.video_exact_t,context_frames-bridge.bridge_frames,(double)(context_frames-bridge.bridge_frames)/H3_FPS,
             bridge.audio_bridge_t,bridge.audio_bridge_t,bridge.prefix.audio_prefix_t,(double)bridge.audio_bridge_t/H3_AUDIO_LATENT_FPS);
-        for (int t=0;t<prefix.video_prefix_t;t++) fprintf(stderr," %.3g",(double)bridge.class_mask[bridge.video_classes[t]]);
-        fputc('\n',stderr);
+        for (int t=0;t<prefix.video_prefix_t;t++) H3_VERBOSE(" %.3g",(double)bridge.class_mask[bridge.video_classes[t]]);
+        H3_VERBOSE("\n");
         size_t counts[H3_TARGET_ROW_CLASSES]={0};
         for (size_t seg=0;seg<layout.segment_count;seg++) {
             const h3_segment *s=&layout.segments[seg];
@@ -2166,10 +2167,10 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
             }
         }
         for (int c=0;c<H3_TARGET_ROW_CLASSES;c++) if (counts[c])
-            fprintf(stderr,"h3cli: bridge class %d mask %.6g packed rows %zu\n",c,(double)bridge.class_mask[c],counts[c]);
+            H3_VERBOSE("h3cli: bridge class %d mask %.6g packed rows %zu\n",c,(double)bridge.class_mask[c],counts[c]);
         if (getenv("H3_PROFILE")) fprintf(stderr,"h3cli: bridge modulation maps: %zu bytes (%zu extra versus hard); compact temporal classes only\n",
             (size_t)params->steps*(layout.seq_len+layout.img_target_rows+layout.audio_target_rows)*sizeof(uint32_t),(size_t)0);
-    } else if (has_continuation) fprintf(stderr,"h3cli: continuation mode=hard\n");
+    } else if (has_continuation) H3_VERBOSE("h3cli: continuation mode=hard\n");
     h3_sigma_schedule sigmas;
     if (resume) sigmas=resume->sigmas;
     else if (!(params->_arithmetic_recipe ? h3_sglang_schedule(params->steps,&sigmas) : h3_serving_schedule_build(params->steps, &sigmas))) {
@@ -2190,7 +2191,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
         memcmp(loaded_conditioning->schedule_key,conditioning_schedule_key,32)) {
         if(params->conditioning_schedule){h3_set_error(ctx,"h3cond: complete sigma schedule or conditioning time classes mismatch; omit --conditioning-schedule to rebuild AdaLN");goto cleanup;}
         loaded_conditioning->has_schedule=0;
-        fprintf(stderr,"h3cli: h3cond schedule miss; invariant conditioning reused, AdaLN rebuilt\n");
+        H3_VERBOSE("h3cli: h3cond schedule miss; invariant conditioning reused, AdaLN rebuilt\n");
     }
     if(getenv("H3_PROFILE")&&*getenv("H3_PROFILE")&&strcmp(getenv("H3_PROFILE"),"0")) {
         uint8_t digest[32];
@@ -2248,7 +2249,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
             h3_set_error(ctx, "%s", detail);
             goto cleanup;
         }
-        fprintf(stderr, "h3cli: prepared DiT cache hit\n");
+        H3_VERBOSE("h3cli: prepared DiT cache hit\n");
         if (h3_progress_emit(&progress, "DiT initialization", 1, 1)) goto cleanup;
     } else if (resume) {
         dit=h3_dit_load_resume(dit_path,"src/metal/shaders.metal",resume,h3_dit_progress_bridge,&progress,detail,sizeof(detail));
@@ -2310,7 +2311,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
             ctx->dit = dit;
             ctx->dit_key = key_copy;
             dit_is_cached = 1;
-            fprintf(stderr, "h3cli: prepared DiT cache miss; model retained\n");
+            H3_VERBOSE("h3cli: prepared DiT cache miss; model retained\n");
         }
     }
     if(sampler) {
@@ -2452,7 +2453,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
                 char *provenance=h3_lora_provenance(ctx->lora,&ctx->lora_variants[ref2va],ctx->model_dir,ref2va);
                 int saved=provenance&&h3_lora_save_provenance(params->save_sampler_state,provenance,ctx->error,sizeof(ctx->error));
                 free(provenance);if(!saved)goto cleanup;
-                fprintf(stderr,"h3cli: sampler runtime LoRA key %s; resume with the same ordered --lora arguments\n",ctx->lora_variants[ref2va].key);
+                H3_VERBOSE("h3cli: sampler runtime LoRA key %s; resume with the same ordered --lora arguments\n",ctx->lora_variants[ref2va].key);
             }
         }
     }
@@ -2471,7 +2472,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     if(dit_is_cached&&!paused&&!tiny_decoder) {
         ctx->dit=NULL;free(ctx->dit_key);ctx->dit_key=NULL;ctx->dit_sampler_key_ready=0;
         dit_is_cached=0;
-        fprintf(stderr,"h3cli: releasing completed DiT cache before production VAE\n");
+        H3_VERBOSE("h3cli: releasing completed DiT cache before production VAE\n");
     }
     #endif
     if (!dit_is_cached) h3_dit_free(dit);
@@ -2508,7 +2509,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
         h3_dit_free(ctx->dit); ctx->dit = NULL;
         free(ctx->dit_key); ctx->dit_key = NULL; ctx->dit_sampler_key_ready = 0;
         dit_is_cached = 0;
-        fprintf(stderr, "h3cli: evicted prepared DiT cache to make room for decoding\n");
+        H3_VERBOSE("h3cli: evicted prepared DiT cache to make room for decoding\n");
     }
     if (paused && !params->preview_on_stop) {
         result=calloc(1,sizeof(*result));
@@ -2869,11 +2870,11 @@ static h3_result *h3_generate_request(h3_ctx *ctx,const char *prompt,const h3_pa
     if(result) {
         result->resume_count=state->resume_count; result->resume_step=state->resume_step; result->resume_format=state->resume_format;
         memcpy(result->resume_hash,state->resume_hash,32);
-        fprintf(stderr,"h3cli: resume provenance: format=%u step=%u operations=%u checkpoint_sha256=",
+        H3_VERBOSE("h3cli: resume provenance: format=%u step=%u operations=%u checkpoint_sha256=",
             result->resume_format,result->resume_step,result->resume_count);
         for (int i = 0; i < 32; i++)
-            fprintf(stderr, "%02x", result->resume_hash[i]);
-        fputc('\n', stderr);
+            H3_VERBOSE("%02x", result->resume_hash[i]);
+        H3_VERBOSE("\n");
     }
     if (!result || result->sampler_state!=state) h3_sampler_state_free(state);
     return result;
@@ -2933,7 +2934,7 @@ h3_result *h3_generate(h3_ctx *ctx,const char *prompt,const h3_params *params) {
         h3_backend_exchange(previous_backend);return NULL;
     }
     if(policy.active && !params->resume_sampler_state)
-        fprintf(stderr,"h3cli: CUDA execution: single-pipeline base=sglang-v%d attention=%s quant=%s decoder=%s%s\n",
+        H3_VERBOSE("h3cli: CUDA execution: single-pipeline base=sglang-v%d attention=%s quant=%s decoder=%s%s\n",
             policy.base_recipe,h3_attention_name(policy.attention),h3_quant_name(policy.projection_precision),
             policy.preview?"preview":"sglang",
             policy.preview?" (delivery outside full-output SGLang parity)":"");

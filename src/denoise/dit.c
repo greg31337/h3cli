@@ -1,3 +1,4 @@
+#include "src/log.h"
 #include "src/sglang/sglang.h"
 #include "src/denoise/attention.h"
 #include "src/denoise/adaptive_cache.h"
@@ -1840,7 +1841,7 @@ static h3_dit *load_dit(const char *weight_directory,
     if(dit->adaptive_mode) {
         if(!dit->video_rows||!dit->audio_rows||dit->video_target_start>dit->sequence-dit->video_rows||
            dit->audio_target_start>dit->sequence-dit->audio_rows){fail(error,error_size,"invalid adaptive target ranges");goto failed;}
-        fprintf(stderr,"h3cli: adaptive preset=%s threshold=%.9g max_hits=%d recipe=%u warmup=%d\n",
+        H3_VERBOSE("h3cli: adaptive preset=%s threshold=%.9g max_hits=%d recipe=%u warmup=%d\n",
             h3_adaptive_name(dit->adaptive_mode),dit->adaptive_threshold,dit->adaptive_max_hits,dit->adaptive_recipe,dit->adaptive_warmup);
     }
     if(dit->adaptive_recipe==H3_ADAPTIVE_CONTINUATION_VERSION &&
@@ -1910,7 +1911,7 @@ static h3_dit *load_dit(const char *weight_directory,
                 fail(error,error_size,"cannot restore the recorded ANE execution plan");goto failed;
             }
         }
-        fprintf(stderr,"h3cli: hybrid: %s + native %s attention, dense kernel=%s; production unqualified\n",
+        H3_VERBOSE("h3cli: hybrid: %s + native %s attention, dense kernel=%s; production unqualified\n",
             dit->metal_q8?(native.metal.q8_kernel?"native Q8/BF16 simdgroup core linears; BF16 sensitive weights":
                 "Q8 core weights + bounded Metal dequantization + MPSGraph BF16 linears"):
             native.metal.ane_mode?"MPSGraph BF16 linears with scaled FP16 ANE QKV shards":"MPSGraph BF16 linears",
@@ -1999,7 +2000,7 @@ static h3_dit *load_dit(const char *weight_directory,
         if (!report(progress,progress_opaque,"refine text",0,1,error,error_size)) goto failed;
         if(!refine_text(dit,text,error,error_size)) goto failed;
         if (!report(progress,progress_opaque,"refine text",1,1,error,error_size)) goto failed;
-    } else fprintf(stderr,"h3cli: prepared refined text restored (raw BF16)\n");
+    } else H3_VERBOSE("h3cli: prepared refined text restored (raw BF16)\n");
     schedule_progress schedule_state = {progress, progress_opaque};
     double bridge_prepare_start = layout->bridge ? stream_now() : 0;
     if(cache_ok) dit->schedule=h3_dit_schedule_import(dit->gpu,resume);
@@ -2008,7 +2009,7 @@ static h3_dit *load_dit(const char *weight_directory,
         dit->schedule=h3_dit_schedule_import(dit->gpu,&cached);
         if(!dit->schedule){fail(error,error_size,"h3cond: invalid schedule tensor shapes");goto failed;}
     }
-    if(dit->schedule) fprintf(stderr,"h3cli: prepared timestep/AdaLN tensors restored (raw BF16)\n");
+    if(dit->schedule) H3_VERBOSE("h3cli: prepared timestep/AdaLN tensors restored (raw BF16)\n");
     if(!dit->schedule) dit->schedule = layout->bridge ? h3_dit_schedule_precompute_bridge(
         dit->weights, dit->gpu, sigmas, dit->layout.bridge,
         schedule_report, &schedule_state, error, error_size) :
@@ -2025,14 +2026,14 @@ static h3_dit *load_dit(const char *weight_directory,
             uint32_t rows = h3_dit_schedule_time_rows(dit->schedule);
             uint32_t extra = rows - h3_dit_schedule_time_rows(hard);
             size_t row_bytes = (H3_DIT_BLOCKS*H3_DIT_MODALITIES*H3_DIT_ADALN_SLOTS*H3_DIT_HIDDEN+2*H3_DIT_HIDDEN)*2;
-            fprintf(stderr,"h3cli: bridge modulation preparation %.6f s; %u time rows (%u extra), %zu extra AdaLN bytes, %zu class-plan bytes\n",
+            H3_VERBOSE("h3cli: bridge modulation preparation %.6f s; %u time rows (%u extra), %zu extra AdaLN bytes, %zu class-plan bytes\n",
                 stream_now()-bridge_prepare_start, rows, extra, (size_t)extra*row_bytes,
                 2*sizeof(h3_bridge_profile)+(size_t)sigmas->steps*H3_TARGET_ROW_CLASSES*sizeof(uint32_t));
             h3_dit_schedule_free(hard);
         } else if ((layout->prefix.video_prefix_t || layout->prefix.audio_prefix_t) && getenv("H3_PROFILE")) {
             size_t extra = (size_t)(layout->prefix.video_prefix_t && !dit->video_condition_rows) +
                            (size_t)(layout->prefix.audio_prefix_t && !dit->audio_condition_rows);
-            fprintf(stderr,"h3cli: continuation modulation: %zu extra time rows, %zu bytes AdaLN; prefix=%d/%d\n",extra,
+            H3_VERBOSE("h3cli: continuation modulation: %zu extra time rows, %zu bytes AdaLN; prefix=%d/%d\n",extra,
                 extra*(H3_DIT_BLOCKS*H3_DIT_MODALITIES*H3_DIT_ADALN_SLOTS*H3_DIT_HIDDEN+2*H3_DIT_HIDDEN)*2,
                 layout->prefix.video_prefix_t,layout->prefix.audio_prefix_t);
         }
@@ -3740,7 +3741,7 @@ int h3_dit_denoise_euler_preview(
      * CPU continuation default; explicit options and stored modes take priority. */
     int use_gpu = gpu_sampler_requested(dit);
     if (continuation)
-        fprintf(stderr, "h3cli: %s continuation uses %s Euler sampler (%s DiT)\n",
+        H3_VERBOSE("h3cli: %s continuation uses %s Euler sampler (%s DiT)\n",
             dit->layout.bridge ? "bridge" : "hard", use_gpu ? "GPU-state F32" : "CPU F32",
             h3_gpu_backend_name(dit->gpu));
     if (use_gpu)
@@ -3760,7 +3761,7 @@ int h3_dit_denoise_euler_preview(
     if (reuse_interval>1 && getenv("H3_PROFILE")) {
         int evaluations=0;
         for (int i=0;i<state->total_steps;i++) evaluations+=state->selected[i]!=0;
-        fprintf(stderr,"h3cli: %s reuse schedule has %d evaluations\n",custom_count>0?"custom":"selected",evaluations);
+        H3_VERBOSE("h3cli: %s reuse schedule has %d evaluations\n",custom_count>0?"custom":"selected",evaluations);
     }
     memcpy(state->video,video_latent,state->video_elements*sizeof(float));
     memcpy(state->audio,audio_latent,state->audio_elements*sizeof(float));
@@ -3807,7 +3808,7 @@ int h3_dit_denoise_euler_range(h3_dit *dit, h3_sampler_state *state,
     if (!h3_preview_mode_parse(getenv("H3_PREVIEW_MODE"), &preview_mode,
                                error, error_size)) return 0;
     if (preview && (getenv("H3_PROFILE") || getenv("H3_PREVIEW_DIAGNOSTICS")))
-        fprintf(stderr, "Preview mode: %s\n", h3_preview_mode_name(preview_mode));
+        h3_log_printf("Preview mode: %s\n", h3_preview_mode_name(preview_mode));
     const char *teacher=getenv("H3_TEST_NATIVE_TEACHER_DIR");
     const char *teacher_budget=dit->sglang_reference && state->total_steps==50?"50":"6";
     if(teacher && (!*teacher || !getenv("H3_TEST_MAX_EVALUATIONS") ||

@@ -1,3 +1,4 @@
+#include "src/log.h"
 /* A separate cuBLAS 13 handle for the pinned reference recipe. Other GPU
  * contexts keep their own linked cuBLAS handles and symbol resolution. */
 #include <dlfcn.h>
@@ -55,7 +56,7 @@ struct h3_sglang_blas {
            cublasLtCreate_ref(&lt)!=CUBLAS_STATUS_SUCCESS) {
             snprintf(error,size,"reference recipe requires pinned cuBLAS 130101 (found %d)",version);return false;
         }
-        fprintf(stderr,"h3cli: SGLang reference cuBLAS=%d workspace=%zu partial-reduction=BF16-permitted\n",version,bytes);
+        H3_VERBOSE("h3cli: SGLang reference cuBLAS=%d workspace=%zu partial-reduction=BF16-permitted\n",version,bytes);
         return true;
     }
     static unsigned alignment(const void *ptr) {

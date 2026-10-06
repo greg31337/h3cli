@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independently check logged resume provenance against its input file."""
+"""Check resume provenance from a --verbose log against its input file."""
 import argparse
 import hashlib
 from pathlib import Path

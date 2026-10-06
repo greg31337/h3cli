@@ -171,7 +171,7 @@ def run(args):
         setup = server / "env.sh"
         cwd = server
     else:
-        command = [str(source / "bin/h3cli"), "-d", args.model, "-p", prompt, "--seed", str(seed),
+        command = [str(source / "bin/h3cli"), "--verbose", "-d", args.model, "-p", prompt, "--seed", str(seed),
                    "--width", "640", "--height", "480", "--frames", str(frames), "--steps", str(evaluations),
                    "-o", str(root / "video.mp4")]
         if args.capture:
