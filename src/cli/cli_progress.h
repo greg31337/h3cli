@@ -16,8 +16,9 @@ typedef struct {
     double phase_started;
     double step_started;
     int phase_timing;
-    int terminal;
+    int terminal; /* Redraw style, including output forwarded through a pipe. */
     int line_open;
+    int line_width;
     double last_draw;
     h3_cli_phase_time pending[32];
 } h3_cli_progress_state;

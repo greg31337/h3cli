@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
-"""Render an Alpine flight with first-frame handoffs and native 2x latent upscaling.
+"""Render a continuous, 50-segment paraglider flight through the Swiss Alps.
 
 Usage: python3 test.py [flight.txt] [--steps N] [--no-overlay] [-o flight.mp4]
 
-Adapted from samples/panda/test.py. Each ### NUMBER ### prompt generates a
-960x544, 243-frame source with the full VAE and 50 denoising steps, then native
-latent upscaling produces 1920x1088 at 24 fps (four refinement steps by default).
-Each next source uses the preceding upscaled clip's final frame as --first-frame.
-Native upscale source capture does not support --continue-from. Image handoffs
-preserve composition, but cannot carry latent motion or audio history.
+Adapted from samples/panda/test.py, without a reference image. Each ### NUMBER ###
+prompt generates 960x544 at 24 fps, using 243 internal frames, the full VAE and
+50 denoising steps. Later segments continue the preceding .h3av state with
+39 context frames, carrying both motion and audio history.
 
-The repeated opening frame is omitted from each later clip during assembly.
-Twenty segments deliver 4,841 frames (201.708 seconds). Audio is retained;
-segment numbers are overlaid unless --no-overlay is specified.
+H3 delivers 243 frames first and 204 new frames per continuation; assembly does
+not trim them again. Fifty segments deliver 10,239 frames (426.625 seconds).
+Audio is retained; segment numbers are overlaid unless --no-overlay is specified.
 
-Requires Python 3.10+, h3cli, FFmpeg and FFprobe. States, clips, handoff images,
-intermediates and logs are preserved under outputs/. --dry-run prints the entire
-command plan without running tools, downloading models or creating outputs.
+Requires Python 3.10+, h3cli, FFmpeg and FFprobe. States, presentation sidecars,
+clips, intermediates and logs are preserved under outputs/. --dry-run prints the
+entire command plan without running tools, downloading models or creating outputs.
 """
 import argparse
 from fractions import Fraction
@@ -32,8 +30,7 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parent
-WIDTH, HEIGHT, FRAMES, FPS = 960, 544, 243, 24
-OUTPUT_WIDTH, OUTPUT_HEIGHT = WIDTH*2, HEIGHT*2
+WIDTH, HEIGHT, FRAMES, FPS, CONTEXT = 960, 544, 243, 24, 39
 HEADER = re.compile(r'^\s*###\s*([0-9]+)\s*###\s*$')
 DIGITS = (
     '01110 10001 10011 10101 11001 10001 01110',
@@ -128,7 +125,7 @@ def badge(path, number):
     path.write_bytes(f'P6\n{width} {height}\n255\n'.encode()+pixels)
 
 
-def inspect_video(ffprobe, path, frames, width=OUTPUT_WIDTH, height=OUTPUT_HEIGHT):
+def inspect_video(ffprobe, path, frames, width=WIDTH, height=HEIGHT):
     result = subprocess.run([ffprobe, '-v', 'error', '-count_frames', '-show_streams',
                              '-of', 'json', str(path)], capture_output=True, text=True, check=True)
     streams = json.loads(result.stdout)['streams']
@@ -142,22 +139,22 @@ def inspect_video(ffprobe, path, frames, width=OUTPUT_WIDTH, height=OUTPUT_HEIGH
         raise ValueError(f'{path}: expected {width}x{height}, {frames} frames at {FPS} fps')
 
 
-def label_command(ffmpeg, source, image, destination, frames, skip=0):
+def label_command(ffmpeg, source, image, destination, frames):
     samples = frames*32000//FPS
     command = [ffmpeg, '-nostdin', '-hide_banner', '-loglevel', 'warning', '-n',
                '-i', str(source)]
-    # Encode every prepared clip with the same codec settings. Mixing a copied
-    # first clip with trimmed/re-encoded suffixes can create DTS errors at joins.
-    filters = f'[0:v]trim=start_frame={skip},setpts=PTS-STARTPTS'
-    if image is not None:
-        command += ['-i', str(image)]
-        filters += '[base];[base][1:v]overlay=x=16:y=H-h-16:eof_action=repeat'
-    command += ['-filter_complex', filters+'[v]', '-map', '[v]',
-        '-c:v', 'libx264', '-preset', 'fast', '-crf', '18', '-pix_fmt', 'yuv420p',
-        '-r', str(FPS)]
+    if image is None:
+        # Without an overlay, preserve the original video without re-encoding.
+        command += ['-map', '0:v:0', '-c:v', 'copy']
+    else:
+        command += ['-i', str(image), '-filter_complex',
+            '[0:v]setpts=PTS-STARTPTS[base];'
+            '[base][1:v]overlay=x=16:y=H-h-16:eof_action=repeat[v]',
+            '-map', '[v]',
+            '-c:v', 'libx264', '-preset', 'fast', '-crf', '18', '-pix_fmt', 'yuv420p',
+            '-r', str(FPS)]
     return command + ['-map', '0:a:0', '-map_metadata', '-1', '-af',
-            f'aresample=32000,atrim=start_sample={skip*32000//FPS},'
-            f'apad=whole_len={samples},atrim=end_sample={samples},asetpts=PTS-STARTPTS',
+            f'aresample=32000,apad=whole_len={samples},atrim=end_sample={samples},asetpts=PTS-STARTPTS',
             '-c:a', 'pcm_s16le', '-ar', '32000', '-ac', '2',
             '-video_track_timescale', '24000', str(destination)]
 
@@ -172,31 +169,22 @@ def merge_command(ffmpeg, listing, destination):
 
 
 def preflight(ffmpeg, ffprobe, work, overlay=True):
-    """Exercise handoffs, frame trimming, codecs and joins before expensive renders."""
+    """Exercise the actual codecs, badge and concatenation before expensive renders."""
     source, prepared = work/'probe.mov', work/'probe-ready.mov'
-    next_prepared = work/'probe-next.mov'
     image = work/'probe.ppm' if overlay else None
     if image is not None:
         badge(image, '0')
     run([ffmpeg, '-nostdin', '-hide_banner', '-loglevel', 'error', '-n',
-         '-f', 'lavfi', '-i', f'color=c=gray:s=96x96:r={FPS}:d={FRAMES/FPS}',
-         '-f', 'lavfi', '-i', 'anullsrc=r=32000:cl=stereo', '-t', str(FRAMES/FPS),
+         '-f', 'lavfi', '-i', 'color=c=gray:s=96x96:r=24:d=0.25',
+         '-f', 'lavfi', '-i', 'anullsrc=r=32000:cl=stereo', '-t', '0.25',
          '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'pcm_s16le',
          '-video_track_timescale', '24000', str(source)],
         work/'probe-source.log')
-    handoff = work/'probe-handoff.png'
-    run(handoff_command(ffmpeg, source, handoff), work/'probe-handoff.log')
-    if not handoff.is_file() or not handoff.stat().st_size:
-        raise ValueError('FFmpeg preflight did not produce a handoff image')
-    run(label_command(ffmpeg, source, image, prepared, FRAMES), work/'probe-label.log')
-    run(label_command(ffmpeg, source, image, next_prepared, FRAMES-1, skip=1),
-        work/'probe-next.log')
+    run(label_command(ffmpeg, source, image, prepared, 6), work/'probe-label.log')
     listing = work/'probe-concat.txt'
-    listing.write_text("ffconcat version 1.0\nfile 'probe-ready.mov'\n"
-                       f"duration {FRAMES/FPS:.9f}\nfile 'probe-next.mov'\n"
-                       f"duration {(FRAMES-1)/FPS:.9f}\n")
+    listing.write_text("ffconcat version 1.0\nfile 'probe-ready.mov'\nduration 0.25\n")
     run(merge_command(ffmpeg, listing, work/'probe.mp4'), work/'probe-merge.log')
-    inspect_video(ffprobe, work/'probe.mp4', FRAMES*2-1, 96, 96)
+    inspect_video(ffprobe, work/'probe.mp4', 6, 96, 96)
 
 
 def model_options(args):
@@ -209,56 +197,33 @@ def model_options(args):
     return options
 
 
-def render_command(args, prompt, source, index, previous):
+def render_command(args, prompt, state, video, index, previous):
     command = [args.h3cli, '-p', prompt, '--width', str(WIDTH), '--height', str(HEIGHT),
                '--frames', str(FRAMES), '--steps', str(args.steps),
                '--seed', str(args.seed+index), '--no-preview-vae',
-               '--save-upscale-state', str(source), '--state-only'] + model_options(args)
-    if previous is not None:
-        command += ['--first-frame', str(previous)]
-    return command
-
-
-def upscale_command(args, source, state, video, index):
-    command = [args.h3cli, '--upscale-state', str(source),
-               '--upscale-refine-steps', str(args.upscale_refine_steps),
-               '--upscale-seed', str(args.seed+index),
                '--save-av-state', str(state), '-o', str(video)] + model_options(args)
-    if args.upscale_refine_steps:
-        command += ['--upscale-noise', '0.25']
-    if args.upscale_model is not None:
-        command += ['--upscale-model', str(args.upscale_model.expanduser().resolve())]
+    if previous is not None:
+        command += ['--continue-from', str(previous), '--continue-context', str(CONTEXT)]
     return command
-
-
-def handoff_command(ffmpeg, video, image):
-    # Select the exact final decoded frame, avoiding approximate time-based seeks.
-    return [ffmpeg, '-nostdin', '-hide_banner', '-loglevel', 'warning', '-n',
-            '-i', str(video), '-map', '0:v:0', '-vf', f'select=eq(n\\,{FRAMES-1})',
-            '-frames:v', '1', '-fps_mode', 'vfr', '-update', '1', str(image)]
 
 
 def segment_plan(args, sections, work):
     previous = None
     for index, (number, prompt) in enumerate(sections):
         stem = f'segment-{index+1:04d}'
-        source, state = work/(stem+'.h3up'), work/(stem+'.h3av')
-        video, handoff = work/(stem+'.mp4'), work/(stem+'-handoff.png')
+        state, video = work/(stem+'.h3av'), work/(stem+'.mp4')
         prepared = work/(stem+'-prepared.mov')
         image_badge = None if args.no_overlay else work/(stem+'.ppm')
-        skip = 0 if previous is None else 1
-        frames = FRAMES-skip
+        # H3 already omits the inherited context from the delivered video/audio.
+        frames = FRAMES if previous is None else FRAMES-CONTEXT
         yield dict(number=number, prompt=prompt, stem=stem, frames=frames,
-                   source=str(source), state=str(state), video=str(video),
-                   handoff=str(handoff), prepared=str(prepared),
+                   state=str(state), video=str(video), prepared=str(prepared),
                    badge=None if image_badge is None else str(image_badge),
-                   first_frame=None if previous is None else str(previous),
-                   render_command=render_command(args, prompt, source, index, previous),
-                   upscale_command=upscale_command(args, source, state, video, index),
-                   handoff_command=handoff_command(args.ffmpeg, video, handoff),
+                   continue_from=None if previous is None else str(previous),
+                   render_command=render_command(args, prompt, state, video, index, previous),
                    prepare_command=label_command(args.ffmpeg, video, image_badge,
-                                                 prepared, frames, skip))
-        previous = handoff
+                                                 prepared, frames))
+        previous = state
 
 
 def main(argv=None):
@@ -273,10 +238,7 @@ def main(argv=None):
     parser.add_argument('--ffprobe', default=os.environ.get('H3_FFPROBE', 'ffprobe'))
     parser.add_argument('-d', '--model-dir', type=Path)
     parser.add_argument('--models-path', type=Path)
-    parser.add_argument('--steps', type=int, default=50, help='Source denoising steps (default: 50)')
-    parser.add_argument('--upscale-refine-steps', type=int, choices=(0, 2, 3, 4), default=4,
-                        help='Native upscale refinement steps (default: 4; 0 is transfer only)')
-    parser.add_argument('--upscale-model', type=Path, help='Override the native latent upscaler weights')
+    parser.add_argument('--steps', type=int, default=50, help='Denoising steps (default: 50)')
     parser.add_argument('--offline', action='store_true', help='Require existing local models')
     parser.add_argument('--dry-run', action='store_true', help='Print a JSON command plan without running tools')
     parser.add_argument('--no-overlay', action='store_true', help='Do not overlay segment numbers on the video')
@@ -299,8 +261,9 @@ def main(argv=None):
             rows = list(segment_plan(args, sections, planned_work))
             total_frames = sum(row['frames'] for row in rows)
             print(json.dumps(dict(output=str(output), width=WIDTH, height=HEIGHT,
-                                  output_width=OUTPUT_WIDTH, output_height=OUTPUT_HEIGHT,
-                                  fps=FPS, delivered_frames=total_frames,
+                                  output_width=WIDTH, output_height=HEIGHT,
+                                  fps=FPS, context=CONTEXT, handoff_mode='av-continuation',
+                                  delivered_frames=total_frames,
                                   duration_seconds=total_frames/FPS, segments=rows,
                                   merge_command=merge_command(args.ffmpeg, planned_work/'concat.txt', output)),
                              indent=2))
@@ -313,16 +276,15 @@ def main(argv=None):
             work = candidate
         else:
             Path('outputs').mkdir(exist_ok=True)
-            work = Path(tempfile.mkdtemp(prefix=args.prompts.stem+'-upscale-', dir='outputs')).resolve()
+            work = Path(tempfile.mkdtemp(prefix=args.prompts.stem+'-continuation-', dir='outputs')).resolve()
         output.parent.mkdir(parents=True, exist_ok=True)
         report.update(output=str(output), width=WIDTH, height=HEIGHT,
-                      output_width=OUTPUT_WIDTH, output_height=OUTPUT_HEIGHT,
-                      frames=FRAMES, steps=args.steps, upscale_refine_steps=args.upscale_refine_steps,
-                      overlay=not args.no_overlay, handoff_mode='first-frame', fps=FPS)
+                      output_width=WIDTH, output_height=HEIGHT,
+                      frames=FRAMES, steps=args.steps, context=CONTEXT,
+                      overlay=not args.no_overlay, handoff_mode='av-continuation', fps=FPS)
         print(f'{len(sections)} segments; intermediate files: {work}', flush=True)
-        print(f'Native upscale: {WIDTH}x{HEIGHT} -> {OUTPUT_WIDTH}x{OUTPUT_HEIGHT}; '
-              f'steps: {args.steps} source + {args.upscale_refine_steps} refinement', flush=True)
-        print(f'Delivered frames: {FRAMES} first, {FRAMES-1} per handoff', flush=True)
+        print(f'Render: {WIDTH}x{HEIGHT}; VAE: normal; steps: {args.steps}', flush=True)
+        print(f'Delivered frames: {FRAMES} first, {FRAMES-CONTEXT} per continuation', flush=True)
         preflight(ffmpeg, ffprobe, work, overlay=not args.no_overlay)
         entries, total_frames = ['ffconcat version 1.0'], 0
         for index, row in enumerate(segment_plan(args, sections, work)):
@@ -334,20 +296,10 @@ def main(argv=None):
             (work/'run.json').write_text(json.dumps(report, indent=2)+'\n')
             print(f'\nRendering segment {number} ({index+1}/{len(sections)})', flush=True)
             run(row['render_command'], work/(stem+'-render.log'))
-            source = Path(row['source'])
-            if not source.is_file() or not source.stat().st_size:
-                raise ValueError(f'Missing native upscale source: {source}')
-            row['status'] = 'upscaling'
-            (work/'run.json').write_text(json.dumps(report, indent=2)+'\n')
-            run(row['upscale_command'], work/(stem+'-upscale.log'))
             for required in (state, Path(str(state)+'.presentation')):
                 if not required.is_file() or not required.stat().st_size:
-                    raise ValueError(f'Missing upscaled state or presentation sidecar: {required}')
-            inspect_video(ffprobe, video, FRAMES)
-            run(row['handoff_command'], work/(stem+'-handoff.log'))
-            handoff = Path(row['handoff'])
-            if not handoff.is_file() or not handoff.stat().st_size:
-                raise ValueError(f'Missing handoff image: {handoff}')
+                    raise ValueError(f'Missing continuation state or presentation sidecar: {required}')
+            inspect_video(ffprobe, video, frames)
             if row['badge'] is not None:
                 badge(Path(row['badge']), number)
             run(row['prepare_command'], work/(stem+'-prepare.log'))

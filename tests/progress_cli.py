@@ -57,14 +57,14 @@ def main():
     lines = terminal_lines(raw)
     (OUT / 'terminal.txt').write_text('\n'.join(lines) + '\n')
     assert not re.search(r'\b0/[01]\b', raw)
-    assert '\r' not in raw and 'phase start' not in raw
+    assert '\r' in raw and 'phase start' not in raw
     for phase in ['reference vision preparation', 'DiT initialization']:
         assert any(line.startswith(phase) and re.search(r'\b1/1\s+\([0-9.]+ s\)$', line) for line in lines), phase
     assert any(line.startswith('video VAE encoder') and re.search(r'\b1/1\s+\([0-9.]+ s\)$', line) for line in lines)
     assert 'loading...' in raw and 'starting...' in raw
     for phase in ['video VAE load', 'video VAE decode']:
         rows = [line for line in lines if line.startswith(phase)]
-        assert 2 <= len(rows) <= 2 + int(wall_seconds / 5), (phase, rows)
+        assert len(rows) == 1, (phase, rows)
     assert any(line.startswith('video VAE load') and re.search(r'\b36/36\s+\([0-9.]+ s\)$', line) for line in lines)
     # 56 frames = three temporal chunks; 128px fits one spatial tile.
     assert any(line.startswith('video VAE decode') and re.search(r'\b108/108\s+\([0-9.]+ s\)$', line) for line in lines)

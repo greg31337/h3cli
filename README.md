@@ -100,7 +100,8 @@ video is saved as `fox-preview.mp4` in your current directory.
 Console output shows stage progress, elapsed time, saved files, and total wall
 time. Add `--verbose` for backend, memory, and execution diagnostics. Use
 `--profile` to include those diagnostics plus GPU timing instrumentation.
-Redirected logs use occasional progress lines instead of terminal redraws.
+Each stage updates in place, including through sample runners and `tee`.
+Saved raw logs retain the carriage returns used for these updates.
 
 For a final render, change `--quality preview` to `--quality extra-high` and
 choose a new output filename. Describe the subject, motion, camera, lighting,

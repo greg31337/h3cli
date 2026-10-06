@@ -82,7 +82,7 @@ int main(void) {
     h3_cli_progress_update(&state, f, "denoise", 6, 6);
     CHECK(!strstr(raw + before, "last step:"));
     CHECK(fclose(f) == 0); free(raw);
-    /* Redirected output has no carriage returns or profiling records, and a
+    /* Explicit plain mode has no carriage returns or profiling records, and a
      * large decode cannot flood the log with thousands of tiny updates. */
     raw = NULL; size = 0; memset(&state, 0, sizeof(state));
     f = open_memstream(&raw, &size); CHECK(f);

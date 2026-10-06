@@ -50,7 +50,7 @@ def main():
                 subprocess.run(command, cwd=root, env=env, stdout=stream,
                                stderr=subprocess.STDOUT, check=True, timeout=600)
             text = log.read_text()
-            assert '\r' not in log.read_bytes().decode(), name
+            assert b'\r' in log.read_bytes(), name
             assert re.search(r'denoise\s+2/2\s+\([0-9.]+ s', text), name
             assert re.search(r'DiT initialization\s+1/1\s+\([0-9.]+ s\)', text), name
             assert re.search(r'h3cli: total wall time: [0-9.]+ s', text), name

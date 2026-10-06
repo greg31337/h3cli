@@ -405,7 +405,9 @@ static int cli_execute(int argc, char **argv) {
     h3_params params = H3_PARAMS_DEFAULT;
     h3_reference references[12];
     size_t reference_count = 0;
-    cli_state cli = {.progress = {.completed = -1, .total = -1, .terminal = isatty(STDERR_FILENO)}};
+    /* Sample runners and tee forward pipes to a terminal. Keep carriage-return
+     * updates through those pipes instead of printing a new row per update. */
+    cli_state cli = {.progress = {.completed = -1, .total = -1, .terminal = 1}};
     h3_log_line_callback(cli_log_line, &cli);
     int show = 0;
     int profile = 0;

@@ -11,6 +11,7 @@ static double progress_now(void) {
 void h3_cli_progress_finish(h3_cli_progress_state *state, FILE *stream) {
     if (state->line_open) fputc('\n', stream);
     state->line_open = 0;
+    state->line_width = 0;
     state->active = 0;
 }
 
@@ -40,7 +41,11 @@ void h3_cli_progress_update(h3_cli_progress_state *state, FILE *stream,
     } else state->step_started = 0;
     if (same_phase && state->completed == completed && state->total == total) return;
     if (!same_phase) {
-        h3_cli_progress_finish(state, stream);
+        /* A parent announces 0/1 before its child stages. Reuse that initial
+         * row; its timed completion will get a row after the children finish. */
+        int reuse_parent = state->terminal && state->line_open &&
+            state->completed == 0 && state->total == 1 && !state->phase_timing;
+        if (!reuse_parent) h3_cli_progress_finish(state, stream);
         snprintf(state->phase, sizeof(state->phase), "%s", phase);
     }
     h3_cli_phase_time *timer = phase_time(state, phase);
@@ -56,8 +61,8 @@ void h3_cli_progress_update(h3_cli_progress_state *state, FILE *stream,
     state->total = total;
     state->active = total <= 0 || completed < total;
     int done = !state->active;
-    /* Logs get stage boundaries, completed denoising steps, and a heartbeat
-     * for long loads/decodes. Terminals get a throttled in-place counter. */
+    /* Redraws are throttled even through pipes. Explicit plain mode retains
+     * stage boundaries, denoising steps, and occasional load/decode updates. */
     int draw = !same_phase || done || (!state->terminal && denoise) ||
         now-state->last_draw >= (state->terminal ? 0.1 : 5.0);
     if (draw) {
@@ -70,9 +75,15 @@ void h3_cli_progress_update(h3_cli_progress_state *state, FILE *stream,
         else snprintf(timing, sizeof(timing), "%.2f s", elapsed);
         snprintf(line, sizeof(line), "%-28s %-12s (%s)", phase, status, timing);
         if (state->terminal) {
-            fprintf(stream, "\r%-100s", line);
+            int width = (int)strlen(line);
+            if (width < state->line_width) width = state->line_width;
+            /* Erase only the previous row's tail. Fixed 100-column padding
+             * wraps on ordinary terminals and defeats in-place updates. The
+             * final CR also delimits each update for streaming log readers. */
+            fprintf(stream, "\r%-*s\r", width, line);
+            state->line_width = width;
             state->line_open = 1;
-            if (done) { fputc('\n', stream); state->line_open = 0; }
+            if (done) h3_cli_progress_finish(state, stream);
         } else fprintf(stream, "%s\n", line);
         state->last_draw = now;
     }
