@@ -1,11 +1,12 @@
 # Swiss Alps paraglider flight
 
 A 50-segment first-person flight through one connected Swiss Alpine valley,
-using the AV continuation workflow from [`samples/panda`](../panda). The pilot
-starts on a timber launch platform on a high limestone outcrop, takes off, and
-descends past forested spurs, pasture, cascades and a turquoise lake. The flight
-ends with a gentle landing on an open lakeside meadow beside a small stone
-chapel, with a waterfall on the cliff beyond. This is an imagined Alpine route.
+using the AV continuation workflow.
+The pilot starts on a timber launch platform on a high limestone outcrop,
+takes off, and descends past forested spurs, pasture, cascades and a turquoise
+lake. The flight ends with a gentle landing on an open lakeside meadow beside
+a small stone chapel, with a waterfall on the cliff beyond. This is an imagined
+Alpine route.
 
 Red-and-cream, ochre-yellow, and blue-and-white paragliders appear during three
 parts of the flight. Each enters, travels through and leaves the view gradually.

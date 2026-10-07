@@ -1,0 +1,563 @@
+Cabinet of miniature worlds: forty independent ten-second studies.
+Each scene is generated from text alone, then natively upscaled 2x.
+The edit uses intentional cuts, quiet isolated sounds and near-silent clip edges.
+
+### 1 ###
+subject_definitions:
+A palm-sized archipelago of mossy rock islands mounted inside an open brass armillary sphere on a dark walnut base. Tiny white stairways link warm stone buildings; the islands hang on fine curved supports.
+summary:
+The brass archipelago: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The outer brass ring makes a slow quarter-turn while the islands remain steady, revealing the stairways behind the front ring. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Brushed brass machining marks, rough limestone, tiny roof tiles and velvety moss.
+overall_soundscape:
+One very soft mechanical detent click near the middle; otherwise almost silent. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 2 ###
+subject_definitions:
+A shallow celadon bowl holds a complete miniature tea garden: a weathered bonsai, a red cedar footbridge, raked pale gravel and a mirror-still pool. Two fallen maple leaves rest beside the bridge.
+summary:
+The bonsai tea garden: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: A single maple leaf drifts gently across the still pool and comes to rest beside the bridge. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Glazed ceramic crazing, individual gravel grains, carved bridge joints and fine leaf veins.
+overall_soundscape:
+One faint leaf-on-wood tap as the leaf reaches the bridge; no water or wind bed. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 3 ###
+subject_definitions:
+A tiny city grows from the exposed movement of a large antique pocket watch. Brass wheels carry stone arcades, copper roofs and delicate spiral staircases around a sapphire-blue central tower.
+summary:
+The watchmaker's city: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: One large supporting gear advances slowly, bringing a small arched terrace into view, then settles. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Gear teeth, copper patina, watch screws, miniature brick courses and engraved geometric ornament without letters.
+overall_soundscape:
+A single muted gear click; no repeated ticking. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 4 ###
+subject_definitions:
+An intricate folded-paper mountain range rises from a thick ivory map board. A tiny crimson electric railcar rests beside a paper viaduct, with layered pine cutouts and stacked contour ridges.
+summary:
+The folded mountain railway: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The railcar crosses the short viaduct at walking pace and stops beyond it, while the camera tracks a few centimeters alongside. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Paper fibers, crisp folds, bridge latticework, painted wheel rims and contour-layer edges.
+overall_soundscape:
+One soft wheel-joint clack halfway across; no engine, whistle or rolling background sound. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 5 ###
+subject_definitions:
+A spiral seashell is opened into a miniature coastal village on a slate plinth. An ivory lighthouse stands at the shell's highest point, with blue-green resin coves and tiny stone steps following the spiral.
+summary:
+The shell lighthouse: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The lighthouse lens turns once slowly, sending a small patch of warm light across the shell interior. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Mother-of-pearl ridges, sand grains, hand-built stone steps and the lens's fine brass frame.
+overall_soundscape:
+Almost silent, with a single faint lens mechanism click; no surf or gulls. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 6 ###
+subject_definitions:
+An old clothbound book lies open as a miniature library courtyard. Its sculpted pages form terraces, tiny shelves and a narrow staircase around a central mossy tree; the book spines carry no readable writing.
+summary:
+The mossbound library: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: A small wooden door in the paper wall swings open to reveal one warm reading lamp, then holds still. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Cloth weave, exposed paper fibers, tiny joinery, moss tips and warm glass reflections.
+overall_soundscape:
+One quiet wooden latch sound as the door opens; no page rustling bed or voices. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 7 ###
+subject_definitions:
+A miniature observatory clings to a limestone cliff on a circular black base. Its oxidized copper dome sits above a stone balcony, with a delicate brass telescope barely visible inside.
+summary:
+The cliff observatory: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The dome's narrow shutter opens slowly and the telescope tilts a few degrees toward the light, then stops. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Copper verdigris, rivet heads, stone strata, balcony railings and telescope adjustment screws.
+overall_soundscape:
+One soft latch click after the shutter opens; no motor hum. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 8 ###
+subject_definitions:
+Inside a clear glass bell jar, a tiny mountain valley sits beneath one sculpted cotton cloud held on nearly invisible supports. Hair-thin copper branches suggest lightning within the cloud.
+summary:
+A weather cabinet: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: A soft internal light travels once through the copper branches and fades, illuminating the miniature valley without a dramatic flash. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Glass highlights, individual cotton fibers, copper wire, tiny fir trees and layered rock.
+overall_soundscape:
+Silent except for one very faint cabinet relay click; no thunder, rain or wind. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 9 ###
+subject_definitions:
+A porcelain courtyard on a lacquer tray encloses a small oval pond, stone lantern and miniature willow. Two enamel koi models rest beneath the clear shallow surface.
+summary:
+The porcelain koi court: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: One koi glides smoothly under the willow reflection and stops beside the second, leaving only a slight visible ripple. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Porcelain glaze, lantern lattice, enamel scale patterns, willow leaf edges and polished tray grain.
+overall_soundscape:
+One delicate isolated water drop during the glide; no continuous pond ambience. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 10 ###
+subject_definitions:
+A moon research station modeled in unglazed white porcelain stands in a shallow dish of fine gray mineral powder. Tiny gold foil panels catch the studio light beside a six-wheeled rover.
+summary:
+The lunar porcelain station: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The rover advances one short body length along existing tracks and pauses beneath a slim antenna. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Powder grains, ceramic pores, foil wrinkles, wheel treads and antenna filigree.
+overall_soundscape:
+A brief, very quiet grainy wheel scrape in the middle; no radio, beeps or machinery bed. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 11 ###
+subject_definitions:
+A palm-sized mechanical dragonfly rests on a carved ebony leaf. Its body is polished copper and its four transparent mica wings carry hair-thin silver veins.
+summary:
+The jeweled dragonfly: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The wings unfold slowly into a symmetrical resting position, catch the light, and remain open. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Mica layers, silver vein joints, tiny copper rivets and the ebony leaf's carved grooves.
+overall_soundscape:
+One gentle hinge tick; no buzzing or wingbeat drone. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 12 ###
+subject_definitions:
+A miniature theater built inside a dark wooden jewelry box has crimson velvet curtains, an ivory stage and fine gilt balconies. A tiny porcelain dancer stands motionless at center stage.
+summary:
+The velvet jewel theater: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The curtains part slowly to reveal the dancer and the camera eases slightly closer, stopping before the end. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Velvet pile, gilt edge wear, miniature balcony carvings, pearl buttons and porcelain glaze.
+overall_soundscape:
+A brief soft curtain brush; no music, audience or applause. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 13 ###
+subject_definitions:
+A narrow miniature alley is assembled from painted paper storefronts and cedar beams on a small black plinth. Warm paper lanterns hang above wet-looking lacquer cobblestones; there are no signs or letters.
+summary:
+The lantern alley: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: One lantern turns gently on its string as the camera glides slowly past the first doorway, revealing a tiny inner courtyard. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Paper translucency, string fibers, painted wood grain and tiny lacquer reflections between cobbles.
+overall_soundscape:
+One faint paper-and-string creak in the middle; no street ambience, rain or voices. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 14 ###
+subject_definitions:
+A miniature hill village occupies the interior of a split amethyst geode. Pale stone houses follow the crystal ledges around a tiny silver bridge over a mirrored pool.
+summary:
+The amethyst village: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: A small hinged silver bridge lowers smoothly into place while the camera makes a shallow sideward arc. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Crystal facets and inclusions, stone masonry, silver hinge pins and delicate roof shingles.
+overall_soundscape:
+One soft bridge latch tap with no ringing tail; otherwise nearly silent. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 15 ###
+subject_definitions:
+Three small terracotta garden terraces hang at different heights inside an open oak frame. Succulents, carved channels and clear resin streamlets connect the levels into a tiny vertical landscape.
+summary:
+The suspended terraces: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: A single bead of water travels down one short channel and falls into the lowest basin, then all visible motion settles. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Terracotta pores, succulent leaf texture, fine roots, oak joints and clear water highlights.
+overall_soundscape:
+One tiny isolated drip; no continuous trickling or waterfall sound. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 16 ###
+subject_definitions:
+A wide white teacup contains a miniature harbor made from folded parchment islands and cork piers. Three small silk hot-air balloon models hover on fine threads above the rim.
+summary:
+The teacup balloon harbor: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The nearest balloon rises a few centimeters as a tiny brass counterweight lowers, then hangs still. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Silk seams, woven basket texture, cork grain, porcelain highlights and the fine support thread.
+overall_soundscape:
+A soft counterweight tap; no burners, wind or harbor ambience. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 17 ###
+subject_definitions:
+A miniature wildflower meadow grows from a polished oval wood base. A single gold-and-black mechanical bee rests on a blue enamel cornflower surrounded by fine grass blades.
+summary:
+The wildflower automaton: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The bee opens its translucent wings once and bends gently toward the flower center without taking off. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Enamel petal edges, tiny pollen-like grains, gold leg joints and individual grass strands.
+overall_soundscape:
+A very faint leaf brush; no buzzing or outdoor sound bed. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 18 ###
+subject_definitions:
+A dry tabletop diorama shows a small polished copper submarine suspended in a cutaway undersea workshop, surrounded by pale resin coral and glass fish on thin rods.
+summary:
+The copper submarine dock: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: A round porthole shutter opens and reveals a warm amber light inside; a small periscope turns a few degrees and stops. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Copper solder seams, miniature bolts, brushed metal, glass fish fins and coral pores.
+overall_soundscape:
+One muffled latch click; no engine hum, bubbling or underwater ambience. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 19 ###
+subject_definitions:
+A glass snowglobe holds a tiny timber village around a frozen blue pond, with steep slate roofs and delicate bare trees. Only a few artificial snow flakes remain suspended.
+summary:
+The snowglobe village: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The last sparse flakes settle slowly onto the roofs as the camera makes a small smooth arc around the globe. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Glass curvature, individual snow grains, roof slates, timber joints and painted window frames.
+overall_soundscape:
+Near silence, with one faint wooden-base creak; no bells, wind or music. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 20 ###
+subject_definitions:
+A miniature desert is sculpted from layered ochre paper inside a shallow brass tray. Three tiny carved camel figures stand beside a cloth tent under a folded sandstone arch.
+summary:
+The paper desert caravan: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The leading camel figure makes one slow articulated step and settles while a small tassel on its saddle sways once. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Paper strata, fine sand, carved wood, woven saddle cloth and thread tassels.
+overall_soundscape:
+One soft grainy footstep; no wind, voices or caravan bells. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 21 ###
+subject_definitions:
+A miniature Victorian greenhouse of fine black iron ribs and clear glass shelters succulents in tiny terra-cotta pots. A bead of condensation hangs from the inside of one roof pane.
+summary:
+The succulent greenhouse: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The roof vent opens a little and the condensation bead slides down the glass, then stops against the frame. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Glass condensation, delicate iron joints, leaf wax, pot pores and small gravel grains.
+overall_soundscape:
+A tiny vent latch click; no fan or garden ambience. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 22 ###
+subject_definitions:
+A small wooden sailing boat rests on a still blue enamel sea inside a carved oval tray. Its cream silk sail hangs from a slender mast with fine ropes and brass fittings.
+summary:
+The silk sailboat: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The sail fills gently once as the boat turns only a few degrees on its hidden support and then becomes still. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Silk weave, twisted rope fibers, deck planks, brass cleats and the enamel water surface.
+overall_soundscape:
+One soft silk crease; no wind, surf or creaking loop. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 23 ###
+subject_definitions:
+A clear amber-colored resin block contains a miniature prehistoric forest of finely modeled ferns, a fallen tree and a small polished beetle. The block sits on a dark felt pad.
+summary:
+The amber forest: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: Warm studio light moves slowly across the block as the camera shifts sideways, revealing fern layers through the resin. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Tiny fern leaflets, resin inclusions, carved bark, beetle wing-case lines and felt fibers.
+overall_soundscape:
+Almost silent, with a single faint felt brush; no insect drone or forest ambience. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 24 ###
+subject_definitions:
+A miniature canal town made of stone, timber and tinted resin sits in a shallow walnut drawer. Tiny warm windows reflect in perfectly still blue canal water.
+summary:
+The canal bridge at blue hour: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: A narrow wooden footbridge rises gently to admit a small unpowered model barge and then holds while the barge pauses. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Fine stonework, bridge chains, window mullions, wood grain and precise reflected highlights.
+overall_soundscape:
+One small wooden latch tap; no motors, flowing water or street sounds. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 25 ###
+subject_definitions:
+An oversized open pocket watch contains a tiny solar system arranged around a moss-covered golden sun. Small enamel planets sit on slender nested brass tracks among miniature ferns.
+summary:
+The pocket planetary garden: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: Two planet arms advance slowly through a short arc and come to rest at different depths. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Brass knurling, enamel marbling, tiny fern tips, gear edges and polished pivots.
+overall_soundscape:
+One soft detent click near the center; no regular ticking or ambient hum. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 26 ###
+subject_definitions:
+A delicate white fortress is built among translucent salt crystals on a rough dark stone base. A slim wooden drawbridge crosses a narrow mirrored fissure.
+summary:
+The salt-crystal fortress: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The drawbridge lowers gently and a warm light appears in the gatehouse, then the scene remains settled. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Crystal edges, tiny masonry blocks, weathered wood slats, fine chain links and stone grain.
+overall_soundscape:
+One quiet drawbridge contact sound; no battle, wind or distant voices. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 27 ###
+subject_definitions:
+A small painter's atelier occupies an open wooden cigar box with no labels. A tiny easel holds an abstract painted landscape; pigment jars and a linen-covered stool sit beside it.
+summary:
+The miniature painter's studio: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: A fine mechanical brush makes one slow short stroke on the canvas and lifts away, with its support outside the crop. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Canvas weave, dry pigment grains, tiny bristles, linen threads and worn wood edges.
+overall_soundscape:
+One faint brush-on-canvas whisper; no music or room ambience. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 28 ###
+subject_definitions:
+A tiny bakery display is modeled in warm porcelain and pale carved wood on a round stone base. Baskets of miniature croissants and braided loaves surround a glass cake stand.
+summary:
+The porcelain bakery: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The cake stand rotates a small amount to reveal a pastry's layered edge, then stops; a few loose flour grains settle. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Porcelain glaze, pastry-like lamination, wicker basket strands, flour grains and fine glass reflections.
+overall_soundscape:
+A single muted stand click; no kitchen machinery, oven hiss or voices. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 29 ###
+subject_definitions:
+A miniature castle landscape is carved into the broad bases of three chess pieces: a veined marble queen, a dark wooden knight and an ivory-colored ceramic rook. They stand on a small velvet-lined tray.
+summary:
+The marble chess kingdom: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The queen's base turns slowly through a shallow angle, revealing an intricate staircase carved beneath her crown. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Marble veining, wooden growth rings, ceramic glaze, fine stair treads and velvet pile.
+overall_soundscape:
+One gentle felt-damped movement sound; no repeated chess clicks or dramatic music. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 30 ###
+subject_definitions:
+A miniature grotto of dark porous rock contains softly glowing glass mushrooms, delicate moss and one clear droplet hanging from a stone arch. The diorama rests on a matte black plinth.
+summary:
+The mushroom grotto: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The droplet falls once into a tiny still pool as the glass mushrooms brighten slightly and return to their original glow. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Rock pores, moss filaments, glass mushroom gills and small reflected points of light.
+overall_soundscape:
+One very soft isolated drip; no cave rumble or continuous dripping. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 31 ###
+subject_definitions:
+A tiny Alpine farm is sewn entirely from fabric: patchwork green fields, a wool-roofed barn, stitched fences and small felt sheep. It sits in an open wooden embroidery hoop.
+summary:
+The quilted mountain farm: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: One felt sheep tilts its head through a subtle hidden mechanism while a short ribbon grass tuft bends and settles. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Visible hand stitching, wool fibers, fabric weave, tiny knots and the hoop's wood grain.
+overall_soundscape:
+A faint fabric brush; no wind, livestock calls or cowbell loop. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 32 ###
+subject_definitions:
+A miniature reef built from frosted glass and pale ceramic coral surrounds a small pearl pavilion. One translucent jellyfish model hangs on a fine thread above the scene.
+summary:
+The glass coral pavilion: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The jellyfish drifts a few centimeters and its thin silk tentacles trail slowly before settling. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Frosted glass texture, ceramic coral pores, pearl iridescence, silk threads and tiny pavilion columns.
+overall_soundscape:
+Nearly silent, with a single faint thread-and-support tick; no bubbles or ocean bed. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 33 ###
+subject_definitions:
+A jewel-like mechanical peacock stands on a carved rosewood branch. Its feathers are fine silver filigree filled with blue-green enamel, and its body is brushed gold.
+summary:
+The filigree peacock: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The tail fans open smoothly into a broad symmetrical display, catches the studio light and holds fully open. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Filigree wire joints, enamel cells, gold brush marks, small hinge pins and carved wood ridges.
+overall_soundscape:
+One quiet feather-hinge rustle that ends promptly; no bird calls or music. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 34 ###
+subject_definitions:
+A miniature watermill carved from walnut stands over a clear resin stream in a mossy stone channel. The mill has a tiny wooden balcony and a copper roof.
+summary:
+The walnut watermill: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The waterwheel makes a slow quarter-turn under a single small pulse of visible water and then stops. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Walnut growth rings, paddle joinery, copper patina, moss tips and clear resin pebbles.
+overall_soundscape:
+One soft wooden creak and a tiny splash in the middle; no running-water bed. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 35 ###
+subject_definitions:
+Moss-covered miniature stone arches surround a tiled courtyard on a small slate base. One folded blue foil butterfly rests on the top of a broken column.
+summary:
+The butterfly ruins: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The butterfly opens its wings once, showing fine darker vein patterns, and remains perched as the camera makes a shallow arc. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Stone chips, mosaic tile edges, moss filaments, foil creases and wing vein embossing.
+overall_soundscape:
+One barely audible wing-fabric brush; no forest or insect ambience. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 36 ###
+subject_definitions:
+A small Japanese-inspired timber tower is assembled from precise interlocking cedar pieces without nails. Its layered roofs shelter tiny interior floors visible through open lattice walls.
+summary:
+The joiner's tower: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The top roof lifts a little on a concealed mechanism, revealing the joinery beneath, then settles back into its joints. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Cedar end grain, interlocking wood joints, fine latticework, shingle edges and miniature stair rails.
+overall_soundscape:
+One gentle wooden seating click; no hammering or workshop background. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 37 ###
+subject_definitions:
+A palm-sized astronomical instrument of tarnished silver holds a textured porcelain moon inside nested engraved rings. Geometric markings decorate the rings without readable lettering.
+summary:
+The silver lunar instrument: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: One ring rotates slowly until a small aperture frames the moon, then locks into place. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Silver tarnish, fine geometric engraving, tiny screw heads, porcelain lunar craters and satin reflections.
+overall_soundscape:
+One soft lock click; no ticking, tones or electronic sound. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 38 ###
+subject_definitions:
+A clear horizontal bottle contains a tiny dune landscape, a bleached wooden shelter and an ivory paper boat on a still turquoise inlet. The bottle rests on two small cork supports.
+summary:
+The bottle dune sanctuary: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: A thin cloth curtain at the shelter lifts once and falls still while the camera slides along the glass to reveal the boat. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Glass distortion, fine dune grains, cork pores, wood fibers and paper boat folds.
+overall_soundscape:
+A short quiet cloth brush; no wind, waves or coastal ambience. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 39 ###
+subject_definitions:
+A miniature bonsai tree is formed from twisted copper wire, dark carved bark and dozens of folded paper leaves in a shallow ceramic planter. Tiny polished stones surround its roots.
+summary:
+The copper-leaf bonsai: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: One small branch unfolds a fresh pair of paper leaves through a delicate visible linkage, then holds its new position. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Copper wire twist, bark grooves, paper fibers, leaf folds, ceramic glaze and smooth stones.
+overall_soundscape:
+A faint paper-and-wire creak that finishes before the end; no garden sound bed. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
+
+### 40 ###
+subject_definitions:
+An open walnut keepsake box contains a tiny mountain village beneath a brass crescent moon, with pearl stars on fine wires and one softly glowing window. The box is framed as the last treasure in the collection.
+summary:
+The final cabinet: a self-contained cinematic miniature study.
+detailed_description:
+Photorealistic macro cinematography of a real hand-built tabletop model, not a cartoon or a full-size landscape. Soft controlled studio light and a quiet matte charcoal background. A fixed macro lens, moderate depth of field and a very slow smooth camera move preserve readable fine detail; keep the main object sharp rather than hiding it in blur. Compose the subject comfortably inside the frame with clear space at the top and bottom. No people, readable lettering, captions, logos or interfaces.
+[Shot 1] Establish the complete scene during the first two seconds. Between seconds two and seven: The camera eases closer while the lid lowers slowly, leaving a narrow warm-lit opening; the motion finishes early enough to hold a calm final view. During the final three seconds, settle the movement and hold the finished composition. This clip has its own beginning and ending; do not imply movement inherited from another shot. No internal cuts, rapid zooms, time lapses or dissolves.
+Surface detail to preserve: Walnut dovetail joints, satin brass, pearl surfaces, tiny roof tiles and worn velvet lining.
+overall_soundscape:
+One quiet felt-damped clasp tap, followed by near silence; no musical ending or applause. Keep this isolated sound very low and place it only between seconds three and seven, with a short natural decay. The first and last seconds are nearly silent. No continuous background ambience, crowd, speech, narration, music or low-frequency rumble. Do not build a sustained sound that continues past the end of the shot.
+non_diegetic_music:
+N/A
