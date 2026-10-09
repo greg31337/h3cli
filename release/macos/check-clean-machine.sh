@@ -88,4 +88,4 @@ done
 [[ "$h3_clean_done" == true ]] || { echo 'Server job timed out' >&2; exit 1; }
 /usr/bin/curl --max-time 60 -fsS "$h3_clean_url/v1/videos/$h3_clean_job/content" -o "$h3_clean_output/server.mp4"
 [[ -s "$h3_clean_output/smoke.mp4" && -s "$h3_clean_output/server.mp4" ]]
-echo 'Runtime smoke checks passed. Watch both videos and record the clean-machine/trust conditions separately.'
+echo 'Runtime smoke checks passed. Record the clean-machine/trust conditions separately. Video inspection is optional.'

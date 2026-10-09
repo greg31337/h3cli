@@ -148,7 +148,7 @@ is a requirement for running the released h3cli executable.
 Complete the [clean-Mac procedure](macos.md#7-check-a-clean-mac-and-a-fresh-download)
 using a browser download from the draft. `gh`/`scp` transfers do not prove
 browser quarantine behavior. Confirm a downloaded Linux executable runs on
-PRO 5000, and review the sample videos. Keep reports with machine/OS details,
+PRO 5000. Human video review is optional. Keep reports with machine/OS details,
 commands, results and the artifact checksum.
 
 Attach each actual report with this helper; change the check ID and report path
@@ -156,7 +156,6 @@ for each completed check:
 
 ```sh
 ./release/record-check.sh --check source-tests --report /absolute/path/to/source-test-report.txt
-./release/record-check.sh --check visual-review --report /absolute/path/to/video-review.txt
 ./release/record-check.sh --check macos-clean-runtime --report /absolute/path/to/clean-runtime.txt
 ./release/record-check.sh --check macos-fresh-online --report /absolute/path/to/fresh-online.txt
 ./release/record-check.sh --check macos-fresh-offline --report /absolute/path/to/fresh-offline.txt
@@ -176,7 +175,7 @@ For a fully qualified stable release:
 ./release/macos/step9-publish.sh --channel stable
 ```
 
-This requires all six reported checks, checks the completed automation records,
+This requires all five reported checks, checks the completed automation records,
 re-downloads and verifies the draft again, updates its notes and makes it public
 as the latest stable release. It never rebuilds or re-signs the approved files.
 
@@ -186,8 +185,8 @@ For an early preview, use this **instead**:
 ./release/macos/step9-publish.sh --channel prerelease
 ```
 
-A prerelease still requires both platforms' automated tests plus `source-tests`
-and `visual-review`. Its notes must explicitly name every missing check ID,
+A prerelease still requires both platforms' automated tests plus `source-tests`.
+Its notes must explicitly name every missing check ID,
 for example `macos-clean-runtime`, `macos-fresh-online`, `macos-fresh-offline`
 or `linux-downloaded`, with an explanation that it is pending. The script marks
 the release as a prerelease and does not mark it latest. The currently deferred

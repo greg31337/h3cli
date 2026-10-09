@@ -27,7 +27,7 @@ ASSETS = (*PUBLIC, 'SHA256SUMS', 'SHA256SUMS.minisig')
 STEPS = {'linux': ('prerequisites', 'build', 'models', 'test', 'export'),
          'macos': ('prerequisites', 'build', 'sign', 'test', 'collect', 'stage',
                    'draft', 'verify', 'publish')}
-MANUAL = ('source-tests', 'visual-review', 'macos-clean-runtime',
+MANUAL = ('source-tests', 'macos-clean-runtime',
           'macos-fresh-online', 'macos-fresh-offline', 'linux-downloaded')
 
 
@@ -89,6 +89,11 @@ def repo_name(value):
     m = re.fullmatch(r'(?:https://github\.com/|git@github\.com:)?([\w.-]+/[\w.-]+?)(?:\.git)?/?', value)
     require(m is not None and not m[1].startswith('-'), 'Repository must be OWNER/REPO or a GitHub URL')
     return m[1]
+
+
+def ssh_options(identity_file=''):
+    return ['-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15',
+            *(['-i', str(identity_file), '-o', 'IdentitiesOnly=yes'] if identity_file else [])]
 
 
 class Runner:
@@ -402,7 +407,8 @@ class Runner:
             require(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.@-]*', host) and
                     re.fullmatch(r'/[A-Za-z0-9_./-]+', remote), 'Use a simple SSH alias and remote path without spaces')
             remote = remote.rstrip('/') + '/bin/linux-handoff-' + self.c['run']
-            self.command(['scp', *[host + ':' + remote + '/' + n for n in names], str(incoming) + '/'])
+            self.command(['scp', *ssh_options(self.c.get('linux_identity_file', '')),
+                          *[host + ':' + remote + '/' + n for n in names], str(incoming) + '/'])
         self.check_handoff(incoming)
         if not self.dry:
             incoming.rename(self.incoming)
@@ -589,7 +595,7 @@ class Runner:
         self.completed('macos-stage', required=True)
         self.completed('macos-verify', required=True)
         self.notes_check()
-        checks = MANUAL if channel == 'stable' else ('source-tests', 'visual-review')
+        checks = MANUAL if channel == 'stable' else ('source-tests',)
         for check in checks:
             self.completed('manual-' + check, required=True)
         # Re-download immediately before publishing; a previous verification
@@ -634,6 +640,8 @@ def configure(args):
                   secret_key=str(Path(args.secret_key).expanduser().resolve()),
                   linux_host=args.linux_host, linux_root=args.linux_root,
                   linux_handoff=str(Path(args.linux_handoff).expanduser().resolve()) if args.linux_handoff else '')
+    if args.linux_identity_file:
+        config['linux_identity_file'] = str(Path(args.linux_identity_file).expanduser().resolve())
     if args.dry_run:
         print(json.dumps(config, indent=2))
     else:
@@ -705,6 +713,7 @@ def parser():
     c.add_argument('--linux-host', default='')
     c.add_argument('--linux-root', default='')
     c.add_argument('--linux-handoff', default='')
+    c.add_argument('--linux-identity-file', default='', help='SSH private-key path on the Mac (never copied)')
     c = commands.add_parser('clone', help='Clone a reviewed commit into a new directory')
     c.add_argument('--repo', required=True)
     c.add_argument('--commit', required=True)

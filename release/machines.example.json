@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "macos": {
+    "models": "/path/to/models",
+    "apple_identity": "",
+    "notary_profile": "h3cli",
+    "secret_key": "~/.config/h3cli-release/h3cli-release.key",
+    "jobs": 8
+  },
+  "linux": {
+    "host": "cuda-test",
+    "identity_file": "~/.ssh/release_ed25519",
+    "root": "/path/to/release-candidates",
+    "models": "/path/to/models",
+    "jobs": 8
+  }
+}

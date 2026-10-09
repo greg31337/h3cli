@@ -87,8 +87,8 @@ explained in the main guide.
 
 Step 4 uses mostly 256×256, two-step clips, plus 512×512 upscale cases. It tests
 references, stills, continuation, bridge, saved state, upscale and the server.
-Its server download case requires network access. Watch the generated videos
-using the run's `features/review.html` and retain the test results.
+Its server download case requires network access. Retain the test results;
+the run's `features/review.html` is available for optional inspection.
 
 For a separately configured native development environment, run:
 

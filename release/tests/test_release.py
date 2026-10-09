@@ -227,13 +227,35 @@ class ReleaseTests(unittest.TestCase):
 
     def test_prerelease_must_disclose_deferred_check_ids(self):
         self.notes()
-        for name in ('macos-stage', 'macos-verify', 'manual-source-tests', 'manual-visual-review'):
+        for name in ('macos-stage', 'macos-verify', 'manual-source-tests'):
             self.r.receipt(name)
         with patch.object(self.r, 'clean'), patch.object(self.r, 'verify'), \
              patch.object(self.r, 'remote_release', return_value={'draft': True}), patch.object(self.r, 'gh') as gh:
             with self.assertRaisesRegex(ValueError, 'pending check IDs'):
                 self.r.publish('prerelease')
             gh.assert_not_called()
+
+    def test_publication_no_longer_requires_video_review(self):
+        self.public_files()
+        self.notes()
+        for name in ('macos-stage', 'macos-verify', *('manual-'+c for c in release.MANUAL)):
+            self.r.receipt(name)
+        self.assertNotIn('visual-review', release.MANUAL)
+        self.assertFalse((self.r.base/'manual-visual-review.json').exists())
+        with patch.object(self.r, 'clean'), patch.object(self.r, 'verify'), \
+             patch.object(self.r, 'remote_release', return_value={'draft': True}), patch.object(self.r, 'gh') as gh:
+            for channel in ('stable', 'prerelease'):
+                self.r.publish(channel)
+                self.assertTrue(any('--draft=false' in call.args for call in gh.call_args_list))
+
+    def test_collection_uses_configured_ssh_key(self):
+        self.r.c['linux_identity_file'] = '/path with spaces/release.key'
+        with patch.object(self.r, 'clean'), patch.object(self.r, 'check_handoff'), \
+             patch.object(self.r, 'receipt'), patch.object(self.r, 'command') as command:
+            self.r.collect()
+        argv = command.call_args.args[0]
+        self.assertEqual(argv[argv.index('-i')+1], self.r.c['linux_identity_file'])
+        self.assertIn('BatchMode=yes', argv)
 
     def test_remote_tag_mismatch_rejected(self):
         for output in ('', 'b'*40+'\trefs/tags/v0.1.0\n'):

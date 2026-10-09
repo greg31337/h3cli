@@ -72,8 +72,8 @@ never changes goldens, adds tolerances or skips failed cases.
 
 The feature matrix tests mostly 256×256, two-step clips, including references,
 stills, saved state, continuation, bridge, upscale and server behavior. The
-server check downloads a fresh preview VAE and needs network access. Open the
-run's `features/review.html`, watch the videos and retain the JSON reports.
+server check downloads a fresh preview VAE and needs network access. Retain the
+JSON reports. The run's `features/review.html` is available for optional inspection.
 These userlands share the PRO 5000's driver and kernel; they do not establish
 physical qualification for every compiled GPU target.
 

@@ -7,6 +7,9 @@ No shell variables need to be carried between Terminal windows.
 
 ## Recommended path
 
+Use the [one-command coordinator](#one-command-from-the-mac) for a complete draft,
+or the numbered scripts below for individual steps.
+
 Build and test Linux on the qualified PRO 5000, and build, sign and test Mac on
 Apple Silicon. Use the same reviewed commit, version and run name on both.
 The signing Mac collects the Linux result and prepares the GitHub release.
@@ -35,6 +38,74 @@ always the separate `step9-publish.sh` command.
 
 Ordinary `make` remains the development build. These scripts call the existing
 portable packaging recipes in `scripts/linux/` and `scripts/macos/`.
+
+## One command from the Mac
+
+After one-time machine/signing setup, start a release from a clean, committed
+checkout on Apple Silicon:
+
+```sh
+./release/release.sh --version v0.2.0
+```
+
+Copy `release/machines.example.json` to `outputs/release/machines.json` and set:
+
+| Setting | Value |
+| --- | --- |
+| `macos.models` | Absolute local model-root path |
+| `macos.model` (optional) | Main model override; otherwise detects `MiniMax-H3` or uses `MiniMaxH3` |
+| `macos.apple_identity` | Developer ID Application identity; empty selects the only valid identity |
+| `macos.notary_profile` | Existing Keychain notarization profile, normally `h3cli` |
+| `macos.secret_key` | Existing Minisign secret-key path outside the checkout |
+| `linux.host` | SSH alias or `user@host` for the RTX PRO 5000 |
+| `linux.identity_file` | Optional SSH key path on the Mac, also used for downloads |
+| `linux.root` | Parent directory for new isolated release candidates on Linux |
+| `linux.models` | Existing Linux model root; missing supported model groups may be downloaded |
+| `linux.model` (optional) | Main model override |
+| `jobs` in either machine | Build jobs, 1–32, default 8 |
+
+Keep this settings file ignored: it contains private paths and connection details.
+The SSH key and signing keys are never uploaded or copied to Linux. Linux paths
+must be absolute and contain no spaces or shell characters. SSH must already work
+without a password prompt and the host key must already be trusted.
+
+Prepare the tools listed below on each machine, including `skopeo` and `umoci`
+on Linux and `gh`/`minisign` on the Mac. Use the numbered prerequisite scripts
+with `--install` once if necessary. Complete
+[signing setup](github.md#one-time-release-key-setup), log in to GitHub, and commit
+the public key at `docs/release/h3cli-release.pub` along with the coordinator.
+The remote machine needs no GitHub login: source is transferred as a Git bundle
+through the configured SSH connection. GitHub tag/release writes happen on the Mac.
+
+The coordinator pins `HEAD` (or `--commit REVISION`) on both machines. It builds
+in `outputs/release/candidates/RUN/source` on the Mac and `linux.root/RUN/source`
+on Linux; existing development checkouts are not modified. It verifies Mac tools
+and signing access before starting the Linux build. The Linux runner builds,
+provisions models, runs all qualification tests and exports the handoff. The Mac
+then builds, signs/notarizes, tests, collects Linux, signs the checksums, generates
+notes, uploads a draft and verifies the downloaded assets. The final URL is
+printed only after verification succeeds. It never calls the publication step.
+
+```sh
+./release/release.sh --version v0.2.0 --dry-run
+./release/release.sh --version v0.2.0 --notes /path/to/change-description.txt
+./release/release.sh --version v0.2.0 --run v0.2.0-02
+```
+
+`--settings PATH` selects another machine profile. Dry run reads local settings
+and Git only; it performs no writes or network calls. `--notes` supplies an
+optional change description; automated results and pending source/clean-machine
+checks are appended from verified records. Without it the notes identify the
+source commit. Notes are regenerated on each coordinator run. Signing may still
+prompt locally for Keychain access or the Minisign password.
+
+Rerun the same command to reuse hash-verified completed work and finish a partial
+upload. A changed commit or machine profile requires a new `--run`. Failed partial
+builds are preserved and also require a new run. Command logs and receipts live
+under `outputs/release/RUN/` inside each candidate checkout. After a draft is
+complete, run individual check-recording/publication commands from the Mac's
+candidate checkout. Stable publication still requires the five reports below;
+human video review is not a release gate.
 
 ## What you need
 
@@ -119,16 +190,16 @@ rejected; use a new configuration and run instead of silently changing a candida
 ## Before calling a release ready
 
 The scripts check build identities, test reports, checksums, accepted Apple
-submissions, the remote tag and the exact public asset list. They cannot judge
-visual quality or whether a Mac was actually clean. Record real evidence for
-those checks using [record-check.sh](../../release/record-check.sh).
+submissions, the remote tag and the exact public asset list. Record actual source
+and clean-machine evidence using [record-check.sh](../../release/record-check.sh).
+The scripts cannot establish that a Mac was actually clean. Human video review
+is optional and is not recorded as a required publication check.
 
-Stable publication requires these six reported checks:
+Stable publication requires these five reported checks:
 
 | Check ID | Evidence to supply |
 | --- | --- |
 | `source-tests` | Required source tests for the release commit, under [CONTRIBUTING.md](../../CONTRIBUTING.md) |
-| `visual-review` | Human review of the Linux and Mac sample videos |
 | `macos-clean-runtime` | Execution without developer dependencies in a clean environment |
 | `macos-fresh-online` | Browser-downloaded DMG on a Mac with fresh trust, online |
 | `macos-fresh-offline` | Separate first launch offline, with models already provisioned |
