@@ -68,8 +68,12 @@ def fetch(cache,offline):
         key=name+'=='+version
         if key not in known:
             if offline:raise ValueError('Missing offline wheel metadata: '+key)
-            with urllib.request.urlopen('https://pypi.org/pypi/'+name+'/'+version+'/json',timeout=120) as response:
-                candidates=json.load(response)['urls']
+            url='https://pypi.org/pypi/'+name+'/'+version+'/json'
+            try:
+                with urllib.request.urlopen(url,timeout=120) as response:
+                    candidates=json.load(response)['urls']
+            except OSError as exc:
+                raise OSError('Wheel metadata download failed for '+key+': '+url+': '+str(exc)) from exc
             matches=[r for r in candidates if r['digests']['sha256']==sha]
             if len(matches)!=1:raise ValueError('Pinned wheel not found: '+key)
             known[key]={'name':matches[0]['filename'],'url':matches[0]['url'],'sha256':sha}

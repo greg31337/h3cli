@@ -35,9 +35,12 @@ def fetch(url, path, sha):
     try:
         with urllib.request.urlopen(url, timeout=120) as src, temporary.open('wb') as dst:
             shutil.copyfileobj(src, dst)
-        if digest(temporary) != sha:
-            raise ValueError(f'Download checksum mismatch: {url}')
+        actual = digest(temporary)
+        if actual != sha:
+            raise ValueError(f'Download checksum mismatch: {url}; expected {sha}, got {actual}')
         temporary.replace(path)
+    except OSError as exc:
+        raise OSError(f'Download failed: {url} -> {path}: {exc}') from exc
     finally:
         temporary.unlink(missing_ok=True)
     return path

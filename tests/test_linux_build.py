@@ -4,12 +4,15 @@
 import os
 os.environ["H3_OFFLINE"] = "1"  # Tests use provisioned weights; never fetch implicitly.
 import importlib.util
+import hashlib
+import io
 import json
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+import urllib.error
 from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -34,6 +37,31 @@ class Build(unittest.TestCase):
   with tempfile.TemporaryDirectory() as tmp,patch.object(environment.urllib.request,'urlopen') as network:
    with self.assertRaisesRegex(ValueError,'Missing offline'):build.cached('https://invalid',Path(tmp)/'missing','0'*64,True)
    network.assert_not_called()
+ def test_failed_download_identifies_url_and_destination(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   p=Path(tmp)/'download';url='https://example.invalid/missing.deb'
+   error=urllib.error.HTTPError(url,404,'Not Found',{},None)
+   self.addCleanup(error.close)
+   with patch.object(environment.urllib.request,'urlopen',side_effect=error):
+    with self.assertRaises(OSError) as raised:environment.fetch(url,p,'0'*64)
+   self.assertIn(url,str(raised.exception));self.assertIn(str(p),str(raised.exception))
+   self.assertIn('404',str(raised.exception))
+   self.assertFalse(p.exists());self.assertFalse(p.with_name('download.partial').exists())
+ def test_changed_download_reports_hashes_and_is_not_cached(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   p=Path(tmp)/'download';url='https://example.invalid/tool'
+   with patch.object(environment.urllib.request,'urlopen',return_value=io.BytesIO(b'changed')):
+    with self.assertRaises(ValueError) as raised:environment.fetch(url,p,'0'*64)
+   self.assertIn(url,str(raised.exception));self.assertIn('expected '+'0'*64,str(raised.exception))
+   self.assertIn('got '+hashlib.sha256(b'changed').hexdigest(),str(raised.exception))
+   self.assertFalse(p.exists());self.assertFalse(p.with_name('download.partial').exists())
+ def test_wheel_metadata_failure_identifies_pin_and_url(self):
+  url='https://pypi.org/pypi/missing/1.0/json'
+  error=urllib.error.HTTPError(url,404,'Not Found',{},None)
+  self.addCleanup(error.close)
+  with tempfile.TemporaryDirectory() as tmp,patch.object(build,'wheels',return_value=[('missing','1.0','0'*64)]),patch.object(build.urllib.request,'urlopen',side_effect=error):
+   with self.assertRaises(OSError) as raised:build.fetch(Path(tmp),False)
+  self.assertIn('missing==1.0',str(raised.exception));self.assertIn(url,str(raised.exception))
  def test_native_wheel_pins_are_shared(self):
   pins=build.wheels();self.assertEqual(len(pins),4)
   self.assertIn(('nvidia-cublas','13.1.1.3','37936a16db8fe4ac1f065c2139360608a543a09275cb1a1af612e08cfa065436'),pins)

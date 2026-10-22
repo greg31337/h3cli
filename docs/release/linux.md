@@ -58,6 +58,14 @@ Build work and caches go under `outputs/linux-build/`. The portable output is
 `bin/linux-handoff-RUN/`. `RUN` defaults to `v0.1.0-01` in this example.
 Budget roughly 30 GiB per clean build, plus cached inputs, models and test media.
 
+Ubuntu archive dependencies use the dated [Ubuntu snapshot service](https://snapshot.ubuntu.com/)
+so superseded packages remain available. PRoot uses a versioned upstream release
+asset. Every download is checked against its SHA-256 in `scripts/linux/lock.json`;
+download errors include the URL, and checksum errors include both hashes.
+If fetching stops before compilation creates the work/output directories, rerun
+the same release command to reuse verified downloads. Updating the lock requires
+a reviewed commit and a new `--run`, like any other source change.
+
 ## What the tests check
 
 Step 4 uses the final standalone executable and its matching private probes;
