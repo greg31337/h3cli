@@ -27,7 +27,10 @@ do not depend on the calling directory. `status.sh` lists saved step records.
 `record-check.sh` attaches source-test and clean-machine evidence to the staged files.
 `verify-downloads.sh` verifies a complete download using an independently trusted
 public key. `macos/setup-signing.sh` performs the one-time interactive credential
-and Minisign setup. Each platform's `test-source.sh` wraps the native source suite
+and Minisign setup without requiring a release config. It uses an existing
+release config, otherwise Mac machine settings, otherwise defaults; `--settings`,
+`--notary-profile` and `--secret-key` select or override those settings.
+Each platform's `test-source.sh` wraps the native source suite
 when its development environment is already installed.
 
 The shell files share `driver.py` so checksum lists, identities and failure

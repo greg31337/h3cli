@@ -426,5 +426,127 @@ class ReleaseTests(unittest.TestCase):
             self.assertIn('apt-get' if target=='linux' else 'brew install', result.stdout)
 
 
+class SigningSetupTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix='h3-signing-setup-')
+        self.addCleanup(self.tmp.cleanup)
+        self.base = Path(self.tmp.name).resolve()
+        self.root = self.base/'checkout'
+        self.root.mkdir()
+        self.config = self.root/'outputs/release/config.json'
+        self.settings = self.root/'outputs/release/machines.json'
+        self.secret = self.base/'private keys/release.key'
+
+    def runner(self, *argv):
+        args = release.parser().parse_args(['setup-signing', *argv])
+        return release.SigningRunner(args, root=self.root), args
+
+    def test_missing_config_dry_run_previews_login_and_key_without_side_effects(self):
+        before = list(self.root.rglob('*'))
+        with patch.object(release, 'ROOT', self.root), \
+             patch.object(subprocess, 'run', side_effect=AssertionError('external command')), \
+             patch.object(subprocess, 'check_output', side_effect=AssertionError('external command')), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            release.main(['setup-signing', '--github-login', '--generate-key', '--dry-run',
+                          '--secret-key', str(self.secret)])
+        self.assertIn('gh auth login', output.getvalue())
+        self.assertIn('minisign -G', output.getvalue())
+        self.assertIn('--keychain-profile h3cli', output.getvalue())
+        self.assertEqual(before, list(self.root.rglob('*')))
+        self.assertFalse(self.secret.parent.exists())
+        self.assertFalse(self.config.exists())
+
+    def test_bootstrap_uses_machine_settings_and_copies_only_public_key(self):
+        release.write(self.settings, dict(schema=1, macos=dict(
+            notary_profile='test-profile', secret_key=str(self.secret))))
+        calls = []
+        def command(runner, argv, **kwargs):
+            calls.append(list(map(str, argv)))
+            if argv[:2] == ['minisign', '-G']:
+                Path(argv[argv.index('-s')+1]).write_text('secret fixture')
+                Path(argv[argv.index('-p')+1]).write_text('public fixture')
+            return ''
+        with patch.object(release, 'ROOT', self.root), patch.object(release.Runner, 'host'), \
+             patch.object(release.SigningRunner, 'command', command):
+            release.main(['setup-signing', '--github-login', '--generate-key'])
+        self.assertEqual(self.secret.read_text(), 'secret fixture')
+        self.assertEqual((self.root/'docs/release/h3cli-release.pub').read_text(), 'public fixture')
+        self.assertFalse(self.config.exists())
+        self.assertIn(['xcrun', 'notarytool', 'history', '--keychain-profile', 'test-profile'], calls)
+        self.assertIn(['gh', 'auth', 'login', '--hostname', 'github.com', '--git-protocol', 'https', '--web'], calls)
+        self.assertFalse(any(p.read_text() == 'secret fixture' for p in self.root.rglob('*') if p.is_file()))
+
+    def test_defaults_need_neither_release_nor_machine_config(self):
+        runner, _ = self.runner()
+        self.assertEqual(runner.c['notary_profile'], 'h3cli')
+        self.assertEqual(runner.c['secret_key'], str(Path('~/.config/h3cli-release/h3cli-release.key').expanduser().resolve()))
+
+    def test_existing_release_config_takes_precedence_over_machine_settings(self):
+        release.write(self.config, dict(schema=1, root=str(self.root),
+                      notary_profile='release-profile', secret_key=str(self.secret)))
+        release.write(self.settings, dict(schema=1, macos=dict(notary_profile='machine-profile')))
+        runner, _ = self.runner()
+        self.assertEqual(runner.c['notary_profile'], 'release-profile')
+        self.assertEqual(runner.c['secret_key'], str(self.secret))
+
+    def test_explicit_settings_and_overrides_take_precedence(self):
+        release.write(self.config, dict(schema=1, root=str(self.root), notary_profile='release-profile'))
+        custom = self.base/'custom-machines.json'
+        release.write(custom, dict(schema=1, macos=dict(notary_profile='machine-profile')))
+        runner, _ = self.runner('--settings', str(custom))
+        self.assertEqual(runner.c['notary_profile'], 'machine-profile')
+        runner, _ = self.runner('--settings', str(custom), '--notary-profile', 'override',
+                                '--secret-key', str(self.secret))
+        self.assertEqual(runner.c, dict(notary_profile='override', secret_key=str(self.secret)))
+
+    def test_explicit_missing_files_do_not_silently_use_defaults(self):
+        release.write(self.settings, dict(schema=1, macos={}))
+        for option in ('--config', '--settings'):
+            with self.subTest(option=option), self.assertRaises(FileNotFoundError):
+                self.runner(option, str(self.base/'missing.json'))
+
+    def test_invalid_configuration_is_rejected(self):
+        release.write(self.config, dict(schema=1, root='/another/checkout'))
+        with self.assertRaisesRegex(ValueError, 'another checkout'):
+            self.runner()
+        release.write(self.settings, dict(schema=2, macos={}))
+        with self.assertRaisesRegex(ValueError, 'Unsupported Mac'):
+            self.runner('--settings', str(self.settings))
+        with self.assertRaisesRegex(ValueError, 'Choose --config or --settings'):
+            self.runner('--config', str(self.config), '--settings', str(self.settings))
+
+    def test_existing_keys_are_rejected_before_interactive_login(self):
+        runner, args = self.runner('--github-login', '--generate-key', '--secret-key', str(self.secret))
+        for path in (self.secret, self.secret.with_suffix('.pub'), runner.key):
+            with self.subTest(path=path):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('existing key fixture')
+                with patch.object(runner, 'host'), patch.object(runner, 'command') as command:
+                    with self.assertRaisesRegex(ValueError, 'refusing to replace'):
+                        release.setup_signing(runner, args)
+                    command.assert_not_called()
+                self.assertEqual(path.read_text(), 'existing key fixture')
+                path.unlink()
+        runner.key.symlink_to(self.base/'absent-public-key')
+        with patch.object(runner, 'host'), patch.object(runner, 'command') as command:
+            with self.assertRaisesRegex(ValueError, 'refusing to replace'):
+                release.setup_signing(runner, args)
+            command.assert_not_called()
+
+    def test_secret_in_checkout_is_rejected_before_interactive_login(self):
+        runner, args = self.runner('--github-login', '--generate-key', '--secret-key', str(self.root/'private.key'))
+        with patch.object(runner, 'host'), patch.object(runner, 'command') as command:
+            with self.assertRaisesRegex(ValueError, 'outside the checkout'):
+                release.setup_signing(runner, args)
+            command.assert_not_called()
+
+    def test_missing_apple_account_arguments_fail_before_interactive_login(self):
+        runner, args = self.runner('--github-login', '--store-credentials')
+        with patch.object(runner, 'host'), patch.object(runner, 'command') as command:
+            with self.assertRaisesRegex(ValueError, '--apple-id and --team-id'):
+                release.setup_signing(runner, args)
+            command.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()

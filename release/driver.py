@@ -616,6 +616,36 @@ class Runner:
         self.receipt('macos-publish', [self.stage/n for n in ASSETS], channel=channel)
 
 
+class SigningRunner(Runner):
+    """Share command logging/locking without requiring a release candidate."""
+    def __init__(self, args, root=ROOT):
+        self.root = Path(root).resolve()
+        self.dry = args.dry_run
+        self.base = self.root/'outputs/release/signing-setup'
+        self.key = self.root/'docs/release/h3cli-release.pub'
+        require(not (args.config and args.settings), 'Choose --config or --settings, not both')
+        config = self.root/'outputs/release/config.json'
+        values = {}
+        if args.config is not None or (args.settings is None and config.exists()):
+            config = Path(args.config or config).expanduser().resolve()
+            values = read(config)
+            require(isinstance(values, dict) and values.get('schema') == 1, 'Unsupported release config')
+            require(values.get('root') == str(self.root), 'Config belongs to another checkout; configure locally')
+        else:
+            settings = Path(args.settings or self.root/'outputs/release/machines.json').expanduser().resolve()
+            if args.settings is not None or settings.exists():
+                machine = read(settings)
+                require(isinstance(machine, dict) and machine.get('schema') == 1
+                        and isinstance(machine.get('macos'), dict), 'Unsupported Mac machine settings')
+                values = machine['macos']
+        self.c = {key: getattr(args, key) if getattr(args, key) is not None else values.get(key, default)
+                  for key, default in (('notary_profile', 'h3cli'),
+                                       ('secret_key', '~/.config/h3cli-release/h3cli-release.key'))}
+        require(all(isinstance(value, str) and value.strip() for value in self.c.values()),
+                'Notary profile and secret-key path must be nonempty strings')
+        self.c['secret_key'] = str(Path(self.c['secret_key']).expanduser().resolve())
+
+
 def configure(args):
     root = ROOT
     commit = subprocess.check_output(['git', 'rev-parse', args.commit + '^{commit}'], cwd=root, text=True).strip()
@@ -668,22 +698,26 @@ def clone(args):
 def setup_signing(runner, args):
     runner.host('macos')
     c = runner.c
+    if args.store_credentials:
+        require(args.apple_id and args.team_id, 'Supply --apple-id and --team-id; the password is prompted locally')
+    if args.generate_key:
+        secret = Path(c['secret_key'])
+        public = secret.with_suffix('.pub')
+        require(not any(p.exists() or p.is_symlink() for p in (secret, public, runner.key)),
+                'A release key already exists; refusing to replace it')
+        require(not secret.is_relative_to(runner.root), 'Secret key must be outside the checkout')
     if args.github_login:
         runner.command(['gh', 'auth', 'login', '--hostname', 'github.com', '--git-protocol', 'https', '--web'], interactive=True)
         runner.command(['gh', 'auth', 'setup-git', '--hostname', 'github.com'])
     if args.store_credentials:
-        require(args.apple_id and args.team_id, 'Supply --apple-id and --team-id; the password is prompted locally')
         runner.command(['xcrun', 'notarytool', 'store-credentials', c['notary_profile'],
                         '--apple-id', args.apple_id, '--team-id', args.team_id], interactive=True)
     if args.generate_key:
-        secret = Path(c['secret_key'])
-        public = secret.with_suffix('.pub')
-        require(not secret.exists() and not public.exists() and not runner.key.exists(), 'A release key already exists; refusing to replace it')
-        require(not secret.is_relative_to(runner.root), 'Secret key must be outside the checkout')
         if not runner.dry:
             secret.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         runner.command(['minisign', '-G', '-s', secret, '-p', public], interactive=True)
         if not runner.dry:
+            runner.key.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(public, runner.key)
         print('Review and commit docs/release/h3cli-release.pub, then configure the final release commit in a fresh clone.')
     runner.command(['security', 'find-identity', '-v', '-p', 'codesigning'])
@@ -732,6 +766,10 @@ def parser():
     c.add_argument('--check', choices=MANUAL, required=True)
     c.add_argument('--report', type=Path, required=True)
     c = common('setup-signing', help='One-time interactive credentials/key setup; never publishes')
+    c.set_defaults(config=None)
+    c.add_argument('--settings', type=Path, help='Machine settings (default: outputs/release/machines.json when no release config exists)')
+    c.add_argument('--notary-profile', help='Override the Keychain profile (default: saved value or h3cli)')
+    c.add_argument('--secret-key', help='Override the Minisign secret-key path (default: saved value or ~/.config/h3cli-release/h3cli-release.key)')
     c.add_argument('--github-login', action='store_true')
     c.add_argument('--store-credentials', action='store_true')
     c.add_argument('--apple-id')
@@ -763,6 +801,11 @@ def main(argv=None):
         require(sha(args.directory/'h3cli-release.pub') == sha(args.public_key), 'Wrong downloaded public key')
         print('Signature and all nine file checksums verified.')
         return
+    if args.command == 'setup-signing':
+        r = SigningRunner(args, root=ROOT)
+        with r.lock():
+            setup_signing(r, args)
+        return
     r = Runner(args.config, args.dry_run)
     if args.command == 'status':
         for path in sorted(r.base.glob('*.json')):
@@ -770,9 +813,7 @@ def main(argv=None):
         print('Notes: ' + str(r.notes))
         return
     with r.lock():
-        if args.command == 'setup-signing':
-            setup_signing(r, args)
-        elif args.command == 'record-check':
+        if args.command == 'record-check':
             r.record_check(args.check, args.report)
         elif args.command == 'source-tests':
             r.source_tests(args.platform, args.environment)

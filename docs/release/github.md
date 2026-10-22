@@ -12,12 +12,20 @@ helpers when called with `--install`. The Apple identity is a separate key from
 the Minisign key used for the public checksum list.
 
 For the first release, do this in a development checkout before freezing the
-release commit. Configure it using the Mac guide, then run:
+release commit. No release `config.json` is needed for this setup:
 
 ```sh
 ./release/macos/step1-prerequisites.sh --install
 ./release/macos/setup-signing.sh --github-login --generate-key
 ```
+
+Setup uses `outputs/release/config.json` if present, otherwise the `macos`
+settings in `outputs/release/machines.json`, otherwise the defaults below.
+Use `--config PATH` or `--settings PATH` to select another existing file.
+`--notary-profile NAME` and `--secret-key PATH` override the selected values.
+Setup does not create a release configuration; the coordinator creates one
+for each candidate, or `configure.sh` creates one for the numbered scripts.
+Use `--dry-run` to inspect the setup commands without logging in or creating keys.
 
 `--github-login` opens GitHub's browser login and configures Git's credential
 helper. `--generate-key` creates a password-protected Minisign key at the configured

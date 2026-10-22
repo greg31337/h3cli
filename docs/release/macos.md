@@ -36,7 +36,9 @@ packager requires. See [Apple's certificate setup](https://developer.apple.com/h
 Certificate creation/installation is the team's responsibility and cannot be
 completed by these scripts without the team's account access.
 
-The helper checks the identity list, notarization profile and GitHub login:
+The helper checks the identity list, notarization profile and GitHub login.
+It can run before release configuration, using existing machine settings or
+the default `h3cli` notary profile:
 
 ```sh
 ./release/macos/setup-signing.sh
@@ -50,7 +52,7 @@ If the notary profile has not been stored, use the interactive setup once:
 ```
 
 The app-specific password is prompted locally and stored in Keychain. The
-default profile name is `h3cli`; configure `--notary-profile` to use another.
+default profile name is `h3cli`; pass `--notary-profile` to use another.
 A working profile does not create a signing certificate. The profile and
 identity must belong to the same team. Reuse the working profile for later
 releases. [Apple's notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow)
