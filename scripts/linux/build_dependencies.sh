@@ -28,14 +28,42 @@ site=$("$prefix/venv/bin/python" -c 'import sysconfig; print(sysconfig.get_path(
 ln -sfn libcudnn.so.9 "$site/nvidia/cudnn/lib/libcudnn.so"
 ln -sfn libcublas.so.13 "$site/nvidia/cu13/lib/libcublas.so"
 ln -sfn libcublasLt.so.13 "$site/nvidia/cu13/lib/libcublasLt.so"
+# Retain the inputs needed by application compilation and source-material
+# assembly inside the prepared image, independently of this build directory.
+retained="$prefix/sources"
+mkdir -p "$retained"
+for name in cudnn-frontend sglang-cutlass sage-cutlass; do
+    mkdir -p "$retained/$name"
+    cp -a "$build/$name/include" "$retained/$name/"
+    if [ -d "$build/$name/tools/util/include" ]; then
+        mkdir -p "$retained/$name/tools/util"
+        cp -a "$build/$name/tools/util/include" "$retained/$name/tools/util/"
+    fi
+done
+python3 - "$build" "$retained" <<'PY'
+from pathlib import Path
+import shutil, sys
+source, retained = map(Path, sys.argv[1:])
+for name in ('icu', 'jpeg', 'ffmpeg', 'cudnn-frontend', 'sglang-cutlass', 'sage-cutlass'):
+    target = retained/name; target.mkdir(exist_ok=True)
+    for p in (source/name).iterdir():
+        if p.is_file() and p.name.lower().startswith(('license', 'copying', 'copyright')):
+            shutil.copyfile(p, target/p.name)
+for name in ('ffmpeg', 'jpeg-build', 'icu/source'):
+    for file in ('config.h', 'ffbuild/config.mak'):
+        p = source/name/file
+        if p.is_file():
+            target = retained/name/file; target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(p, target)
+PY
 cat > "$prefix/environment.sh" <<EOF
 export CUDA_PATH=/usr/local/cuda-13.0
 export NVCC=/usr/local/cuda-13.0/bin/nvcc
 export PATH="$prefix/bin:/usr/local/cuda-13.0/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export CUDA_ARCH=fat CUDA_SGLANG=1 CUDA_CUDNN=1 CUDA_SAGE=1 CUDA_SOL=1 CUDA_SUBBLOCK=1 CUDA_OPENSSL=1
-export CUDNN_FRONTEND_PATH="$build/cudnn-frontend/include"
-export SGLANG_CUTLASS_PATH="$build/sglang-cutlass"
-export SAGE_CUTLASS_PATH="$build/sage-cutlass"
+export CUDNN_FRONTEND_PATH="$retained/cudnn-frontend/include"
+export SGLANG_CUTLASS_PATH="$retained/sglang-cutlass"
+export SAGE_CUTLASS_PATH="$retained/sage-cutlass"
 export CPATH="$prefix/include:$site/nvidia/cudnn/include"
 export LIBRARY_PATH="$prefix/lib:$prefix/lib64:$site/nvidia/cudnn/lib:$site/nvidia/cu13/lib:/usr/local/cuda-13.0/lib64/stubs"
 export LD_LIBRARY_PATH="$prefix/lib:$prefix/lib64:$site/nvidia/cudnn/lib:$site/nvidia/cu13/lib:/usr/local/cuda-13.0/lib64"

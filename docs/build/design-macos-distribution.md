@@ -74,12 +74,13 @@ hardware unavailable on M4 remains explicitly unqualified.
 ## Build entry point and pinned inputs
 
 Add `scripts/build_macos.sh`, backed by focused helpers under `scripts/macos/`.
-Proposed interface, matching the Linux builder where practical:
+The original source-build interface remains available explicitly. For current
+releases using qualified bundles, see the [dependency guide](dependency-bundles.md).
 
 ```sh
 bash scripts/build_macos.sh --doctor
-bash scripts/build_macos.sh --fetch-only --cache outputs/macos-build/cache
-bash scripts/build_macos.sh --offline --jobs 8 \
+bash scripts/build_macos.sh --source-dependencies --fetch-only --cache outputs/macos-build/cache
+bash scripts/build_macos.sh --source-dependencies --offline --jobs 8 \
   --cache outputs/macos-build/cache \
   --work-dir outputs/macos-build/run-001 \
   --output bin/macos-release

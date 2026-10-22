@@ -1,3 +1,92 @@
+# Reusable dependency bundles for builds and releases
+
+Status: **complete — 12/12 tasks complete**. Updated 2026-10-22.
+[Qualification evidence](build/dependency-bundles-results.md).
+Build and validate our own Linux x86-64 and macOS arm64 dependency bundles once
+per dependency configuration, then reuse those exact artifacts across application
+builds and release candidates. Keep the existing macOS qualification milestone
+below and its pending tasks intact.
+
+## Scope and acceptance
+
+Refactor the [Linux dependency recipe](../scripts/linux/build_dependencies.sh),
+[Linux builder](../scripts/linux/build.py),
+[macOS builder](../scripts/macos/build.py) and
+[release coordinator](../release/coordinator.py). Preserve the current dependency
+versions, numerical behavior, platform requirements and standalone deliverables.
+Existing vendor/distro binaries remain pinned inputs. Retain a supported source
+build path for creating and reproducing bundles.
+
+Completion requires two different application commits to build and qualify with
+the same verified dependency bundle on each platform, without recompiling
+unchanged dependencies. A dependency, recipe, compiler/SDK, architecture or build
+configuration change must select a new bundle. Application compilation, final
+artifact tests, signing and notarization still run as required for each release.
+
+## Dependency bundle milestone
+
+- [x] DEP001 Inventory dependency inputs and outputs on both platforms. Define
+  the bundle contents: compiled libraries, development headers/static archives,
+  media executables, required resources and build metadata. Include required
+  CUTLASS/cuDNN frontend headers; keep application kernels and probes in the
+  application build. Separate production dependencies from historical test media
+  and identify which toolchain/system prerequisites remain external.
+- [x] DEP002 Define a canonical manifest and immutable bundle identity covering
+  source/vendor hashes, patches, relevant recipes, configuration flags, compiler,
+  SDK/sysroot, target architecture, deployment baseline and reproducibility inputs.
+  Inventory file hashes, sizes and modes. Exclude application commit, release
+  version, run name and installation path from dependency cache invalidation.
+- [x] DEP003 Add explicit commands to build dependency bundles in fresh isolated
+  directories using the existing locked recipes. Produce relocatable archives,
+  manifests and corresponding source materials; make source builds reproducible
+  and usable offline with provisioned inputs. Never overwrite a validated bundle.
+- [x] DEP004 Qualify each new bundle before allowing release reuse. Check ABI and
+  minimum OS requirements, CPU architecture, codec configuration, recursive library
+  dependencies and relocation without developer paths. Record the reference
+  application/test revision and results against the bundle's exact digest.
+  Keep numerical goldens and existing acceptance thresholds unchanged.
+- [x] DEP005 Implement bundle acquisition and a shared cache across release
+  candidates. Use immutable locations and trusted checksum pins; verify contents
+  before reuse, extract safely into staging and publish readiness atomically.
+  Support concurrent consumers, interrupted downloads and strict offline reuse.
+  Missing or incompatible bundles must give actionable errors; bundle creation
+  must be explicit rather than an unexpected release-time dependency rebuild.
+- [x] DEP006 Integrate bundle consumption into Linux builds, including the
+  pinned builder userland, development files and runtime packaging inputs.
+  Reuse compiled ICU, TurboJPEG and production/regression media tools. Compile
+  h3cli, its launcher and matching validation probes against the verified bundle;
+  retain vendor-library identities, ABI audits and private validation-kit isolation.
+- [x] DEP007 Integrate bundle consumption into macOS builds. Reuse the qualified
+  FFmpeg/x264 artifacts while retaining Apple SDK/toolchain checks and native
+  build support. Copy reusable inputs into each candidate before final signing
+  and notarization; signing must never mutate the shared dependency cache.
+- [x] DEP008 Pin bundle identities in release candidate configuration, build
+  provenance and completion receipts. Verify the same identities on resume and
+  handoff. Preserve final-artifact qualification, source inventories, checksum
+  signing and draft/publication boundaries; earlier dependency qualification
+  does not substitute for testing the current application release.
+- [x] DEP009 Cover cache hits/misses, changed dependency inputs, unrelated
+  application changes, wrong platforms, corrupt/incomplete bundles, concurrent
+  users and offline operation. Verify Ctrl+C/SIGTERM stops owned local and remote
+  build workers while preserving completed bundles and failure logs. Failed or
+  canceled work must never receive a successful completion receipt.
+- [x] DEP010 Preserve exact binary-to-source correspondence, patches, build/relink
+  instructions and license notices in companion source archives. Keep dependency
+  provenance available independently of any one application release. Exclude
+  Apple SDK/framework payloads, credentials, model weights and private test outputs
+  from redistributed bundles; retain applicable vendor redistribution conditions.
+- [x] DEP011 Validate cold source builds and warm bundle reuse on the local
+  PRO 5000 and M4. Compare dependency bytes across fresh locations and application
+  commits, prove offline reuse and retain timings plus evidence that dependency
+  compilation was skipped. Follow [CONTRIBUTING.md](../CONTRIBUTING.md), including
+  the complete 204-output CUDA gate and final Linux artifact qualification, plus
+  affected macOS packaging, rendering, signing and release-runner checks.
+- [x] DEP012 Document bundle creation, qualification, storage, fetching, cache
+  inspection, invalidation, recovery and the explicit source-build fallback.
+  Record bundle identities, cold/warm timings and qualification reports; update
+  the build/release guides and reconcile this checklist against retained evidence.
+  Complete only when both platforms meet the cross-release reuse acceptance above.
+
 # macOS standalone package building
 
 Status: **notarized package qualified on the local M4 — 33/36 tasks complete**.

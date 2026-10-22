@@ -29,12 +29,19 @@ The source archive contains:
 - `redistribution.json` and `manifest.json`: component mapping and per-file hashes.
 
 From `h3cli/` on Linux x86-64, install Python 3.10+, GNU coreutils, skopeo and
-umoci, then run `scripts/build_linux.sh`. This fetches checksum-pinned build
+umoci, then run `scripts/build_linux.sh --source-dependencies`. This fetches checksum-pinned build
 inputs and produces the executable, runtime, sources and separate validation
 kit. Use `--fetch-only --cache PATH` once and then `--offline --cache PATH`
-with fresh `--work-dir` and `--output` directories for offline rebuilds. Models
+alongside `--source-dependencies`, with fresh `--work-dir` and `--output`
+directories for offline rebuilds. Models
 and a GPU are unnecessary for compilation. See `docs/build/linux-distribution.md`
 for full build and runtime instructions.
+
+When the application reused a dependency bundle, `dependency-bundle.json`
+records that exact archive, recipe and qualification identity. The included
+sources and recipes also support an independent source rebuild. See
+`h3cli/docs/build/dependency-bundles.md` for producing and qualifying reusable
+dependencies before another application build.
 
 For distro libraries, extract the matching `.dsc` with `dpkg-source -x` and
 follow its `debian/rules` and `debian/control` build dependencies in the locked

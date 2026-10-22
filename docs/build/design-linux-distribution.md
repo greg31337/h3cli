@@ -118,10 +118,11 @@ work. Compare toolkit-linked and explicitly loaded cuBLAS identities; deduplicat
 only identical or explicitly qualified files. Never accidentally load two
 incompatible copies with the same SONAME.
 
-Qualified contributor build entry point:
+Explicit source-build entry point (for reusable bundles, see the
+[dependency guide](dependency-bundles.md)):
 
 ```sh
-bash scripts/build_linux.sh
+bash scripts/build_linux.sh --source-dependencies
 ```
 
 It builds in a digest-pinned OCI filesystem through PRoot on an x86-64 Linux

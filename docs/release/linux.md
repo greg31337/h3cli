@@ -11,12 +11,18 @@ Replace the repository, version, full commit and model path:
 ```sh
 ./release/linux/step1-prerequisites.sh --install
 ./release/configure.sh --repo OWNER/REPO --tag v0.1.0 \
-  --commit REPLACE_WITH_FULL_COMMIT_ID --models-path /absolute/path/to/models
+  --commit REPLACE_WITH_FULL_COMMIT_ID --models-path /absolute/path/to/models \
+  --dependencies /path/to/linux-qualification/bundle.json \
+  --dependency-cache /path/to/shared/dependency-cache \
+  --build-cache /path/to/shared/tool-downloads
 ```
 
 The main model defaults to `MODELS/MiniMaxH3`, with an existing `MiniMax-H3`
 fallback. Add `--model /custom/main-model` if necessary. Set `--jobs 16` for a
 larger builder, or reduce the default eight jobs if memory is limited.
+Build and qualify the dependency bundle first using the
+[dependency guide](../build/dependency-bundles.md). Configuration embeds its
+archive and qualification checksums; the release does not rebuild dependencies.
 
 ## Run the whole Linux sequence
 
@@ -41,7 +47,7 @@ Use these scripts individually to resume or inspect a particular step:
 | Step | Script | What it does |
 | --- | --- | --- |
 | 1 | [step1-prerequisites.sh](../../release/linux/step1-prerequisites.sh) | Checks Linux x86-64 and build helpers; `--install` installs missing prerequisites |
-| 2 | [step2-build.sh](../../release/linux/step2-build.sh) | Fetches pinned dependencies, builds offline, checks commit and artifact hashes |
+| 2 | [step2-build.sh](../../release/linux/step2-build.sh) | Verifies the pinned dependency bundle, builds the application offline, checks commit and artifact hashes |
 | 3 | [step3-models.sh](../../release/linux/step3-models.sh) | Verifies/provisions all main and auxiliary model groups |
 | 4 | [step4-test.sh](../../release/linux/step4-test.sh) | Runs parity, three-userland checks, runtime checks and small feature/server renders |
 | 5 | [step5-export.sh](../../release/linux/step5-export.sh) | Creates the checked private handoff for the signing Mac |
@@ -53,10 +59,12 @@ For example:
 ./release/linux/step5-export.sh
 ```
 
-Build work and caches go under `outputs/linux-build/`. The portable output is
+Build work goes under `outputs/linux-build/`; configure caches outside candidate
+checkouts to share them across releases. The portable output is
 `bin/linux-RUN/`, evidence is under `outputs/release/RUN/`, and the handoff is
 `bin/linux-handoff-RUN/`. `RUN` defaults to `v0.1.0-01` in this example.
-Budget roughly 30 GiB per clean build, plus cached inputs, models and test media.
+Budget space for the bundle archive, extracted cache and each unpacked builder,
+plus application outputs, models and test media.
 
 Ubuntu archive dependencies use the dated [Ubuntu snapshot service](https://snapshot.ubuntu.com/)
 so superseded packages remain available. PRoot uses a versioned upstream release

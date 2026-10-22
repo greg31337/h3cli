@@ -10,6 +10,9 @@ tools in [scripts/macos/lock.json](../../scripts/macos/lock.json).
 ./release/macos/step1-prerequisites.sh --install
 ./release/configure.sh --repo OWNER/REPO --tag v0.1.0 \
   --commit REPLACE_WITH_FULL_COMMIT_ID --models-path /absolute/path/to/models \
+  --dependencies /path/to/macos-qualification/bundle.json \
+  --dependency-cache /path/to/shared/dependency-cache \
+  --build-cache /path/to/shared/tool-downloads \
   --apple-identity 'Developer ID Application: Example Name (TEAMID)' \
   --linux-host h3cli-linux-builder --linux-root /absolute/remote/path/to/h3cli-release
 ```
@@ -19,6 +22,10 @@ the maintainer-provided host, login, port and key. The remote path must be absol
 and contain no spaces or shell characters. Alternatively, use
 `--linux-handoff /absolute/path/to/copied/linux-handoff-RUN` for a local copy.
 Do not copy the Linux configuration onto the Mac; its local paths differ.
+
+Build and qualify the dependency bundle first using the
+[dependency guide](../build/dependency-bundles.md). Each candidate copies the
+qualified media tools before signing; signing never modifies the shared cache.
 
 ## Apple tools and credentials
 
@@ -73,7 +80,7 @@ prepared Mac.
 | Step | Script | What it does |
 | --- | --- | --- |
 | 1 | [step1-prerequisites.sh](../../release/macos/step1-prerequisites.sh) | Checks tools and runs the SDK doctor |
-| 2 | [step2-build.sh](../../release/macos/step2-build.sh) | Fetches inputs, builds offline, verifies sources/checksums and runs package fixture tests |
+| 2 | [step2-build.sh](../../release/macos/step2-build.sh) | Verifies the dependency bundle, builds the application offline, verifies sources/checksums and runs package fixture tests |
 | 3 | [step3-sign.sh](../../release/macos/step3-sign.sh) | Signs inner code, notarizes it, signs the launcher/DMG, notarizes and staples the DMG |
 | 4 | [step4-test.sh](../../release/macos/step4-test.sh) | Checks signatures/team/notarization, provisions models and runs the small feature/server matrix |
 

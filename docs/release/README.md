@@ -5,6 +5,10 @@ Linux and Mac runbooks into a repeatable process. Configure each machine once;
 the scripts remember its paths and keep logs and results under `outputs/`.
 No shell variables need to be carried between Terminal windows.
 
+First build and qualify the [reusable dependency bundles](../build/dependency-bundles.md)
+for Linux and macOS. Each release pins those bundles and compiles the application
+and probes against them; it still runs all final artifact tests and Apple signing.
+
 ## Recommended path
 
 Use the [one-command coordinator](#one-command-from-the-mac) for a complete draft,
@@ -62,6 +66,10 @@ Copy `release/machines.example.json` to `outputs/release/machines.json` and set:
 | `linux.root` | Parent directory for new isolated release candidates on Linux |
 | `linux.models` | Existing Linux model root; missing supported model groups may be downloaded |
 | `linux.model` (optional) | Main model override |
+| `dependencies` in either machine | Absolute path to that platform's qualified `bundle.json` |
+| `dependencies_sha256` in either machine | SHA-256 of that exact reference JSON |
+| `dependency_cache` in either machine | Shared verified bundle cache outside candidate checkouts |
+| `build_cache` in either machine | Shared tool/download cache, including Linux test userlands |
 | `jobs` in either machine | Build jobs, 1–32, default 8 |
 
 Keep this settings file ignored: it contains private paths and connection details.
@@ -106,6 +114,11 @@ under `outputs/release/RUN/` inside each candidate checkout. After a draft is
 complete, run individual check-recording/publication commands from the Mac's
 candidate checkout. Stable publication still requires the five reports below;
 human video review is not a release gate.
+
+Ctrl+C or SIGTERM cancels owned build workers. The Linux runner also watches the
+SSH input stream and cancels its workers if the connection closes. Completed
+dependency bundles remain available to the next candidate; canceled work never
+gets a successful receipt.
 
 ## What you need
 

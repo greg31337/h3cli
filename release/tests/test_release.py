@@ -399,10 +399,32 @@ class ReleaseTests(unittest.TestCase):
 
     def test_shell_metacharacters_remain_single_argv_values(self):
         value = '/path with spaces/$(touch NEVER); `echo x`'
-        with patch.object(subprocess, 'check_output', return_value='ok') as run:
+        with patch.object(release.build_process, 'run', return_value=subprocess.CompletedProcess(['tool'],0,'ok','')) as run:
             self.r.command(['tool', value], capture=True)
         self.assertEqual(run.call_args.args[0], ['tool', value])
         self.assertNotIn('shell', run.call_args.kwargs)
+
+    def test_build_requires_explicit_qualified_dependencies(self):
+        with patch.object(self.r,'host'),patch.object(self.r,'clean'),patch.object(self.r,'command') as run:
+            with self.assertRaisesRegex(ValueError,'qualified --dependencies'):self.r.build('linux')
+            run.assert_not_called()
+
+    def test_build_dependency_identity_is_checked(self):
+        pin=dict(platform='linux-x86_64',recipe_id='a'*64,archive=dict(sha256='b'*64),qualification=dict(sha256='c'*64))
+        self.r.c['dependency_bundle']=pin
+        row=dict(dependencies=dict(mode='qualified',recipe_id='a'*64,archive_sha256='b'*64,qualification_sha256='c'*64))
+        self.r.dependency_check(row,'linux')
+        for key in ('mode','recipe_id','archive_sha256','qualification_sha256'):
+            changed=dict(dependencies=row['dependencies']|{key:'different'})
+            with self.subTest(key=key),self.assertRaisesRegex(ValueError,'unqualified dependencies'):
+                self.r.dependency_check(changed,'linux')
+
+    def test_handoff_checks_pinned_dependency_reference(self):
+        directory,q=self.handoff()
+        self.r.c['linux_dependency_reference_sha256']='d'*64
+        with self.assertRaisesRegex(ValueError,'dependency reference'):self.r.check_handoff(directory)
+        q['dependency_reference_sha256']='d'*64;release.write(directory/'qualification.json',q)
+        self.r.check_handoff(directory)
 
     def test_repo_normalization(self):
         for value in ('example/h3cli', 'https://github.com/example/h3cli.git', 'git@github.com:example/h3cli.git'):

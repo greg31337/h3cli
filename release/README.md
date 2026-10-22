@@ -14,7 +14,8 @@ It creates isolated checkouts, runs Linux over SSH, generates release notes,
 and finishes with a verified GitHub draft. `--dry-run` prints the sequence.
 
 1. `clone.sh` creates a fresh checkout of an explicit reviewed commit.
-2. `configure.sh` saves repository, version, model and machine paths once.
+2. `configure.sh` saves repository, version, model and machine paths and pins a
+   [qualified dependency bundle](../docs/build/dependency-bundles.md).
 3. `linux/run.sh` performs Linux steps 1–5; `macos/run.sh` performs Mac steps 1–4.
 4. `macos/run.sh --through 8` collects, signs and uploads a draft, then verifies it.
 5. `macos/step9-publish.sh --channel stable` publishes only after all required

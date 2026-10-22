@@ -9,7 +9,7 @@ Command Line Tools or a separately installed FFmpeg.
 Local builds are **ad-hoc signed, unnotarized development artifacts**. Public
 Developer ID signing and clean Gatekeeper qualification are separate release
 steps; see [qualification results](macos-distribution-results.md).
-The locally prepared [Developer ID release candidate](../../bin/macos-public-release/)
+The previously prepared [Developer ID release candidate](macos-distribution-results.md)
 has accepted inner/outer notarizations and a stapled DMG. Clean-environment and
 fresh-trust qualification remain pending at the user's request.
 
@@ -23,8 +23,10 @@ installs software. `DEVELOPER_DIR` selects an existing Apple installation.
 
 ```sh
 bash scripts/build_macos.sh --doctor
-bash scripts/build_macos.sh --fetch-only --cache outputs/macos-build/cache
-bash scripts/build_macos.sh --offline --jobs 8 \
+bash scripts/build_macos.sh --dependencies /path/to/macos-qualification/bundle.json \
+  --fetch-only --cache outputs/macos-build/cache
+bash scripts/build_macos.sh --dependencies /path/to/macos-qualification/bundle.json \
+  --offline --jobs 8 \
   --cache outputs/macos-build/cache \
   --work-dir outputs/macos-build/run-001 \
   --output bin/macos-release
@@ -33,7 +35,11 @@ bash scripts/build_macos.sh --offline --jobs 8 \
 Use fresh work/output directories. Sources are snapshotted, including dirty and
 untracked code, without models or build outputs. The authoritative FFmpeg pin
 comes from the Linux lock; the macOS x264 pin identifies revision r3222/b35605a.
-Both media helpers are built from source with dependency autodetection disabled.
+Both media helpers are built from source once, with dependency autodetection
+disabled, when [creating the dependency bundle](dependency-bundles.md). Application
+builds verify and reuse those bytes. Use `--dependency-cache /path/to/shared/cache`
+to share bundles across checkouts. For an explicit full source rebuild, replace
+`--dependencies PATH` with `--source-dependencies` in both commands.
 The ordinary `make`/`bin/h3cli`/`bin/libh3.a` workflow remains available.
 
 ## Run and cache

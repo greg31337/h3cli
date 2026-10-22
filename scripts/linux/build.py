@@ -21,6 +21,9 @@ import sys
 import time
 import urllib.request
 
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+import build_process
+import dependency_bundle as bundles
 import environment
 import package
 
@@ -135,7 +138,7 @@ def run_builder(cache,root,source,inputs,work,jobs,command):
     env={'PATH':'/usr/sbin:/usr/bin:/sbin:/bin','HOME':'/root','LANG':'C.UTF-8','TERM':'dumb',
          'SOURCE_DATE_EPOCH':str(LOCK['source_date_epoch'])}
     args=environment.command(cache,root,bindings,cwd='/source')
-    return subprocess.run(args+['env','H3_BUILD_JOBS='+str(jobs),*command],env=env,check=True)
+    return build_process.run(args+['env','H3_BUILD_JOBS='+str(jobs),*command],env=env,check=True)
 
 
 def main():
@@ -146,6 +149,11 @@ def main():
     p.add_argument('--jobs',type=int,default=int(os.environ.get('H3_BUILD_JOBS','8')))
     p.add_argument('--fetch-only',action='store_true',help='Populate and verify dependencies without compiling')
     p.add_argument('--offline',action='store_true',help='Require all locked inputs in cache; never fetch missing inputs')
+    group=p.add_mutually_exclusive_group()
+    group.add_argument('--dependencies',type=Path,help='Pinned qualified dependency bundle reference')
+    group.add_argument('--dependency-candidate',type=Path,help='Unqualified bundle for explicit qualification builds only')
+    group.add_argument('--source-dependencies',action='store_true',help='Explicitly rebuild dependencies from source')
+    p.add_argument('--dependency-cache',type=Path,default=SOURCE/'outputs/dependencies/cache',help='Shared verified bundle cache')
     a=p.parse_args()
     if platform.system()!='Linux' or platform.machine()!='x86_64':p.error('The builder requires Linux x86-64; ordinary make supports macOS')
     if not 1<=a.jobs<=32:p.error('--jobs must be between 1 and 32')
@@ -153,24 +161,40 @@ def main():
         if not shutil.which(tool):p.error('Missing '+tool+'; install host build helpers first (Debian/Ubuntu: apt-get install skopeo umoci)')
     cache=a.cache.expanduser().resolve();work=a.work_dir.expanduser().resolve();output=a.output.expanduser().resolve()
     if not a.fetch_only and (work.exists() or output.exists()):p.error('--work-dir and --output must be fresh; existing builds are never overwritten')
-    started=time.monotonic();inputs=fetch(cache,a.offline)
+    started=time.monotonic();dependency=None
+    pin=a.dependencies or a.dependency_candidate
+    if pin:
+        payload,dependency=bundles.load(pin,a.dependency_cache.expanduser().resolve(),
+            bundles.recipe(SOURCE,'linux-x86_64'),a.offline,bool(a.dependency_candidate))
+        inputs=payload/'inputs'
+        image=payload/'images/builder'
+        toolcache=payload
+    elif a.source_dependencies:
+        inputs=fetch(cache,a.offline);image=cache/'images/builder';toolcache=cache
+    else:
+        p.error('Select --dependencies QUALIFIED.json or explicitly use --source-dependencies; see scripts/dependencies.py')
     if a.fetch_only:return 0
     work.mkdir(parents=True);(work/'build').mkdir();(work/'evidence').mkdir()
     source=work/'source';record=snapshot(SOURCE,source);write(work/'evidence/source.json',record)
+    if dependency:write(work/'evidence/dependency-bundle.json',dependency)
     # Never compile in, or clone, a mutable cached root filesystem. Every build
     # is unpacked again from the checksum-verified OCI blobs.
     bundle=work/'builder';root=bundle/'rootfs'
-    subprocess.run(['umoci','unpack','--rootless','--image',str(cache/'images/builder')+':base',str(bundle)],check=True)
-    run_builder(cache,root,source,inputs,work,a.jobs,['bash','-c','export DEBIAN_FRONTEND=noninteractive; cp /inputs/debs/*.deb /var/cache/apt/archives/ && apt-get --no-download --no-install-recommends -y install /inputs/debs/*.deb'])
-    run_builder(cache,root,source,inputs,work,a.jobs,['bash','scripts/linux/build_dependencies.sh'])
-    run_builder(cache,root,source,inputs,work,a.jobs,['bash','scripts/linux/build_release.sh'])
+    build_process.run(['umoci','unpack','--rootless','--image',str(image)+':base',str(bundle)],check=True)
+    if a.source_dependencies:
+        run_builder(toolcache,root,source,inputs,work,a.jobs,['bash','-c','export DEBIAN_FRONTEND=noninteractive; cp /inputs/debs/*.deb /var/cache/apt/archives/ && apt-get --no-download --no-install-recommends -y install /inputs/debs/*.deb'])
+        run_builder(toolcache,root,source,inputs,work,a.jobs,['bash','scripts/linux/build_dependencies.sh'])
+    else:print('Reusing dependency bundle '+dependency['archive_sha256']+'; dependency compilation skipped.',flush=True)
+    run_builder(toolcache,root,source,inputs,work,a.jobs,['bash','scripts/linux/build_release.sh'])
     output.parent.mkdir(parents=True,exist_ok=True)
     shutil.copytree(source/'bin/linux-release',output)
     package.seal(output/'linux-runtime')
-    write(work/'evidence/timing.json',{'seconds':time.monotonic()-started,'jobs':a.jobs,'offline':a.offline})
+    write(work/'evidence/timing.json',{'seconds':time.monotonic()-started,'jobs':a.jobs,'offline':a.offline,
+        'dependencies':dependency,'dependency_compilation':a.source_dependencies})
     print('Release prepared at '+str(output)+'; qualification is separate from compilation.')
     return 0
 
 if __name__=='__main__':
     try:raise SystemExit(main())
+    except KeyboardInterrupt:raise SystemExit(130)
     except (OSError,ValueError,subprocess.CalledProcessError) as exc:raise SystemExit('Linux build: '+str(exc))

@@ -60,7 +60,7 @@ def main():
             if path.is_file() and (path.name.lower() in ('copyright','license','license.txt','eula.txt') or path.name.startswith('License')):
                 dest=notices/folder.name/path.relative_to(folder);dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,dest)
     for name in ('icu','jpeg','ffmpeg','cudnn-frontend','sglang-cutlass','sage-cutlass'):
-        folder=Path('/build/dependencies')/name
+        folder=Path('/opt/h3deps/sources')/name
         for path in sorted(folder.glob('*')):
             if path.is_file() and path.name.lower().startswith(('license','copying','copyright')):
                 dest=notices/name/path.name;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,dest)
@@ -104,7 +104,9 @@ def main():
     source_materials.finish(materials,release,lock)
     # The complete checkout includes reports that may quote the release hash.
     # Keep that outer snapshot record out of the payload to avoid a hash cycle.
-    package.write_json(release/'build.json',provenance|{'snapshot_sha256':source['snapshot_sha256']})
+    dependency=Path('/evidence/dependency-bundle.json')
+    package.write_json(release/'build.json',provenance|{'snapshot_sha256':source['snapshot_sha256'],
+        'dependencies':json.loads(dependency.read_text()) if dependency.is_file() else {'mode':'source'}})
     print(json.dumps(result,indent=2))
 
 if __name__=='__main__':main()

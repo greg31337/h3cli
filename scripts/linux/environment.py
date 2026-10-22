@@ -14,6 +14,9 @@ import subprocess
 import sys
 import urllib.request
 
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+import build_process
+
 HERE = Path(__file__).resolve().parent
 LOCK = json.loads((HERE/'lock.json').read_text())
 
@@ -51,7 +54,7 @@ def prepare(cache, name, offline=False):
     if not (oci/'index.json').is_file():
         if offline:raise ValueError('Missing offline OCI image: '+str(oci))
         oci.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(['skopeo', '--override-arch', 'amd64', 'copy',
+        build_process.run(['skopeo', '--override-arch', 'amd64', 'copy',
                         'docker://'+image, 'oci:'+str(oci)+':base'], check=True)
         (oci/'origin.json').write_text(json.dumps({'image':image})+'\n')
     origin=oci/'origin.json'
@@ -62,7 +65,7 @@ def prepare(cache, name, offline=False):
     bundle = cache/'roots'/name
     if not (bundle/'rootfs').is_dir():
         bundle.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(['umoci', 'unpack', '--rootless', '--image',
+        build_process.run(['umoci', 'unpack', '--rootless', '--image',
                         str(oci)+':base', str(bundle)], check=True)
     return bundle/'rootfs'
 
@@ -108,9 +111,10 @@ def main():
     root = a.root.resolve() if a.root else prepare(cache, a.image)
     env = {'PATH':'/usr/sbin:/usr/bin:/sbin:/bin', 'HOME':'/root', 'LANG':'C.UTF-8',
            'TERM':'dumb', 'SOURCE_DATE_EPOCH':str(LOCK['source_date_epoch'])}
-    return subprocess.call(command(cache, root, a.bind, a.gpu, a.cwd, a.identity)+args, env=env)
+    return build_process.run(command(cache, root, a.bind, a.gpu, a.cwd, a.identity)+args, env=env).returncode
 
 if __name__ == '__main__':
     try: raise SystemExit(main())
+    except KeyboardInterrupt: raise SystemExit(130)
     except (OSError, ValueError, subprocess.CalledProcessError) as exc:
         raise SystemExit(f'Linux environment: {exc}')

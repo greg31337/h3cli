@@ -2,6 +2,10 @@
   "schema": 1,
   "macos": {
     "models": "/path/to/models",
+    "dependencies": "/path/to/macos-qualification/bundle.json",
+    "dependencies_sha256": "REPLACE_WITH_SHA256_OF_MACOS_BUNDLE_JSON",
+    "dependency_cache": "/path/to/shared/dependency-cache",
+    "build_cache": "/path/to/shared/tool-downloads",
     "apple_identity": "",
     "notary_profile": "h3cli",
     "secret_key": "~/.config/h3cli-release/h3cli-release.key",
@@ -12,6 +16,10 @@
     "identity_file": "~/.ssh/release_ed25519",
     "root": "/path/to/release-candidates",
     "models": "/path/to/models",
+    "dependencies": "/path/to/linux-qualification/bundle.json",
+    "dependencies_sha256": "REPLACE_WITH_SHA256_OF_LINUX_BUNDLE_JSON",
+    "dependency_cache": "/path/to/shared/dependency-cache",
+    "build_cache": "/path/to/shared/tool-downloads",
     "jobs": 8
   }
 }

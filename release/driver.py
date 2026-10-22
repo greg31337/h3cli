@@ -18,6 +18,10 @@ import tempfile
 import time
 import uuid
 
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
+import build_process
+import dependency_bundle as bundles
+
 ROOT = Path(__file__).resolve().parents[1]
 LINUX = ('h3cli-linux-x86_64', 'h3cli-linux-x86_64.sha256',
          'h3cli-linux-x86_64-sources.tar.gz', 'h3cli-linux-x86_64-sources.tar.gz.sha256')
@@ -126,9 +130,10 @@ class Runner:
             return ''
         cwd = cwd or self.root
         if capture:
-            return subprocess.check_output(argv, cwd=cwd, env=env, text=True, stderr=subprocess.STDOUT).strip()
+            return build_process.run(argv, cwd=cwd, env=env, text=True, stdout=subprocess.PIPE,
+                                     stderr=subprocess.STDOUT, check=True).stdout.strip()
         if interactive:
-            subprocess.run(argv, cwd=cwd, env=env, check=True)
+            build_process.run(argv, cwd=cwd, env=env, check=True)
             return ''
         logs = self.base/'logs'
         logs.mkdir(parents=True, exist_ok=True)
@@ -136,7 +141,7 @@ class Runner:
                                          suffix='.log', dir=logs, delete=False) as log:
             self.last_log = Path(log.name)
             print('  Log: ' + log.name, flush=True)
-            result = subprocess.run(argv, cwd=cwd, env=env, stdout=log,
+            result = build_process.run(argv, cwd=cwd, env=env, stdout=log,
                                     stderr=subprocess.STDOUT)
         require(result.returncode == 0, f'Command failed ({result.returncode}); see {log.name}')
         return ''
@@ -201,6 +206,7 @@ class Runner:
         row = read(directory/'build.json')
         require(row.get('commit') == self.c['commit'] and row.get('dirty') is False,
                 'Linux build is dirty or from another commit')
+        self.dependency_check(row, 'linux')
         verify_checksums(directory, LINUX[1], [LINUX[0]])
         verify_checksums(directory, LINUX[3], [LINUX[2]])
 
@@ -208,6 +214,7 @@ class Runner:
         if self.dry:
             return
         row = read(self.dev/'build.json')
+        self.dependency_check(row, 'macos')
         source = row['source']['files']
         # Compare the actual archived source inventory, not a platform-specific
         # fingerprint or the unrelated current HEAD label alone.
@@ -222,6 +229,7 @@ class Runner:
             require(record['input_build_sha256'] == sha(self.dev/'build.json'), 'Wrong Mac signing input')
             require(all(record.get(phase, {}).get('status') == 'Accepted' for phase in ('inner', 'outer')),
                     'Mac notarization was not accepted')
+            self.dependency_check(record, 'macos')
         for name, item in record['artifacts'].items():
             require(Path(name).name == name and sha(directory/name) == item['sha256'],
                     'Mac artifact changed: ' + name)
@@ -230,6 +238,17 @@ class Runner:
         self.command(['bash', self.root/'release'/target/'step1-prerequisites.sh',
                       *(['--install'] if install else [])], interactive=install)
 
+    def dependency_check(self, row, target):
+        pin = self.c.get('dependency_bundle')
+        # The Mac validates Linux handoffs against the reference-file digest
+        # pinned in its machine settings, not against its own macOS bundle.
+        if pin and pin['platform'] == ('linux-x86_64' if target == 'linux' else 'macos-arm64'):
+            actual = row.get('dependencies', {})
+            require(actual.get('mode') == 'qualified' and actual.get('archive_sha256') == pin['archive']['sha256'] and
+                    actual.get('recipe_id') == pin['recipe_id'] and
+                    actual.get('qualification_sha256') == pin['qualification']['sha256'],
+                    'Build used different or unqualified dependencies')
+
     def build(self, target):
         self.host(target)
         self.clean()
@@ -237,14 +256,24 @@ class Runner:
             print('Verified completed build; reusing it.')
             return
         output = self.linux if target == 'linux' else self.dev
-        cache = self.root/'outputs'/(target + '-build')/'cache'
-        work = cache.parent/self.c['run']
+        cache = Path(self.c.get('build_cache') or self.root/'outputs'/(target + '-build')/'cache')
+        work = self.root/'outputs'/(target + '-build')/self.c['run']
         self.fresh(output)
         self.fresh(work)
         script = 'scripts/build_' + target + '.sh'
-        self.command(['bash', script, '--fetch-only', '--cache', cache])
+        pin = self.c.get('dependency_bundle')
+        require(pin or self.dry, 'Configure a qualified --dependencies bundle before building; see scripts/dependencies.py')
+        reference = self.base/'dependency-reference.json'
+        if not self.dry:
+            bundles.validate_reference(pin)
+            require('qualification' in pin, 'Release dependencies must be qualified')
+            require(not reference.exists() or read(reference) == pin, 'Release dependency reference changed')
+            write(reference, pin)
+        depcache = Path(self.c.get('dependency_cache') or self.root/'outputs/dependencies/cache')
+        dependency_args = ['--dependencies', reference, '--dependency-cache', depcache]
+        self.command(['bash', script, '--fetch-only', '--cache', cache, *dependency_args])
         self.command(['bash', script, '--offline', '--jobs', self.c['jobs'],
-                      '--cache', cache, '--work-dir', work, '--output', output])
+                      '--cache', cache, '--work-dir', work, '--output', output, *dependency_args])
         self.clean()
         if target == 'linux':
             self.linux_build_check(output)
@@ -254,7 +283,8 @@ class Runner:
             self.mac_build_check()
             names = (*MACOS, 'build.json', 'SHA256SUMS', 'libh3.a')
             self.command(['python3', 'tests/test_macos_bundle.py'])
-        self.receipt(target + '-build', [output/n for n in names])
+        self.receipt(target + '-build', [output/n for n in names], dependencies=pin,
+                     dependency_reference_sha256=self.c.get('dependency_reference_sha256'))
 
     def models(self, target):
         self.host(target)
@@ -319,7 +349,7 @@ class Runner:
             self.command(['python3', 'tests/cuda_reference_regression.py', '--source', self.root,
                           '--runtime', runtime, '--validation', release/'linux-validation',
                           '--artifact', binary, '--model', self.c['model'], '--out', output/'parity'])
-            cache = self.root/'outputs/linux-build/cache'
+            cache = Path(self.c.get('build_cache') or self.root/'outputs/linux-build/cache')
             self.command(['python3', 'tests/linux_distribution.py', '--source', self.root,
                           '--release', release, '--cache', cache, '--model', self.c['model'],
                           '--out', output/'distros'])
@@ -347,7 +377,8 @@ class Runner:
             require(before == hashes(release, before), 'Artifacts changed during qualification')
         self.clean()
         self.receipt(target + '-test', [*reports, *(release/n for n in before)],
-                     artifacts=before, reports={p.parent.name: read(p) for p in reports} if not self.dry else {})
+                     artifacts=before, reports={p.parent.name: read(p) for p in reports} if not self.dry else {},
+                     dependency_reference_sha256=self.c.get('dependency_reference_sha256'))
 
     def export(self):
         self.clean()
@@ -372,6 +403,9 @@ class Runner:
         directory = directory or self.incoming
         self.linux_build_check(directory)
         q = read(directory/'qualification.json')
+        expected = self.c.get('linux_dependency_reference_sha256')
+        if expected:
+            require(q.get('dependency_reference_sha256') == expected, 'Linux handoff used a different dependency reference')
         require(q.get('identity') == self.identity, 'Linux handoff belongs to another release')
         require(q.get('artifacts') == hashes(directory, LINUX), 'Linux qualification has different artifacts')
         reports = q.get('reports', {})
@@ -672,6 +706,14 @@ def configure(args):
                   linux_handoff=str(Path(args.linux_handoff).expanduser().resolve()) if args.linux_handoff else '')
     if args.linux_identity_file:
         config['linux_identity_file'] = str(Path(args.linux_identity_file).expanduser().resolve())
+    if args.dependencies:
+        digest = bundles.sha(args.dependencies)
+        require(not args.dependencies_sha256 or digest == args.dependencies_sha256, 'Dependency reference file changed')
+        config['dependency_bundle'] = bundles.reference(args.dependencies)
+        require('qualification' in config['dependency_bundle'], 'Release dependencies must be qualified')
+        config['dependency_reference_sha256'] = digest
+    for key in ('dependency_cache', 'build_cache'):
+        if getattr(args, key):config[key] = str(Path(getattr(args, key)).expanduser().resolve())
     if args.dry_run:
         print(json.dumps(config, indent=2))
     else:
@@ -748,6 +790,10 @@ def parser():
     c.add_argument('--linux-root', default='')
     c.add_argument('--linux-handoff', default='')
     c.add_argument('--linux-identity-file', default='', help='SSH private-key path on the Mac (never copied)')
+    c.add_argument('--dependencies', type=Path, help='Qualified dependency bundle reference to pin in this release')
+    c.add_argument('--dependencies-sha256', help='Expected dependency reference digest (used by the remote coordinator)')
+    c.add_argument('--dependency-cache', type=Path, help='Shared verified dependency bundle cache')
+    c.add_argument('--build-cache', type=Path, help='Shared source/OCI/tool download cache')
     c = commands.add_parser('clone', help='Clone a reviewed commit into a new directory')
     c.add_argument('--repo', required=True)
     c.add_argument('--commit', required=True)
@@ -844,5 +890,7 @@ def main(argv=None):
 if __name__ == '__main__':
     try:
         main()
+    except KeyboardInterrupt:
+        sys.exit(130)
     except (ValueError, OSError, subprocess.CalledProcessError, KeyError) as exc:
         sys.exit('Release stopped: ' + str(exc))

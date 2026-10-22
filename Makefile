@@ -968,6 +968,7 @@ bin/cuda_multi_reference_host: tests/cuda_multi_reference_host.o tests/test_toke
 .PHONY: test-current-host test-setup test-linux-build-host
 test-linux-build-host:
 	python3 tests/test_linux_build.py
+	python3 tests/test_dependency_bundles.py
 	python3 tests/test_cuda_reference_gate.py
 test-setup:
 	python3 tests/setup_scripts.py

@@ -10,6 +10,8 @@ import subprocess
 import sys
 
 import driver
+import build_process
+import dependency_bundle as bundles
 
 
 # These programs run through SSH with separately shell-quoted arguments. No
@@ -81,6 +83,12 @@ def settings(path):
     for machine in (mac, linux):
         machine.setdefault('jobs', 8)
         driver.require(type(machine['jobs']) is int and 1 <= machine['jobs'] <= 32, 'Jobs must be in 1..32')
+        if machine.get('dependencies'):
+            convert = local_path if machine is mac else remote_path
+            for key in ('dependencies', 'dependency_cache', 'build_cache'):
+                if machine.get(key):machine[key] = convert(machine[key])
+            driver.require(re.fullmatch(r'[0-9a-f]{64}', machine.get('dependencies_sha256', '')),
+                           'Pin dependencies_sha256 alongside each dependency reference path')
     return config
 
 
@@ -113,6 +121,14 @@ class Coordinator:
                       linux_root=self.remote_source, linux_identity_file=self.linux['identity_file'], linux_handoff='')
         # Runner normally reads an on-disk config. Dry runs must not create one.
         self.config = config
+        if self.mac.get('dependencies'):
+            driver.require(bundles.sha(self.mac['dependencies']) == self.mac['dependencies_sha256'], 'Mac dependency reference changed')
+            config['dependency_bundle'] = bundles.reference(self.mac['dependencies'])
+            config['dependency_reference_sha256'] = self.mac['dependencies_sha256']
+            for key in ('dependency_cache', 'build_cache'):
+                if self.mac.get(key):config[key] = self.mac[key]
+        if self.linux.get('dependencies_sha256'):
+            config['linux_dependency_reference_sha256'] = self.linux['dependencies_sha256']
         self.runner = None
 
     def git(self, *args, cwd=None):
@@ -121,17 +137,21 @@ class Coordinator:
     def command(self, argv, **kwargs):
         print('+ ' + shlex.join(list(map(str, argv))), flush=True)
         if not self.dry:
-            subprocess.run(list(map(str, argv)), check=True, **kwargs)
+            build_process.run(list(map(str, argv)), check=True, **kwargs)
 
-    def remote(self, argv):
+    def remote(self, argv, supervised=False):
+        if supervised:
+            argv = ['python3', self.remote_source+'/scripts/build_process.py', '--', *argv]
         self.command(['ssh', *driver.ssh_options(self.linux['identity_file']), self.linux['host'],
-                      shlex.join(list(map(str, argv)))])
+                      shlex.join(list(map(str, argv)))], **({'stdin': subprocess.PIPE} if supervised else {}))
 
     def preflight(self):
         if self.dry:
             print('Would require a clean checkout and check Mac tools, signing keys, notarization, GitHub access and the remote GPU.')
             return
         driver.require(not self.git('status', '--porcelain'), 'Commit/review local changes before releasing')
+        driver.require(all(machine.get('dependencies') for machine in (self.mac, self.linux)),
+                       'Configure qualified dependencies and dependencies_sha256 on both machines; see scripts/dependencies.py')
         driver.require((driver.platform.system(), driver.platform.machine()) == ('Darwin', 'arm64'),
                        'Start this command on an Apple Silicon Mac')
         missing = [name for name in ('git', 'ssh', 'scp', 'gh', 'minisign', 'xcrun') if not shutil.which(name)]
@@ -203,8 +223,13 @@ class Coordinator:
                      '--run', self.run, '--jobs', self.linux['jobs'], '--models-path', self.linux['models']]
         if self.linux.get('model'):
             configure.extend(['--model', self.linux['model']])
+        if self.linux.get('dependencies'):
+            configure.extend(['--dependencies', self.linux['dependencies'],
+                              '--dependencies-sha256', self.linux['dependencies_sha256']])
+            for key in ('dependency_cache', 'build_cache'):
+                if self.linux.get(key):configure.extend(['--'+key.replace('_', '-'), self.linux[key]])
         self.remote(configure)
-        self.remote(['bash', self.remote_source + '/release/linux/run.sh'])
+        self.remote(['bash', self.remote_source + '/release/linux/run.sh'], supervised=True)
 
     def notes(self):
         r = self.runner
@@ -298,5 +323,7 @@ def main(argv=None):
 if __name__ == '__main__':
     try:
         main()
+    except KeyboardInterrupt:
+        sys.exit(130)
     except (ValueError, OSError, subprocess.CalledProcessError, KeyError) as exc:
         sys.exit('Release stopped: ' + str(exc))

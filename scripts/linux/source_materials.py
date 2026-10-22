@@ -42,6 +42,8 @@ def tar(directory,destination,epoch):
 
 def prepare(root,runtime,release,lock,snapshot):
     notices=runtime/'share/licenses';materials=release/'source-materials';materials.mkdir()
+    dependency=Path('/evidence/dependency-bundle.json')
+    if dependency.is_file():shutil.copyfile(dependency,materials/'dependency-bundle.json')
     manifest=json.loads((runtime/'share/h3cli/runtime.json').read_text())
     components={}
     for name,record in manifest['files'].items():
@@ -106,7 +108,7 @@ def prepare(root,runtime,release,lock,snapshot):
         dest.chmod(0o755 if path.stat().st_mode&0o111 else 0o644)
     recipes=materials/'configuration';recipes.mkdir()
     for name in ('ffmpeg','jpeg-build','icu/source'):
-        folder=Path('/build/dependencies')/name
+        folder=Path('/opt/h3deps/sources')/name
         for file in ('config.h','config.log','ffbuild/config.mak','CMakeCache.txt'):
             path=folder/file
             if path.is_file():

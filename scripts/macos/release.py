@@ -8,12 +8,14 @@ import shutil
 import subprocess
 import sys
 
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+import build_process
 import package
 
 
 def notarize(container, profile, output, phase):
     # Only a Keychain profile name crosses the process boundary, never secrets.
-    result = subprocess.run(['xcrun','notarytool','submit',str(container),'--keychain-profile',profile,
+    result = build_process.run(['xcrun','notarytool','submit',str(container),'--keychain-profile',profile,
                              '--wait','--timeout','30m','--output-format','json'],capture_output=True,text=True)
     try: record=json.loads(result.stdout)
     except json.JSONDecodeError:
@@ -80,6 +82,7 @@ def main():
     artifacts={p.name:{'sha256':package.sha(p),'size':p.stat().st_size} for p in (executable,image,output/'h3cli-macos-arm64-sources.tar.gz',output/'libh3.a')}
     package.write(output/'build.json',{'schema':1,'signing':'Developer ID; inner and outer notarized; DMG stapled',
         'input_build_sha256':package.sha(source/'build.json'),'inner':first,'outer':second,
+        'dependencies':record.get('dependencies',{'mode':'source'}),
         'inner_files':accepted,'bundle':bundle,'artifacts':artifacts,
         'qualification':'Fresh quarantine/trust, cold offline extraction and GPU qualification remain required.'})
     (output/'SHA256SUMS').write_text(''.join(v['sha256']+'  '+n+'\n' for n,v in artifacts.items()))

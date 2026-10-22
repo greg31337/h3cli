@@ -18,12 +18,13 @@ to trace child processes. On Debian/Ubuntu, install the build helpers with:
 ```sh
 sudo apt-get update
 sudo apt-get install python3 skopeo umoci
-bash scripts/build_linux.sh --jobs 8
+bash scripts/build_linux.sh --dependencies /path/to/linux-qualification/bundle.json --jobs 8
 ```
 
-The build fetches checksum-pinned inputs, freshly unpacks the digest-pinned
-CUDA 13.0.3 / Ubuntu 22.04 builder, installs its locked packages, and compiles
-inside it. It does not install CUDA or development libraries into the host.
+First [build and qualify a dependency bundle](dependency-bundles.md). Application
+builds verify that bundle, freshly unpack its prepared CUDA 13.0.3 / Ubuntu 22.04
+builder, and compile inside it. They reuse its libraries, media tools and headers.
+The build does not install CUDA or development libraries into the host.
 No GPU, Docker daemon, FUSE or nested user namespace is required for compilation.
 PRoot supplies filesystem translation, not security isolation: build trusted
 source only. GPU execution requires a compatible NVIDIA driver and device.
@@ -41,8 +42,10 @@ logical data even when the filesystem supports reflinks.
 To fetch once and then build without fetching anything:
 
 ```sh
-bash scripts/build_linux.sh --fetch-only --cache outputs/linux-build/cache
-bash scripts/build_linux.sh --offline --cache outputs/linux-build/cache \
+bash scripts/build_linux.sh --dependencies /path/to/linux-qualification/bundle.json \
+  --fetch-only --cache outputs/linux-build/cache
+bash scripts/build_linux.sh --dependencies /path/to/linux-qualification/bundle.json \
+  --offline --cache outputs/linux-build/cache \
   --work-dir outputs/linux-build/offline-1 --output bin/linux-offline-1
 ```
 
@@ -50,6 +53,11 @@ bash scripts/build_linux.sh --offline --cache outputs/linux-build/cache \
 not disable networking for arbitrary source code; the pinned build recipes
 perform no network fetches in their compile/install phases. The native CUDA
 wheel hashes come from the same requirements file as the Ubuntu setup.
+
+Use `--dependency-cache /path/to/shared/cache` on both commands to share verified
+bundles across checkouts. For an explicit full source rebuild, replace
+`--dependencies PATH` with `--source-dependencies`; only that path compiles the
+dependency recipes during an application build.
 
 ## Run a prepared artifact
 

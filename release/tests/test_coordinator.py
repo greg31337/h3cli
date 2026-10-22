@@ -65,6 +65,13 @@ class CoordinatorTests(unittest.TestCase):
         self.assertIn('verify downloads', output.getvalue())
         self.assertNotIn('--draft=false', output.getvalue())
 
+    def test_remote_build_has_cancellation_lifeline(self):
+        c=self.make()
+        with patch.object(c,'command') as run:
+            c.remote(['bash',c.remote_source+'/release/linux/run.sh'],supervised=True)
+        self.assertEqual(run.call_args.kwargs['stdin'],subprocess.PIPE)
+        self.assertIn('/scripts/build_process.py -- bash ',run.call_args.args[0][-1])
+
     def test_isolated_checkout_bundle_and_remote_checkout_pin_the_commit(self):
         c = self.make()
         self.checkout(c)

@@ -8,7 +8,12 @@ To prepare public downloads, follow the [release guide](../release/README.md).
 It covers cloning a fixed commit, building Linux and Mac packages, signing,
 testing, and publishing a draft on GitHub Releases.
 
-On Apple Silicon, `bash scripts/build_macos.sh` produces a single
+Standalone packaging requires either a qualified dependency bundle or an explicit
+source build. The examples below use `--source-dependencies` to rebuild the
+dependencies; recurring releases should follow the
+[reusable dependency guide](dependency-bundles.md).
+
+On Apple Silicon, `bash scripts/build_macos.sh --source-dependencies` produces a single
 `h3cli-macos-arm64` with bundled shaders and FFmpeg/FFprobe 9.0.2, plus a
 source archive and development DMG. Runtime requires macOS 26+, with no
 Homebrew, Python or developer tools. Local builds are ad-hoc signed and
@@ -42,7 +47,7 @@ H3CLI_BUNDLE_INFO=1 ./h3cli-linux-x86_64
 ```
 
 To produce the portable release from a checkout on Linux, install Python 3.10+,
-`skopeo` and `umoci`, then run `bash scripts/build_linux.sh`. It builds in a
+`skopeo` and `umoci`, then run `bash scripts/build_linux.sh --source-dependencies`. It builds in a
 pinned Ubuntu 22.04 filesystem and writes the executable, checksums and companion
 `h3cli-linux-x86_64-sources.tar.gz` under `bin/linux-release/`. Distribute that
 source archive alongside the executable; keep `linux-validation/` private.

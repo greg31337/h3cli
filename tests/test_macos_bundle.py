@@ -40,6 +40,7 @@ int main(int argc,char **argv){
 class Bundle(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
+  (ROOT/'bin').mkdir(exist_ok=True)
   cls.temp=tempfile.TemporaryDirectory(prefix='macos-tests-',dir=ROOT/'bin');cls.base=Path(cls.temp.name)
   (cls.base/'core.c').write_text(CORE);cls.core=cls.base/'core'
   subprocess.run(['xcrun','clang','-arch','arm64','-mmacosx-version-min=26.0',str(cls.base/'core.c'),'-o',str(cls.core)],check=True)
