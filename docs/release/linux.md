@@ -1,5 +1,10 @@
 # Build and check the Linux download
 
+> Historical interface. Use the [five-command release workflow](README.md) for
+> new releases. The numbered commands, handoffs and manual report/fresh-machine
+> gates below are retained as historical diagnostics, not required release steps.
+> The current `publish` command generates notes and finishes publication itself.
+
 Use the clean clone from the [release guide](README.md). Build and test on the
 qualified Linux x86-64 PRO 5000 to avoid moving private runtimes and tool caches
 between machines. No signing key is needed on this machine.

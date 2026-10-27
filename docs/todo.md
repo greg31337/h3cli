@@ -1,15 +1,18 @@
 # Simple build, test and release tooling
 
-Status: **planned — 0/8 tasks complete**. Updated 2026-10-27.
+Status: **complete — 8/8 tasks implemented and validated**.
+Updated 2026-10-27.
 
 Make releases practical for a single maintainer working on an experimental/hobby
 project. After signing setup and environment configuration, the entire process
 must require only the five commands below. Reuse the working builders, dependency
 bundles and tests; simplify the public interface and remove manual handoffs.
 
-**These are planned commands, not implemented commands.** The
-[current release guide](release/README.md) describes the existing tooling until
-this milestone is implemented. This document changes the plan, not the runners.
+The commands are implemented and documented in the
+[current release guide](release/README.md). Native and signed-package acceptance
+passed on both hosts, followed by interrupted/resumed publication and a verified
+published retry in a private disposable repository. See the
+[acceptance record](release/results.md) for the checks and tested scope.
 
 ## The only manual steps
 
@@ -128,27 +131,27 @@ subtask, existing file or stale report cannot produce an overall `PASS`. A
 
 ## Implementation milestone
 
-- [ ] REL001 Add the five named commands to `release/release.sh`, using a shared
+- [x] REL001 Add the five named commands to `release/release.sh`, using a shared
   driver, consistent help, progress, exit codes and final PASS/FAIL summaries.
-- [ ] REL002 Consolidate signing setup and environment configuration. Import
+- [x] REL002 Consolidate signing setup and environment configuration. Import
   existing machine/signing settings, discover tools/bundles, and save one usable
   profile without manual JSON copying, checksum entry or environment sourcing.
-- [ ] REL003 Implement `build-local` with automatic source snapshots, native
+- [x] REL003 Implement `build-local` with automatic source snapshots, native
   host selection, SSH execution and dependency provisioning/reuse. Keep normal
   development builds working and keep private configuration out of artifacts.
-- [ ] REL004 Implement `test-local` against the recorded local builds, including
+- [x] REL004 Implement `test-local` against the recorded local builds, including
   the required host/current-feature suites and unchanged full CUDA gate. Save
   results automatically and reject missing, mismatched or failed inputs.
-- [ ] REL005 Implement `build-packages` around the existing packagers, Apple
+- [x] REL005 Implement `build-packages` around the existing packagers, Apple
   signing/notarization, Linux collection, source materials and signed checksums.
   All intermediate steps and retry directories stay internal.
-- [ ] REL006 Implement `test-packages` against the final signed/distributable
+- [x] REL006 Implement `test-packages` against the final signed/distributable
   bytes. Replace manual report gates with automated checks and documented test
   scope; keep optional fresh-machine research out of the release path.
-- [ ] REL007 Implement `publish` as upload, download/verification and public
+- [x] REL007 Implement `publish` as upload, download/verification and public
   release in one invocation. Generate complete notes, create the exact source
   tag, preserve tested bytes and support safe retries without a second command.
-- [ ] REL008 Test the whole sequence on the Mac and PRO 5000, including first
+- [x] REL008 Test the whole sequence on the Mac and PRO 5000, including first
   setup, warm dependency reuse, failures, cancellation, stale results and partial
   publication. Verify GitHub behavior with a disposable test repository. Update
   the release/build/dependency guides to this workflow and retire numbered/manual

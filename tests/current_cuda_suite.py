@@ -29,7 +29,9 @@ def main():
     p.add_argument('--cow-directory', type=Path, required=True,
                    help='Disposable scratch directory on a filesystem with reflink support')
     p.add_argument('--prebuilt',type=Path,help='Verified feature-probe manifest; never rebuild in this mode')
+    p.add_argument('--native-manifest',type=Path,help='Recorded native build; never rebuild in this mode')
     a = p.parse_args()
+    if a.prebuilt and a.native_manifest:p.error('Choose one prebuilt mode')
     root = Path(__file__).resolve().parents[1]
     out, model, state = a.out.resolve(), a.model.resolve(), a.state.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -73,6 +75,12 @@ def main():
         artifact=gate.artifact_config(root,runtime,a.prebuilt.resolve().parent,root/'bin/h3cli',reference=False)
         env.update(artifact['_runtime_env'])
         env['PATH']=str(runtime/'tools')+os.pathsep+env.get('PATH','/usr/bin:/bin')
+    elif a.native_manifest:
+        import cuda_reference_regression as gate
+        native=json.loads(a.native_manifest.read_text())
+        if native.get('schema')!=1 or native.get('source_sha256')!=gate.fingerprint(gate.source_files(root)) or not set(TARGETS+['bin/h3cli'])<=set(native.get('binaries',{})):
+            raise ValueError('Native build does not match source/target set')
+        gate.checked_files(root,native['binaries'])
     elif not run('build', ['make','-j4',*TARGETS]):return 1
     run('cow-lora-runtime', ['python3','tests/test_lora_runtime.py'],
         {'TMPDIR':str(a.cow_directory.resolve())})
@@ -102,6 +110,9 @@ def main():
         gate.checked_files(root,prebuilt['binaries'])
         gate.verify_artifact_identities(artifact['_identities'])
         if prebuilt['source_sha256']!=gate.fingerprint(gate.source_files(root)):raise ValueError('Source changed during prebuilt qualification')
+    if a.native_manifest:
+        gate.checked_files(root,native['binaries'])
+        if native['source_sha256']!=gate.fingerprint(gate.source_files(root)):raise ValueError('Source changed during native qualification')
     (out/'result.json').write_text(json.dumps(dict(complete=True, passed=passed,
         binary_sha256=binary_hash, checks=records), indent=2)+'\n')
     return 0 if passed else 1

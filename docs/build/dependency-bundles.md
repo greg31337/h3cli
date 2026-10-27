@@ -1,10 +1,13 @@
 # Reusable build dependencies
 
-Dependency production and application releases are separate operations. Build
-and qualify a Linux x86-64 or macOS arm64 dependency bundle when its inputs
-change, then reuse its pinned bytes for application builds and release candidates.
-The release coordinator requires qualified bundle references on both machines.
-It never starts a dependency source build implicitly.
+The [release workflow](../release/README.md) automatically discovers compatible
+qualified bundles, or builds and qualifies one from locked inputs on a cache
+miss. Unchanged application releases reuse those bytes. Operators run
+`build-local`; no bundle identity, checksum copying, qualification or pinning
+command is part of the normal release sequence.
+
+The low-level commands below are for dependency development and investigations.
+Their explicit fresh directories are managed automatically by the release driver.
 
 ## Contents and identity
 
@@ -148,41 +151,29 @@ available.
 
 ## Configure releases
 
-For individual platform scripts, pin a qualified reference when configuring a
-fresh candidate:
-
 ```sh
-./release/configure.sh --repo OWNER/REPO --tag v0.6.0 --run v0.6.0-01 \
-  --models-path /path/to/models \
-  --dependencies /path/to/qualification/bundle.json \
-  --dependency-cache /path/to/shared/dependency-cache \
-  --build-cache /path/to/shared/tool-downloads
+./release/release.sh configure --version v0.6.0
+./release/release.sh build-local
 ```
 
-For the one-command Mac coordinator, add these fields to each platform's private
-entry in `outputs/release/machines.json`:
+Existing machine settings and bundle references are imported automatically.
+Compatible cached qualifications are verified and reused. If an input recipe
+changes or no qualification is available, `build-local` builds and validates a
+new bundle and registers it in the shared cache for later releases. Offline
+misses fail with a diagnostic. Application source/version changes alone do not
+invalidate dependency recipes.
 
-```json
-{
-  "dependencies": "/path/to/qualification/bundle.json",
-  "dependencies_sha256": "REPLACE_WITH_SHA256_OF_BUNDLE_JSON",
-  "dependency_cache": "/path/to/shared/dependency-cache",
-  "build_cache": "/path/to/shared/tool-downloads"
-}
-```
-
-Calculate the reference-file digest with `shasum -a 256` on macOS or `sha256sum`
-on Linux. The Linux paths refer to the remote machine. Place shared caches outside
-individual candidate checkouts so later releases use the same downloads and
-verified bundle extraction. Changed references/settings require a new candidate;
-resuming an existing candidate rechecks its saved identities and receipts.
+Use configuration's `--macos-dependencies` or `--linux-dependencies` to select a
+specific existing reference when needed; no reference-file checksum entry is
+required. Cache locations can also be selected in configuration. Keep shared
+caches outside per-release work directories. Dependency archives and reports
+remain content-verified; simplifying the interface does not remove validation.
 
 ## Storage, recovery and verification
 
 Bundle references support local paths, `file:` URLs and credential-free HTTPS
 locations. To move an archive/report to durable storage, update their locations
-in a copy of `bundle.json`, retain their exact hashes/sizes and pin the new
-reference-file digest in machine settings. There is no implicit `latest` lookup
+in a copy of `bundle.json`, retain their exact hashes/sizes and select that reference through release configuration. There is no implicit `latest` lookup
 or upload. Keep required source materials alongside the stored artifacts.
 
 The shared cache uses archive digests as directory names. Concurrent users lock

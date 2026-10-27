@@ -1,5 +1,10 @@
 # h3cli REPLACE_VERSION
 
+> Historical interface. Use the [five-command release workflow](README.md) for
+> new releases. The numbered commands, handoffs and manual report/fresh-machine
+> gates below are retained as historical diagnostics, not required release steps.
+> The current `publish` command generates notes and finishes publication itself.
+
 REPLACE_SHORT_DESCRIPTION_OF_CHANGES
 
 ## Downloads

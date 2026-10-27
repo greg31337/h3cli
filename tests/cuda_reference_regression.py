@@ -212,8 +212,10 @@ def main():
     p.add_argument('--runtime',type=Path,help='Validate a prebuilt runtime instead of rebuilding')
     p.add_argument('--validation',type=Path,help='Matching validation probes and manifest')
     p.add_argument('--artifact',type=Path,help='Final single-file entry point (requires --runtime/--validation)')
+    p.add_argument('--native-manifest',type=Path,help='Recorded native build; verify and test without compiling')
     p.add_argument('--executor-config',type=Path,help='Artifact-only JSON argv prefix for a clean userland; applies to every probe, C0 and decoder')
     a=p.parse_args()
+    if a.native_manifest and a.runtime:p.error('Choose native or packaged validation, not both')
     if bool(a.runtime)!=bool(a.validation) or (a.artifact and not a.runtime):
         p.error('--runtime and --validation are required together; --artifact also requires both')
     if a.executor_config and not a.runtime:p.error('--executor-config requires prebuilt artifact mode')
@@ -243,6 +245,17 @@ def main():
                 config['_identities'][str(a.executor_config.resolve())]=sha(a.executor_config)
                 result['executor']=executor
                 result['artifact_identities']=dict(config['_identities'])
+        elif a.native_manifest:
+            native=json.loads(a.native_manifest.read_text())
+            if native.get('schema')!=1 or native.get('source_sha256')!=fingerprint(original) or not set(BUILD)<=set(native.get('binaries',{})):
+                raise ValueError('Native build does not match source/probe set')
+            checked_files(source,native['binaries'])
+            config=config|source_media_config(source)
+            config['_identities'].update({str(source/n):h for n,h in native['binaries'].items()})
+            config['_identities'][str(a.native_manifest.resolve())]=sha(a.native_manifest)
+            build=source
+            result['mode']='native'
+            result['artifact_identities']=dict(config['_identities'])
         else:
             config=config|source_media_config(source)
             result['media_identities']=dict(config['_identities'])

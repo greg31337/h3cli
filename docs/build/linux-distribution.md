@@ -10,6 +10,16 @@ Historical codecs remain confined to private validation tools. Earlier PRO 6000
 results are retained in the [original report](linux-distribution-results.md)
 and [media migration report](ffmpeg-upgrade.md).
 
+## Release workflow
+
+For maintained releases, use the [five release commands](../release/README.md).
+They provision/reuse qualified dependencies, build on the selected Linux host,
+run native and final-artifact CUDA gates, transfer packages and verify the
+GitHub-downloaded executable automatically. No manual SSH or handoff is needed.
+
+The commands below are low-level packaging/development tools. Their fresh work
+paths and dependency arguments are handled inside the release workflow.
+
 ## Build locally
 
 Use Linux x86-64. The host needs Python 3.10+, `skopeo`, `umoci`, and permission

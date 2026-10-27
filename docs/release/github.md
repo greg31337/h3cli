@@ -1,5 +1,10 @@
 # Sign the downloads and publish on GitHub
 
+> Historical interface. Use the [five-command release workflow](README.md) for
+> new releases. The numbered commands, handoffs and manual report/fresh-machine
+> gates below are retained as historical diagnostics, not required release steps.
+> The current `publish` command generates notes and finishes publication itself.
+
 Run these steps on the signing Mac after [Linux](linux.md) and [Mac](macos.md)
 qualification. Configuration comes from `release/configure.sh`; there is no
 need to export paths or hand-copy checksum commands.

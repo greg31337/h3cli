@@ -5,8 +5,9 @@ start with the [README](../../README.md); see the [documentation index](../READM
 for user guides.
 
 To prepare public downloads, follow the [release guide](../release/README.md).
-It covers cloning a fixed commit, building Linux and Mac packages, signing,
-testing, and publishing a draft on GitHub Releases.
+It provides five explicit build/test/package/test/publish commands after initial
+signing setup and configuration. Source snapshots, dependency reuse, signing,
+transfers and final GitHub publication are automatic.
 
 Standalone packaging requires either a qualified dependency bundle or an explicit
 source build. The examples below use `--source-dependencies` to rebuild the

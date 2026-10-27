@@ -97,52 +97,28 @@ links to upstream moving branches are not a substitute for these materials.
 
 ## Public release workflow
 
-The release command accepts an installed **Developer ID Application** identity
-and an existing Keychain notary profile. It never takes account passwords or
-private keys. Ordinary builds do not submit to Apple.
+Use the [five-command release workflow](../release/README.md). Its one-time
+`setup-signing` discovers or helps provision the Developer ID Application
+identity and Keychain notary profile. An Apple Development identity cannot sign
+a public Developer ID distribution. Ordinary builds never submit to Apple.
 
-These are separate prerequisites: a successful `notarytool store-credentials`
-does not create a signing identity. `security find-identity -v -p codesigning`
-must show **Developer ID Application** with its private key available. An
-**Apple Development** identity does not qualify. Create the certificate for the
-same team used by the notary profile, through Xcode's certificate management or
-[Apple's Developer ID certificate workflow](https://developer.apple.com/help/account/certificates/create-developer-id-certificates/).
+`build-packages` signs the inner executables with hardened runtime, notarizes
+that runtime, embeds its accepted bytes, signs the launcher and DMG, notarizes
+the outer image and staples it. Submission IDs, unique upload names and hashes
+are retained so a retry resumes completed submissions without re-signing accepted
+code. Missing credentials or rejected notarization fails the stage.
 
-```sh
-python3 scripts/macos/release.py --input bin/macos-release \
-  --output bin/macos-public-release \
-  --identity 'Developer ID Application: Example (TEAMID)' \
-  --keychain-profile h3cli
-```
+`test-packages` verifies the signatures, identity, notarization requirement and
+stapled DMG, mounts the image and checks its executable against the standalone
+bytes, then runs rendering/media/server tests outside the checkout with isolated
+runtime caches. `publish` verifies downloaded packages before publication. These
+checks are automatic; the low-level `scripts/macos/release.py` is an internal
+entry point, not another manual release step.
 
-This explicit command signs the inner executables with hardened runtime,
-notarizes them in a supported container, embeds their accepted exact bytes,
-signs the launcher, creates/signs the DMG, then notarizes, staples and validates
-it. It retains submission logs, inner hashes and final checksums. It fails on
-rejection or missing credentials; it never falls back to ad-hoc signing. A
-failed run retains evidence and requires a fresh output directory for retry.
-No public upload/hosting is performed.
-
-To inspect a completed distribution on the current machine:
-
-```sh
-xcrun stapler validate bin/macos-public-release/h3cli-macos-arm64.dmg
-spctl --assess --type open --context context:primary-signature --verbose=2 \
-  bin/macos-public-release/h3cli-macos-arm64.dmg
-codesign --verify --strict --verbose=4 --test-requirement '=notarized' \
-  --check-notarization bin/macos-public-release/h3cli-macos-arm64
-```
-
-Use the `codesign` notarized requirement for the standalone CLI. The app-specific
-`spctl --type execute` assessment can reject valid CLI code because it is not an
-app bundle; the DMG uses `spctl --type open`. These checks follow
-[Apple's product-type guidance](https://developer.apple.com/forums/thread/130560)
-and do not replace testing on a fresh machine.
-
-Actual release acceptance also requires fresh quarantine/trust tests of the
-stapled DMG, cold online/offline extraction, helpers and Metal/server operation.
-A local ad-hoc test or previously warmed trust cache does not satisfy that gate.
-Apple cannot staple a ticket to a bare CLI executable, so independent inner-code
-notarization plus outer DMG stapling requires physical offline trust validation.
-See [Apple's custom notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow)
-and [hardened-runtime requirements](https://developer.apple.com/documentation/security/resolving-common-notarization-issues).
+The standalone CLI uses the `codesign` notarized requirement; the DMG uses
+`spctl --type open`. The app-specific execute assessment is inappropriate for
+bare CLI programs; see [Apple's product-type guidance](https://developer.apple.com/forums/thread/130560).
+A ticket cannot be stapled to a bare executable, so the DMG is the stapled
+artifact. Fresh installations/accounts, browser quarantine and physical offline
+trust experiments are optional investigations. Passing on an existing account
+is not evidence of fresh-machine trust, and release notes state that limitation.

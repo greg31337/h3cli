@@ -45,6 +45,11 @@ def _stop(process):
                 os.killpg(process.pid, 0)
             except ProcessLookupError:
                 break
+            except PermissionError:
+                # On macOS a group containing only unreaped zombies can report
+                # EPERM here. Poll again to reap the child before probing it.
+                # Permission failures from TERM/KILL still propagate normally.
+                pass
             time.sleep(.05)
         else:
             continue

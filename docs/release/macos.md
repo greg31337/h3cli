@@ -1,5 +1,10 @@
 # Build and sign the Mac download
 
+> Historical interface. Use the [five-command release workflow](README.md) for
+> new releases. The numbered commands, handoffs and manual report/fresh-machine
+> gates below are retained as historical diagnostics, not required release steps.
+> The current `publish` command generates notes and finishes publication itself.
+
 Use the clean clone from the [release guide](README.md) on Apple Silicon.
 The runtime minimum is macOS 26. The build must use the exact installed Apple
 tools in [scripts/macos/lock.json](../../scripts/macos/lock.json).
