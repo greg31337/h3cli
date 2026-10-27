@@ -1,349 +1,183 @@
-# Reusable dependency bundles for builds and releases
+# Simple build, test and release tooling
 
-Status: **complete — 12/12 tasks complete**. Updated 2026-10-22.
-[Qualification evidence](build/dependency-bundles-results.md).
-Build and validate our own Linux x86-64 and macOS arm64 dependency bundles once
-per dependency configuration, then reuse those exact artifacts across application
-builds and release candidates. Keep the existing macOS qualification milestone
-below and its pending tasks intact.
+Status: **planned — 0/8 tasks complete**. Updated 2026-10-27.
 
-## Scope and acceptance
+Make releases practical for a single maintainer working on an experimental/hobby
+project. After signing setup and environment configuration, the entire process
+must require only the five commands below. Reuse the working builders, dependency
+bundles and tests; simplify the public interface and remove manual handoffs.
 
-Refactor the [Linux dependency recipe](../scripts/linux/build_dependencies.sh),
-[Linux builder](../scripts/linux/build.py),
-[macOS builder](../scripts/macos/build.py) and
-[release coordinator](../release/coordinator.py). Preserve the current dependency
-versions, numerical behavior, platform requirements and standalone deliverables.
-Existing vendor/distro binaries remain pinned inputs. Retain a supported source
-build path for creating and reproducing bundles.
+**These are planned commands, not implemented commands.** The
+[current release guide](release/README.md) describes the existing tooling until
+this milestone is implemented. This document changes the plan, not the runners.
 
-Completion requires two different application commits to build and qualify with
-the same verified dependency bundle on each platform, without recompiling
-unchanged dependencies. A dependency, recipe, compiler/SDK, architecture or build
-configuration change must select a new bundle. Application compilation, final
-artifact tests, signing and notarization still run as required for each release.
+## The only manual steps
 
-## Dependency bundle milestone
+1. **Initial signing prerequisites:** `./release/release.sh setup-signing`.
+   Reuse or help provision GitHub login, the existing Minisign key, and the
+   Developer ID identity/Keychain notary profile for Mac packages. Include Apple
+   account, certificate and credential-access setup here. This must work before a release
+   config exists; never replace working credentials just to start another release.
+2. **Configure the release environment:**
+   `./release/release.sh configure --version v0.6.0`.
+   Ask for missing machine/model paths and the GitHub repository, discover tools
+   and existing credentials, and save one ignored configuration. Remember host
+   settings across releases; subsequent configuration normally changes only the
+   version. Default to a GitHub prerelease, with a stable label selectable here.
+   Check credentials and SSH access, provision the required tools/models with
+   progress, and save environment settings so later commands need no shell exports.
 
-- [x] DEP001 Inventory dependency inputs and outputs on both platforms. Define
-  the bundle contents: compiled libraries, development headers/static archives,
-  media executables, required resources and build metadata. Include required
-  CUTLASS/cuDNN frontend headers; keep application kernels and probes in the
-  application build. Separate production dependencies from historical test media
-  and identify which toolchain/system prerequisites remain external.
-- [x] DEP002 Define a canonical manifest and immutable bundle identity covering
-  source/vendor hashes, patches, relevant recipes, configuration flags, compiler,
-  SDK/sysroot, target architecture, deployment baseline and reproducibility inputs.
-  Inventory file hashes, sizes and modes. Exclude application commit, release
-  version, run name and installation path from dependency cache invalidation.
-- [x] DEP003 Add explicit commands to build dependency bundles in fresh isolated
-  directories using the existing locked recipes. Produce relocatable archives,
-  manifests and corresponding source materials; make source builds reproducible
-  and usable offline with provisioned inputs. Never overwrite a validated bundle.
-- [x] DEP004 Qualify each new bundle before allowing release reuse. Check ABI and
-  minimum OS requirements, CPU architecture, codec configuration, recursive library
-  dependencies and relocation without developer paths. Record the reference
-  application/test revision and results against the bundle's exact digest.
-  Keep numerical goldens and existing acceptance thresholds unchanged.
-- [x] DEP005 Implement bundle acquisition and a shared cache across release
-  candidates. Use immutable locations and trusted checksum pins; verify contents
-  before reuse, extract safely into staging and publish readiness atomically.
-  Support concurrent consumers, interrupted downloads and strict offline reuse.
-  Missing or incompatible bundles must give actionable errors; bundle creation
-  must be explicit rather than an unexpected release-time dependency rebuild.
-- [x] DEP006 Integrate bundle consumption into Linux builds, including the
-  pinned builder userland, development files and runtime packaging inputs.
-  Reuse compiled ICU, TurboJPEG and production/regression media tools. Compile
-  h3cli, its launcher and matching validation probes against the verified bundle;
-  retain vendor-library identities, ABI audits and private validation-kit isolation.
-- [x] DEP007 Integrate bundle consumption into macOS builds. Reuse the qualified
-  FFmpeg/x264 artifacts while retaining Apple SDK/toolchain checks and native
-  build support. Copy reusable inputs into each candidate before final signing
-  and notarization; signing must never mutate the shared dependency cache.
-- [x] DEP008 Pin bundle identities in release candidate configuration, build
-  provenance and completion receipts. Verify the same identities on resume and
-  handoff. Preserve final-artifact qualification, source inventories, checksum
-  signing and draft/publication boundaries; earlier dependency qualification
-  does not substitute for testing the current application release.
-- [x] DEP009 Cover cache hits/misses, changed dependency inputs, unrelated
-  application changes, wrong platforms, corrupt/incomplete bundles, concurrent
-  users and offline operation. Verify Ctrl+C/SIGTERM stops owned local and remote
-  build workers while preserving completed bundles and failure logs. Failed or
-  canceled work must never receive a successful completion receipt.
-- [x] DEP010 Preserve exact binary-to-source correspondence, patches, build/relink
-  instructions and license notices in companion source archives. Keep dependency
-  provenance available independently of any one application release. Exclude
-  Apple SDK/framework payloads, credentials, model weights and private test outputs
-  from redistributed bundles; retain applicable vendor redistribution conditions.
-- [x] DEP011 Validate cold source builds and warm bundle reuse on the local
-  PRO 5000 and M4. Compare dependency bytes across fresh locations and application
-  commits, prove offline reuse and retain timings plus evidence that dependency
-  compilation was skipped. Follow [CONTRIBUTING.md](../CONTRIBUTING.md), including
-  the complete 204-output CUDA gate and final Linux artifact qualification, plus
-  affected macOS packaging, rendering, signing and release-runner checks.
-- [x] DEP012 Document bundle creation, qualification, storage, fetching, cache
-  inspection, invalidation, recovery and the explicit source-build fallback.
-  Record bundle identities, cold/warm timings and qualification reports; update
-  the build/release guides and reconcile this checklist against retained evidence.
-  Complete only when both platforms meet the cross-release reuse acceptance above.
+Then run these five commands in order:
 
-# macOS standalone package building
+| Manual action | Command | Work performed automatically |
+| --- | --- | --- |
+| Build local binary on macOS / Linux | `./release/release.sh build-local` | Resolve dependencies and compile the native binary and its test helpers on each selected host. Print binary paths. |
+| Test local binary | `./release/release.sh test-local` | Run the required host and GPU tests against those builds and save results automatically. |
+| Build release packages | `./release/release.sh build-packages` | Build standalone deliverables and matching sources, collect both platforms, sign/notarize/staple the Mac distribution, and generate signed checksums. Print package paths. |
+| Test release packages | `./release/release.sh test-packages` | Extract/mount and run the actual final packages, check signatures, contents and hashes, and save results against those exact bytes. |
+| Release packages on GitHub | `./release/release.sh publish` | Generate notes, create the tag/draft, upload, download and verify the assets, then publish and print the public URL. |
 
-Status: **notarized package qualified on the local M4 — 33/36 tasks complete**.
-Updated 2026-09-30. [Evidence and pending prerequisites](build/macos-distribution-results.md).
-The release team's **Developer ID Application** identity and the `h3cli`
-Keychain notary profile are verified. Apple accepted the signed inner runtime;
-all 18 embedded/extracted members match the accepted bytes. The final DMG is
-signed, notarized and stapled; signed-artifact rendering, server, download,
-Metal/ANE and isolation tests pass on the existing M4 account.
-The user explicitly left clean-environment and fresh-trust qualification
-(MAC029/MAC030) pending; final public completion MAC036 remains open.
-The local ad-hoc executable, development DMG, library and corresponding sources
-remain ready.
-Implement [the macOS distribution design](build/design-macos-distribution.md).
-The preceding **36/36 completed model-download tasks** are archived in
-[their checklist](features/model-downloads-tasks.md), with
-[qualification results](features/model-downloads-results.md).
+For the existing two-machine setup, run this sequence from the Mac: each command
+runs its macOS work locally and its Linux work over the configured SSH connection.
+Compilation and GPU tests run natively on their respective hosts. The same
+interface supports configuring just one platform. A selected target must pass;
+an unreachable Linux host cannot silently become a Mac-only success. No manual
+SSH commands, source copies, artifact transfers or matching run names are needed.
 
-## Fixed scope and acceptance rules
+## Work that belongs inside the commands
 
-- Deliver a single `h3cli-macos-arm64` executable containing the application,
-  shaders and pinned FFmpeg/FFprobe 9.0.2 dependencies. Extract verified resources
-  to `~/Library/Caches/h3cli/runtime/<id>`, with `H3CLI_RUNTIME_CACHE` override.
-  Running it needs no Homebrew, Python, Xcode/CLT, system FFmpeg, sudo or container.
-- Initial target: Apple Silicon arm64, explicit macOS 26.0 deployment target.
-  macOS supplies its system frameworks. Distinguish the deployment target from
-  the actual OS/chip qualified; preserve existing feature/capability guards.
-- Provide a signed, notarized, stapled DMG for public distribution and complete
-  companion source materials. Local/offline builds use explicitly labeled
-  ad-hoc signing. Public qualification requires a Developer ID identity and
-  working notarization credentials; unavailable credentials leave those tasks
-  pending. Ordinary build/test commands never upload code or publish releases.
-- Embed the payload in a signature-covered Mach-O section before signing;
-  prove inner-helper and outer-executable trust behavior early. Preserve exact
-  extracted signed bytes. Do not reuse Linux's EOF-footer assumption or disable
-  Gatekeeper/quarantine checks as a workaround.
-- Preserve CLI/server features, cwd and output behavior, current state checks,
-  automatic model downloads and `--models-path`/`-d`/auxiliary precedence. Models
-  remain outside the runtime. No codec/model upgrade or numerical-policy change.
-- Keep native `make`, `bin/h3cli`, `bin/libh3.a`, setup scripts and Linux packaging
-  working. Binaries/packages go under ignored `bin/`; work/evidence goes under
-  `outputs/macos-build/` and `outputs/macos-distribution/`. Exclude weights,
-  private media, credentials and Apple's SDKs from redistribution.
-- Use **local M4** for macOS builds and small Metal samples. Use **local PRO 5000**
-  for Linux/CUDA protection; no cloud nodes, host-driver changes or OS reinstall.
-  Preserve existing models and use isolated build/cache/download/output trees.
-- Follow [CONTRIBUTING.md](../CONTRIBUTING.md): full CUDA golden gate after
-  coherent code/build/test changes, plus final source and rebuilt Linux artifact
-  gates. Keep all **204 hashes and 12 fixtures unchanged**, with networking off
-  and no skipped/relaxed cases. Docs-only edits need document/link checks.
-- Real sample defaults: 256×256, 22 frames, two steps; 56 frames where references
-  or continuation require them, and 512×512 upscaling with two refine steps.
-  Preserve the CUDA gate's own 640×480/124-frame/six-step case. No new large
-  performance campaign. Missing prerequisites or unrun checks are not passes.
+- Configuration selects an existing source commit, defaulting to `HEAD`, and
+  clearly shows whether the working tree differs. Build an automatic snapshot of
+  that commit on both hosts; exclude uncommitted changes explicitly. Cloning,
+  source synchronization, version metadata and candidate directories are internal
+  details. Ordinary development commits are not extra release preparation steps.
+- Keep [reusable dependency bundles](build/dependency-bundles.md). Discover and
+  verify compatible cached bundles automatically. If none is available,
+  `build-local` obtains one or builds and validates it once from the locked inputs,
+  then caches it. Announce this work and its progress. Unchanged application
+  releases reuse it; operators never copy bundle hashes or invoke separate
+  identity/build/qualify/pin commands. Offline misses fail with a useful reason.
+- Use one small shared implementation behind the commands and a simple saved
+  state file under `outputs/release/`. Record source/configuration, dependency and
+  artifact identities and test results automatically. No hand-written reports,
+  `record-check.sh`, placeholder editing, manual checksum signing or extra
+  collect/stage/verify/publish commands are part of the normal workflow.
+- Each stage uses the preceding stage's matching output. Source, build settings
+  or artifact changes invalidate affected later results; packaging-time rebuilds
+  and signing are covered by `test-packages`. Tests never rebuild the tested
+  artifact silently, and `publish` never rebuilds or re-signs it.
+- `build-packages` includes the existing Apple submissions and waits for their
+  results. Other build/test commands do not submit to Apple. Only `publish` writes
+  tags or release assets to GitHub; invoking it is the publication action, with
+  no separate approval file, browser button or final publish command. Use system
+  credential stores configured during setup, not passwords in config or logs.
+- Retrying the same command resumes verified completed work and allocates fresh
+  attempts for failed work. Preserve failure logs; do not require deleting folders
+  or inventing a new run ID. Ctrl+C, SIGTERM and SSH disconnects stop owned workers
+  on both machines. Resume notarization/upload attempts without duplicating them.
 
-PRO 5000 connection for the required regression protection:
+Publication may use a draft internally, but must finish with a published release.
+Generate usable notes from commits and actual test results; custom notes are
+optional configuration. Verify the remote tag and the downloaded bytes against
+the tested packages before publication. On retry, reconcile a matching draft or
+already-published release; never overwrite a conflicting public version. Confirm
+the final public state before reporting success. GitHub CLI already supports
+[generated notes and explicit target commits](https://cli.github.com/manual/gh_release_create)
+and [publishing a draft](https://cli.github.com/manual/gh_release_edit).
 
-```sh
-ssh cuda-test
+## Tests and final results
+
+Keep the existing correctness checks automated inside the two test commands:
+
+- `test-local`: required host/release-tool tests and bounded real-model tests on
+  the selected native backends, including the complete Linux **204-output CUDA
+  reference gate** required by [CONTRIBUTING.md](../CONTRIBUTING.md). Prepare test
+  fixtures and saved states automatically; operators do not run setup renders.
+- `test-packages`: run the final standalone binaries outside the checkout with
+  isolated runtime caches; exercise rendering, CLI/server startup and packaged
+  media dependencies; verify Mac signatures/notary tickets/stapling, source
+  materials, asset lists and checksums. Include the existing final Linux artifact
+  CUDA gate. Generated reports identify the exact tested binaries/packages.
+- Automate the current downloaded-Linux check within `publish`, using the same
+  configured GPU host. Keep source tests and downloaded-asset verification tied
+  to the release without manual report attachment.
+
+Fresh Mac accounts/installations, browser-quarantine experiments, broader OS/GPU
+matrices and human video review are optional development investigations, not
+recurring publication requirements. Record the actual tested systems and known
+limits in release notes; never describe an existing developer account as a fresh
+trust environment. This replaces the old manual stable-release gates for both
+release labels. Automated signing, artifact and numerical failures still block
+publication; a required missing prerequisite or skipped test is not a pass.
+
+Every one of the five commands must end with one unambiguous summary line:
+
+```text
+PASS build-local: macos-arm64, linux-x86_64; binaries: <paths>
+PASS test-local: all required tests passed; report: <path>
+PASS build-packages: signed release packages ready; packages: <path>
+PASS test-packages: all final package tests passed; report: <path>
+PASS publish: <public GitHub release URL>
+FAIL test-packages: linux-x86_64: <reason>; log: <path>; retry: ./release/release.sh test-packages
 ```
 
-## Baseline and build pipeline
+Exit zero only for success and nonzero for failure or cancellation (130 for
+Ctrl+C). Print progress and the failing command while running. A successful
+subtask, existing file or stale report cannot produce an overall `PASS`. A
+`--dry-run` may print `PLAN`, but must never claim a build, test or release passed.
 
-- [x] MAC001 Inventory the current macOS build: OS/chip/RAM, compiler/linker/SDK,
-  deployment target, linked and runtime-loaded dependencies, shaders, CoreML
-  resources, subprocesses and exposed features. Record native host/Metal/server
-  results and small reference samples before changes. Establish the complete
-  current CUDA baseline on PRO 5000; preserve existing models and artifacts.
-- [x] MAC002 Define the macOS dependency/toolchain lock and provenance schema.
-  Pin actual Apple tool identities, SDK inventory, build tools, deployment flags,
-  source epoch and verified dependency sources/configurations. Share FFmpeg's
-  authoritative 9.0.2 pin; determine the exact qualified macOS x264 source.
-  Separate supplied Apple prerequisites from downloadable redistributable inputs.
-- [x] MAC003 Implement `scripts/build_macos.sh` and helpers with `--doctor`,
-  `--cache`, `--work-dir`, `--output`, `--jobs`, `--fetch-only` and `--offline`.
-  Validate prerequisites/options; use fresh isolated directories and controlled
-  tool selection. Do not modify global Xcode selection, install Homebrew, touch
-  native build outputs or fetch model weights. Make warm-cache builds offline.
-- [x] MAC004 Snapshot Git checkouts and source archives consistently, including
-  dirty/untracked code, catalogs and shader inputs. Exclude generated objects,
-  models, outputs, secrets and prior packages while retaining `src/models/` and
-  source test fixtures. Normalize paths/order/timestamps and preserve meaningful
-  source/compiler identity in saved-state compatibility checks.
-- [x] MAC005 Build pinned arm64 FFmpeg/FFprobe 9.0.2 and qualified x264 with
-  explicit deployment/configuration flags and no dependency autodetection.
-  Prefer static x264; otherwise bundle audited private dylibs with relative
-  load paths. Preserve input/output capabilities and codec settings. Eliminate
-  all Homebrew/MacPorts/developer-prefix runtime dependencies.
-- [x] MAC006 Build the complete macOS application/library/probes without warnings.
-  Retain Metal/MPSGraph, compiled optional native/Q8/SOL/ANE implementations,
-  capability guards, server and native downloads. Keep generated shaders/catalog
-  deterministic. Preserve source builds, setup and Linux integration; do not
-  introduce new fast-math flags or machine-specific compiler tuning.
-- [x] MAC007 Add recursive Mach-O/resource audits for every shipped executable
-  and dylib: arm64, minimum OS, install names, weak/re-exported loads and confined
-  rpaths. Allow only audited Apple-system loads outside the payload. Include
-  explicit loads, media helpers and generated resource use in the inventory;
-  fail assembly on missing dependencies, unrecorded files or host leakage.
+## Implementation milestone
 
-## Single-executable runtime
+- [ ] REL001 Add the five named commands to `release/release.sh`, using a shared
+  driver, consistent help, progress, exit codes and final PASS/FAIL summaries.
+- [ ] REL002 Consolidate signing setup and environment configuration. Import
+  existing machine/signing settings, discover tools/bundles, and save one usable
+  profile without manual JSON copying, checksum entry or environment sourcing.
+- [ ] REL003 Implement `build-local` with automatic source snapshots, native
+  host selection, SSH execution and dependency provisioning/reuse. Keep normal
+  development builds working and keep private configuration out of artifacts.
+- [ ] REL004 Implement `test-local` against the recorded local builds, including
+  the required host/current-feature suites and unchanged full CUDA gate. Save
+  results automatically and reject missing, mismatched or failed inputs.
+- [ ] REL005 Implement `build-packages` around the existing packagers, Apple
+  signing/notarization, Linux collection, source materials and signed checksums.
+  All intermediate steps and retry directories stay internal.
+- [ ] REL006 Implement `test-packages` against the final signed/distributable
+  bytes. Replace manual report gates with automated checks and documented test
+  scope; keep optional fresh-machine research out of the release path.
+- [ ] REL007 Implement `publish` as upload, download/verification and public
+  release in one invocation. Generate complete notes, create the exact source
+  tag, preserve tested bytes and support safe retries without a second command.
+- [ ] REL008 Test the whole sequence on the Mac and PRO 5000, including first
+  setup, warm dependency reuse, failures, cancellation, stale results and partial
+  publication. Verify GitHub behavior with a disposable test repository. Update
+  the release/build/dependency guides to this workflow and retire numbered/manual
+  runbooks from the normal path. Accept only when the seven manual actions above
+  suffice and all five stage commands report accurate final PASS/FAIL results.
 
-- [x] MAC008 Prototype the signature-covered Mach-O payload early, before
-  committing to the full extractor. Embed a tiny signed helper, sign the outer
-  executable, extract identical bytes and execute it. Verify section bounds and
-  codesign mutations; establish the public inner/outer notarization sequence
-  and fresh offline trust test required by MAC021/MAC030. Do not append data
-  after signing or quietly substitute a multi-file deliverable.
-- [x] MAC009 Implement the bounded canonical macOS manifest/archive and Mach-O
-  section reader. Bind platform/schema, launcher and payload identity without
-  signature/hash cycles. Reuse safe common parsing/compression logic where useful,
-  preserving Linux format compatibility. Keep the bootstrap free of non-system
-  installed dependencies and runtime archive/crypto/developer command helpers.
-- [x] MAC010 Implement private versioned cache extraction with ownership/no-follow
-  checks, process locking, staging, free-space bounds, hashes, sync and atomic
-  readiness publication. Cover interrupted/racing launches and fast verified warm
-  reuse. Refuse changed caches; preserve active/older versions and provide safe
-  manual recovery. Use macOS cache conventions and the explicit cache override.
-- [x] MAC011 Implement the macOS launcher with canonical executable discovery,
-  bundle inspection and verified core execution. Preserve cwd, argv, stdio,
-  exit status, signals and process groups. Support symlinks, renamed binaries,
-  read-only launch locations and mounted DMGs without writing alongside them.
-  Keep extraction network-free and independent of model/GPU availability.
-- [x] MAC012 Add packaged macOS resource initialization and override policy.
-  Bind runtime identity and all helper/resource paths before CLI or server work;
-  ensure internal workers select the same runtime. Ignore resource substitutions
-  from cwd/PATH and source-only overrides, handle relevant DYLD variables, and
-  preserve legitimate models/offline/proxy/token settings. Retain native behavior.
-- [x] MAC013 Package all required shader source/includes and integrate their
-  verified lookup with every Metal component. Keep system runtime compilation;
-  require no offline Metal compiler or source checkout on the user's machine.
-  Test hostile cwd shaders and `H3_SHADER_PATH` while preserving source-build
-  lookup rules and useful compilation/lookup diagnostics.
-- [x] MAC014 Bind all CLI/server media operations to packaged FFmpeg/FFprobe
-  9.0.2, including input decoding, output encoding, probes and child cleanup.
-  Verify no system media tool is used and private dylib paths remain relocatable.
-  Keep historical codecs in the CUDA validation kit only.
-- [x] MAC015 Integrate content-based runtime/media/shader identities with current
-  sampler, conditioning, AV, presentation and upscale compatibility checks.
-  Prove relocation and cache-root changes work for the same compatible artifact
-  and unchanged model tree. Retain source/flags/resource/model mismatch detection;
-  do not broaden arbitrary native/package or cross-OS checkpoint compatibility.
-- [x] MAC016 Preserve default downloads, the embedded catalog, receipts and all
-  model-root/auxiliary overrides through CLI and server worker launch. Runtime
-  extraction must not relocate weights/states/outputs or alter cwd. Keep macOS
-  system trust/CA/proxy/HF-token behavior and strict offline policy; do not embed
-  a CA bundle or import Linux-specific CA-path selection.
+## Research informing the plan
 
-## Source materials and reproducibility
+Reviewed upstream project files on 2026-10-27. These are examples of automation
+patterns; the five-stage local interface above is the choice for h3cli.
 
-- [x] MAC017 Produce the complete companion source archive, licenses/notices,
-  patches, dependency configurations and build/relink instructions for h3cli,
-  FFmpeg, x264 and every redistributed component. Audit exact source-to-binary
-  correspondence. Exclude Apple SDK/framework payloads, CUDA dependencies,
-  model weights and secrets; keep small checked-in fixtures distinguishable.
-- [x] MAC018 Perform two fresh offline builds in different absolute directories
-  with the same locked inputs. Compare normalized core/helper bytes, generated
-  sources, deterministic ad-hoc payload, manifest and source archive. Resolve
-  unintended path/time/UUID/order variation and document which final signing/DMG
-  fields are externally nondeterministic. Preserve meaningful build identities.
+| Project and primary source | Relevant pattern to adopt |
+| --- | --- |
+| [fzf release configuration](https://github.com/junegunn/fzf/blob/master/.goreleaser.yml) | One configuration describes platform builds, archives, GitHub releases and macOS signing/notarization. Keep credentials in setup and signing inside packaging. |
+| [ripgrep release workflow](https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml) | Version validation, platform builds, archives, checksums and uploads are scripted. Hide these mechanics behind explicit maintainer commands. |
+| [yt-dlp release workflow](https://github.com/yt-dlp/yt-dlp/blob/master/.github/workflows/release.yml) | Preparation, reusable platform builds, artifact collection, generated notes and GitHub publication form an automated sequence. Avoid manual handoff and note-template completion. |
+| [whisper.cpp release workflow](https://github.com/ggml-org/whisper.cpp/blob/master/.github/workflows/make-release.yml) | One dispatch selects a commit, runs release checks and automates tag/description/release creation, with a dry-run path. Keep source selection and release mechanics explicit but automated. |
 
-## Signing and macOS distribution
+Use these patterns with the existing Python/shell builders and local GPU hosts;
+this milestone does not require adopting GoReleaser or moving GPU tests to hosted
+CI. Keep the implementation small enough for one maintainer to understand.
 
-- [x] MAC019 Implement deterministic ad-hoc signing for local development output
-  and an explicitly unnotarized development DMG. Exercise the signing order,
-  signature-covered payload and extracted-code verification. Clearly separate
-  this successful local workflow from public-release trust qualification.
-- [x] MAC020 Implement Developer ID Application signing for inner code and the
-  outer launcher with secure timestamps, hardened runtime and minimal justified
-  entitlements. Verify every nested signature. Test Metal/MPSGraph, CoreML/ANE,
-  library validation, downloads and server subprocesses under these settings;
-  do not solve failures by disabling platform security or broad exceptions.
-- [x] MAC021 Implement and execute inner-runtime notarization in a supported
-  container before embedding the exact accepted signed bytes. Retain submission
-  identity, logs and accepted hashes. Use the documented custom-installer order
-  rather than assuming the notary scanner inspects custom compressed sections.
-  Apple accepted the inner-runtime submission, with no
-  reported issues; accepted bytes match the extracted signed executable.
-- [x] MAC022 Create the release DMG with the signed standalone CLI and usage/source
-  notices. Sign/notarize the final distribution, inspect logs, staple and validate
-  its ticket, and emit final hashes/status metadata. Record inner/outer identities
-  separately. Do not attempt to staple the bare executable or modify signed code
-  afterward. Keep public publishing outside the build/release commands.
-- [x] MAC023 Isolate signing credentials in Keychain/caller-controlled secure
-  profiles. Add explicit release-command help, failure/retry handling and redacted
-  logging; ordinary build/offline/test modes must never submit to Apple or fall
-  back silently to weaker signing. Test these boundaries without real secrets.
-  Record missing credentials as pending public qualification, not a pass.
+## Previous work
 
-## Tests and hardware qualification
-
-- [x] MAC024 Add host-only archive/Mach-O/extractor fault tests using tiny
-  fixtures. Cover malformed bounds/hashes, traversal/duplicates/ancestor conflicts,
-  symlink races, wrong ownership/modes, disk-full/write failures, crashes, stale
-  metadata, tampering, concurrent cold launches and multiple active versions.
-  Measure bounded memory/cancellation and run appropriate parser sanitizers.
-- [x] MAC025 Add relocation and process tests: spaces/Unicode, changed cwd,
-  symlinks/renames, read-only or missing cache parents, mounted DMGs, bundle info,
-  hostile shaders/tools/environment, argv/stdio/exit codes and SIGINT/SIGTERM.
-  Assert package resource identity and safe failure without relying on a checkout
-  or runtime developer utilities. Cover state resume after cache relocation.
-- [x] MAC026 Exercise the packaged server's admission, preparation, inference,
-  artifact probing/fetch, cancellation, shutdown/restart and idempotency paths.
-  Verify workers and FFmpeg use the same verified runtime; preserve responsive
-  queue behavior, resource snapshots, authorization and offline inheritance.
-  Run current server suites, including changed-runtime rejection.
-- [x] MAC027 Exercise packaged model-root/group/override behavior with fixtures,
-  then perform real automatic preview-VAE acquisition through CLI and server
-  into separate empty auxiliary locations. Verify pinned hashes, progress,
-  warm offline reuse, read-only installed models and no usable CA/network
-  requirement for offline inference. Reuse the already qualified main weights.
-- [x] MAC028 Run the complete bounded M4 matrix from the design: text/full and
-  preview, first/last, image/video/audio references, still/decode, AV/conditioning,
-  minimal decode, continuation/bridge, sampler resume and upscale/resume. Compare
-  source/package on identical OS, weights, shaders and media tools; retain exact
-  round-trip comparisons, fully decoded media, timings and sample galleries.
-  Run current Metal/host and supported optional-feature probes without warnings.
-- [ ] MAC029 Qualify the final runtime outside the checkout under a clean user
-  and minimal environment, preferably an available clean macOS installation.
-  Prove no Homebrew, Python, system FFmpeg, SDK/compiler or hidden developer
-  resource dependency via load/file-access/subprocess evidence; PATH alone is
-  insufficient. Record actual OS/M4, isolation limits and deployment-only support.
-  Do not uninstall tools or reinstall the developer's system to perform the test.
-- [ ] MAC030 Qualify the actual Developer ID/notarized/stapled DMG under fresh
-  quarantine/trust state. Copy out, unmount and run with an empty extraction cache
-  online and offline; also test warm offline rendering with provisioned models.
-  Verify inner code signatures, Metal compilation and server children. Preserve
-  Gatekeeper/notary/stapling evidence; no quarantine removal or cached-trust-only
-  substitute. Missing credentials or a suitable environment leave this open.
-- [x] MAC031 On PRO 5000 run affected Linux host/package/server checks and the
-  full offline 204-output gate at coherent milestones. For final sources rebuild
-  the Linux standalone artifact and run its full artifact gate with the private
-  historical codec kit. Preserve all 204 goldens/12 fixtures, normal FFmpeg 9.0.2,
-  Linux archive/cache behavior and native state checks. Fix failures and rerun.
-
-## Documentation and completion
-
-- [x] MAC032 Add `docs/build/macos-distribution.md` and update README/setup/help
-  guidance for one-command building, prerequisites versus runtime requirements,
-  copy/run usage, source materials, signing/notarization, cache inspection/removal,
-  model paths/downloads/offline use, deployment limits and troubleshooting.
-  Clearly identify development artifacts versus publicly qualified releases.
-- [x] MAC033 Freeze final source, dependency and signing inputs; build the final
-  executable, DMG, source archive, library, checksums and private validation kit.
-  Audit signatures/contents and rerun affected final-artifact checks after any
-  mutation. Verify the copied/distributed executable and DMG contents match the
-  tested artifacts, with no weights, secrets, host paths or accidental runtime tools.
-- [x] MAC034 Write `docs/build/macos-distribution-results.md` with exact source,
-  toolchain/SDK, OS/hardware, media and artifact identities; sizes, extraction
-  memory/cold-warm timings, reproducibility evidence, sample links, automatic
-  downloads, state/server checks, source audits, public trust results and both
-  final CUDA gates. Keep failures, untested OS/chips and pending signing explicit.
-- [x] MAC035 Review final diffs, links, catalog/shader regeneration, artifact
-  exclusions and documentation consistency. Preserve the archived model-download
-  checklist/results and native/Linux instructions. Keep executable/library outputs
-  under ignored `bin/` and qualification media/evidence under ignored `outputs/`.
-- [ ] MAC036 Reconcile every checklist item against retained evidence. Confirm
-  the local/offline build and actual public-release workflow meet their respective
-  contracts, and that no required test, source audit or signing prerequisite is
-  silently skipped. Mark completion only after required qualification passes;
-  prepare deliverables locally without publishing a release.
+The [previous checklist](release-tooling-history.md) is archived intact:
+dependency bundles remain **12/12 complete**, with
+[qualification evidence](build/dependency-bundles-results.md). The macOS package
+milestone remains **33/36 complete**, with
+[recorded evidence and limits](build/macos-distribution-results.md).
+MAC029/MAC030 were not executed, and MAC036's old closure criteria remain unmet;
+none is relabeled as passed. Their former manual publication requirements are
+superseded by this milestone's automated checks and stated support scope.

@@ -20,7 +20,8 @@ Homebrew, Python or developer tools. Local builds are ad-hoc signed and
 unnotarized; Developer ID distribution uses a separate explicit workflow.
 See the [macOS build/run guide](macos-distribution.md),
 [qualification report](macos-distribution-results.md) and
-[implementation tasks](../todo.md). Native source-build instructions remain below.
+[implementation tasks](../release-tooling-history.md). Native source-build
+instructions remain below.
 
 On Linux, the portable `h3cli-linux-x86_64` executable includes the native CUDA
 runtime and FFmpeg/FFprobe 9.0.2. It runs without a toolkit, Python, system FFmpeg,

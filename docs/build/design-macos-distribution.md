@@ -5,8 +5,9 @@ Developer ID signing, inner/outer notarization and DMG stapling are complete.
 Clean-environment and fresh-trust qualification remain pending at the user's
 request. See the [implementation guide](macos-distribution.md) and
 [qualification record](macos-distribution-results.md).
-Implementation checklist: [todo.md](../todo.md). The completed model-download
-work is preserved in [its checklist](../features/model-downloads-tasks.md) and
+Implementation checklist: [archived tasks](../release-tooling-history.md).
+The completed model-download work is preserved in
+[its checklist](../features/model-downloads-tasks.md) and
 [qualification report](../features/model-downloads-results.md).
 
 ## Outcome and scope

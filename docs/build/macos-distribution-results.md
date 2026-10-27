@@ -8,7 +8,7 @@ native library, payload and corresponding sources reproduce across fresh
 offline builds in different absolute directories.
 
 [Build/run guide](macos-distribution.md), [design](design-macos-distribution.md),
-[task checklist](../todo.md). Local deliverables are in
+[task checklist](../release-tooling-history.md). Local deliverables are in
 [`bin/macos-release/`](../../bin/macos-release/) for development and
 [`bin/macos-public-release/`](../../bin/macos-public-release/) for the notarized
 release candidate. Nothing was publicly published.

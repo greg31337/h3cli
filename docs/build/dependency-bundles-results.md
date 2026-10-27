@@ -3,8 +3,9 @@
 Updated 2026-10-22. Both platforms passed qualification and reuse across two
 application revisions on the local M4 and RTX PRO 5000.
 The [operating guide](dependency-bundles.md) describes production, qualification,
-cache verification and release configuration. The [milestone](../todo.md) tracks
-acceptance for both platforms.
+cache verification and release configuration. The
+[archived milestone](../release-tooling-history.md) tracks acceptance for both
+platforms.
 
 ## Reference applications
 
