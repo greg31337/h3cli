@@ -24,13 +24,14 @@ base model + ordered --lora arguments
                   |
        validate request and select mode
                   |
-       derive folded-variant identity
+       sample inputs + cached variant
                   |
        +----------+-----------+
        |                      |
- verified cache hit      miss / invalid entry
+ sampled cache hit       miss / invalid entry
        |                      |
-       |              native FP32 folding
+       |              full verification
+       |              native FP32 folding if needed
        |              one BF16 rounding
        |              validate + publish
        +----------+-----------+
@@ -52,7 +53,7 @@ base model + ordered --lora arguments
   around an offline transformer. Runtime folding resolves the transformer
   directly and needs neither assembly nor persistent base-model symlinks.
 - [../../src/weights/lora.c](../../src/weights/lora.c) owns adapter selection, strict planning,
-  deterministic CPU folding, validation, cache publication, and reader leases.
+  deterministic CPU folding, validation, cache publication, and bounded sample lookup.
   [../../src/weights/lora_json.c](../../src/weights/lora_json.c) supplies strict JSON and
   locale-independent numeric parsing.
 - [../../src/engine.c](../../src/engine.c) adds `h3_load_dir_with_lora`, inventories available
@@ -144,8 +145,7 @@ loading. Do not put mutable adapter selection into per-step sampler parameters.
 
 The context keeps the base model directory for tokenizer, encoders, VAEs, and
 other unchanged assets. Add an effective-transformer resolver per mode. Each
-resolved mode holds the verified transformer path, content identity, and cache
-lease. It is an override of the transformer component, not a replacement base
+resolved mode holds the checked transformer path and content identity. It is an override of the transformer component, not a replacement base
 directory. This avoids copying large unchanged components and stale cached
 symlinks when a base model moves.
 
@@ -162,9 +162,9 @@ For each request:
 2. Select the actual transformer mode. Ordered references select Ref2VA;
    prompt-only and first/last-frame requests select FL2VA. Sampler resume uses
    the checkpoint's saved mode, not the new command line's empty reference list.
-3. Require that mode in the base model. Normalize every adapter against that
-   mode and validate all inputs before allocating output shards. Do not fold
-   both modes for an ordinary one-shot request.
+3. Require that mode in the base model. Try the bounded sample lookup first.
+   On a miss, normalize adapters and fully validate inputs before allocating
+   output shards. Do not fold both modes for an ordinary one-shot request.
 4. Resolve or build the cached transformer, before loading encoders, reference
    conditioning, inference weights, or preparing quantized projections. Release
    an incompatible prepared DiT before folding another mode in a reused context.
@@ -173,8 +173,8 @@ For each request:
    identity in prepared-DiT cache keys. Shared components still use the base.
 6. Perform model fingerprint/resume compatibility checks against the effective
    model, then run normal generation. Release folding scratch buffers before
-   inference allocations. Keep the read lease for as long as weights may be
-   mapped or reused; release it on context cleanup.
+   inference allocations. The single-user caller must not modify the cache
+   while weights are mapped or reused.
 
 The initial model inventory and device capability query may precede folding;
 large inference allocations must not. Preparation reports progress through the
@@ -259,7 +259,7 @@ Use a dedicated cache, separate from the existing CUDA quantization cache:
 
 ```text
 <lora-cache>/
-  locks/<key>.lock
+  samples/<sample-key>.json              # disposable lookup acceleration
   variants/<key>/
     manifest.json
     transformer/
@@ -314,41 +314,39 @@ validated on every new invocation; the cache is not a standalone model export.
 
 ## Lookup, publication, and recovery
 
-1. Open and validate the inputs, hash their contents, derive the key, and retain
-   file identity/change guards. A stat stamp alone is not a persistent content
-   identity. Reuse of verified hashes within one context must detect changed
-   files before later requests.
-2. Acquire a shared lock for an existing entry. A hit requires the expected
-   schema/key/mode, complete inventory, valid metadata, and matching output
-   content hashes. Revalidate source identity while resolving the request.
-   Directory existence alone is never a hit.
-3. On a miss or corruption, release the read lock and acquire the exclusive
-   per-key lock, then recheck. If another process completed the entry, verify
-   and reuse it. Independent keys may prepare concurrently. Lock waits must
-   support cancellation and report that preparation is waiting.
-4. With the exclusive lock, quarantine an invalid final entry and create a
-   unique staging directory. Clone/copy the original transformer there, fold
-   all mapped updates, and validate the complete result. Check for source
-   replacement or mutation and rehash the sources before publication.
-5. Flush output files and deterministic identity metadata, write the completed
-   outer manifest last, fsync the staging directory, and atomically rename it
-   into the final entry. Fsync affected parent directories. Generation starts
-   only after publication and validation succeed. Downgrade to a shared lease
-   before making the entry available to the context.
+1. Enumerate the selected original transformer files and ordered adapters.
+   Derive a sample key from names, sizes, recipe, mode, strengths and sampled
+   bytes. Divide a 384 KiB budget equally among files. Read small files fully;
+   otherwise read up to 32 evenly spaced windows, including first and last bytes.
+2. Read the sample-key record (bounded to 4 KiB). It maps to the existing full
+   content fold key and a cached-output sample digest. Check the exact cache
+   file inventory and sample the transformer files plus manifest using a second
+   384 KiB budget. The total model/adapter/cache data read on a hit is at most
+   768 KiB, regardless of model size or adapter count. Recheck file stamps during
+   the operation to reject files changing while samples are read.
+3. A sampled hit skips full input hashing, adapter tensor planning and full
+   output hashing. The sample scheme is intentionally incomplete: same-size
+   modifications outside its windows may go undetected. Samples never redefine
+   the full-content fold key or deterministic model identity.
+4. If the record is missing, malformed, stale or fails its samples, run the
+   existing full-content planning and verification. A valid legacy cache is
+   reused without folding; save a new sample record for later requests. Deleting
+   sample records forces this full verification. A read-only legacy cache stays
+   usable but cannot persist the acceleration record.
+5. On a full verification miss, quarantine an invalid entry and create a unique
+   staging directory. Clone/copy, fold and validate all outputs; rehash the
+   sources and verify untouched bytes before publication. Write complete
+   manifests, flush, and atomically rename the stage to the final entry. Fully
+   verify the published entry before saving its atomic sample record.
 
-A cache hit must perform no fold writes. It may work with a read-only cache
-when the existing entry and persistent lock file can be read and shared-locked.
-A miss in such a cache fails with an actionable error. Report hashing/verification
-time separately from folding time; a warm hit still reads substantial data and
-does not promise constant-time startup.
-
-Cache entries are immutable after publication. Never patch a completed entry
-in place. A shared lease prevents another H3 process from replacing it while
-its weights are in use. Keep lock files at stable paths and do not unlink them
-after unlock. Test the shared-to-exclusive recheck and exclusive-to-shared
-transition. If the platform cannot convert a lock atomically, reacquire the
-shared lease and revalidate the final entry before opening it for model use;
-never assume a previous validation survived an unlocked interval.
+This flow assumes single-user cache management. No ownership/private-permission
+checks, locks or reader leases are used. Normal filesystem permissions apply;
+cache-root symlinks are resolved before source-overlap checks. Existing legacy
+lock files are ignored. Concurrent cache builds, repairs, pruning and external
+writes must be serialized by the caller. Cache hits can use read-only files.
+Only the current invocation's unpublished stage is cleaned on failure; stages
+left by killed processes are ignored and retained for manual cleanup. A complete
+entry is never modified in place during repair.
 
 Try APFS cloning on macOS and reflink cloning on supporting Linux filesystems.
 If unavailable, copy automatically after a conservative disk-space check and
@@ -363,18 +361,16 @@ the independent copy; original inputs are never removed.
 Disk-space preflight is advisory; short writes and ENOSPC must still cleanly
 abort publication.
 
-Restrict cache-created permissions to the user, validate manifest-relative
-paths, reject traversal and unexpected symlinks inside entries, and refuse cache
-locations that overlap input trees/files in ways that could overwrite inputs.
-Cleanup may remove only owned staging paths after obtaining the relevant key's
-exclusive lock. A killed writer's staging directory is never treated as a hit.
-Do not steal a live lock based on a PID file or a timeout.
+Validate manifest-relative paths and cache structure, keep generated weights
+independent of their sources, and reject source/cache overlap. Ordinary access
+failures remain errors. Cleanup removes only this invocation's staging tree;
+a killed writer's directory is never treated as a cache hit.
 
-Corrupt entries are rebuilt once under the lock if sources and storage permit;
+Detected corrupt entries are rebuilt once if sources and storage permit;
 otherwise fail without producing media. Retain quarantined data for explicit
-cleanup and report its location. Automatic eviction, a cache daemon, network
-cache sharing, and cache management commands are outside v1. Document manual
-pruning while no H3 process is using the cache and the disk cost of many strengths.
+cleanup and report its location. Automatic eviction and coordinated concurrent
+cache management are outside this flow. Document manual pruning while no H3
+process uses the cache and the disk cost of many strengths.
 
 ## Effective model identity, continuation, and resume
 
@@ -449,14 +445,14 @@ published LoRA variant and must not silently select another precision.
 ## Diagnostics and failure behavior
 
 Use existing progress conventions to report selected mode, adapter count/order,
-effective scales, cache root/key, hit/miss/repair, lock waits, copy strategy,
+effective scales, cache root/key, hit/miss/repair, sampled byte counts, copy strategy,
 current tensor/block, bytes processed, and validation/publication completion.
 Summarize preparation, cache verification, and inference times separately. Avoid
 per-element logging and include enough identity information to reproduce a run.
 
 On invalid inputs, mapping errors, cancellation, memory/disk exhaustion, source
 mutation, validation failure, or publication failure, return an actionable error
-before generation. Preserve sources and valid entries, release locks/buffers,
+before generation. Preserve sources and valid entries, release buffers,
 and clean only this attempt's staging files. A cache repair may fail, but H3 must
 never silently omit the requested adapters. Default no-LoRA execution and the
 offline tools must continue to work without any cache-related dependency.
@@ -472,10 +468,10 @@ cache lifecycle checks. Keep the Python implementation independent as an oracle.
 | Parsing and mapping | Literal-colon/spaced paths, valid/invalid scales, duplicates/order, all supported conventions, QKV slices, alpha/rank conflicts, malformed files and unsupported architectures. |
 | Math | Independent FP32 and BF16 references; zero/negative/multiple scales; one-rounding counterexample; finite/overflow checks; invariant bytes across tile sizes and repeated native builds under the same recipe. |
 | Native/offline parity | Tiny exact fixtures plus representative real matrices compared numerically using existing error bounds; exact untouched bytes. |
-| Cache identity | Hits survive path moves and equivalent scale spellings; changes to any source content, scale, order, mode, or recipe produce the appropriate miss. |
-| Cache integrity | Missing/truncated/changed output, invalid manifest/schema, source mutation with preserved mtime, path traversal, and symlink attempts cannot produce false hits. |
-| Publication and concurrency | Same-key writers converge to one verified entry, different keys proceed independently, reader leases protect mapped files, cancellation/crash/fault injection never exposes a partial variant. |
-| Resource handling | Enforced scratch budget, bounded RSS accounting, clone and full-copy paths, disk-full/permission errors, read-only hits, cleanup and descriptor/lock leak checks. |
+| Cache identity | Hits survive path moves and equivalent scale spellings; changes in sampled source bytes, sizes, names, scale, order, mode or recipe produce the appropriate miss; cold folding retains full-content keys. |
+| Cache integrity | Missing/truncated outputs, changes in sampled regions, invalid records, path traversal and generated-file symlinks trigger full verification; explicitly test and document unread-byte blind spots. |
+| Publication and lifecycle | Sequential reuse and repair, legacy migration, normal cache permissions, no lock files, cancellation/crash/fault injection never exposes a partial variant; abandoned stages are ignored. |
+| Resource handling | Enforced scratch budget, bounded RSS accounting, clone and full-copy paths, disk-full/permission errors, read-only hits, cleanup, descriptor leak checks, and a measured sample-read budget below 1 MB. |
 | Mode and API lifecycle | Standalone FL2VA/Ref2VA models, both-mode models, missing selected mode, mode changes between library calls, and immutable context configuration. |
 | State compatibility | Cold/warm/rebuilt runtime variants resume identically under existing deterministic settings; changed effective weights reject; no-LoRA/legacy fingerprints remain compatible; hard/bridge AV continuation preserves its rules. |
 | Inference composition | Metal BF16 and supported CUDA BF16/fast/FP8/NVFP4, full/preview VAE, and source-content-based packed cache separation. |

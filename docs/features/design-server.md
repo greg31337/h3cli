@@ -308,7 +308,7 @@ available inside `h3cli`, not extra JSON keys. Keep their CLI names and meanings
 | Still | `still`, `save-still-latent`, `image-vae`; expose PNG and latent artifacts. |
 | Latent upscale | `save-upscale-state`, `upscale-state`, `upscale-model`, `upscale-refine-steps`, `upscale-noise`, `upscale-seed`, `upscale-import-sampler`, `inspect-upscale-state`. |
 | Preview / delivery | `preview-vae`, `no-preview-vae`, `preview-vae-model`, `frames-dir`; preview/full decode retains CLI behavior, frame directories become indexed downloadable artifacts. |
-| LoRA | Ordered repeatable `lora` entries with explicit scale, `lora-cache`, `lora-memory-mib`; preserve native folding, CoW behavior, and cache leases. |
+| LoRA | Ordered repeatable `lora` entries with explicit scale, `lora-cache`, `lora-memory-mib`; preserve native folding, CoW behavior, and bounded sample checks. The LoRA cache has no locks; serialize cache mutation through the worker. |
 | General approximation / placement | `reuse`, `layers`, `core-reuse`, `token-reduction`, `ssd-streaming`, `use-int8-row-fc2`, `use-reference-rope`. |
 | Metal | `backend`, `metal-attention`, `metal-attention-kernel`, `metal-attention-dtype`, `metal-tier`, `metal-attention-layout`, `metal-ane`, `metal-ane-rows`, `metal-ane-chunk`, `metal-weight-format`, `metal-q8-kernel`. Preserve opt-in requirements. |
 | SOL | `sol-q-block`, `sol-kv-block`, `sol-tau`, `sol-dense-layers`, `sol-dense-steps`, `sol-dense-sigma`, `sol-local-radius`, `sol-min-exact`; keep backend-specific interpretation. |

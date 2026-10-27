@@ -28,15 +28,25 @@ with tempfile.TemporaryDirectory(prefix='h3-lora-cli-') as tmp:
         run(['--info','--lora',str(adapter),'--lora-memory-mib',value],contains='positive integer')
     for value in ['nan','inf','1e100','bad','']:
         run(['--info','--lora',str(adapter)+':'+value],contains='invalid LoRA')
-    run(['--info','--lora',str(adapter),'--lora-cache',''],contains='invalid LoRA')
+    run(['--info','--lora',str(adapter),'--lora-cache',''],contains='invalid --lora-cache value')
     for flags in [['--lora',str(adapter)],['--lora-cache',str(cache)],['--lora-memory-mib','1']]:
         run(['--decode-av-state',str(root/'missing.h3av'),*flags],contains='decode-only accepts')
     output=run(['--resume-sampler-state',str(root/'missing.h3sample'),'--lora',str(adapter),'--lora-cache',str(cache)])
     assert 'generation-changing' not in output,output
     run(['--resume-sampler-state',str(root/'missing.h3sample'),'--lora',str(adapter),'--steps','2'],contains='generation-changing')
-    # Missing selected modes must fail before any fold/cache creation.
-    for mode,extra,message in [('Ref2VA',[],'require the FL2VA checkpoint'),('FL2VA',['--ref-image','inputs/face1.jpg'],'require the Ref2VA checkpoint')]:
-        stand=root/mode;stand.mkdir();(stand/mode).symlink_to(model/mode,target_is_directory=True)
+    # Keep shared assets present so offline preflight specifically rejects the
+    # missing selected transformer, before any fold/cache creation.
+    for mode,missing,extra in [('Ref2VA','FL2VA',[]),('FL2VA','Ref2VA',['--ref-image','tests/fixtures/cuda-reference/portrait.jpg'])]:
+        stand=root/mode;stand.mkdir()
+        for child in model.iterdir():
+            target=stand/child.name
+            if child.name not in ('FL2VA','Ref2VA'):
+                target.symlink_to(child,target_is_directory=child.is_dir());continue
+            target.mkdir()
+            for component in child.iterdir():
+                if child.name==missing and component.name=='transformer':continue
+                (target/component.name).symlink_to(component,target_is_directory=component.is_dir())
+        message=f'offline: missing required model file {missing}/transformer/'
         r=subprocess.run(['./bin/h3cli','-d',str(stand),'--lora',str(adapter),'--lora-cache',str(cache),'-p','A sunny park.','--width','128','--height','128','--frames','22','--steps','2',*extra],text=True,capture_output=True,timeout=45)
         assert r.returncode and message in r.stderr,r.stderr
         assert not cache.exists()

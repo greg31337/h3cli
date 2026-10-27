@@ -6,10 +6,9 @@ typedef struct h3_lora_selection h3_lora_selection;
 typedef struct {
     char *transformer;
     char key[65];
-    int lease;
     int cache_hit;
     double hash_seconds, verify_seconds, prepare_seconds;
-    size_t scratch_peak;
+    size_t scratch_peak, sampled_bytes;
 } h3_lora_variant;
 /* Host-only API: no GPU, tokenizer or model allocations. NULL options is a no-op. */
 int h3_lora_selection_create(const h3_lora_options *options,

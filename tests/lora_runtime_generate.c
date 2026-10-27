@@ -1,5 +1,5 @@
 /* Real-backend lifecycle test: owned options, both modes, prepared DiT reuse,
- * repeated content verification, deterministic latents, and cancellation. */
+ * repeated sample checks, deterministic latents, and cancellation. */
 #include "../src/h3.h"
 #include "../src/sampling/av_state.h"
 #include <stdio.h>

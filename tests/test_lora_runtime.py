@@ -11,7 +11,7 @@ import unittest
 import time
 import signal
 import random
-import concurrent.futures
+import re
 
 HOST = str(Path(os.environ.get('H3_LORA_HOST', './bin/lora_host')).resolve())
 
@@ -81,11 +81,11 @@ class RuntimeLoRA(unittest.TestCase):
         self.assertFalse(list((cache or self.cache).glob('variants/*/manifest.json')))
         return result
 
-    def test_native_and_verified_hit(self):
+    def test_native_and_sampled_hit(self):
         out,r=self.run_fold()
         self.assertEqual(values(out/'model.safetensors',self.name),[bf16(1.5),bf16(2)]*6)
         self.assertEqual(values(out/'model.safetensors','untouched'),[bf16(2),bf16(3)])
-        again,r=self.run_fold();self.assertEqual(out,again);self.assertIn('verified cache hit',r.stderr)
+        again,r=self.run_fold(env={'H3_TEST_LORA_FAULT':'full-hash'});self.assertEqual(out,again);self.assertIn('sampled cache hit',r.stderr)
         self.assertNotEqual(os.stat(out/'model.safetensors').st_ino,os.stat(self.base/'model.safetensors').st_ino)
 
     def test_scale_and_duplicate_order(self):
@@ -148,7 +148,7 @@ class RuntimeLoRA(unittest.TestCase):
         self.make_adapter(a=[float('nan'),1]);self.run_fold(str(self.adapter)+':0',good=False)
 
     def test_faults_and_short_writes(self):
-        for fault in ['selection-allocation','allocation','copy','permission','lock','write','enospc','fsync','rename']:
+        for fault in ['selection-allocation','allocation','copy','permission','full-hash','write','enospc','fsync','rename']:
             self.run_fold(good=False,env={'H3_TEST_LORA_FAULT':fault})
             self.assertFalse(list(self.cache.glob('staging/*')))
         out,_=self.run_fold(env={'H3_TEST_LORA_SHORT_WRITE':'1'})
@@ -197,21 +197,88 @@ class RuntimeLoRA(unittest.TestCase):
         paths=list(self.cache.rglob('*'))+[self.cache]
         for p in paths:p.chmod(0o500 if p.is_dir() else 0o400)
         try:
-            again,r=self.run_fold();self.assertEqual(out,again);self.assertIn('verified cache hit',r.stderr)
+            again,r=self.run_fold();self.assertEqual(out,again);self.assertIn('sampled cache hit',r.stderr)
             self.assertEqual(manifest.stat().st_mtime_ns,stamp)
         finally:
             for p in reversed(paths):p.chmod(0o700 if p.is_dir() else 0o600)
 
-    def test_concurrent_writers(self):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
-            outs=list(pool.map(lambda _:self.run_fold()[0],range(4)))
-        self.assertEqual(len(set(outs)),1);self.assertEqual(len(list(self.cache.glob('variants/*'))),1)
-        self.assertFalse(list(self.cache.glob('staging/*')))
-
-    def test_different_key_writers(self):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
-            outs=list(pool.map(lambda scale:self.run_fold(str(self.adapter)+':'+str(scale))[0],[0.25,0.5,0.75]))
+    def test_different_selections(self):
+        outs=[self.run_fold(str(self.adapter)+':'+str(scale))[0] for scale in [0.25,0.5,0.75]]
         self.assertEqual(len(set(outs)),3)
+
+    def test_normal_directory_permissions_and_cache_alias(self):
+        self.cache.mkdir();self.cache.chmod(0o2775)
+        out,_=self.run_fold()
+        self.assertFalse((self.cache/'locks').exists())
+        for mode in [0o755,0o775,0o2775,0o777]:
+            for p in [self.cache,*(p for p in self.cache.rglob('*') if p.is_dir())]:p.chmod(mode)
+            again,r=self.run_fold(env={'H3_TEST_LORA_FAULT':'full-hash'})
+            self.assertEqual(out,again);self.assertIn('sampled cache hit',r.stderr)
+        alias=self.root/'cache-alias';alias.symlink_to(self.cache,target_is_directory=True)
+        again,_=self.run_fold(cache=alias,env={'H3_TEST_LORA_FAULT':'full-hash'})
+        self.assertEqual(out,again)
+
+    def test_readonly_sources_can_be_folded(self):
+        p=self.base/'model.safetensors';p.chmod(0o444)
+        try:
+            out,_=self.run_fold()
+            self.assertEqual(values(out/'model.safetensors',self.name),[bf16(1.5),bf16(2)]*6)
+            self.assertEqual(p.stat().st_mode&0o777,0o444)
+        finally:p.chmod(0o644)
+
+    def test_legacy_cache_upgrade_preserves_weights_and_key(self):
+        out,_=self.run_fold();before={p.name:(p.stat().st_mtime_ns,p.read_bytes()) for p in out.iterdir()}
+        shutil.rmtree(self.cache/'samples')
+        # Legacy locks have no role in either migration or reuse.
+        (self.cache/'locks').mkdir();(self.cache/'locks'/(out.parent.name+'.lock')).write_text('legacy')
+        again,r=self.run_fold();self.assertEqual(out,again);self.assertIn('fully verified cache hit',r.stderr)
+        self.assertEqual(before,{p.name:(p.stat().st_mtime_ns,p.read_bytes()) for p in out.iterdir()})
+        _,r=self.run_fold(env={'H3_TEST_LORA_FAULT':'full-hash'});self.assertIn('sampled cache hit',r.stderr)
+
+    def test_invalid_sample_record_falls_back(self):
+        out,_=self.run_fold()
+        record=next((self.cache/'samples').glob('*.json'))
+        for text in ['{}','not json','x'*4097,json.dumps(dict(schema=1,input=record.stem,output='0'*64,key='../bad'))]:
+            record.write_text(text)
+            again,r=self.run_fold();self.assertEqual(out,again);self.assertIn('fully verified cache hit',r.stderr)
+            _,r=self.run_fold(env={'H3_TEST_LORA_FAULT':'full-hash'});self.assertIn('sampled cache hit',r.stderr)
+
+    def test_sampling_budget_and_distributed_changes(self):
+        # Large non-tensor files exercise bounded sampling without a large fold.
+        for name in ['large-a.bin','large-b.bin']:
+            with (self.base/name).open('wb') as f:f.truncate(8*1024*1024)
+        out,_=self.run_fold()
+        _,r=self.run_fold(env={'H3_TEST_LORA_FAULT':'full-hash'})
+        sampled=int(re.search(r'sampled (\d+) bytes',r.stderr)[1])
+        self.assertGreater(sampled,100_000);self.assertLessEqual(sampled,768*1024)
+        self.assertNotIn('source hashing/planning',r.stderr)
+        self.assertNotIn('LoRA adapter 1:',r.stderr)
+        # Beginning, interior and end of BOTH cached large files are checked.
+        count=len(list(out.iterdir()))+1  # cached manifest is sampled as well
+        block=min(4096,(384*1024//count)//32)
+        for name in ['large-a.bin','large-b.bin']:
+            p=out/name
+            for offset in [0,((p.stat().st_size-block)*16)//31,p.stat().st_size-1]:
+                with p.open('r+b') as f:f.seek(offset);f.write(b'x')
+                again,r=self.run_fold();self.assertEqual(out,again);self.assertIn('quarantined',r.stderr)
+                with p.open('rb') as f:f.seek(offset);self.assertEqual(f.read(1),b'\0')
+        # A changed input sample selects a new full-content fold identity.
+        with (self.base/'large-a.bin').open('r+b') as f:f.write(b'x')
+        changed,_=self.run_fold();self.assertNotEqual(changed,out)
+
+    def test_unsampled_change_is_outside_fast_check_contract(self):
+        with (self.base/'large.bin').open('wb') as f:f.truncate(8*1024*1024)
+        out,_=self.run_fold();p=out/'large.bin'
+        # With 32 evenly spaced windows the exact midpoint is in an unread gap.
+        with p.open('r+b') as f:f.seek(p.stat().st_size//2);f.write(b'x')
+        again,r=self.run_fold(env={'H3_TEST_LORA_FAULT':'full-hash'})
+        self.assertEqual(again,out);self.assertIn('sampled cache hit',r.stderr)
+
+    def test_cancel_sampling_leaves_cache_unchanged(self):
+        out,_=self.run_fold();before=(out.parent/'manifest.json').read_bytes()
+        r=subprocess.run([HOST,str(self.base),str(self.cache),'512',str(self.adapter)],text=True,capture_output=True,
+            env={**os.environ,'H3_TEST_MIN_AVAILABLE_MEMORY_BYTES':'0','H3_TEST_LORA_CANCEL_PHASE':'cache sampling'})
+        self.assertNotEqual(r.returncode,0);self.assertEqual(before,(out.parent/'manifest.json').read_bytes())
 
     def start_paused(self,phase):
         p=subprocess.Popen([HOST,str(self.base),str(self.cache),'512',str(self.adapter)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,
@@ -227,8 +294,9 @@ class RuntimeLoRA(unittest.TestCase):
         for phase in ['hashing','copying','folding','validating','publishing']:
             p=self.start_paused(phase);p.kill();p.communicate(timeout=5)
             self.assertFalse(list(self.cache.glob('variants/*/manifest.json')))
+            abandoned=set(self.cache.glob('staging/*'))
             out,_=self.run_fold();shutil.rmtree(out.parent)
-            self.assertFalse(list(self.cache.glob('staging/*')))
+            self.assertEqual(abandoned,set(self.cache.glob('staging/*')))
 
     def test_source_mutation_during_fold(self):
         for phase in ['folding','publishing']:
@@ -323,19 +391,6 @@ class RuntimeLoRA(unittest.TestCase):
             dot=0.0
             for rank in range(k):dot=f32(dot+f32(B[row*k+rank]*A[rank*c+col]))
             self.assertEqual(got[row*c+col],bf16(f32(1+dot)))
-
-    def test_lease_blocks_repair(self):
-        out,_=self.run_fold()
-        env={**os.environ,'H3_TEST_MIN_AVAILABLE_MEMORY_BYTES':'0','H3_TEST_LORA_LEASE_SECONDS':'3'}
-        holder=subprocess.Popen([HOST,str(self.base),str(self.cache),'512',str(self.adapter)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,env=env)
-        self.assertEqual(Path(holder.stdout.readline().strip()),out)
-        (out/'model.safetensors').write_bytes(b'broken')
-        writer=subprocess.Popen([HOST,str(self.base),str(self.cache),'512',str(self.adapter)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,
-            env={**os.environ,'H3_TEST_MIN_AVAILABLE_MEMORY_BYTES':'0'})
-        time.sleep(.25);self.assertIsNone(writer.poll());self.assertFalse(list(self.cache.glob('invalid/*')))
-        holder.terminate();holder.communicate(timeout=5)
-        stdout,stderr=writer.communicate(timeout=5);self.assertEqual(writer.returncode,0,stderr)
-        self.assertEqual(Path(stdout.strip()),out)
 
     def test_folded_parent(self):
         parent,_=self.run_fold();child_cache=self.root/'child-cache'

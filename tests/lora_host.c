@@ -20,7 +20,7 @@ int main(int argc,char **argv) {
     if(argc<5){fprintf(stderr,"usage: lora_host transformer cache memory_mib [--ref2va] adapter...\n");return 2;}
     int first=4,mode=0;if(!strcmp(argv[first],"--ref2va")){mode=1;first++;}
     h3_lora_options options={.adapters=(const char *const *)(argv+first),.count=(size_t)(argc-first),.cache_dir=argv[2],.memory_mib=(size_t)strtoull(argv[3],NULL,10)};
-    h3_lora_selection *s=NULL;h3_lora_variant v={.lease=-1};char error[512];
+    h3_lora_selection *s=NULL;h3_lora_variant v={0};char error[512];
     const char *round=getenv("H3_TEST_LORA_ROUND");
     if(round)fesetround(FE_DOWNWARD);
 #if defined(__aarch64__)
@@ -43,6 +43,5 @@ int main(int argc,char **argv) {
     if((before_mxcsr&0xffc0)!=(_mm_getcsr()&0xffc0)){fprintf(stderr,"ERROR: caller MXCSR changed\n");return 1;}
 #endif
     printf("%s\n",v.transformer);fflush(stdout);
-    const char *hold=getenv("H3_TEST_LORA_LEASE_SECONDS");if(hold)sleep((unsigned)atoi(hold));
     h3_lora_variant_free(&v);h3_lora_selection_free(s);return 0;
 }

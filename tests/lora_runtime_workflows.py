@@ -8,7 +8,6 @@ models/adapters, ffmpeg, and a functioning Metal or CUDA build. No downloads.
 import os
 os.environ["H3_OFFLINE"] = "1"  # Tests use provisioned weights; never fetch implicitly.
 import argparse
-import fcntl
 import hashlib
 import json
 from pathlib import Path
@@ -31,7 +30,7 @@ p.add_argument('--offline-model',help='Existing standalone offline-folded model 
 p.add_argument('--output',required=True)
 p.add_argument('--moved-directory',help='Directory for a copied adapter and relocated model aliases')
 p.add_argument('--allow-evict-generated-variant',action='store_true',
-               help='Permit recovery case to remove its recorded baseline cache entry under an exclusive lease')
+               help='Permit recovery case to remove its recorded baseline cache entry; run with no other cache users')
 p.add_argument('--cases',nargs='+',default=['baseline','resume','ref-resume','continuation'])
 a=p.parse_args();out=Path(a.output);out.mkdir(parents=True,exist_ok=True)
 env={**os.environ,'H3_CPU_SAMPLER':'1'}
@@ -120,10 +119,8 @@ if 'recovery' in a.cases:
     entry=Path(a.cache)/'variants'/key
     manifest=json.loads((entry/'manifest.json').read_text())
     (out/'pre-eviction-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
-    with (Path(a.cache)/'locks'/(key+'.lock')).open('rb') as lock:
-        fcntl.flock(lock,fcntl.LOCK_EX)
-        assert entry.is_dir() and not entry.is_symlink()
-        shutil.rmtree(entry)
+    assert entry.is_dir() and not entry.is_symlink()
+    shutil.rmtree(entry)
     resumed=run('rebuilt-resumed',args+['--resume-sampler-state',str(state)]+preview())
     assert sha(resumed)==sha(baseline),'cold rebuilt checkpoint resume latents differ'
     after=json.loads((entry/'manifest.json').read_text())

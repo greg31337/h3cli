@@ -4,6 +4,14 @@ Validation date: September 19, 2026. Implementation and required hardware
 acceptance are complete within the scope below. The checklist is [../todo.md](../todo.md); architectural details are
 in [design-runtime-lora.md](design-runtime-lora.md).
 
+The timings and concurrency results below describe the original September
+implementation. The October update replaces full hashing on warm hits with
+bounded samples and removes LoRA locks and private-directory requirements.
+Current behavior is documented in the [LoRA guide](../../lora/README.md#cache-and-resource-costs)
+and measured in the [sample-cache validation](cache-sampling-validation.md).
+The retained arithmetic, cold-build and state-compatibility results remain
+historical evidence; the old warm timings and locking tests are superseded.
+
 ## Reproduction and scope
 
 The native runtime has no Python dependency. Validation uses these independent

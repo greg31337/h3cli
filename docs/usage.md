@@ -24,8 +24,10 @@ removed. The [original-model VAE guide](preview/fast-vae.md) covers saved
 latent decoding and validation. `--preview-vae` stays separate.
 
 For adapters, use repeatable `--lora PATH[:SCALE]` flags with the original model:
-H3 folds a missing BF16 variant at startup and verifies cached variants on later
-requests. `--lora-cache DIR` selects storage and `--lora-memory-mib N` bounds
+H3 folds a missing BF16 variant at startup and checks distributed samples of
+cached variants on later requests (at most 768 KiB of inputs and cached data).
+The cache uses normal filesystem permissions and assumes single-user management
+without locks. `--lora-cache DIR` selects storage and `--lora-memory-mib N` bounds
 folding allocations (default 512 MiB). This native path works with Metal and
 CUDA, requires no Python, and composes with FP8/NVFP4 and preview VAE. See the
 [LoRA guide](../lora/README.md#runtime-folding-metal-and-cuda) for first-run costs,

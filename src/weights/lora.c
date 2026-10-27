@@ -20,7 +20,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/file.h>
 #include <sys/statvfs.h>
 #include <time.h>
 #include <unistd.h>
@@ -42,6 +41,8 @@
 #define IDENTITY "h3_lora_manifest.json"
 #define RECIPE "h3-runtime-lora/schema=1/mapping=1/recipe=1"
 #define IO_SIZE 65536u
+#define SAMPLE_BUDGET (384u * 1024u) /* Each of inputs and cached outputs. */
+#define SAMPLE_WINDOWS 32u
 #define MIN(a,b) ((a)<(b)?(a):(b))
 
 typedef struct { char *path; double scale; } adapter_arg;
@@ -77,7 +78,7 @@ typedef struct {
     double last_check;
     const char *last_phase;
     double hash_seconds, copy_seconds, fold_seconds, validation_seconds;
-    size_t cloned_files, copied_files;
+    size_t cloned_files, copied_files, sampled_bytes;
 } work;
 static int fail(work *w,const char *fmt,...) {
     va_list ap;va_start(ap,fmt);
@@ -134,6 +135,7 @@ static int io_write(work *w,int fd,const void *buf,size_t n,uint64_t off) {
         p+=r;n-=(size_t)r;off+=(uint64_t)r;}return 1;
 }
 static int hash_file(work *w,source_file *f,int recheck) {
+    if(!injected(w,"full-hash"))return 0;
     if(!checkpoint(w,"LoRA hashing",0,0))return 0;
     int fd=open(f->path,O_RDONLY);struct stat a={0},b={0},pathstat={0};
     if(fd<0)return fail(w,"%s: %s",f->path,strerror(errno));
@@ -213,7 +215,7 @@ void h3_lora_selection_print(const h3_lora_selection *s,FILE *out) {
     fprintf(out,"Runtime LoRA: %zu adapter(s), %zu MiB scratch, cache %s\n",s->count,s->budget/(1024*1024),s->cache);
     for(size_t i=0;i<s->count;i++)fprintf(out,"  [%zu] %s : %.17g\n",i+1,s->args[i].path,s->args[i].scale);
 }
-void h3_lora_variant_free(h3_lora_variant *v) {if(!v)return;if(v->transformer&&v->lease>=0)close(v->lease);free(v->transformer);memset(v,0,sizeof(*v));v->lease=-1;}
+void h3_lora_variant_free(h3_lora_variant *v) {if(!v)return;free(v->transformer);memset(v,0,sizeof(*v));}
 
 static int reserve_plan(work *w,size_t bytes) {
     if(bytes>w->selection->budget || w->plan_bytes>w->selection->budget-bytes ||
@@ -631,24 +633,23 @@ static char *future_path(const char *path) {
         if(result)snprintf(result,n,"%s%s%s",resolved,end==1&&normal[end]?"/":"",normal+end);}
     free(copy);free(normal);free(resolved);return result;
 }
-static int private_dir(work *w,const char *path,int create) {
+static int cache_dir(work *w,const char *path,int create) {
     struct stat st;
-    if(lstat(path,&st)){
+    if(stat(path,&st)){
         if(errno!=ENOENT||!create)return fail(w,"cache directory %s: %s",path,strerror(errno));
         char *parent=strdup(path);if(!parent)return fail(w,"out of memory");char *slash=strrchr(parent,'/');
-        if(slash&&slash!=parent){*slash=0;struct stat ps;if(stat(parent,&ps)&&!private_dir(w,parent,1)){free(parent);return 0;}}
-        free(parent);if(mkdir(path,0700)&&errno!=EEXIST)return fail(w,"cannot create cache %s: %s",path,strerror(errno));
-        if(lstat(path,&st))return fail(w,"cannot stat cache %s",path);
+        if(slash&&slash!=parent){*slash=0;struct stat ps;if(stat(parent,&ps)&&!cache_dir(w,parent,1)){free(parent);return 0;}}
+        free(parent);if(mkdir(path,0777)&&errno!=EEXIST)return fail(w,"cannot create cache %s: %s",path,strerror(errno));
+        if(stat(path,&st))return fail(w,"cannot stat cache %s",path);
     }
-    if(!S_ISDIR(st.st_mode)||st.st_uid!=geteuid()||(st.st_mode&0077))return fail(w,"cache must be an owned directory with private permissions and no symlinks: %s",path);
+    if(!S_ISDIR(st.st_mode))return fail(w,"cache path is not a directory: %s",path);
     return 1;
 }
 static int under(const char *path,const char *dir) {size_t n=strlen(dir);return !strncmp(path,dir,n)&&(path[n]==0||path[n]=='/');}
 static int sync_dir(work *w,const char *path) {if(!injected(w,"fsync"))return 0;int fd=open(path,O_RDONLY|O_DIRECTORY|O_NOFOLLOW);int ok=fd>=0&&fsync(fd)==0;if(fd>=0)close(fd);return ok?1:fail(w,"cache directory fsync failed: %s",strerror(errno));}
-/* Only called for our private staging trees, under their stable key lock. */
+/* Only remove the unpublished staging tree created by this invocation. */
 static int remove_tree(const char *path) {
     struct stat st;if(lstat(path,&st))return errno==ENOENT;
-    if(st.st_uid!=geteuid())return 0;
     if(!S_ISDIR(st.st_mode))return unlink(path)==0;
     DIR *d=opendir(path);if(!d)return 0;struct dirent *e;int ok=1;
     while((e=readdir(d)))if(strcmp(e->d_name,".")&&strcmp(e->d_name,"..")){
@@ -656,20 +657,16 @@ static int remove_tree(const char *path) {
     }
     closedir(d);return ok&&rmdir(path)==0;
 }
-static int lock_wait(work *w,int fd,int mode) {
-    if(!injected(w,"lock"))return 0;
-    for(;;){if(!flock(fd,mode|LOCK_NB))return 1;
-        if(errno!=EWOULDBLOCK&&errno!=EAGAIN&&errno!=EINTR)return fail(w,"LoRA cache lock failed: %s",strerror(errno));
-        if(!checkpoint(w,"LoRA waiting for cache lock",0,0))return 0;
-        struct timespec t={0,100000000};nanosleep(&t,NULL);
-    }
-}
 static int copy_file(work *w,source_file *src,const char *dest,int replace_clone) {
     if(!injected(w,"copy")||!injected(w,"permission"))return 0;
 #ifdef __APPLE__
-    if(!replace_clone&&!clonefile(src->path,dest,0)){w->cloned_files++;src->cloned=1;return chmod(dest,0600)==0;}
+    if(!replace_clone&&!clonefile(src->path,dest,0)){
+        w->cloned_files++;src->cloned=1;
+        /* Clones of read-only source weights must be writable for folding. */
+        return chmod(dest,(src->stamp.st_mode&0666)|0600)==0;
+    }
 #endif
-    int in=open(src->path,O_RDONLY),out=open(dest,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600),ok=0;
+    int in=open(src->path,O_RDONLY),out=open(dest,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0666),ok=0;
     if(in<0||out<0){fail(w,"cannot create independent cache copy: %s",strerror(errno));goto end;}
 #ifndef __APPLE__
     if(!replace_clone&&!ioctl(out,FICLONE,in)){w->cloned_files++;src->cloned=1;ok=1;goto end;}
@@ -748,7 +745,7 @@ static int identity_emit(work *w,FILE *f,const char *key,int mode) {
 }
 static int identity_write(work *w,const char *dir,const char *key,int mode) {
     char *p=join(dir,IDENTITY);if(!p)return fail(w,"out of memory");
-    int fd=open(p,O_WRONLY|O_CREAT|O_TRUNC|O_NOFOLLOW,0600);free(p);
+    int fd=open(p,O_WRONLY|O_CREAT|O_TRUNC|O_NOFOLLOW,0666);free(p);
     if(fd<0)return fail(w,"cannot write LoRA identity");
     FILE *f=fdopen(fd,"w");if(!f){close(fd);return 0;}
     int written=identity_emit(w,f,key,mode);return finish_file(w,f)&&written;
@@ -761,7 +758,7 @@ static int identity_digest(work *w,const char *key,int mode,unsigned char digest
 }
 static int manifest_write(work *w,const char *stage,const char *key,int mode) {
     char *transformer=join(stage,"transformer"),*path=join(stage,"manifest.json");if(!path||!transformer){free(path);free(transformer);return 0;}
-    int fd=open(path,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);free(path);
+    int fd=open(path,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0666);free(path);
     FILE *f=fd>=0?fdopen(fd,"w"):NULL;if(!f){if(fd>=0)close(fd);free(transformer);return fail(w,"cannot create cache manifest");}
     fprintf(f,"{\"schema\":1,\"key\":\"%s\",\"mode\":%d,\"scratch_peak\":%zu,\"sources\":[",key,mode,w->scratch_peak);
     for(size_t i=0;i<w->selection->count;i++){if(i)fputc(',',f);lj_quote(f,w->selection->args[i].path);}fputs("],\"source_files\":[",f);
@@ -798,7 +795,7 @@ static int manifest_write(work *w,const char *stage,const char *key,int mode) {
 static int verify_entry(work *w,const char *entry,const char *key,int mode) {
     char *path=join(entry,"manifest.json"),*dir=join(entry,"transformer");struct stat st;
     if(!path||!dir){free(path);free(dir);return 0;}
-    int ok=lstat(entry,&st)==0&&S_ISDIR(st.st_mode)&&st.st_uid==geteuid()&&lstat(path,&st)==0&&S_ISREG(st.st_mode)&&
+    int ok=lstat(entry,&st)==0&&S_ISDIR(st.st_mode)&&lstat(path,&st)==0&&S_ISREG(st.st_mode)&&
         lstat(dir,&st)==0&&S_ISDIR(st.st_mode);
     if(ok){
         DIR *d=opendir(entry);struct dirent *e;size_t count=0;
@@ -835,7 +832,7 @@ static int verify_entry(work *w,const char *entry,const char *key,int mode) {
         for(size_t j=0;j<i;j++){const lj_value *other=lj_get(files->items[j],"name");if(other&&!strcmp(other->text,name->text))known=0;}
         if(!known){ok=0;break;}
         source_file f={.path=join(dir,name->text)};
-        ok=f.path&&lstat(f.path,&st)==0&&S_ISREG(st.st_mode)&&st.st_nlink==1&&st.st_uid==geteuid()&&hash_file(w,&f,0);
+        ok=f.path&&lstat(f.path,&st)==0&&S_ISREG(st.st_mode)&&st.st_nlink==1&&hash_file(w,&f,0);
         if(ok){char h[65];hex(f.digest,h);ok=(double)f.size==size->number&&!strcmp(h,digest->text);if(!strcmp(name->text,IDENTITY))memcpy(stored_identity,f.digest,32);}file_free(&f);
     }
     /* Enforce canonical deterministic identity bytes, not merely equivalent
@@ -844,14 +841,153 @@ static int verify_entry(work *w,const char *entry,const char *key,int mode) {
     lj_free(manifest);free(path);free(dir);return ok;
 }
 
+/* A small, disposable lookup maps sampled inputs to the unchanged full-content
+ * fold key. Old caches are verified once to seed it; model identity and sampler
+ * compatibility do not change. Samples deliberately cannot detect changes in
+ * unread bytes. This is a single-user cache, with no writer/reader coordination. */
+typedef struct { source_file *files; size_t count; } sample_set;
+static void sample_free(sample_set *set) {
+    for(size_t i=0;i<set->count;i++)file_free(&set->files[i]);
+    free(set->files);memset(set,0,sizeof(*set));
+}
+static int sample_stamps(const sample_set *set) {
+    for(size_t i=0;i<set->count;i++){struct stat st;if(stat(set->files[i].path,&st)||!same_stamp(&st,&set->files[i].stamp))return 0;}
+    return 1;
+}
+static int sample_add(work *w,sample_set *set,const char *name,const char *path,int output) {
+    if(!reserve_plan(w,sizeof(source_file)+strlen(name)+strlen(path)+2))return 0;
+    source_file *files=realloc(set->files,(set->count+1)*sizeof(*files));
+    if(!files)return fail(w,"out of memory listing LoRA samples");
+    set->files=files;source_file *f=&files[set->count++];memset(f,0,sizeof(*f));
+    f->name=strdup(name);f->path=strdup(path);
+    if(!f->name||!f->path)return fail(w,"out of memory listing LoRA samples");
+    if((output?lstat(path,&f->stamp):stat(path,&f->stamp))||!S_ISREG(f->stamp.st_mode)||
+       f->stamp.st_size<0||(output&&f->stamp.st_nlink!=1))return fail(w,"invalid LoRA sample file: %s",path);
+    f->size=(uint64_t)f->stamp.st_size;return 1;
+}
+static int sample_inputs(work *w,const char *source,sample_set *set,size_t *base_count) {
+    struct dirent **items=NULL;int count=scandir(source,&items,NULL,entry_order),ok=1;
+    if(count<0)return fail(w,"cannot list LoRA transformer: %s",source);
+    for(int i=0;i<count;i++) {
+        const char *name=items[i]->d_name;
+        if(ok&&strcmp(name,".")&&strcmp(name,"..")) {
+            char *path=join(source,name),*label=join("base",name);
+            ok=path&&label&&sample_add(w,set,label,path,0);free(path);free(label);
+        }
+        free(items[i]);
+    }
+    free(items);*base_count=set->count;
+    for(size_t i=0;ok&&i<w->selection->count;i++) {
+        char label[64];snprintf(label,sizeof(label),"adapter/%zu",i);
+        ok=sample_add(w,set,label,w->selection->args[i].path,0);
+    }
+    return ok;
+}
+static int directory_count(const char *path,size_t expected) {
+    struct stat st;if(lstat(path,&st)||!S_ISDIR(st.st_mode))return 0;
+    DIR *dir=opendir(path);if(!dir)return 0;
+    size_t count=0;struct dirent *item;
+    while((item=readdir(dir)))if(strcmp(item->d_name,".")&&strcmp(item->d_name,".."))count++;
+    closedir(dir);return count==expected;
+}
+static int sample_outputs(work *w,const sample_set *inputs,size_t base_count,const char *entry,sample_set *set) {
+    char *dir=join(entry,"transformer"),*manifest=join(entry,"manifest.json");
+    int ok=dir&&manifest&&directory_count(entry,2),has_identity=0;
+    for(size_t i=0;ok&&i<base_count;i++) {
+        const char *name=inputs->files[i].name+5; /* strip base/ */
+        if(!strcmp(name,IDENTITY))has_identity=1;
+        char *path=join(dir,name);ok=path&&sample_add(w,set,name,path,1);free(path);
+    }
+    if(ok&&!has_identity){char *path=join(dir,IDENTITY);ok=path&&sample_add(w,set,IDENTITY,path,1);free(path);}
+    if(ok)ok=directory_count(dir,set->count)&&sample_add(w,set,"manifest.json",manifest,1);
+    free(dir);free(manifest);return ok;
+}
+static int sample_block(work *w,int fd,h3_sha256_ctx *hash,uint64_t offset,size_t bytes) {
+    unsigned char data[4096];
+    if(bytes>sizeof(data)||!io_read(w,fd,data,bytes,offset))return 0;
+    hash_u64(hash,offset);hash_u64(hash,bytes);h3_sha256_update(hash,data,(h3_sha256_size)bytes);
+    w->sampled_bytes+=bytes;return 1;
+}
+static int sample_digest(work *w,const sample_set *set,int mode,int inputs,char digest[65]) {
+    if(!set->count||set->count>SAMPLE_BUDGET)return fail(w,"too many files for bounded LoRA sampling");
+    h3_sha256_ctx hash;h3_sha256_init_fast(&hash);
+    hash_string(&hash,"h3-lora-samples/v1");hash_string(&hash,RECIPE);
+    hash_u64(&hash,SAMPLE_BUDGET);hash_u64(&hash,SAMPLE_WINDOWS);hash_u64(&hash,(uint64_t)inputs);
+    hash_u64(&hash,(uint64_t)mode);hash_u64(&hash,set->count);
+    if(inputs)for(size_t i=0;i<w->selection->count;i++) {
+        uint64_t bits;memcpy(&bits,&w->selection->args[i].scale,8);hash_u64(&hash,bits);
+    }
+    const size_t quota=SAMPLE_BUDGET/set->count;
+    for(size_t i=0;i<set->count;i++) {
+        if(!checkpoint(w,"LoRA cache sampling",0,0))return 0;
+        const source_file *f=&set->files[i];struct stat before,after,pathstat;
+        int fd=open(f->path,O_RDONLY);
+        if(fd<0)return fail(w,"cannot sample LoRA file: %s",f->path);
+        int ok=fstat(fd,&before)==0&&same_stamp(&before,&f->stamp);
+        hash_string(&hash,f->name);hash_u64(&hash,f->size);
+        if(f->size<=quota) {
+            for(uint64_t off=0;ok&&off<f->size;){size_t n=(size_t)MIN(4096,f->size-off);ok=sample_block(w,fd,&hash,off,n);off+=n;}
+        }else {
+            size_t windows=MIN(SAMPLE_WINDOWS,quota),bytes=MIN(4096,quota/windows);
+            uint64_t span=f->size-bytes;
+            for(size_t j=0;ok&&j<windows;j++) {
+                /* Quotient/remainder form avoids overflow for very large files. */
+                uint64_t off=windows==1?span/2:(span/(windows-1))*j+(span%(windows-1))*j/(windows-1);
+                ok=sample_block(w,fd,&hash,off,bytes);
+            }
+        }
+        ok=ok&&fstat(fd,&after)==0&&stat(f->path,&pathstat)==0&&same_stamp(&before,&after)&&same_stamp(&before,&pathstat);
+        close(fd);if(!ok)return fail(w,"LoRA file changed during sampling: %s",f->path);
+    }
+    unsigned char raw[32];h3_sha256_final(raw,&hash);hex(raw,digest);return 1;
+}
+static int digest_text(const lj_value *v) {
+    return v&&v->type==LJ_STRING&&strlen(v->text)==64&&strspn(v->text,"0123456789abcdef")==64;
+}
+static char *sample_record_path(const char *root,const char *input) {
+    char name[96];snprintf(name,sizeof(name),"samples/%s.json",input);return join(root,name);
+}
+static int sample_lookup(work *w,const char *root,const sample_set *inputs,size_t base_count,
+                         const char *input,int mode,char key[65]) {
+    char *path=sample_record_path(root,input);struct stat st;
+    /* Metadata is tiny and bounded separately from the 768 KiB data samples. */
+    int ok=path&&stat(path,&st)==0&&S_ISREG(st.st_mode)&&st.st_size>0&&st.st_size<=4096;
+    lj_value *record=ok?lj_file(path,w->error,w->error_size):NULL;free(path);
+    const lj_value *schema=lj_get(record,"schema"),*in=lj_get(record,"input"),*out=lj_get(record,"output"),*k=lj_get(record,"key");
+    ok=schema&&schema->type==LJ_NUMBER&&schema->number==1&&digest_text(in)&&!strcmp(in->text,input)&&digest_text(out)&&digest_text(k);
+    sample_set outputs={0};char *variants=NULL,*entry=NULL,actual[65];
+    if(ok){variants=join(root,"variants");entry=variants?join(variants,k->text):NULL;
+        ok=entry&&sample_outputs(w,inputs,base_count,entry,&outputs)&&sample_digest(w,&outputs,mode,0,actual)&&!strcmp(actual,out->text);}
+    if(ok)ok=sample_stamps(inputs)&&sample_stamps(&outputs);
+    if(ok)strcpy(key,k->text);
+    sample_free(&outputs);free(variants);free(entry);lj_free(record);return ok;
+}
+static int sample_record(work *w,const char *root,const sample_set *inputs,size_t base_count,
+                         const char *input,const char *entry,const char *key,int mode) {
+    if(!sample_stamps(inputs))return fail(w,"LoRA inputs changed before saving sample record");
+    sample_set outputs={0};char digest[65];
+    int ok=sample_outputs(w,inputs,base_count,entry,&outputs)&&sample_digest(w,&outputs,mode,0,digest);
+    sample_free(&outputs);if(!ok)return 0;
+    char *dir=join(root,"samples"),*path=sample_record_path(root,input),*temp=dir?join(dir,".sample-XXXXXX"):NULL;
+    int fd=-1;
+    if(dir&&path&&temp&&cache_dir(w,dir,1))fd=mkstemp(temp);
+    FILE *f=fd>=0?fdopen(fd,"w"):NULL;
+    if(!f){if(fd>=0)close(fd);ok=0;}
+    else {fprintf(f,"{\"schema\":1,\"input\":\"%s\",\"output\":\"%s\",\"key\":\"%s\"}\n",input,digest,key);
+        ok=finish_file(w,f)&&rename(temp,path)==0&&sync_dir(w,dir);}
+    if(temp)unlink(temp);
+    free(dir);free(path);free(temp);return ok;
+}
+
 int h3_lora_prepare(const h3_lora_selection *selection,const char *source,int mode,
     h3_progress_callback progress,void *opaque,h3_lora_variant *variant,char *error,size_t cap) {
     if(error&&cap)error[0]=0;
     if(!variant){if(error&&cap)snprintf(error,cap,"missing LoRA variant output");return 0;}
-    if(!selection){memset(variant,0,sizeof(*variant));variant->lease=-1;return 1;}
+    if(!selection){memset(variant,0,sizeof(*variant));return 1;}
     work w={.selection=selection,.progress=progress,.opaque=opaque,.error=error,.error_size=cap};
-    double start=now(),hashed=0,verified=0;int ok=0,lock=-1,published=0,hit=0;
-    char *root=NULL,*locks=NULL,*variants=NULL,*staging=NULL,*invalid=NULL,*entry=NULL,*lockpath=NULL,*stage=NULL,*outdir=NULL;
+    double start=now(),hashed=0,verified=0;int ok=0,published=0,hit=0,sampled_hit=0;
+    char *root=NULL,*variants=NULL,*staging=NULL,*invalid=NULL,*entry=NULL,*stage=NULL,*outdir=NULL;
+    sample_set inputs={0};size_t base_count=0;char input_sample[65];
     char key[65]={0};locale_t previous_locale=uselocale((locale_t)0),numeric_locale=newlocale(LC_NUMERIC_MASK,"C",(locale_t)0);fenv_t env;int env_saved=fegetenv(&env)==0;
 #if defined(__SSE__)
     unsigned mxcsr=_mm_getcsr();_mm_setcsr(mxcsr&~0x8040u);
@@ -862,6 +998,23 @@ int h3_lora_prepare(const h3_lora_selection *selection,const char *source,int mo
     if(!numeric_locale||!uselocale(numeric_locale)){fail(&w,"cannot establish locale-independent LoRA metadata");goto end;}
     if(!env_saved||fesetround(FE_TONEAREST)){fail(&w,"cannot establish deterministic LoRA floating-point environment");goto end;}
     if(!source||mode<0||mode>1||selection->budget<1024*1024){fail(&w,"invalid LoRA source/mode or scratch budget");goto end;}
+    root=future_path(selection->cache);char *resolved_source=realpath(source,NULL);
+    if(!root||!resolved_source){free(resolved_source);fail(&w,"cannot resolve cache/source directories");goto end;}
+    int overlap=under(root,resolved_source)||under(resolved_source,root);
+    for(size_t i=0;i<selection->count;i++)if(under(selection->args[i].path,root))overlap=1;
+    free(resolved_source);if(overlap){fail(&w,"LoRA cache must not overlap transformer or adapter sources");goto end;}
+    variants=join(root,"variants");staging=join(root,"staging");invalid=join(root,"invalid");
+    if(!variants||!staging||!invalid)goto oom;
+    if(!sample_inputs(&w,source,&inputs,&base_count)||!sample_digest(&w,&inputs,mode,1,input_sample))goto end;
+    hashed=now()-start;
+    double verify_start=now();
+    if(sample_lookup(&w,root,&inputs,base_count,input_sample,mode,key)) {
+        sampled_hit=hit=1;verified=now()-verify_start;w.scratch_peak=w.plan_bytes+4096;
+        entry=join(variants,key);if(!entry)goto oom;
+        goto ready;
+    }
+    if(w.cancelled)goto end;
+    if(error&&cap)error[0]=0;
     if(!checkpoint(&w,"LoRA planning and hashing",0,0)||!inventory(&w,source))goto end;
     w.adapters=calloc(selection->count,sizeof(*w.adapters));if(!w.adapters){fail(&w,"out of memory");goto end;}
     for(size_t i=0;i<selection->count;i++)if(!plan_adapter(&w,i))goto end;
@@ -873,51 +1026,24 @@ int h3_lora_prepare(const h3_lora_selection *selection,const char *source,int mo
     for(size_t i=0;i<selection->count;i++){h3_sha256_update(&hash,w.adapters[i].digest,32);uint64_t bits;memcpy(&bits,&selection->args[i].scale,8);hash_u64(&hash,bits);}
     unsigned char digest[32];h3_sha256_final(digest,&hash);hex(digest,key);hashed=now()-start;w.hash_seconds=hashed;
     fprintf(stderr,"LoRA %s: %zu adapter(s), %zu targets, key %s (source hashing/planning %.2fs)\n",mode?"Ref2VA":"FL2VA",selection->count,w.target_count,key,hashed);
-    root=future_path(selection->cache);char *resolved_source=realpath(source,NULL);
-    if(!root||!resolved_source){free(resolved_source);fail(&w,"cannot resolve cache/source directories");goto end;}
-    int overlap=under(root,resolved_source)||under(resolved_source,root);
-    for(size_t i=0;i<selection->count;i++)if(under(selection->args[i].path,root))overlap=1;
-    free(resolved_source);if(overlap){fail(&w,"LoRA cache must not overlap transformer or adapter sources");goto end;}
-    /* Check the spelling too: an existing cache-root symlink is not accepted. */
-    struct stat cache_stat;
-    if(!lstat(selection->cache,&cache_stat)&&S_ISLNK(cache_stat.st_mode)){fail(&w,"LoRA cache root cannot be a symlink");goto end;}
-    if(!private_dir(&w,root,1))goto end;
-    locks=join(root,"locks");variants=join(root,"variants");staging=join(root,"staging");invalid=join(root,"invalid");
-    if(!locks||!variants||!staging||!invalid)goto oom;
-    if(!private_dir(&w,locks,1)||!private_dir(&w,variants,1)||!private_dir(&w,staging,1)||!private_dir(&w,invalid,1))goto end;
-    char lockname[80];snprintf(lockname,sizeof(lockname),"%s.lock",key);lockpath=join(locks,lockname);entry=join(variants,key);
-    if(!lockpath||!entry)goto oom;
-    lock=open(lockpath,O_RDONLY|O_NOFOLLOW);
-    if(lock<0&&errno==ENOENT)lock=open(lockpath,O_RDWR|O_CREAT|O_EXCL|O_NOFOLLOW,0600);
-    if(lock<0&&errno==EEXIST)lock=open(lockpath,O_RDONLY|O_NOFOLLOW);
-    struct stat lockstat;if(lock<0||fstat(lock,&lockstat)||!S_ISREG(lockstat.st_mode)||lockstat.st_uid!=geteuid()){
-        fail(&w,"cannot open stable LoRA cache lock: %s",strerror(errno));goto end;}
-    if(!lock_wait(&w,lock,LOCK_SH))goto end;
-    double verify_start=now();
+    if(!cache_dir(&w,root,1)||!cache_dir(&w,variants,1)||!cache_dir(&w,staging,1)||!cache_dir(&w,invalid,1))goto end;
+    entry=join(variants,key);if(!entry)goto oom;
+    verify_start=now();
     if(verify_entry(&w,entry,key,mode)){hit=1;verified=now()-verify_start;goto ready;}
     if(w.cancelled||!checkpoint(&w,"LoRA cache miss",0,0))goto end;
     if(error&&cap)error[0]=0;
-    /* flock upgrades need not be atomic. Explicitly drop/reacquire and recheck. */
-    if(flock(lock,LOCK_UN)||!lock_wait(&w,lock,LOCK_EX))goto end;
-    if(verify_entry(&w,entry,key,mode)){hit=1;goto downgrade;}
     if(w.cancelled||!checkpoint(&w,"LoRA preparing cache",0,0))goto end;
     if(error&&cap)error[0]=0;
     struct stat st;
     if(!lstat(entry,&st)){
-        if(st.st_uid!=geteuid()){fail(&w,"refusing to repair cache entry owned by another user");goto end;}
         char name[112];snprintf(name,sizeof(name),"%s.%ld.%.0f",key,(long)getpid(),now()*1e9);char *quarantine=join(invalid,name);
         if(!injected(&w,"repair")||!quarantine||rename(entry,quarantine)){free(quarantine);fail(&w,"cannot quarantine invalid LoRA cache: %s",strerror(errno));goto end;}
         fprintf(stderr,"LoRA: quarantined invalid entry at %s; rebuilding once\n",quarantine);free(quarantine);
         if(!sync_dir(&w,variants)||!sync_dir(&w,invalid))goto end;
     }else if(errno!=ENOENT){fail(&w,"cannot inspect LoRA cache: %s",strerror(errno));goto end;}
-    DIR *d=opendir(staging);if(!d){fail(&w,"cannot inspect staging directory");goto end;}struct dirent *e;
-    while((e=readdir(d)))if(!strncmp(e->d_name,key,64)&&e->d_name[64]=='.'){
-        char *p=join(staging,e->d_name);if(!p||!remove_tree(p)){free(p);closedir(d);fail(&w,"cannot clean interrupted LoRA staging entry");goto end;}free(p);
-    }
-    closedir(d);
     char pattern[80];snprintf(pattern,sizeof(pattern),"%s.XXXXXX",key);stage=join(staging,pattern);
     if(!stage||!mkdtemp(stage)){fail(&w,"cannot create LoRA staging: %s",strerror(errno));goto end;}
-    outdir=join(stage,"transformer");if(!outdir||!private_dir(&w,outdir,1))goto end;
+    outdir=join(stage,"transformer");if(!outdir||!cache_dir(&w,outdir,1))goto end;
     /* Check enough logical capacity for a full fallback before copying. CoW
      * may still succeed when logical space is tight, so each fallback checks
      * its actual requirement immediately before any write. */
@@ -974,26 +1100,31 @@ int h3_lora_prepare(const h3_lora_selection *selection,const char *source,int mo
     if(!source_stamps(&w)||!injected(&w,"rename"))goto end;
     if(rename(stage,entry)){fail(&w,"atomic LoRA publication failed: %s",strerror(errno));goto end;}published=1;
     if(!sync_dir(&w,variants)||!sync_dir(&w,staging))goto end;
-downgrade:
-    if(flock(lock,LOCK_UN)||!lock_wait(&w,lock,LOCK_SH))goto end;
-    verify_start=now();if(!verify_entry(&w,entry,key,mode)){fail(&w,"LoRA cache verification failed after lease conversion");goto end;}verified=now()-verify_start;
+    verify_start=now();if(!verify_entry(&w,entry,key,mode)){fail(&w,"LoRA cache verification failed after publication");goto end;}verified=now()-verify_start;
 ready:
-    if(!source_stamps(&w))goto end;
-    if(!checkpoint(&w,hit?"LoRA verified cache hit":"LoRA fold complete",1,1))goto end;
+    if(!sampled_hit) {
+        if(!source_stamps(&w))goto end;
+        if(!sample_record(&w,root,&inputs,base_count,input_sample,entry,key,mode)) {
+            if(w.cancelled)goto end;
+            /* A read-only legacy cache remains usable without acceleration. */
+            fprintf(stderr,"LoRA: could not save sample lookup; next request will fully verify the cache\n");
+            if(error&&cap)error[0]=0;
+        }
+    }
+    if(!checkpoint(&w,sampled_hit?"LoRA sampled cache hit":hit?"LoRA fully verified cache hit":"LoRA fold complete",1,1))goto end;
     {char *effective=join(entry,"transformer");if(!effective)goto oom;
-    memset(variant,0,sizeof(*variant));variant->transformer=effective;variant->lease=lock;lock=-1;strcpy(variant->key,key);
-    variant->cache_hit=hit;variant->hash_seconds=hashed;variant->verify_seconds=verified;variant->prepare_seconds=now()-start;variant->scratch_peak=w.scratch_peak;}
+    memset(variant,0,sizeof(*variant));variant->transformer=effective;strcpy(variant->key,key);
+    variant->cache_hit=hit;variant->hash_seconds=hashed;variant->verify_seconds=verified;variant->prepare_seconds=now()-start;variant->scratch_peak=w.scratch_peak;variant->sampled_bytes=w.sampled_bytes;}
     if(!hit)fprintf(stderr,"LoRA phases: copy %.2fs (%zu cloned, %zu full copies), fold %.2fs, input/untouched validation %.2fs\n",
         w.copy_seconds,w.cloned_files,w.copied_files,w.fold_seconds,w.validation_seconds);
-    fprintf(stderr,"LoRA %s: %s; verification %.2fs, preparation %.2fs, owned arithmetic/I/O scratch %zu bytes\n",mode?"Ref2VA":"FL2VA",hit?"verified cache hit":"fold published",verified,variant->prepare_seconds,w.scratch_peak);
+    fprintf(stderr,"LoRA %s: %s; verification %.2fs, preparation %.2fs, sampled %zu bytes, owned arithmetic/I/O scratch %zu bytes\n",mode?"Ref2VA":"FL2VA",sampled_hit?"sampled cache hit":hit?"fully verified cache hit":"fold published",verified,variant->prepare_seconds,w.sampled_bytes,w.scratch_peak);
     if(error&&cap)error[0]=0;
     ok=1;goto end;
 oom:fail(&w,"out of memory preparing LoRA cache");
 end:
     if(!ok&&error&&cap&&!error[0])snprintf(error,cap,"runtime LoRA preparation failed");
     if(stage&&!published)remove_tree(stage);
-    if(lock>=0)close(lock);
-    free(root);free(locks);free(variants);free(staging);free(invalid);free(entry);free(lockpath);free(stage);free(outdir);work_free(&w);
+    sample_free(&inputs);free(root);free(variants);free(staging);free(invalid);free(entry);free(stage);free(outdir);work_free(&w);
     if(numeric_locale){uselocale(previous_locale);freelocale(numeric_locale);}
     if(env_saved)fesetenv(&env);
 #if defined(__SSE__)

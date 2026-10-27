@@ -1,0 +1,32 @@
+## Run: ./render.py render-example.txt --dry-run
+## Then: ./render.py render-example.txt -o outputs/my-sequence
+## Replace the bundled reference and prompts with your own.
+
+### 1
+#frames 243
+#size 1024x768
+#steps 50
+#seed 42
+#refimage tests/fixtures/cuda-reference/first.png
+#ref-image-size high
+A calm landscape resembling <Picture 1>, with a gentle breeze and soft natural light.
+
+### 2
+#continue
+#seed 43
+#refimage tests/fixtures/cuda-reference/first.png
+The camera slowly moves forward through the same landscape. Preserve the lighting and colors of <Picture 1>.
+
+## This is an independent video. The reference list is empty again, while
+## size, frames, steps, seed and ref-image-size remain as last specified.
+### 3
+A red ceramic teapot on a wooden table, soft studio lighting, fixed camera. Quiet room ambience.
+
+### 4
+#continue
+#continue-mode bridge
+#seed 44
+Steam gradually rises from the same red ceramic teapot. Keep the camera and lighting steady.
+
+## Produces 1.mp4, 2.mp4, 3.mp4, 4.mp4, 1-merged.mp4 and 3-merged.mp4.
+## Add #unset OPTION before a later prompt to restore that option's native default.

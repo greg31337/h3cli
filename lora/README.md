@@ -70,17 +70,19 @@ adapter again applies it again.
 ### Cache and resource costs
 
 The default cache is `$XDG_CACHE_HOME/h3/lora` when `XDG_CACHE_HOME` is absolute,
-otherwise `$HOME/.cache/h3/lora`. An explicit cache path may be relative. Cache
-roots must be private directories owned by the running user; source/cache overlap
-and cache-entry symlinks are rejected.
+otherwise `$HOME/.cache/h3/lora`. An explicit cache path may be relative. The cache
+uses normal filesystem access permissions, including group-readable/writable
+directories and a symlink to a cache root. There are no ownership checks or LoRA
+locks. Source/cache overlap and symlinks inside generated transformer entries
+remain rejected to keep original weights separate from generated files.
 
 The key covers the selected mode, all original transformer files, parent fold
 identity, ordered adapter contents, binary64 strengths, and native mapping/math
 versions. It excludes paths, timestamps, memory limits, prompts, seeds, step
 counts, canvas sizes, fast-CUDA policy, quantization, and decoder settings.
 Moving inputs with identical content therefore reuses the same entry. Original
-model and adapter files must remain readable: H3 rehashes them to establish the
-selection on each request.
+model and adapter files must remain readable. A first build establishes the full
+content identity; subsequent requests use the bounded sample lookup below.
 
 Each mode/combination has a complete transformer directory (about **61.7 GiB
 logical size** for the tested model). APFS clones or Linux reflinks reduce the
@@ -100,24 +102,35 @@ header/plan before copying. OS file-cache residency, process libraries, and late
 inference allocations are separate from this folding budget. H3's normal
 available-memory floor remains active.
 
-A hit verifies every cached file's contents, not just its timestamp. Consequently
-warm preparation still includes reading and hashing large model files; it is
-not instantaneous. Logs separate input hashing/planning, copying, folding,
-validation, and cache verification from the existing inference profile.
+A warm hit samples at most **768 KiB (786,432 bytes) total**: 384 KiB across
+original transformer files and ordered adapters, and 384 KiB across cached
+transformer files and their manifest. Each file gets an equal share of its
+group's budget; small files are read completely and large files use up to 32
+evenly spaced windows including the beginning and end. Filenames, sizes, mode,
+adapter order/strengths and recipe identify the lookup. The small lookup JSON
+is at most 4 KiB and is read separately. No tensor planning or full-file hashing
+runs on a sampled hit; logs report `sampled cache hit` and actual sampled bytes.
 
-Stable per-key locks coordinate processes. Readers hold shared leases while a
-context can use the weights; writers wait cancellably, build in private staging,
-and publish atomically. A corrupt entry is moved to `invalid/` and rebuilt once.
-Read-only hits work when the existing lock and complete cache directories are
-present. A miss or repair on an unwritable/full cache fails with an error.
-There is no fallback that silently omits adapters.
+Sampling can miss same-size changes outside the sampled windows. This is the
+intended fast-check contract for a single-user installation, not an exhaustive
+integrity check. To force full verification, remove the relevant record under
+`samples/` (or that directory's JSON records) before the next request. Initial
+folding and cache repair retain full input/output hashes and numerical checks.
+An existing cache without a sample record is fully verified once, then upgraded
+without changing its weights, fold key or checkpoint identity. A corrupt sample
+record falls back to full verification; detected weight corruption is quarantined
+under `invalid/` and rebuilt. A read-only cache still supports hits; a legacy
+read-only cache cannot save its acceleration record and uses full verification.
 
-Cancellation removes the current unpublished staging directory. After a killed
-writer, the next writer for that key cleans up abandoned staging under the key
-lock. A completed entry survives later encoder, quantization, or generation
-failures. For manual pruning, stop all H3 processes using the cache, remove the
-unneeded directories under `variants/` (and old `invalid/`/`staging/` entries),
-and leave `locks/` intact. The next request rebuilds an evicted variant.
+The cache assumes a single user manages its contents. There is no coordination
+between processes: serialize builds, repairs and pruning for a shared cache,
+and do not change files while a render uses them. New variants are assembled in
+a unique staging directory and published atomically. Cancellation cleans only
+that invocation's unpublished stage. A killed process can leave an ignored stage
+for manual cleanup; later requests never reuse it. Completed entries survive
+later generation failures. With cache users stopped, unneeded `variants/`,
+`samples/`, `invalid/` and abandoned `staging/` entries may be removed. Legacy
+`locks/` files are ignored. An evicted variant is rebuilt on its next request.
 
 ### Checkpoints, continuation, and quantization
 
@@ -156,7 +169,7 @@ remain independent execution/decoder choices and do not trigger refolding.
 # RTX 5090 example; keep the two caches on volumes with sufficient free space.
 ./bin/h3cli -d models/MiniMax-H3 \
   --lora lora/downloads/minimax_h3_turbo_v4_step600_ema.safetensors \
-  --lora-cache /path/to/private/lora-cache --lora-memory-mib 512 \
+  --lora-cache /path/to/lora-cache --lora-memory-mib 512 \
   --width 1344 --height 768 --frames 362 --steps 8 --seed 42 \
   --cuda-denoise-quant nvfp4 \
   --cuda-denoise-quant-cache /path/to/quant-cache --preview-vae \
@@ -166,10 +179,11 @@ remain independent execution/decoder choices and do not trigger refolding.
 Library callers use `h3_load_dir_with_lora(model_dir, &options)` with
 `h3_lora_options`. The context copies the options and adapter paths. Preparation
 uses each request's progress/cancellation callback, and `h3_free` releases cached
-model objects, selection metadata, and reader leases. `h3_load_dir` retains its
+model objects and selection metadata. `h3_load_dir` retains its
 previous behavior.
 
-See [runtime validation](../docs/lora/runtime-validation.md) for measured costs,
+See [sample-cache validation](../docs/lora/cache-sampling-validation.md) for current
+cache timings and [runtime validation](../docs/lora/runtime-validation.md) for folding costs,
 exact test settings, numerical coverage, and remaining assessment limits. The
 Python workflow below remains useful for exporting standalone folded models.
 

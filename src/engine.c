@@ -564,7 +564,6 @@ h3_ctx *h3_load_dir_with_lora(const char *model_dir,const h3_lora_options *optio
         h3_set_error(NULL, "out of memory creating H3 context");
         return NULL;
     }
-    ctx->lora_variants[0].lease=ctx->lora_variants[1].lease=-1;
     if(!h3_lora_selection_create(options,&ctx->lora,h3_global_error,sizeof(h3_global_error))) { free(ctx); return NULL; }
     ctx->model_dir = strdup(model_dir);
     if (!ctx->model_dir) {
@@ -1097,8 +1096,7 @@ typedef struct { h3_ctx *ctx; const h3_params *params; int mode; } h3_lora_progr
 static int h3_lora_progress_bridge(const char *phase,int done,int total,void *opaque) {
     h3_lora_progress *p=opaque;
     if(!strcmp(phase,"LoRA cache miss")) {
-        /* Drop mapped weights before an exclusive repair/build lease. A hit
-         * retains the prepared DiT and holds overlapping reader leases. */
+        /* Drop mapped weights before repairing or rebuilding a cache entry. */
         h3_cache_clear(p->ctx);
         h3_lora_variant_free(&p->ctx->lora_variants[p->mode]);
     }
@@ -1108,7 +1106,7 @@ static int h3_prepare_lora(h3_ctx *ctx,int mode,const h3_params *params) {
     if(!ctx->lora)return 1;
     char *source=h3_path(ctx->model_dir,mode?"Ref2VA/transformer":"FL2VA/transformer");
     if(!source){h3_set_error(ctx,"out of memory resolving LoRA transformer");return 0;}
-    h3_lora_variant next={.lease=-1};h3_lora_progress progress={ctx,params,mode};
+    h3_lora_variant next={0};h3_lora_progress progress={ctx,params,mode};
     int ok=h3_lora_prepare(ctx->lora,source,mode,h3_lora_progress_bridge,&progress,&next,ctx->error,sizeof(ctx->error));
     free(source);
     h3_component_info inventory;
