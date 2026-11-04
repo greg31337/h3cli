@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Render a sectioned text file with h3cli (Python 3.10+).
+"""Render a sectioned text file with h3cli (standalone, Python 3.10+).
 
 Usage: ./render.py scenes.txt [-o OUTPUT_DIRECTORY] [--dry-run]
+       ./render.py --check
 
 ### NAME starts NAME.mp4. Directives before the prompt use native long option
 names without '--', e.g. #frames 243, #steps 50, #lora adapter.safetensors:0.8.
+!### NAME skips rendering that segment while still processing its directives.
+Each continuation chain must be entirely skipped or entirely rendered; mixed
+chains fail during preprocessing, before any rendering or output creation.
 #size WIDTHxHEIGHT and #refimage PATH are shortcuts. Quote paths with spaces.
 Ordinary settings persist; references and first/last-frame anchors reset in
 every section. Repeat a reference directive to supply multiple references.
@@ -25,9 +29,14 @@ frame alignment applies; continuation clips exclude their context automatically
 (243 frames with context 39 delivers 204 new frames). Seeds persist unchanged.
 Use ## for comments; escape a leading prompt hash as \\#.
 
-The checkout's outputs/setup/linux-env.sh is loaded automatically when present.
---no-env disables that behavior. --dry-run validates the plan and prints commands
-without loading models, creating output files, or rendering.
+Copy this script beside the existing h3cli executable; no source checkout,
+options.def, Python packages, compiler or CUDA toolkit is required. Packaged
+FFmpeg/FFprobe are used automatically, with PATH tools as a fallback. Explicit
+--ffmpeg/--ffprobe or H3_FFMPEG/H3_FFPROBE settings take precedence.
+--check verifies the executables without rendering. Nothing is installed.
+Shell environment files are loaded only when --env-file is supplied; --no-env
+remains accepted for compatibility. --dry-run validates the plan and prints
+commands without invoking h3cli, extracting its runtime, or creating outputs.
 """
 
 import argparse
@@ -61,6 +70,128 @@ NON_VIDEO = {"help", "info", "server", "still", "state-only", "decode-av-state",
              "download-models", "list-models"}
 
 
+# Snapshot of src/cli/options.def; tests check that it remains in sync.
+# Embedded so this one script runs without any source or metadata sidecars.
+OPTION_CSV = """output-quality,1,ENUM,NONE,0,0,0,default|maximum|high|medium|low,NULL
+ffmpeg-crf,1,INT,NONE,0,0,51,NULL,NULL
+lossless-video,0,BOOL,NONE,0,0,0,NULL,false
+quality,1,ENUM,NONE,0,0,1.7976931348623157e308,lossless|extra-high|high|preview|fast-preview,NULL
+no-preview-vae,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+model-dir,1,STRING,MODEL,0,0,1.7976931348623157e308,NULL,models/MiniMaxH3
+models-path,1,STRING,NONE,0,0,0,NULL,models
+download-models,1,STRING,NONE,0,0,0,NULL,NULL
+list-models,0,BOOL,NONE,0,0,0,NULL,false
+offline,0,BOOL,NONE,0,0,0,NULL,false
+backend,1,ENUM,NONE,0,0,1.7976931348623157e308,mpsgraph|metal,mpsgraph
+metal-attention,1,ENUM,NONE,0,0,1.7976931348623157e308,dense|sol,dense
+metal-ane,1,ENUM,NONE,0,0,1.7976931348623157e308,off|serial|static|dynamic,off
+metal-ane-rows,1,INT,NONE,0,0,2147483647,NULL,4096
+metal-ane-chunk,1,INT,NONE,0,0,2147483647,NULL,512
+metal-weight-format,1,ENUM,NONE,0,0,1.7976931348623157e308,bf16|q8,bf16
+metal-q8-kernel,1,ENUM,NONE,0,0,1.7976931348623157e308,mpsgraph|simdgroup,mpsgraph
+metal-attention-kernel,1,ENUM,NONE,0,0,1.7976931348623157e308,steel|steel-routed,steel
+metal-attention-dtype,1,ENUM,NONE,0,0,1.7976931348623157e308,bf16|fp16,bf16
+metal-tier,1,ENUM,NONE,0,0,1.7976931348623157e308,diagnostic|reference|preview,diagnostic
+metal-attention-layout,1,ENUM,NONE,0,0,1.7976931348623157e308,adapter|fused,adapter
+sol-q-block,1,INT,NONE,0,0,2147483647,NULL,32
+sol-kv-block,1,INT,NONE,0,0,2147483647,NULL,64
+sol-tau,1,FLOAT,NONE,0,0,1.7976931348623157e308,NULL,1
+sol-dense-layers,1,INT,NONE,0,0,2147483647,NULL,1
+sol-dense-steps,1,INT,NONE,0,0,2147483647,NULL,NULL
+sol-dense-sigma,1,FLOAT,NONE,0,-1,1,NULL,-1
+sol-local-radius,1,INT,NONE,0,0,2147483647,NULL,1
+sol-min-exact,1,FLOAT,NONE,0,0,1,NULL,0
+save-conditioning,1,STRING,OUTPUT,0,0,1.7976931348623157e308,NULL,NULL
+load-conditioning,1,STRING,STATE,0,0,1.7976931348623157e308,NULL,NULL
+conditioning-schedule,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+lora,1,STRING,MODEL,1,0,1.7976931348623157e308,NULL,NULL
+lora-cache,1,STRING,CACHE,0,0,1.7976931348623157e308,NULL,NULL
+lora-memory-mib,1,U64,NONE,0,1,1.7976931348623157e308,NULL,512
+preview-vae,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+preview-vae-model,1,STRING,MODEL,0,0,1.7976931348623157e308,NULL,models/preview-vae/taeh3.safetensors
+decode-still-latent,1,STRING,STATE,0,0,1.7976931348623157e308,NULL,NULL
+image-vae,1,STRING,MODEL,0,0,1.7976931348623157e308,NULL,models/image-vae/minimax_h3_t1_image_vae_step1597.safetensors
+still,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+save-still-latent,1,STRING,OUTPUT,0,0,1.7976931348623157e308,NULL,NULL
+decode-av-state,1,STRING,STATE,0,0,1.7976931348623157e308,NULL,NULL
+prompt,1,STRING,NONE,0,0,1.7976931348623157e308,NULL,NULL
+output,1,STRING,OUTPUT,0,0,1.7976931348623157e308,NULL,NULL
+continue-from,1,STRING,STATE,0,0,1.7976931348623157e308,NULL,NULL
+continue-context,1,INT,NONE,0,0,2147483647,NULL,39
+continue-mode,1,ENUM,NONE,0,0,1.7976931348623157e308,hard|bridge,hard
+continue-bridge-steps,1,INT,NONE,0,0,2147483647,NULL,NULL
+continue-bridge-max-strength,1,FLOAT,NONE,0,0,1,NULL,NULL
+continue-bridge-profile,1,ENUM,NONE,0,0,1.7976931348623157e308,stepped|linear|ease-out,NULL
+save-upscale-state,1,STRING,OUTPUT,0,0,1.7976931348623157e308,NULL,NULL
+state-only,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+upscale-state,1,STRING,STATE,0,0,1.7976931348623157e308,NULL,NULL
+upscale-model,1,STRING,MODEL,0,0,1.7976931348623157e308,NULL,models/latent-upscale/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors
+upscale-refine-steps,1,INT,NONE,0,0,2147483647,NULL,4
+upscale-noise,1,FLOAT,NONE,0,0,1,NULL,0.25
+upscale-seed,1,U64,NONE,0,0,1.7976931348623157e308,NULL,NULL
+upscale-import-sampler,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+inspect-upscale-state,1,STRING,STATE,0,0,1.7976931348623157e308,NULL,NULL
+save-av-state,1,STRING,OUTPUT,0,0,1.7976931348623157e308,NULL,NULL
+stop-after-step,1,INT,NONE,0,0,2147483647,NULL,NULL
+save-sampler-state,1,STRING,OUTPUT,0,0,1.7976931348623157e308,NULL,NULL
+resume-sampler-state,1,STRING,STATE,0,0,1.7976931348623157e308,NULL,NULL
+preview-on-stop,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+keep-continuation-prefix,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+width,1,INT,NONE,0,1,2147483647,NULL,864
+height,1,INT,NONE,0,1,2147483647,NULL,480
+render-width,1,INT,NONE,0,0,2147483647,NULL,0
+render-height,1,INT,NONE,0,0,2147483647,NULL,0
+frames,1,INT,NONE,0,1,2147483647,NULL,56
+seconds,1,FLOAT,NONE,0,0,1.7976931348623157e308,NULL,NULL
+steps,1,INT,NONE,0,1,2147483647,NULL,20
+reuse,1,INT,NONE,0,0,2147483647,NULL,1
+layers,1,INT,NONE,0,0,2147483647,NULL,50
+core-reuse,1,INT,NONE,0,0,2147483647,NULL,1
+adaptive-cache,1,ENUM,NONE,0,0,1.7976931348623157e308,off|conservative|aggressive,off
+adaptive-cache-threshold,1,FLOAT,NONE,0,0,1,NULL,NULL
+adaptive-cache-max-hits,1,INT,NONE,0,1,16,NULL,NULL
+adaptive-cache-max-mib,1,U64,NONE,0,1,1.7976931348623157e308,NULL,4096
+adaptive-cache-warmup,1,INT,NONE,0,2,16,NULL,4
+subblock-warmup,1,INT,NONE,0,2,16,NULL,10
+subblock-sparsity,1,FLOAT,NONE,0,0,1,NULL,0.75
+token-reduction,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+ssd-streaming,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+use-int8-row-fc2,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+use-reference-rope,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+use-slower-bf16-mlp,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+use-slower-bf16-qkv,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+use-slower-bf16-attention-output,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+use-slower-row-major-attention-output,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+use-slower-unfused-int8-inputs,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+use-slower-unfused-qkv-rope,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+use-slower-scalar-qkv-rms,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+use-slower-uncached-int8-scales,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+use-slower-dynamic-fc1-k,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+use-slower-grouped-quantizer,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+seed,1,U64,NONE,0,0,1.7976931348623157e308,NULL,42
+first-frame,1,STRING,MEDIA,0,0,1.7976931348623157e308,NULL,NULL
+last-frame,1,STRING,MEDIA,0,0,1.7976931348623157e308,NULL,NULL
+ref-image,1,STRING,MEDIA,1,0,1.7976931348623157e308,NULL,NULL
+ref-image-size,1,ENUM,NONE,0,0,1.7976931348623157e308,match|high|max,match
+ref-video,1,STRING,MEDIA,1,0,1.7976931348623157e308,NULL,NULL
+ref-silent-video,1,STRING,MEDIA,1,0,1.7976931348623157e308,NULL,NULL
+ref-video-audio,2,STRING,MEDIA,1,0,1.7976931348623157e308,NULL,NULL
+ref-audio,1,STRING,MEDIA,1,0,1.7976931348623157e308,NULL,NULL
+frames-dir,1,STRING,OUTPUT,0,0,1.7976931348623157e308,NULL,NULL
+show,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+zoom,1,INT,NONE,0,1,2147483647,NULL,2
+profile,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+info,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+cuda-device,1,INT,NONE,0,0,2147483647,NULL,0
+cuda-attention,1,ENUM,NONE,0,0,1.7976931348623157e308,default|sage2++|sage3|sol|subblock,default
+cuda-denoise-quant,1,ENUM,NONE,0,0,1.7976931348623157e308,off|fp8|nvfp4,off
+cuda-denoise-quant-cache,1,STRING,CACHE,0,0,1.7976931348623157e308,NULL,NULL
+cuda-denoise-quant-verify,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+cuda-weight-mode,1,ENUM,NONE,0,0,1.7976931348623157e308,auto|resident|stream,auto
+help,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+verbose,0,BOOL,NONE,0,0,1.7976931348623157e308,NULL,false
+"""
+
 @dataclass
 class Option:
     arity: int
@@ -85,20 +216,25 @@ class Segment:
     delivered: int = 0
     width: int = 0
     height: int = 0
+    skipped: bool = False
 
     def value(self, name, options):
         values = self.settings.get(name)
         return values[-1][0] if values else options[name].default
 
 
-def option_inventory(path=ROOT / "src/cli/options.def"):
-    """Use the checkout's CLI inventory instead of maintaining a second flag list."""
+def option_inventory(path=None):
+    """Use embedded metadata; an explicit native inventory is for development."""
     options = {}
-    for line in path.read_text().splitlines():
-        if not line.startswith("H3_OPTION("):
-            continue
-        row = next(csv.reader([line[len("H3_OPTION("):-1]], skipinitialspace=True))
-        name, _, arity, kind, path_kind, repeat, _, low, high, choices, default, _, _ = row
+    if path is None:
+        rows = list(csv.reader(OPTION_CSV.splitlines()))
+    else:
+        rows = []
+        for line in Path(path).read_text().splitlines():
+            if line.startswith("H3_OPTION("):
+                row = next(csv.reader([line[len("H3_OPTION("):-1]], skipinitialspace=True))
+                rows.append([row[i] for i in (0, 2, 3, 4, 5, 7, 8, 9, 10)])
+    for name, arity, kind, path_kind, repeat, low, high, choices, default in rows:
         options[name] = Option(int(arity), kind, path_kind, bool(int(repeat)),
                                float(low), float(high), choices, default)
     if "frames" not in options or "continue-from" not in options:
@@ -166,23 +302,25 @@ def read_sections(path, options, defaults=None):
 
     def finish():
         segment.prompt = "\n".join(lines).strip()
-        if not segment.prompt:
+        if not segment.prompt and not segment.skipped:
             raise ValueError(f"{path}:{segment.line}: {segment.name} has an empty prompt")
         sections.append(segment)
 
     for number, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
         stripped = line.strip()
         try:
-            if stripped.startswith("###"):
+            if stripped.startswith(("###", "!###")):
                 if segment is not None:
                     finish()
                     inherited = copy.deepcopy(segment.settings)
-                segment = Segment(filename(stripped[3:]), number, copy.deepcopy(inherited))
+                skipped = stripped.startswith("!###")
+                segment = Segment(filename(stripped[4 if skipped else 3:]), number,
+                                  copy.deepcopy(inherited), skipped=skipped)
                 lines, touched = [], set()
             elif stripped.startswith("##") or not stripped and not lines:
                 continue
             elif segment is None:
-                raise ValueError("Start the first video with ### NAME")
+                raise ValueError("Start the first video with ### NAME or !### NAME")
             elif stripped.startswith("#"):
                 if any(text.strip() for text in lines):
                     raise ValueError("Put directives before the prompt; use \\# for a prompt hash")
@@ -264,8 +402,21 @@ def merged_name(section):
 
 
 def validate_plan(sections, options):
+    if sections and sections[0].continuing:
+        section = sections[0]
+        raise ValueError(f"Section {section.name} (line {section.line}): #continue needs a preceding segment")
+    groups = chains(sections)
+    # Check the complete document before validating or executing active renders.
+    # Skipping a prefix, suffix, or middle segment would break its saved states.
+    for group in groups:
+        if len({sections[i].skipped for i in group}) > 1:
+            names = ", ".join(f"{sections[i].name} (line {sections[i].line})" for i in group)
+            raise ValueError("Continuation chain mixes skipped (!###) and rendered (###) segments: "
+                             + names + ". Skip every segment in this chain, or render every segment.")
     seen = set()
     for index, section in enumerate(sections):
+        if section.skipped:
+            continue
         def fail(message):
             raise ValueError(f"Section {section.name} (line {section.line}): {message}")
 
@@ -319,8 +470,8 @@ def validate_plan(sections, options):
         mode = section.value("continue-mode", options)
         if core not in ((1, 4, 6) if mode == "bridge" else (1,)):
             fail(f"unsupported core-reuse for {mode} continuation")
-    for group in chains(sections):
-        if len(group) > 1:
+    for group in groups:
+        if len(group) > 1 and not sections[group[0]].skipped:
             name = merged_name(sections[group[0]])
             if name in seen:
                 raise ValueError(f"Merged filename collides with another output: {name}")
@@ -344,12 +495,22 @@ def render_command(binary, section, index, work):
 
 def environment(no_env=False, env_file=None):
     env = dict(os.environ)
-    profile = env_file or ROOT / "outputs/setup/linux-env.sh"
-    if not no_env and (env_file or profile.is_file()):
+    if not no_env and env_file:
         result = subprocess.run(["bash", "-c", 'set -e; set -a; source "$1" >&2; env -0',
-                                 "render.py", str(profile)], stdout=subprocess.PIPE, check=True, env=env)
+                                 "render.py", str(env_file)], stdout=subprocess.PIPE, check=True, env=env)
         env = dict(item.split("=", 1) for item in os.fsdecode(result.stdout).split("\0") if "=" in item)
+    env.pop("H3CLI_BUNDLE_INFO", None)
     return env
+
+
+def select_binary(value, env):
+    if value or env.get("H3CLI_BIN"):
+        return str(Path(value or env["H3CLI_BIN"]).expanduser())
+    for name in ("h3cli", "h3cli-linux-x86_64", "h3cli-macos-arm64", "bin/h3cli"):
+        path = ROOT / name
+        if path.is_file() and os.access(path, os.X_OK):
+            return str(path)
+    return "h3cli"
 
 
 def executable(value, env):
@@ -357,6 +518,64 @@ def executable(value, env):
     if not found:
         raise ValueError(f"Executable not found: {value}")
     return str(Path(found).resolve())
+
+
+def bundled_media(binary, env):
+    # --help keeps an ordinary, non-bundled binary from starting a render when
+    # it ignores H3CLI_BUNDLE_INFO. Bundle metadata itself does not extract files.
+    result = subprocess.run([binary, "--help"], env=env | {"H3CLI_BUNDLE_INFO": "1"},
+                            capture_output=True, text=True, timeout=180)
+    if result.returncode:
+        raise ValueError(f"Cannot run {binary}: {result.stderr.strip() or result.stdout.strip()}")
+    try:
+        info = json.loads(result.stdout)
+    except ValueError:
+        return {}
+    if not isinstance(info, dict) or not isinstance(info.get("cache"), str):
+        return {}
+    runtime = Path(info["cache"])
+    if info.get("platform") == "macos-arm64":
+        runtime /= info["runtime_id"]
+    # Let the existing launcher extract and verify its own runtime normally.
+    # No downloads, package manager, compiler, or source files are involved.
+    result = subprocess.run([binary, "--help"], env=env, capture_output=True, text=True, timeout=180)
+    if result.returncode:
+        raise ValueError(f"Cannot start {binary}: {result.stderr.strip() or result.stdout.strip()}")
+    return {name: str(runtime / "tools" / name) for name in ("ffmpeg", "ffprobe")
+            if (runtime / "tools" / name).is_file() and os.access(runtime / "tools" / name, os.X_OK)}
+
+
+def media_tools(binary, env, ffmpeg=None, ffprobe=None):
+    chosen = {"ffmpeg": ffmpeg or env.get("H3_FFMPEG"), "ffprobe": ffprobe or env.get("H3_FFPROBE")}
+    # Invalid explicit overrides are errors, not requests for a silent fallback.
+    result = {name: executable(value, env) for name, value in chosen.items() if value}
+    bundled = bundled_media(binary, env) if len(result) < 2 else {}
+    missing = []
+    for name in chosen:
+        if name in result:
+            continue
+        value = bundled.get(name) or shutil.which(name, path=env.get("PATH"))
+        if value:
+            result[name] = executable(value, env)
+        else:
+            missing.append(name)
+    if missing:
+        raise ValueError("Missing " + ", ".join(missing) + ". Install FFmpeg (includes ffprobe), "
+                         "or use --ffmpeg/--ffprobe with existing tools. On Ubuntu/Debian: "
+                         "sudo apt install ffmpeg. This script installs nothing.")
+    return result["ffmpeg"], result["ffprobe"]
+
+
+def check_dependencies(binary, ffmpeg, ffprobe, env):
+    subprocess.run([binary, "--help"], env=env, stdout=subprocess.DEVNULL, check=True, timeout=180)
+    print(f"Python: {sys.version.split()[0]}\nh3cli: {binary}")
+    for name, path in (("ffmpeg", ffmpeg), ("ffprobe", ffprobe)):
+        result = subprocess.run([path, "-version"], env=env, capture_output=True, text=True, check=True, timeout=30)
+        lines = (result.stdout or result.stderr).splitlines()
+        if not lines or not lines[0].startswith(name + " version "):
+            raise ValueError(f"Not a working {name} executable: {path}")
+        print(f"{name}: {path}\n  {lines[0]}")
+    print("PASS: executables ready; no software installed. Supply existing model weights with -d.")
 
 
 def stop_child(child):
@@ -480,22 +699,32 @@ def write_report(out, report):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("input", type=Path)
+    parser.add_argument("input", type=Path, nargs="?")
     parser.add_argument("-o", "--output-dir", type=Path, help="Fresh output directory (default: INPUT_STEM-render)")
-    parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--h3cli", help="Override the checkout's bin/h3cli (also H3CLI_BIN)")
-    parser.add_argument("--ffmpeg", help="Override H3_FFMPEG or PATH ffmpeg")
-    parser.add_argument("--ffprobe", help="Override H3_FFPROBE or PATH ffprobe")
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--dry-run", action="store_true")
+    modes.add_argument("--check", action="store_true", help="Check existing executables without rendering")
+    parser.add_argument("--h3cli", help="Existing executable (default: beside this script, then bin/h3cli or PATH; also H3CLI_BIN)")
+    parser.add_argument("--ffmpeg", help="Override H3_FFMPEG, bundled media, or PATH ffmpeg")
+    parser.add_argument("--ffprobe", help="Override H3_FFPROBE, bundled media, or PATH ffprobe")
     parser.add_argument("-d", "--model-dir", type=Path, help="Initial model directory; #model-dir can override it")
-    parser.add_argument("--no-env", action="store_true", help="Do not load the checkout's Linux environment")
-    parser.add_argument("--env-file", type=Path, help="Load this shell environment file instead")
+    parser.add_argument("--no-env", action="store_true", help="Compatibility option; no environment file loads by default")
+    parser.add_argument("--env-file", type=Path, help="Explicitly load this shell environment file")
     args = parser.parse_args(argv)
+    if args.input is None and not args.check:
+        parser.error("INPUT is required unless --check is used")
     started, created, report = time.monotonic(), False, {"status": "running", "segments": [], "merged": []}
     out = None
     try:
         if args.no_env and args.env_file:
             raise ValueError("Choose --no-env or --env-file")
         env = environment(args.no_env, args.env_file.expanduser().resolve() if args.env_file else None)
+        binary = select_binary(args.h3cli, env)
+        if args.check:
+            binary = executable(binary, env)
+            ffmpeg, ffprobe = media_tools(binary, env, args.ffmpeg, args.ffprobe)
+            check_dependencies(binary, ffmpeg, ffprobe, env)
+            return 0
         source = args.input.expanduser().resolve(strict=True)
         out = (args.output_dir or source.with_name(source.stem + "-render")).expanduser().resolve()
         work = out / ".render"
@@ -506,13 +735,16 @@ def main(argv=None):
         defaults = {"model-dir": [[str(Path(model).expanduser().resolve())]]} if model else {}
         sections = read_sections(source, options, defaults)
         validate_plan(sections, options)
-        binary = str(args.h3cli or env.get("H3CLI_BIN") or ROOT / "bin/h3cli")
-        if not args.dry_run:
+        groups = [group for group in chains(sections) if not sections[group[0]].skipped]
+        if groups and not args.dry_run:
             binary = executable(binary, env)
-        commands = [render_command(binary, s, i, work) for i, s in enumerate(sections)]
-        groups = chains(sections)
-        print(f"{len(sections)} segments, {len(groups)} video chains; output: {out}", flush=True)
+        commands = [None if s.skipped else render_command(binary, s, i, work) for i, s in enumerate(sections)]
+        skipped = [s.name for s in sections if s.skipped]
+        print(f"{len(sections)} segments, {len(groups)} active video chains, {len(skipped)} skipped; output: {out}", flush=True)
         for index, section in enumerate(sections):
+            if section.skipped:
+                print(f"  {section.name}: skipped", flush=True)
+                continue
             kind = f"continue {section.value('continue-mode', options)}" if section.continuing else "new video"
             print(f"  {section.name}: {kind}, {section.delivered} delivered frames", flush=True)
             if args.dry_run:
@@ -522,16 +754,20 @@ def main(argv=None):
                 print(f"  merge: {' + '.join(sections[i].name for i in group)} -> {merged_name(sections[group[0]])}")
         if args.dry_run:
             return 0
-        ffmpeg = executable(args.ffmpeg or env.get("H3_FFMPEG", "ffmpeg"), env)
-        ffprobe = executable(args.ffprobe or env.get("H3_FFPROBE", "ffprobe"), env)
-        env.update(H3_FFMPEG=ffmpeg, H3_FFPROBE=ffprobe, H3_SGLANG_INPUT_FFMPEG=ffmpeg)
+        if not groups:
+            print("All segments skipped; nothing to render.", flush=True)
+            return 0
         if out.exists():
             raise ValueError(f"Output directory already exists: {out}; choose a fresh -o directory")
+        ffmpeg, ffprobe = media_tools(binary, env, args.ffmpeg, args.ffprobe)
+        env.update(H3_FFMPEG=ffmpeg, H3_FFPROBE=ffprobe, H3_SGLANG_INPUT_FFMPEG=ffmpeg)
         out.mkdir(parents=True)
         created = True
         work.mkdir()
         shutil.copyfile(source, work / "source.txt")
-        report.update(input=str(source), output=str(out), commands=commands)
+        report.update(input=str(source), output=str(out), commands=commands,
+                      skipped=skipped,
+                      tools={"h3cli": binary, "ffmpeg": ffmpeg, "ffprobe": ffprobe})
         write_report(out, report)
         run([binary, "--help"], work / "h3cli-help.log", env, live=False)
         if any(len(g) > 1 for g in groups):
@@ -568,7 +804,7 @@ def main(argv=None):
         report["status"] = "interrupted"
         print("\nInterrupted; completed clips and intermediate files were preserved.", file=sys.stderr)
         return 130
-    except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:
+    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
         report["status"] = "failed"
         report["error"] = str(error)
         print(f"Error: {error}", file=sys.stderr)

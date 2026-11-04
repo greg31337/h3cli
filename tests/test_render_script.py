@@ -5,12 +5,14 @@ import io
 import json
 import os
 from pathlib import Path
+import shutil
 import signal
 import subprocess
 import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import render
@@ -35,6 +37,85 @@ class RenderScriptTests(unittest.TestCase):
         if validate:
             render.validate_plan(result, self.options)
         return result
+
+    def test_embedded_inventory_matches_native_inventory(self):
+        self.assertEqual(self.options, render.option_inventory(render.ROOT / "src/cli/options.def"))
+
+    def test_one_file_copy_dry_runs_without_source_or_options_sidecars(self):
+        script = self.root / "render.py"
+        shutil.copyfile(render.ROOT / "render.py", script)
+        self.input.write_text("### a\nOne.\n### b\n#continue\nTwo.")
+        out = self.root / "standalone-output"
+        result = subprocess.run([sys.executable, "-I", str(script), str(self.input), "--dry-run", "-o", str(out)],
+                                cwd=self.root, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("a-merged.mp4", result.stdout)
+        self.assertFalse(out.exists())
+        self.assertFalse((self.root / "src").exists())
+        self.assertFalse((self.root / "options.def").exists())
+
+    def test_adjacent_binary_is_selected_before_checkout_and_path(self):
+        for name in ("h3cli", "bin/h3cli"):
+            p = self.root / name
+            p.parent.mkdir(exist_ok=True)
+            p.touch(); p.chmod(0o755)
+        with patch.object(render, "ROOT", self.root):
+            self.assertEqual(render.select_binary(None, {}), str(self.root / "h3cli"))
+            self.assertEqual(render.select_binary("/explicit/h3cli", {}), "/explicit/h3cli")
+            self.assertEqual(render.select_binary(None, {"H3CLI_BIN": "/environment/h3cli"}), "/environment/h3cli")
+
+    def test_environment_file_requires_explicit_selection(self):
+        profile = self.root / "outputs/setup/linux-env.sh"
+        profile.parent.mkdir(parents=True)
+        profile.write_text("export RENDER_PROFILE_WAS_LOADED=yes\n")
+        with patch.object(render, "ROOT", self.root), patch.dict(os.environ, {"PATH": "/usr/bin:/bin"}, clear=True):
+            self.assertNotIn("RENDER_PROFILE_WAS_LOADED", render.environment())
+            self.assertEqual(render.environment(env_file=profile)["RENDER_PROFILE_WAS_LOADED"], "yes")
+
+    def test_existing_bundle_extracts_own_media_for_linux_and_macos_layouts(self):
+        for target in ("linux", "macos"):
+            with self.subTest(target=target):
+                folder = self.root / target; folder.mkdir()
+                runtime = folder / "cache/runtime-id"
+                info = {"cache": str(runtime if target == "linux" else runtime.parent), "runtime_id": "runtime-id"}
+                if target == "macos":
+                    info["platform"] = "macos-arm64"
+                binary = folder / "h3cli"
+                binary.write_text(f'''#!{sys.executable}
+import json,os,sys
+from pathlib import Path
+assert sys.argv[1:]==['--help']
+if os.environ.get('H3CLI_BUNDLE_INFO'):
+    print(json.dumps({info!r}))
+else:
+    root=Path({str(runtime)!r})/'tools';root.mkdir(parents=True,exist_ok=True)
+    for name in ('ffmpeg','ffprobe'):
+        path=root/name
+        path.write_text({'#!' + sys.executable + chr(10)!r}+'print('+repr(name+' version test')+')\\n')
+        path.chmod(0o755)
+''')
+                binary.chmod(0o755)
+                self.assertFalse(runtime.exists())
+                env = dict(os.environ)
+                for name in ("H3_FFMPEG", "H3_FFPROBE", "H3CLI_BUNDLE_INFO"):
+                    env.pop(name, None)
+                ffmpeg, ffprobe = render.media_tools(str(binary), env)
+                self.assertEqual((ffmpeg, ffprobe), tuple(str(runtime / "tools" / n) for n in ("ffmpeg", "ffprobe")))
+                with contextlib.redirect_stdout(io.StringIO()) as output:
+                    render.check_dependencies(str(binary), ffmpeg, ffprobe, env)
+                self.assertIn("PASS:", output.getvalue())
+
+    def test_explicit_media_overrides_do_not_probe_the_bundle(self):
+        with patch.object(render, "bundled_media", side_effect=AssertionError("unexpected bundle probe")):
+            self.assertEqual(render.media_tools("/missing/h3cli", {}, sys.executable, sys.executable),
+                             (str(Path(sys.executable).resolve()),) * 2)
+            with self.assertRaisesRegex(ValueError, "Executable not found"):
+                render.media_tools("/missing/h3cli", {}, "/missing/ffmpeg", sys.executable)
+
+    def test_missing_media_reports_manual_installation_instructions(self):
+        with patch.object(render, "bundled_media", return_value={}), patch.object(render.shutil, "which", return_value=None):
+            with self.assertRaisesRegex(ValueError, "sudo apt install ffmpeg"):
+                render.media_tools("h3cli", {"PATH": ""})
 
     def test_inheritance_reference_reset_and_chain_boundaries(self):
         sections = self.parse("""### 1
