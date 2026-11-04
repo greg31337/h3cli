@@ -1,5 +1,6 @@
-## Run: ./bin/h3cli --render render-example.txt --dry-run
-## Then: ./bin/h3cli --render render-example.txt --output-dir outputs/my-sequence
+## From the checkout root:
+## Run: ./bin/h3cli --render samples/render-example.txt --dry-run
+## Then: ./bin/h3cli --render samples/render-example.txt --output-dir outputs/my-sequence
 ## Replace the bundled reference and prompts with your own.
 
 ### 1
@@ -7,7 +8,7 @@
 #size 1024x768
 #steps 50
 #seed 42
-#refimage tests/fixtures/cuda-reference/first.png
+#refimage ../tests/fixtures/cuda-reference/first.png
 #ref-image-size high
 subject_definitions:
 A calm landscape resembling <Picture 1>.
@@ -25,7 +26,7 @@ A quiet piano melody.
 ### 2
 #continue
 #seed 43
-#refimage tests/fixtures/cuda-reference/first.png
+#refimage ../tests/fixtures/cuda-reference/first.png
 ## Omitted sections inherit automatically; these two replace their old bodies.
 summary:
 The camera begins moving through the landscape.

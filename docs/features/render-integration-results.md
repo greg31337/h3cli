@@ -13,9 +13,8 @@ path, and produces `scenes-render/scenes.mp4`. `--dry-run` exposes effective
 prompts and settings without loading models or creating output files.
 
 The native option registry supplies directive names, aliases and validation.
-The compatibility `render.py` wrapper delegates execution and planning to the
-native command. Standalone executables contain the implementation and use their
-bundled media tools; running a script requires no Python installation.
+Standalone executables contain the implementation and use their bundled media
+tools; running a script requires no Python installation.
 
 Continued prompts inherit omitted structured sections, replace explicitly
 supplied sections, clear explicitly empty sections, and emit the six recognized
@@ -44,6 +43,9 @@ Current rendering used FFmpeg/FFprobe 9.0.2. The historical CUDA gate selected
 its separately verified reference codecs as required by
 [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
+The table records the original milestone runs. Subsequent entry-point cleanup
+and its validation are recorded below.
+
 | Check | Mac source | Mac standalone | CUDA source | Linux standalone |
 |---|---|---|---|---|
 | Native parser/CLI suite | 24 passed | 24 passed | 24 passed | 24 passed |
@@ -64,7 +66,7 @@ by this run.
 The parser suite covers all six sections, transitive hard/bridge inheritance,
 partial/full/empty overrides, preambles, multiline bodies, canonical order,
 independent resets, duplicate headings, UTF-8 validation, option precedence,
-reference resets, LoRA lists, skipped chains, path handling and wrapper parity.
+reference resets, LoRA lists, skipped chains and path handling.
 It exercises every allowed `#nomerge` location plus repeated, escaped, comment
 and inline forms. Invalid scripts and incompatible native modes fail before
 any worker starts.
@@ -165,3 +167,24 @@ Raw logs, plans, reports, hashes and build metadata are retained under ignored
 subdirectory contains the final host/parser/launcher logs, source and standalone
 render results, build metadata, and both complete CUDA gate reports. Private
 host paths and connection details are excluded from this report.
+
+## Cleanup after integration
+
+On 2026-11-03, the compatibility entry point and its two dedicated tests were
+removed. `--render` is the single command for text-script rendering. The
+[example script](../../samples/render-example.txt) moved to `samples/`, with
+updated commands and relative reference-image paths. The original 24-test
+totals above include the two retired compatibility checks.
+
+All **22 remaining parser tests** passed on the Mac and RTX PRO 5000 source
+builds and on the previously built standalone executables. The relocated
+example passed dry runs on both hosts: four segments, three merge destinations,
+both reference images resolved, and no output directory created.
+
+A fresh complete CUDA reference regression passed **204/204** unchanged golden
+outputs in 98.03 seconds (195.37 seconds including its isolated build). Its
+source fingerprint is
+`61a8c9af54d5918c5a473a1e6519f148b427910756c866269208460458b99c79`.
+The native rendering implementation and golden manifest were unchanged.
+Cleanup logs, sample plans and the full gate report are retained under ignored
+`outputs/render-cleanup-20261103/`.

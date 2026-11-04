@@ -32,6 +32,8 @@ options are specific to particular hardware. The [documentation](docs/README.md)
 covers those options and their limits.
 
 For multi-shot videos, see [text-script rendering](docs/features/sequence-rendering.md).
+The [example script](samples/render-example.txt) demonstrates prompt inheritance
+and continuation chains.
 Use `--dry-run` to inspect the plan, and put `#nomerge` anywhere in the script
 to keep only the individual clips.
 

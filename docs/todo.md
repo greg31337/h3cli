@@ -3,7 +3,7 @@
 Status: **complete — 8/8 tasks complete**.
 Updated 2026-11-03.
 
-Integrated [render.py](../render.py) into h3cli as `--render <filename>`.
+Text-script rendering is built into h3cli as `--render <filename>`.
 The native command renders the text script's segments, merges all rendered
 segments into `<text_script_name>.mp4` by default, and inherits structured
 prompt sections through continued segments unless the new prompt overrides them.
@@ -12,7 +12,7 @@ The completed **8/8** release-tooling milestone is
 [archived intact](release-tooling-todo.md), with its
 [acceptance evidence](release/results.md). The requirements below describe
 implemented behavior; the [sequence-rendering guide](features/sequence-rendering.md)
-documents the native command and compatibility wrapper. The
+documents the native command. The
 [rendering acceptance record](features/render-integration-results.md) records
 source and standalone checks on the Mac and RTX PRO 5000, including the
 unchanged 204-output CUDA reference gate.
@@ -25,7 +25,7 @@ unchanged 204-output CUDA reference gate.
 ```
 
 - Make `--render` a first-class CLI mode in source builds and standalone macOS
-  and Linux packages. It must work without a separate `render.py`, a source
+  and Linux packages. It must work without a helper script, a source
   checkout, or a user-installed Python interpreter. Reuse the native option
   registry, generation/continuation paths and packaged FFmpeg/FFprobe support.
 - Preserve the script format and behavior: `### NAME`, `!### NAME`, native
@@ -173,8 +173,7 @@ individual MP4s, plus the normal states, logs and report.
   Expose the expanded prompt in dry runs and reports.
 - [x] RND004 Execute plans through the existing generation and continuation
   paths, preserving saved states, trimmed clips, logs, progress and cancellation
-  behavior. Keep `render.py` usable during migration and avoid divergent script
-  semantics between entry points.
+  behavior. Use `--render` as the single entry point for text-script rendering.
 - [x] RND005 Implement the script-wide merge, preserve chain merges, and apply
   `#nomerge` globally. Handle audio, mixed encoding/canvas normalization, skipped
   segments, filename collisions, one-clip inputs and atomic final publication.
@@ -192,9 +191,9 @@ individual MP4s, plus the normal states, logs and report.
   CUDA reference regression** required by [CONTRIBUTING.md](../CONTRIBUTING.md).
   Record actual evidence and limitations; missing prerequisites are not passes.
 - [x] RND008 Update CLI help, the project README, usage and sequence-rendering
-  guides, and `render-example.txt` with the built-in command, output locations,
-  global `#nomerge` behavior and prompt inheritance/override examples. Document
-  the standalone-script migration and record acceptance against this checklist.
+  guides, and [samples/render-example.txt](../samples/render-example.txt) with
+  the built-in command, output locations, global `#nomerge` behavior and prompt
+  inheritance/override examples. Record acceptance against this checklist.
 
 All eight tasks are complete. The [acceptance evidence](features/render-integration-results.md)
 confirms that the built-in command renders scripts, creates the complete

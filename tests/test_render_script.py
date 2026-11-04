@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-"""Native script planning and compatibility tests; no models or GPU required."""
+"""Native script planning tests; no models or GPU required."""
 import json
 import os
 from pathlib import Path
-import shutil
 import subprocess
-import sys
 import tempfile
 import unittest
 
@@ -333,29 +331,6 @@ Three.
         self.assertEqual(result.returncode, 2)
         self.assertIn('require --lora', result.stderr)
         self.assertFalse(self.out.exists())
-
-    def test_wrapper_uses_native_plan_without_checkout(self):
-        wrapper = self.root / 'render.py'
-        shutil.copyfile(ROOT/'render.py', wrapper)
-        text = '### a\nsummary:\nOne.\n### b\n#continue\nsummary:\nTwo.\n#nomerge'
-        native = self.plan(text)
-        result = subprocess.run([sys.executable, '-I', str(wrapper), str(self.source), '--dry-run',
-                                 '--h3cli', str(BINARY), '-o', str(self.out)], cwd=self.root,
-                                env=self.env, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(result.stdout), native)
-        self.assertFalse((self.root/'src').exists())
-
-    def test_wrapper_explicit_environment_only(self):
-        sys.path.insert(0, str(ROOT))
-        import render
-        from unittest.mock import patch
-        profile = self.root/'profile.sh'
-        profile.write_text('export H3_RENDER_PROFILE_TEST=yes\n')
-        with patch.dict(os.environ, {'PATH': os.environ['PATH']}, clear=True):
-            self.assertNotIn('H3_RENDER_PROFILE_TEST', render.environment())
-            self.assertEqual(render.environment(env_file=profile)['H3_RENDER_PROFILE_TEST'], 'yes')
-
 
 if __name__ == '__main__':
     unittest.main()

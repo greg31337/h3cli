@@ -3,13 +3,17 @@
 Use `h3cli --render <filename>` to render a sequence of shots and continuations.
 The native CLI handles the script, saves each segment, and merges the rendered
 segments in script order. Standalone macOS and Linux packages include the media
-tools; no Python interpreter or separate `render.py` is needed.
+tools; no Python interpreter is needed.
 
 ```sh
 ./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3 --dry-run
 ./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3
 ./bin/h3cli --render scenes.txt --output-dir outputs/my-sequence --steps 20
 ```
+
+For a complete example, see [samples/render-example.txt](../../samples/render-example.txt).
+From the checkout root, inspect it with
+`./bin/h3cli --render samples/render-example.txt --dry-run`.
 
 Replace `./bin/h3cli` with your downloaded executable when using a release.
 Source builds need their configured FFmpeg/FFprobe environment. The existing
@@ -210,23 +214,3 @@ A new independent shot using the inherited generation settings.
 
 An entirely skipped script succeeds without invoking render or media workers
 and without creating an output directory.
-
-## Migrating from render.py
-
-`render.py` is now a small compatibility wrapper around native `--render`.
-Existing text scripts use the same native parser, inheritance and merging rules
-through either entry point. The wrapper requires an h3cli executable that
-supports `--render`; it no longer maintains its own option inventory or renderer.
-
-```sh
-./render.py --check
-./render.py scenes.txt --h3cli /path/to/h3cli --dry-run
-./render.py scenes.txt -d /path/to/MiniMaxH3 -o outputs/my-sequence
-```
-
-The optional wrapper itself requires Python 3.10+. It retains binary discovery
-beside the wrapper, development `bin/h3cli`, PATH, `--h3cli` and `H3CLI_BIN`.
-`--check` verifies existing binary/media tools. `--ffmpeg`/`--ffprobe` and
-`H3_FFMPEG`/`H3_FFPROBE` select source-build tools; packaged runtime rules still
-apply. An environment profile loads only with `--env-file PATH`; `--no-env`
-remains accepted. Nothing installs software automatically.

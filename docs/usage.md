@@ -11,7 +11,7 @@ fresh output directory. The default `scenes-render/scenes.mp4` combines all
 rendered segments; `#nomerge` anywhere in the script disables merging.
 Continued segments inherit omitted structured prompt sections and can override
 individual sections. See [text-script rendering](features/sequence-rendering.md)
-for the format, canonical section order, examples and `render.py` migration.
+for the format, canonical section order and examples.
 
 - [First render](#2-make-a-first-fast-video)
 - [Quality presets](#4-choose-a-speedquality-preset)
