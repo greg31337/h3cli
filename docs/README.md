@@ -24,6 +24,7 @@ that path with your downloaded executable when using a release package.
 | Topic | Guide |
 | --- | --- |
 | Rendering options and examples | [Advanced usage](usage.md) |
+| Text scripts, merged sequences and inherited prompt sections | [Text-script rendering](features/sequence-rendering.md) |
 | Quality and speed | [Quality presets](usage.md#4-choose-a-speedquality-preset) |
 | MP4 compression and lossless RGB | [Output encoding](features/output-encoding.md) |
 | Resolution and duration | [Canvas sizes and frame counts](usage.md#5-pick-resolution-and-duration) |
@@ -55,6 +56,11 @@ that path with your downloaded executable when using a release package.
 
 ## Development and releases
 
+- [Completed rendering milestone](todo.md): built-in text-script rendering,
+  script-wide merging and structured prompt inheritance, with
+  [acceptance evidence](features/render-integration-results.md).
+- [Completed release-tooling milestone](release-tooling-todo.md) and its
+  [acceptance evidence](release/results.md).
 - [Contributing](../CONTRIBUTING.md) and
   [test commands](development.md#tests-and-runtime-requirements).
 - [Recorded SGLang regression](cuda/cuda-sglang-reference.md).

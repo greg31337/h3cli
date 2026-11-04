@@ -1,186 +1,203 @@
-# Simple build, test and release tooling
+# Integrated text-script rendering
 
-Status: **complete — 8/8 tasks implemented and validated**.
-Updated 2026-10-27.
+Status: **complete — 8/8 tasks complete**.
+Updated 2026-11-03.
 
-Make releases practical for a single maintainer working on an experimental/hobby
-project. After signing setup and environment configuration, the entire process
-must require only the five commands below. Reuse the working builders, dependency
-bundles and tests; simplify the public interface and remove manual handoffs.
+Integrated [render.py](../render.py) into h3cli as `--render <filename>`.
+The native command renders the text script's segments, merges all rendered
+segments into `<text_script_name>.mp4` by default, and inherits structured
+prompt sections through continued segments unless the new prompt overrides them.
 
-The commands are implemented and documented in the
-[current release guide](release/README.md). Native and signed-package acceptance
-passed on both hosts, followed by interrupted/resumed publication and a verified
-published retry in a private disposable repository. See the
-[acceptance record](release/results.md) for the checks and tested scope.
+The completed **8/8** release-tooling milestone is
+[archived intact](release-tooling-todo.md), with its
+[acceptance evidence](release/results.md). The requirements below describe
+implemented behavior; the [sequence-rendering guide](features/sequence-rendering.md)
+documents the native command and compatibility wrapper. The
+[rendering acceptance record](features/render-integration-results.md) records
+source and standalone checks on the Mac and RTX PRO 5000, including the
+unchanged 204-output CUDA reference gate.
 
-## The only manual steps
+## Built-in rendering
 
-1. **Initial signing prerequisites:** `./release/release.sh setup-signing`.
-   Reuse or help provision GitHub login, the existing Minisign key, and the
-   Developer ID identity/Keychain notary profile for Mac packages. Include Apple
-   account, certificate and credential-access setup here. This must work before a release
-   config exists; never replace working credentials just to start another release.
-2. **Configure the release environment:**
-   `./release/release.sh configure --version v0.6.0`.
-   Ask for missing machine/model paths and the GitHub repository, discover tools
-   and existing credentials, and save one ignored configuration. Remember host
-   settings across releases; subsequent configuration normally changes only the
-   version. Default to a GitHub prerelease, with a stable label selectable here.
-   Check credentials and SSH access, provision the required tools/models with
-   progress, and save environment settings so later commands need no shell exports.
-
-Then run these five commands in order:
-
-| Manual action | Command | Work performed automatically |
-| --- | --- | --- |
-| Build local binary on macOS / Linux | `./release/release.sh build-local` | Resolve dependencies and compile the native binary and its test helpers on each selected host. Print binary paths. |
-| Test local binary | `./release/release.sh test-local` | Run the required host and GPU tests against those builds and save results automatically. |
-| Build release packages | `./release/release.sh build-packages` | Build standalone deliverables and matching sources, collect both platforms, sign/notarize/staple the Mac distribution, and generate signed checksums. Print package paths. |
-| Test release packages | `./release/release.sh test-packages` | Extract/mount and run the actual final packages, check signatures, contents and hashes, and save results against those exact bytes. |
-| Release packages on GitHub | `./release/release.sh publish` | Generate notes, create the tag/draft, upload, download and verify the assets, then publish and print the public URL. |
-
-For the existing two-machine setup, run this sequence from the Mac: each command
-runs its macOS work locally and its Linux work over the configured SSH connection.
-Compilation and GPU tests run natively on their respective hosts. The same
-interface supports configuring just one platform. A selected target must pass;
-an unreachable Linux host cannot silently become a Mac-only success. No manual
-SSH commands, source copies, artifact transfers or matching run names are needed.
-
-## Work that belongs inside the commands
-
-- Configuration selects an existing source commit, defaulting to `HEAD`, and
-  clearly shows whether the working tree differs. Build an automatic snapshot of
-  that commit on both hosts; exclude uncommitted changes explicitly. Cloning,
-  source synchronization, version metadata and candidate directories are internal
-  details. Ordinary development commits are not extra release preparation steps.
-- Keep [reusable dependency bundles](build/dependency-bundles.md). Discover and
-  verify compatible cached bundles automatically. If none is available,
-  `build-local` obtains one or builds and validates it once from the locked inputs,
-  then caches it. Announce this work and its progress. Unchanged application
-  releases reuse it; operators never copy bundle hashes or invoke separate
-  identity/build/qualify/pin commands. Offline misses fail with a useful reason.
-- Use one small shared implementation behind the commands and a simple saved
-  state file under `outputs/release/`. Record source/configuration, dependency and
-  artifact identities and test results automatically. No hand-written reports,
-  `record-check.sh`, placeholder editing, manual checksum signing or extra
-  collect/stage/verify/publish commands are part of the normal workflow.
-- Each stage uses the preceding stage's matching output. Source, build settings
-  or artifact changes invalidate affected later results; packaging-time rebuilds
-  and signing are covered by `test-packages`. Tests never rebuild the tested
-  artifact silently, and `publish` never rebuilds or re-signs it.
-- `build-packages` includes the existing Apple submissions and waits for their
-  results. Other build/test commands do not submit to Apple. Only `publish` writes
-  tags or release assets to GitHub; invoking it is the publication action, with
-  no separate approval file, browser button or final publish command. Use system
-  credential stores configured during setup, not passwords in config or logs.
-- Retrying the same command resumes verified completed work and allocates fresh
-  attempts for failed work. Preserve failure logs; do not require deleting folders
-  or inventing a new run ID. Ctrl+C, SIGTERM and SSH disconnects stop owned workers
-  on both machines. Resume notarization/upload attempts without duplicating them.
-
-Publication may use a draft internally, but must finish with a published release.
-Generate usable notes from commits and actual test results; custom notes are
-optional configuration. Verify the remote tag and the downloaded bytes against
-the tested packages before publication. On retry, reconcile a matching draft or
-already-published release; never overwrite a conflicting public version. Confirm
-the final public state before reporting success. GitHub CLI already supports
-[generated notes and explicit target commits](https://cli.github.com/manual/gh_release_create)
-and [publishing a draft](https://cli.github.com/manual/gh_release_edit).
-
-## Tests and final results
-
-Keep the existing correctness checks automated inside the two test commands:
-
-- `test-local`: required host/release-tool tests and bounded real-model tests on
-  the selected native backends, including the complete Linux **204-output CUDA
-  reference gate** required by [CONTRIBUTING.md](../CONTRIBUTING.md). Prepare test
-  fixtures and saved states automatically; operators do not run setup renders.
-- `test-packages`: run the final standalone binaries outside the checkout with
-  isolated runtime caches; exercise rendering, CLI/server startup and packaged
-  media dependencies; verify Mac signatures/notary tickets/stapling, source
-  materials, asset lists and checksums. Include the existing final Linux artifact
-  CUDA gate. Generated reports identify the exact tested binaries/packages.
-- Automate the current downloaded-Linux check within `publish`, using the same
-  configured GPU host. Keep source tests and downloaded-asset verification tied
-  to the release without manual report attachment.
-
-Fresh Mac accounts/installations, browser-quarantine experiments, broader OS/GPU
-matrices and human video review are optional development investigations, not
-recurring publication requirements. Record the actual tested systems and known
-limits in release notes; never describe an existing developer account as a fresh
-trust environment. This replaces the old manual stable-release gates for both
-release labels. Automated signing, artifact and numerical failures still block
-publication; a required missing prerequisite or skipped test is not a pass.
-
-Every one of the five commands must end with one unambiguous summary line:
-
-```text
-PASS build-local: macos-arm64, linux-x86_64; binaries: <paths>
-PASS test-local: all required tests passed; report: <path>
-PASS build-packages: signed release packages ready; packages: <path>
-PASS test-packages: all final package tests passed; report: <path>
-PASS publish: <public GitHub release URL>
-FAIL test-packages: linux-x86_64: <reason>; log: <path>; retry: ./release/release.sh test-packages
+```sh
+./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3
+./bin/h3cli --render scenes.txt --dry-run
 ```
 
-Exit zero only for success and nonzero for failure or cancellation (130 for
-Ctrl+C). Print progress and the failing command while running. A successful
-subtask, existing file or stale report cannot produce an overall `PASS`. A
-`--dry-run` may print `PLAN`, but must never claim a build, test or release passed.
+- Make `--render` a first-class CLI mode in source builds and standalone macOS
+  and Linux packages. It must work without a separate `render.py`, a source
+  checkout, or a user-installed Python interpreter. Reuse the native option
+  registry, generation/continuation paths and packaged FFmpeg/FFprobe support.
+- Preserve the script format and behavior: `### NAME`, `!### NAME`, native
+  option directives and aliases, inherited settings, `#unset`, per-segment
+  reference/anchor resets, relative paths beside the script, comments, escaped
+  hashes, multiline prompts, hard/bridge continuation and context trimming.
+  Retain the rule that a continuation chain is entirely rendered or skipped.
+- Use native CLI generation options as initial defaults, with script directives
+  overriding them. Validate incompatible operation modes and options managed by
+  the script, including direct prompt/output and continuation-state overrides,
+  before rendering. Keep ordinary single-video CLI behavior unchanged.
+- Retain the default fresh output directory `<text_script_name>-render` beside
+  the input and expose `--output-dir` in render mode for an explicit directory.
+  Preserve individual clips, continuation states, logs and `run.json`.
+  `<text_script_name>` means the input basename with its final extension removed:
+  `scenes.txt` produces `scenes-render/scenes.mp4` by default.
+- Validate the entire script before starting generation. A dry run shows the
+  effective prompts, settings, skip decisions and merge destinations without
+  loading models or creating output files. Failures and cancellation return
+  nonzero, stop owned workers and retain completed clips and diagnostics.
+
+## Merge all rendered segments
+
+- After all active segments succeed, concatenate their delivered clips once
+  each, in script order, into `<text_script_name>.mp4`. Include independent shots
+  and every continuation chain. Omit skipped segments and avoid repeating
+  continuation context or including both a chain merge and its source clips.
+- Preserve the existing `<first_segment>-merged.mp4` chain outputs by default;
+  the script-wide file is an additional output. Keep the original clips.
+- Recognize a standalone `#nomerge` directive anywhere in the text script:
+  before the first segment, inside any segment (including a skipped one), after
+  prompt text, or at the end. Scan the complete file before execution. Its
+  presence disables all merged outputs for the entire run, including chain
+  merges; it does not affect generation, continuation, or prompt inheritance.
+  Repeated directives are harmless. It takes no arguments and is removed from
+  prompt text. Comments (`## ...`), escaped literal text (`\#nomerge`) and inline
+  mentions in prose do not activate it.
+- With one rendered segment, still produce the script-named MP4. With every
+  segment skipped, succeed without rendering or creating outputs. Reject
+  collisions among segment names, chain outputs and the script-wide filename
+  before rendering; disabled merge destinations do not reserve filenames.
+- Preserve audio/video order and synchronization. The merged frame count must
+  equal the sum of delivered segment frames at the existing 24 fps. Normalize
+  incompatible encodings when needed. For independent shots with different
+  dimensions, use the first rendered segment's canvas and fit/pad other shots
+  without cropping or changing their duration; individual clips stay intact.
+- Publish the final filename only after the complete merge passes media
+  validation. Report render or merge failures accurately; a partial script
+  cannot leave a file presented as the successful full result. Record the merge
+  inputs, normalization and final output, or the `#nomerge` decision, in `run.json`.
+
+## Structured prompt inheritance
+
+Recognize these prompt section headings and emit populated sections in exactly
+this order, regardless of their order in the source prompt:
+
+```text
+subject_definitions:
+...
+summary:
+...
+retention_analysis:
+...
+detailed_description:
+...
+overall_soundscape:
+...
+non_diegetic_music:
+...
+```
+
+- A heading occupies its own line, with optional surrounding whitespace. Its
+  body is all following text up to the next recognized heading or the end of
+  that segment's prompt. Preserve multiline bodies and internal formatting.
+  These are prompt sections, not `#` option directives.
+- A `#continue` segment inherits each omitted section from the immediately
+  preceding segment's **effective** prompt. Carry inherited or replaced values
+  forward through any number of continued segments, in hard and bridge modes.
+  A segment without `#continue` starts a fresh prompt-section context.
+- A heading present in the new prompt replaces that entire inherited section;
+  other sections still inherit. An explicitly empty section clears that section
+  for this and subsequent continuations until it is supplied again. Do not
+  manufacture missing sections or retain both old and new copies.
+- Keep the current segment's unstructured preamble before the ordered sections;
+  never inherit that preamble. Unrecognized headings are ordinary body text.
+  Prompts without recognized headings retain their existing behavior when
+  there are no structured sections to inherit.
+- Reject duplicate recognized headings within one prompt with a script line
+  diagnostic. Resolve inheritance before checking whether an active segment's
+  effective prompt is empty. Fully skipped chains cannot seed later independent
+  prompts, and mixed skipped/rendered chains remain invalid.
+- Pass the expanded prompt to generation and include it in the dry run and
+  execution report so users can inspect what each segment actually receives.
+
+For example, in `scenes.txt`:
+
+```text
+### opening
+#frames 56
+#size 256x256
+subject_definitions:
+A red toy boat with a white sail.
+summary:
+The boat rests beside the reeds.
+retention_analysis:
+Keep the boat's shape and sail color consistent.
+detailed_description:
+A fixed camera watches the boat on a quiet pond.
+overall_soundscape:
+Soft water and a light breeze.
+non_diegetic_music:
+A quiet piano melody.
+
+### drifting
+#continue
+summary:
+The boat drifts away from the reeds.
+detailed_description:
+The camera slowly follows the same boat into open water.
+
+### farther
+#continue
+summary:
+The boat reaches the center of the pond.
+```
+
+`drifting` inherits four sections and replaces `summary` and
+`detailed_description`. `farther` inherits the resulting five omitted sections,
+including `drifting`'s new `detailed_description`, and replaces only `summary`.
+All effective prompts use the six-section order above. The default outputs
+include `opening.mp4`, `drifting.mp4`, `farther.mp4`, `opening-merged.mp4` and
+`scenes.mp4`. Adding `#nomerge` anywhere as a directive leaves only the three
+individual MP4s, plus the normal states, logs and report.
 
 ## Implementation milestone
 
-- [x] REL001 Add the five named commands to `release/release.sh`, using a shared
-  driver, consistent help, progress, exit codes and final PASS/FAIL summaries.
-- [x] REL002 Consolidate signing setup and environment configuration. Import
-  existing machine/signing settings, discover tools/bundles, and save one usable
-  profile without manual JSON copying, checksum entry or environment sourcing.
-- [x] REL003 Implement `build-local` with automatic source snapshots, native
-  host selection, SSH execution and dependency provisioning/reuse. Keep normal
-  development builds working and keep private configuration out of artifacts.
-- [x] REL004 Implement `test-local` against the recorded local builds, including
-  the required host/current-feature suites and unchanged full CUDA gate. Save
-  results automatically and reject missing, mismatched or failed inputs.
-- [x] REL005 Implement `build-packages` around the existing packagers, Apple
-  signing/notarization, Linux collection, source materials and signed checksums.
-  All intermediate steps and retry directories stay internal.
-- [x] REL006 Implement `test-packages` against the final signed/distributable
-  bytes. Replace manual report gates with automated checks and documented test
-  scope; keep optional fresh-machine research out of the release path.
-- [x] REL007 Implement `publish` as upload, download/verification and public
-  release in one invocation. Generate complete notes, create the exact source
-  tag, preserve tested bytes and support safe retries without a second command.
-- [x] REL008 Test the whole sequence on the Mac and PRO 5000, including first
-  setup, warm dependency reuse, failures, cancellation, stale results and partial
-  publication. Verify GitHub behavior with a disposable test repository. Update
-  the release/build/dependency guides to this workflow and retire numbered/manual
-  runbooks from the normal path. Accept only when the seven manual actions above
-  suffice and all five stage commands report accurate final PASS/FAIL results.
+- [x] RND001 Add `--render <filename>`, render-mode `--output-dir` and
+  `--dry-run` to the native CLI inventory, help and dispatch. Define option
+  precedence and reject incompatible modes before model initialization.
+- [x] RND002 Integrate script parsing and planning with the native option
+  registry. Preserve existing directives, path handling, skip/continuation
+  rules and diagnostics; parse whole-file `#nomerge` before prompt processing.
+- [x] RND003 Implement structured-section parsing, transitive inheritance,
+  section replacement/clearing, independent-segment resets and canonical order.
+  Expose the expanded prompt in dry runs and reports.
+- [x] RND004 Execute plans through the existing generation and continuation
+  paths, preserving saved states, trimmed clips, logs, progress and cancellation
+  behavior. Keep `render.py` usable during migration and avoid divergent script
+  semantics between entry points.
+- [x] RND005 Implement the script-wide merge, preserve chain merges, and apply
+  `#nomerge` globally. Handle audio, mixed encoding/canvas normalization, skipped
+  segments, filename collisions, one-clip inputs and atomic final publication.
+- [x] RND006 Add host/parser and synthetic-media coverage. Test every inherited
+  heading, canonical order, partial/full/empty overrides, multiline bodies,
+  transitive propagation, independent resets, preambles and duplicate headings.
+  Cover `#nomerge` at every allowed location, repeated/literal/comment forms,
+  scripts with multiple independent shots and chains, zero/one active clip,
+  paths with spaces, merge frame/audio correctness and failure/cancellation.
+  Port relevant coverage from [script tests](../tests/test_render_script.py) and
+  [media tests](../tests/render_script_media.py).
+- [x] RND007 Validate source and standalone macOS/Linux entry points, packaged
+  media discovery and bounded real-model rendering with continuation. Run the
+  applicable host/current-feature checks and the unchanged full **204-output
+  CUDA reference regression** required by [CONTRIBUTING.md](../CONTRIBUTING.md).
+  Record actual evidence and limitations; missing prerequisites are not passes.
+- [x] RND008 Update CLI help, the project README, usage and sequence-rendering
+  guides, and `render-example.txt` with the built-in command, output locations,
+  global `#nomerge` behavior and prompt inheritance/override examples. Document
+  the standalone-script migration and record acceptance against this checklist.
 
-## Research informing the plan
-
-Reviewed upstream project files on 2026-10-27. These are examples of automation
-patterns; the five-stage local interface above is the choice for h3cli.
-
-| Project and primary source | Relevant pattern to adopt |
-| --- | --- |
-| [fzf release configuration](https://github.com/junegunn/fzf/blob/master/.goreleaser.yml) | One configuration describes platform builds, archives, GitHub releases and macOS signing/notarization. Keep credentials in setup and signing inside packaging. |
-| [ripgrep release workflow](https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/release.yml) | Version validation, platform builds, archives, checksums and uploads are scripted. Hide these mechanics behind explicit maintainer commands. |
-| [yt-dlp release workflow](https://github.com/yt-dlp/yt-dlp/blob/master/.github/workflows/release.yml) | Preparation, reusable platform builds, artifact collection, generated notes and GitHub publication form an automated sequence. Avoid manual handoff and note-template completion. |
-| [whisper.cpp release workflow](https://github.com/ggml-org/whisper.cpp/blob/master/.github/workflows/make-release.yml) | One dispatch selects a commit, runs release checks and automates tag/description/release creation, with a dry-run path. Keep source selection and release mechanics explicit but automated. |
-
-Use these patterns with the existing Python/shell builders and local GPU hosts;
-this milestone does not require adopting GoReleaser or moving GPU tests to hosted
-CI. Keep the implementation small enough for one maintainer to understand.
-
-## Previous work
-
-The [previous checklist](release-tooling-history.md) is archived intact:
-dependency bundles remain **12/12 complete**, with
-[qualification evidence](build/dependency-bundles-results.md). The macOS package
-milestone remains **33/36 complete**, with
-[recorded evidence and limits](build/macos-distribution-results.md).
-MAC029/MAC030 were not executed, and MAC036's old closure criteria remain unmet;
-none is relabeled as passed. Their former manual publication requirements are
-superseded by this milestone's automated checks and stated support scope.
+All eight tasks are complete. The [acceptance evidence](features/render-integration-results.md)
+confirms that the built-in command renders scripts, creates the complete
+script-named MP4 by default, honors global `#nomerge`, and supplies expanded
+prompts to continued segments on both supported platforms. The record includes
+test limits and unrelated platform/filesystem skips.

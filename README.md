@@ -20,6 +20,8 @@ matching settings, and validation scope.
 - Generate videos with dialogue, music, and sound effects from a text prompt.
 - Guide the result with images, video, or audio, or choose the first and last frames.
 - Continue a video across multiple segments and save progress for later.
+- Render a text script with `--render scenes.txt`, automatically inherit prompt
+  sections through continuations, and combine its clips into `scenes.mp4`.
 - Make quick previews, then use higher quality settings for the final render.
 - Upscale saved video latents to twice their width and height.
 - Apply LoRA adapters to customize generation.
@@ -28,6 +30,10 @@ matching settings, and validation scope.
 Apple Silicon uses Metal; Linux with NVIDIA GPUs uses CUDA. Some acceleration
 options are specific to particular hardware. The [documentation](docs/README.md)
 covers those options and their limits.
+
+For multi-shot videos, see [text-script rendering](docs/features/sequence-rendering.md).
+Use `--dry-run` to inspect the plan, and put `#nomerge` anywhere in the script
+to keep only the individual clips.
 
 ## Get started
 

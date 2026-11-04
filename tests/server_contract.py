@@ -24,7 +24,8 @@ ids=re.findall(r'H3_OPTION\("([^"]+)", ([^,]+),', (ROOT/'src/cli/options.def').r
 for d in registry:
  name=d['name'];assert any(n==name for n,_ in ids)
  enum=next(i for n,i in ids if n==name)
- if name not in ('models-path','download-models','list-models','offline'):assert 'case '+enum+':' in source,(name,enum)
+ # Process modes dispatch before the one-shot generation switch.
+ if d['operations']!='process' and name!='offline':assert 'case '+enum+':' in source,(name,enum)
  values=[]
  if d['arity']:
   value=d['choices'].split('|')[0] if d['choices'] else ('path with unicode 猫' if d['type']=='string' else str(max(d['minimum'],1)))

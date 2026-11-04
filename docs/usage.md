@@ -5,6 +5,14 @@ This guide retains the detailed rendering controls, feature restrictions and
 measured tradeoffs. Commands assume a source checkout and run from its root;
 with a release package, replace `./bin/h3cli` with the downloaded executable.
 
+To render a text script, use `./bin/h3cli --render scenes.txt`. Add `--dry-run`
+to inspect expanded prompts and outputs, or `--output-dir DIR` to choose a
+fresh output directory. The default `scenes-render/scenes.mp4` combines all
+rendered segments; `#nomerge` anywhere in the script disables merging.
+Continued segments inherit omitted structured prompt sections and can override
+individual sections. See [text-script rendering](features/sequence-rendering.md)
+for the format, canonical section order, examples and `render.py` migration.
+
 - [First render](#2-make-a-first-fast-video)
 - [Quality presets](#4-choose-a-speedquality-preset)
 - [Resolution and duration](#5-pick-resolution-and-duration)

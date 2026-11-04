@@ -1,4 +1,4 @@
-> Archived 2026-10-27. The active [release tooling plan](todo.md) replaces this
+> Archived 2026-10-27. The completed [release tooling plan](release-tooling-todo.md) replaces this
 > checklist's release procedure and recurring manual qualification requirements.
 > Completion states below are historical evidence, not additional release gates.
 > In particular, MAC029/MAC030/MAC036 have not been marked as passed.

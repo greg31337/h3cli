@@ -1,168 +1,128 @@
 #!/usr/bin/env python3
-"""Parser and execution-plan checks; no models, GPU or media tools required."""
-import contextlib
-import io
+"""Native script planning and compatibility tests; no models or GPU required."""
 import json
 import os
 from pathlib import Path
 import shutil
-import signal
 import subprocess
 import sys
 import tempfile
-import time
 import unittest
-from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import render
+ROOT = Path(__file__).resolve().parents[1]
+BINARY = Path(os.environ.get('H3_RENDER_BIN', ROOT / 'bin/h3cli')).resolve()
+HEADINGS = ['subject_definitions', 'summary', 'retention_analysis',
+            'detailed_description', 'overall_soundscape', 'non_diegetic_music']
 
 
 class RenderScriptTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.options = render.option_inventory()
-
     def setUp(self):
-        self.temporary = tempfile.TemporaryDirectory(prefix="h3 render's ")
-        self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name).resolve()
-        self.input = self.root / "scenes.txt"
-        for name in ("one.png", "two.png", "with spaces.png", "clip.mp4", "sound.wav"):
+        self.temp = tempfile.TemporaryDirectory(prefix="h3 render's ")
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name).resolve()
+        self.source = self.root / 'scenes.txt'
+        self.out = self.root / 'output'
+        self.env = dict(os.environ)
+        self.env.pop('H3_TEST_MAX_EVALUATIONS', None)
+        self.env.pop('H3_MODEL_DIR', None)
+        for name in ('one.png', 'two.png', 'with spaces.png', 'clip.mp4', 'sound.wav'):
             (self.root / name).touch()
 
-    def parse(self, text, validate=True):
-        self.input.write_text(text)
-        result = render.read_sections(self.input, self.options)
-        if validate:
-            render.validate_plan(result, self.options)
-        return result
+    def invoke(self, text, *options, dry=True, binary=BINARY):
+        self.source.write_text(text)
+        command = [str(binary), '--render', str(self.source), '--output-dir', str(self.out)]
+        if dry:
+            command += ['--dry-run']
+        return subprocess.run(command + list(options), capture_output=True, text=True,
+                              env=self.env, cwd=self.root, timeout=20)
 
-    def test_embedded_inventory_matches_native_inventory(self):
-        self.assertEqual(self.options, render.option_inventory(render.ROOT / "src/cli/options.def"))
-
-    def test_one_file_copy_dry_runs_without_source_or_options_sidecars(self):
-        script = self.root / "render.py"
-        shutil.copyfile(render.ROOT / "render.py", script)
-        self.input.write_text("### a\nOne.\n### b\n#continue\nTwo.")
-        out = self.root / "standalone-output"
-        result = subprocess.run([sys.executable, "-I", str(script), str(self.input), "--dry-run", "-o", str(out)],
-                                cwd=self.root, capture_output=True, text=True)
+    def plan(self, text, *options):
+        result = self.invoke(text, *options)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("a-merged.mp4", result.stdout)
-        self.assertFalse(out.exists())
-        self.assertFalse((self.root / "src").exists())
-        self.assertFalse((self.root / "options.def").exists())
+        self.assertFalse(self.out.exists())
+        return json.loads(result.stdout)
 
-    def test_adjacent_binary_is_selected_before_checkout_and_path(self):
-        for name in ("h3cli", "bin/h3cli"):
-            p = self.root / name
-            p.parent.mkdir(exist_ok=True)
-            p.touch(); p.chmod(0o755)
-        with patch.object(render, "ROOT", self.root):
-            self.assertEqual(render.select_binary(None, {}), str(self.root / "h3cli"))
-            self.assertEqual(render.select_binary("/explicit/h3cli", {}), "/explicit/h3cli")
-            self.assertEqual(render.select_binary(None, {"H3CLI_BIN": "/environment/h3cli"}), "/environment/h3cli")
+    def command_values(self, row, flag):
+        command = row['command']
+        return [command[i+1] for i, arg in enumerate(command[:-1]) if arg == '--' + flag]
 
-    def test_environment_file_requires_explicit_selection(self):
-        profile = self.root / "outputs/setup/linux-env.sh"
-        profile.parent.mkdir(parents=True)
-        profile.write_text("export RENDER_PROFILE_WAS_LOADED=yes\n")
-        with patch.object(render, "ROOT", self.root), patch.dict(os.environ, {"PATH": "/usr/bin:/bin"}, clear=True):
-            self.assertNotIn("RENDER_PROFILE_WAS_LOADED", render.environment())
-            self.assertEqual(render.environment(env_file=profile)["RENDER_PROFILE_WAS_LOADED"], "yes")
+    def test_help_and_mode_conflicts(self):
+        result = subprocess.run([str(BINARY), '--help'], capture_output=True, text=True)
+        for flag in ('--render', '--output-dir', '--dry-run', '#nomerge'):
+            self.assertIn(flag, result.stdout + result.stderr)
+        for flags in (['--dry-run'], ['--output-dir', 'out'],
+                      ['--server', '--render', 'missing'], ['--render', 'missing', '--server']):
+            result = subprocess.run([str(BINARY), *flags], capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 2, result.stderr)
 
-    def test_existing_bundle_extracts_own_media_for_linux_and_macos_layouts(self):
-        for target in ("linux", "macos"):
-            with self.subTest(target=target):
-                folder = self.root / target; folder.mkdir()
-                runtime = folder / "cache/runtime-id"
-                info = {"cache": str(runtime if target == "linux" else runtime.parent), "runtime_id": "runtime-id"}
-                if target == "macos":
-                    info["platform"] = "macos-arm64"
-                binary = folder / "h3cli"
-                binary.write_text(f'''#!{sys.executable}
-import json,os,sys
-from pathlib import Path
-assert sys.argv[1:]==['--help']
-if os.environ.get('H3CLI_BUNDLE_INFO'):
-    print(json.dumps({info!r}))
-else:
-    root=Path({str(runtime)!r})/'tools';root.mkdir(parents=True,exist_ok=True)
-    for name in ('ffmpeg','ffprobe'):
-        path=root/name
-        path.write_text({'#!' + sys.executable + chr(10)!r}+'print('+repr(name+' version test')+')\\n')
-        path.chmod(0o755)
-''')
-                binary.chmod(0o755)
-                self.assertFalse(runtime.exists())
-                env = dict(os.environ)
-                for name in ("H3_FFMPEG", "H3_FFPROBE", "H3CLI_BUNDLE_INFO"):
-                    env.pop(name, None)
-                ffmpeg, ffprobe = render.media_tools(str(binary), env)
-                self.assertEqual((ffmpeg, ffprobe), tuple(str(runtime / "tools" / n) for n in ("ffmpeg", "ffprobe")))
-                with contextlib.redirect_stdout(io.StringIO()) as output:
-                    render.check_dependencies(str(binary), ffmpeg, ffprobe, env)
-                self.assertIn("PASS:", output.getvalue())
+    def test_script_wide_and_chain_names_default_directory(self):
+        self.source.write_text('### first\nOne.\n### next\n#continue\nTwo.\n### independent\nThree.')
+        result = subprocess.run([str(BINARY), '--render', str(self.source), '--dry-run'],
+                                capture_output=True, text=True, env=self.env)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        plan = json.loads(result.stdout)
+        self.assertEqual(Path(plan['output']), self.root / 'scenes-render')
+        self.assertEqual([(m['name'], m['segments']) for m in plan['merged']], [
+            ('first-merged.mp4', ['first.mp4', 'next.mp4']),
+            ('scenes.mp4', ['first.mp4', 'next.mp4', 'independent.mp4'])])
+        self.assertEqual([s['delivered'] for s in plan['segments']], [56, 17, 56])
+        self.assertFalse((self.root / 'scenes-render').exists())
 
-    def test_explicit_media_overrides_do_not_probe_the_bundle(self):
-        with patch.object(render, "bundled_media", side_effect=AssertionError("unexpected bundle probe")):
-            self.assertEqual(render.media_tools("/missing/h3cli", {}, sys.executable, sys.executable),
-                             (str(Path(sys.executable).resolve()),) * 2)
-            with self.assertRaisesRegex(ValueError, "Executable not found"):
-                render.media_tools("/missing/h3cli", {}, "/missing/ffmpeg", sys.executable)
-
-    def test_missing_media_reports_manual_installation_instructions(self):
-        with patch.object(render, "bundled_media", return_value={}), patch.object(render.shutil, "which", return_value=None):
-            with self.assertRaisesRegex(ValueError, "sudo apt install ffmpeg"):
-                render.media_tools("h3cli", {"PATH": ""})
-
-    def test_inheritance_reference_reset_and_chain_boundaries(self):
-        sections = self.parse("""### 1
+    def test_inheritance_and_reference_reset(self):
+        plan = self.plan('''### 1
 #frames 243
 #size 1024x768
 #steps 30
-#seed 76
+#seed 18446744073709551615
 #refimage one.png
-First prompt.
+First.
 ### 2.mp4
 #continue
 #refimage two.png
-Second prompt.
+Second.
 ### 3
-Independent prompt.
+Independent.
 ### 4
 #continue
-Fourth prompt.
-""")
-        self.assertEqual(render.chains(sections), [[0, 1], [2, 3]])
-        self.assertEqual([s.delivered for s in sections], [243, 204, 243, 204])
-        self.assertEqual([s.value("seed", self.options) for s in sections], ["76"] * 4)
-        self.assertEqual([s.value("steps", self.options) for s in sections], ["30"] * 4)
-        self.assertEqual([len(s.references) for s in sections], [1, 1, 0, 0])
-        self.assertEqual(sections[0].references[0][1], [str(self.root / "one.png")])
-        self.assertEqual(sections[1].references[0][1], [str(self.root / "two.png")])
+Fourth.
+''')
+        rows = plan['segments']
+        self.assertEqual([s['delivered'] for s in rows], [243, 204, 243, 204])
+        for row in rows:
+            self.assertEqual(self.command_values(row, 'steps'), ['30'])
+            self.assertEqual(self.command_values(row, 'seed'), ['18446744073709551615'])
+        self.assertEqual(self.command_values(rows[0], 'ref-image'), [str(self.root / 'one.png')])
+        self.assertEqual(self.command_values(rows[1], 'ref-image'), [str(self.root / 'two.png')])
+        self.assertFalse(self.command_values(rows[2], 'ref-image'))
 
-    def test_reference_order_all_media_and_anchors_reset(self):
-        sections = self.parse("""### first
+    def test_all_reference_types_order_anchors_and_paths(self):
+        plan = self.plan('''### first
 #refimage one.png
 #ref-audio sound.wav
 #ref-image two.png
 #ref-video-audio clip.mp4 sound.wav
-#first-frame one.png
-#last-frame two.png
 #ref-image-size high
 One.
 ### next
 Two.
-""")
-        self.assertEqual([name for name, _ in sections[0].references],
-                         ["ref-image", "ref-audio", "ref-image", "ref-video-audio", "first-frame", "last-frame"])
-        self.assertEqual(sections[1].references, [])
-        self.assertEqual(sections[1].value("ref-image-size", self.options), "high")
+''')
+        command = plan['segments'][0]['command']
+        media = [s for s in command if s in ('--ref-image', '--ref-audio', '--ref-video-audio', '--first-frame', '--last-frame')]
+        self.assertEqual(media, ['--ref-image', '--ref-audio', '--ref-image', '--ref-video-audio'])
+        self.assertEqual(self.command_values(plan['segments'][1], 'ref-image-size'), ['high'])
+        self.assertNotIn('--first-frame', plan['segments'][1]['command'])
+        anchors = self.plan('### a\n#first-frame one.png\n#last-frame two.png\nOne.\n### b\nTwo.')['segments']
+        self.assertIn('--first-frame', anchors[0]['command'])
+        self.assertNotIn('--first-frame', anchors[1]['command'])
 
-    def test_lora_list_replacement_and_unset(self):
-        sections = self.parse("""### a
+    def test_cli_defaults_script_override_and_unset(self):
+        plan = self.plan('### a\nOne.\n### b\n#steps 4\n#unset seed\nTwo.', '--steps', '2', '--seed', '9')
+        self.assertEqual(self.command_values(plan['segments'][0], 'steps'), ['2'])
+        self.assertEqual(self.command_values(plan['segments'][1], 'steps'), ['4'])
+        self.assertFalse(self.command_values(plan['segments'][1], 'seed'))
+
+    def test_lora_replacement_and_unset(self):
+        plan = self.plan('''### a
 #lora a.safetensors:0.8
 #lora b.safetensors
 #profile
@@ -177,196 +137,225 @@ Three.
 ### d
 #unset lora
 Four.
-""")
-        self.assertEqual(sections[0].settings["lora"], sections[1].settings["lora"])
-        self.assertEqual(sections[2].settings["lora"],
-                         [[str(self.root / "c.safetensors") + ":0"], [str(self.root / "d.safetensors") + ":1.2"]])
-        self.assertNotIn("profile", sections[2].settings)
-        self.assertNotIn("lora", sections[3].settings)
+''')
+        rows = plan['segments']
+        self.assertEqual(self.command_values(rows[0], 'lora'), self.command_values(rows[1], 'lora'))
+        self.assertEqual(self.command_values(rows[2], 'lora'), [str(self.root/'c.safetensors')+':0', str(self.root/'d.safetensors')+':1.2'])
+        self.assertNotIn('--profile', rows[2]['command'])
+        self.assertFalse(self.command_values(rows[3], 'lora'))
 
-    def test_mutually_exclusive_settings_replace_inherited_values(self):
-        sections = self.parse("""### a
+    def test_exclusive_settings_and_native_frame_alignment(self):
+        plan = self.plan('''### a
 #frames 243
 #preview-vae
 #ffmpeg-crf 8
 One.
 ### b
-#seconds 1
+#seconds 0.9375
 #no-preview-vae
 #output-quality high
 Two.
 ### c
-#frames 22
+#frames 40
 #lossless-video
 Three.
-""")
-        self.assertEqual([s.frames for s in sections], [243, 39, 22])
-        self.assertNotIn("frames", sections[1].settings)
-        self.assertNotIn("seconds", sections[2].settings)
-        self.assertNotIn("preview-vae", sections[1].settings)
-        self.assertNotIn("ffmpeg-crf", sections[1].settings)
-        self.assertNotIn("output-quality", sections[2].settings)
+''')
+        rows = plan['segments']
+        self.assertEqual([s['frames'] for s in rows], [243, 39, 56])
+        for flag in ('--frames', '--preview-vae', '--ffmpeg-crf'):
+            self.assertNotIn(flag, rows[1]['command'])
+        for flag in ('--seconds', '--output-quality'):
+            self.assertNotIn(flag, rows[2]['command'])
 
     def test_quotes_bom_comments_and_multiline_prompt(self):
-        sections = self.parse('\ufeff## Example\n### shot one ###\n#--frames=56 # note\n'
-                              '#refimage "with spaces.png"\n#--model-dir "model dir"\n'
-                              'First line.\n\n\\# A literal hash.\nSecond line.\n')
-        self.assertEqual(sections[0].name, "shot one.mp4")
-        self.assertEqual(sections[0].prompt, "First line.\n\n# A literal hash.\nSecond line.")
-        self.assertEqual(sections[0].references[0][1], [str(self.root / "with spaces.png")])
-        self.assertEqual(sections[0].settings["model-dir"], [[str(self.root / "model dir")]])
+        plan = self.plan('\ufeff## Example\r\n### shot one ###\r\n#--frames=56 # note\r\n'
+                         '#refimage "with spaces.png"\r\n#--model-dir "model dir"\r\n'
+                         'First line.\r\n\r\n\\# A literal hash.\r\nSecond line.\r\n')
+        row = plan['segments'][0]
+        self.assertEqual(row['name'], 'shot one.mp4')
+        self.assertEqual(row['prompt'], 'First line.\n\n# A literal hash.\nSecond line.')
+        self.assertEqual(self.command_values(row, 'ref-image'), [str(self.root/'with spaces.png')])
+        self.assertEqual(self.command_values(row, 'model-dir'), [str(self.root/'model dir')])
 
-    def test_native_seconds_rounding_and_frame_alignment(self):
-        # C llround rounds .5 upward, unlike Python round's ties-to-even rule.
-        sections = self.parse("### a\n#seconds 0.9375\nOne.\n### b\n#frames 40\nTwo.\n")
-        self.assertEqual([s.frames for s in sections], [39, 56])
+    def test_utf8_and_oversized_dimensions(self):
+        row = self.plan('### 猫\n#size 256X256\nA cat 猫 and a tree 🌲.')['segments'][0]
+        self.assertEqual(row['prompt'], 'A cat 猫 and a tree 🌲.')
+        result = self.invoke('### a\n#size 999999999999999999999999999x256\nText.')
+        self.assertEqual(result.returncode, 2)
+        for invalid in (b'\xff', b'\xc0\xaf', b'\xed\xa0\x80', b'\xf4\x90\x80\x80', b'\xe2\x82', b'\0'):
+            self.source.write_bytes(b'### a\nText '+invalid)
+            result = subprocess.run([str(BINARY), '--render', str(self.source), '--dry-run'], capture_output=True)
+            self.assertEqual(result.returncode, 2, result.stderr)
 
-    def test_context_uses_full_previous_state_not_trimmed_clip(self):
-        sections = self.parse("### a\n#frames 90\nOne.\n### b\n#continue\nTwo.\n"
-                              "### c\n#continue\nThree.\n")
-        self.assertEqual([s.delivered for s in sections], [90, 51, 51])
+    def test_bridge_only_applies_to_continuations_and_full_state_context(self):
+        rows = self.plan('### a\n#frames 90\n#continue-mode bridge\n#continue-context 39\n'
+                         '#continue-bridge-profile linear\nOne.\n### b\n#continue\nTwo.\n'
+                         '### c\n#continue\nThree.\n### d\nFour.')['segments']
+        self.assertEqual([s['delivered'] for s in rows], [90, 51, 51, 90])
+        for row in (rows[0], rows[3]):
+            self.assertNotIn('--continue-mode', row['command'])
+        self.assertEqual(self.command_values(rows[1], 'continue-mode'), ['bridge'])
+        self.assertTrue(self.command_values(rows[2], 'continue-from')[0].endswith('/0001.h3av'))
 
-    def test_bridge_settings_apply_only_to_continuations(self):
-        sections = self.parse("### a\n#continue-mode bridge\n#continue-context 39\n"
-                              "#continue-bridge-profile linear\nOne.\n### b\n#continue\nTwo.\n"
-                              "### c\nThree.\n")
-        work = self.root / "work"
-        commands = [render.render_command("h3cli", s, i, work) for i, s in enumerate(sections)]
-        self.assertNotIn("--continue-mode", commands[0])
-        self.assertNotIn("--continue-context", commands[0])
-        self.assertNotIn("--continue-bridge-profile", commands[2])
-        self.assertIn("bridge", commands[1])
-        index = commands[1].index("--continue-from")
-        self.assertEqual(commands[1][index + 1], str(work / "0000.h3av"))
-        self.assertNotIn("--continue-from", commands[2])
+    def test_each_section_inherits_and_can_be_replaced_or_cleared(self):
+        for heading in HEADINGS:
+            with self.subTest(heading=heading):
+                rows = self.plan(f'### a\n{heading}:\nOld.\n### b\n#continue\n'
+                                 f'### c\n#continue\n{heading}:\nNew.\n'
+                                 f'### d\n#continue\nPreamble.\n{heading}:\n'
+                                 '### e\n#continue\nAnother preamble.')['segments']
+                self.assertEqual(rows[0]['prompt'], f'{heading}:\nOld.')
+                self.assertEqual(rows[1]['prompt'], rows[0]['prompt'])
+                self.assertEqual(rows[2]['prompt'], f'{heading}:\nNew.')
+                self.assertEqual(rows[3]['prompt'], 'Preamble.')
+                self.assertEqual(rows[4]['prompt'], 'Another preamble.')
 
-    def test_prompt_and_paths_remain_single_arguments(self):
-        sections = self.parse("### a\n#refimage 'with spaces.png'\nA \"quoted\" $(touch example) prompt.\n")
-        command = render.render_command("h3cli", sections[0], 0, self.root)
-        self.assertEqual(command[command.index("--prompt") + 1], sections[0].prompt)
-        self.assertEqual(command[command.index("--ref-image") + 1], str(self.root / "with spaces.png"))
+    def test_canonical_order_partial_overrides_transitive_and_reset(self):
+        original = '\n'.join(f'{h}:\n{h} body\n  indented detail' for h in reversed(HEADINGS))
+        rows = self.plan(f'### a\nOriginal preamble.\n{original}\n'
+                         '### b\n#continue\nNew preamble.\nsummary:\nReplaced.\n'
+                         '### c\n#continue\ndetailed_description:\nNew detail.\n'
+                         '### d\nIndependent.\n### e\n#continue\nStill independent.')['segments']
+        for row in rows[:3]:
+            self.assertEqual([line[:-1] for line in row['prompt'].splitlines() if line[:-1] in HEADINGS], HEADINGS)
+        self.assertIn('summary:\nReplaced.', rows[2]['prompt'])
+        self.assertNotIn('New preamble.', rows[2]['prompt'])
+        self.assertIn('  indented detail', rows[2]['prompt'])
+        self.assertEqual(rows[3]['prompt'], 'Independent.')
+        self.assertEqual(rows[4]['prompt'], 'Still independent.')
+        self.assertEqual(self.command_values(rows[2], 'prompt'), [rows[2]['prompt']])
 
-    def test_multiple_chains_and_singletons_have_separate_merges(self):
-        sections = self.parse("### a\nOne.\n### b\n#continue\nTwo.\n### c\nThree.\n"
-                              "### d\nFour.\n### e\n#continue\nFive.\n")
-        self.assertEqual(render.chains(sections), [[0, 1], [2], [3, 4]])
-        self.assertEqual([render.merged_name(sections[g[0]]) for g in render.chains(sections) if len(g) > 1],
-                         ["a-merged.mp4", "d-merged.mp4"])
+    def test_plain_preamble_unknown_headings_and_all_overrides(self):
+        rows = self.plan('### a\nsummary:\nOld.\n### b\n#continue\n'
+                         'Preamble.\nsummary:\nNew.\nunknown_heading:\nBody.')['segments']
+        self.assertEqual(rows[1]['prompt'], 'Preamble.\n\nsummary:\nNew.\nunknown_heading:\nBody.')
+        original = '\n'.join(f'{h}:\nOld {h}.' for h in HEADINGS)
+        replacement = '\n'.join(f'{h}:\nNew {h}.' for h in HEADINGS)
+        rows = self.plan(f'### a\n{original}\n### b\n#continue\n{replacement}')['segments']
+        self.assertNotIn('Old', rows[1]['prompt'])
+        self.assertEqual(rows[1]['prompt'].count('New'), 6)
 
-    def test_invalid_inputs_fail_before_any_render(self):
+    def test_duplicate_headings_and_empty_effective_prompt(self):
+        for text, diagnostic in [('### a\nsummary:\nOne.\nsummary:\nTwo.', ':4: duplicate'),
+                                 ('### a\nsummary:\nOne.\n### b\n#continue\nsummary:', 'empty prompt')]:
+            result = self.invoke(text)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn(diagnostic, result.stderr)
+
+    def test_nomerge_in_every_location_is_global_and_idempotent(self):
+        base = '### a\nOne.\n### b\n#continue\nTwo.\n!### skipped\n'
+        variants = ['#nomerge\n' + base, base + '#nomerge\n',
+                    base.replace('One.', '#nomerge\nOne.'), base.replace('Two.', 'Two.\n#nomerge'),
+                    '#nomerge\n' + base + '#nomerge\n']
+        for text in variants:
+            plan = self.plan(text)
+            self.assertTrue(plan['nomerge'])
+            self.assertEqual(plan['merged'], [])
+            self.assertEqual([s['prompt'] for s in plan['segments'][:2]], ['One.', 'Two.'])
+
+    def test_nomerge_comments_literals_and_arguments(self):
+        plan = self.plan('## #nomerge\n### a\nUse #nomerge in prose.\n\\#nomerge')
+        self.assertFalse(plan['nomerge'])
+        self.assertEqual(len(plan['merged']), 1)
+        self.assertIn('\n#nomerge', plan['segments'][0]['prompt'])
+        result = self.invoke('### a\nText.\n#nomerge true')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('no arguments', result.stderr)
+
+    def test_skip_directives_inherit_but_prompts_and_references_do_not(self):
+        rows = self.plan('!### a\n#steps 4\n#refimage missing.png\nsummary:\nSkipped.\n'
+                         '!### b\n#continue\n### c\nActive.\n### d\n#continue\nNext.')['segments']
+        self.assertEqual([s['status'] for s in rows], ['skipped', 'skipped', 'planned', 'planned'])
+        self.assertEqual(rows[2]['prompt'], 'Active.')
+        self.assertEqual(self.command_values(rows[2], 'steps'), ['4'])
+        self.assertNotIn('--ref-image', rows[2]['command'])
+
+    def test_all_skipped_no_outputs_or_media_dependencies(self):
+        self.env.update(H3_FFMPEG='/missing/ffmpeg', H3_FFPROBE='/missing/ffprobe')
+        result = self.invoke('!### a\n#refimage missing.png\n!### b\n#continue', dry=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(self.out.exists())
+
+    def test_late_errors_prevent_any_rendering_or_outputs(self):
         cases = {
-            "first continuation": ("### a\n#continue\nOne.", "preceding"),
-            "duplicate name": ("### a\nOne.\n### a.mp4\nTwo.", "duplicate"),
-            "merge collision": ("### a\nOne.\n### b\n#continue\nTwo.\n### a-merged\nThree.", "collides"),
-            "unknown": ("### a\n#frmes 56\nOne.", "Unknown"),
-            "empty": ("### a\n#frames 56", "empty prompt"),
-            "malformed quote": ('### a\n#refimage "one.png\nOne.', "quotation"),
-            "bad size": ("### a\n#size 1023x768\nOne.", "multiples"),
-            "changed geometry": ("### a\nOne.\n### b\n#continue\n#size 512x512\nTwo.", "width"),
-            "missing reference": ("### a\n#refimage missing.png\nOne.", "missing"),
-            "model switch": ("### a\n#refimage one.png\nOne.\n### b\n#continue\nTwo.", "Ref2VA"),
-            "source too short": ("### a\n#frames 22\nOne.\n### b\n#frames 56\n#continue\nTwo.", "context"),
-            "no suffix": ("### a\n#frames 39\nOne.\n### b\n#continue\nTwo.", "context"),
-            "invalid context": ("### a\nOne.\n### b\n#continue\n#continue-context 40\nTwo.", "context"),
-            "unsafe path": ("### ../a\nOne.", "filename"),
-            "preamble": ("unexpected text\n### a\nOne.", "first video"),
-            "late directive": ("### a\nOne.\n#frames 56", "before the prompt"),
-            "unknown unset": ("### a\n#unset frmes\nOne.", "Cannot unset"),
-            "zero seconds": ("### a\n#seconds 0\nOne.", "seconds"),
-            "nan": ("### a\n#seconds nan\nOne.", "Invalid"),
-            "seed overflow": ("### a\n#seed 18446744073709551616\nOne.", "Invalid"),
-            "no option value": ("### a\n#frames\nOne.", "expects 1"),
-            "flag with value": ("### a\n#profile true\nOne.", "expects 0"),
-            "invalid enum": ("### a\n#continue-mode wrong\nOne.", "hard|bridge"),
+            'first continuation': ('### a\n#continue\nOne.', 'preceding'),
+            'mixed skipped': ('### good\nGood.\n### a\nOne.\n!### b\n#continue\nTwo.', 'mixes'),
+            'duplicate': ('### a\nOne.\n### a\nTwo.', 'collides'),
+            'case collision': ('### A\nOne.\n### a\nTwo.', 'collides'),
+            'chain collision': ('### a\nOne.\n### b\n#continue\nTwo.\n### a-merged\nThree.', 'collides'),
+            'script collision': ('### scenes\nOne.', 'collides'),
+            'unknown': ('### a\n#frmes 56\nOne.', 'unknown'),
+            'empty': ('### a\n#frames 56', 'empty prompt'),
+            'bad quote': ('### a\n#refimage "one.png\nOne.', 'quotation'),
+            'bad size': ('### a\n#size 1023x768\nOne.', 'multiples'),
+            'changed size': ('### a\nOne.\n### b\n#continue\n#size 512x512\nTwo.', 'width'),
+            'missing ref': ('### a\n#refimage missing.png\nOne.', 'missing'),
+            'mode switch': ('### a\n#refimage one.png\nOne.\n### b\n#continue\nTwo.', 'Ref2VA'),
+            'short source': ('### a\n#frames 22\nOne.\n### b\n#frames 56\n#continue\nTwo.', 'context'),
+            'no suffix': ('### a\n#frames 39\nOne.\n### b\n#continue\nTwo.', 'context'),
+            'bad context': ('### a\nOne.\n### b\n#continue\n#continue-context 40\nTwo.', 'context'),
+            'bad path': ('### ../a\nOne.', 'filename'),
+            'preamble': ('unexpected\n### a\nOne.', 'first video'),
+            'late option': ('### a\nOne.\n#frames 56', 'before the prompt'),
+            'bad unset': ('### a\n#unset frmes\nOne.', 'cannot unset'),
+            'zero seconds': ('### a\n#seconds 0\nOne.', 'seconds'),
+            'nan': ('### a\n#seconds nan\nOne.', 'invalid'),
+            'overflow': ('### a\n#seed 18446744073709551616\nOne.', 'invalid'),
+            'missing value': ('### a\n#frames\nOne.', 'expects 1'),
+            'flag value': ('### a\n#profile true\nOne.', 'expects 0'),
+            'bad enum': ('### a\n#continue-mode wrong\nOne.', 'hard|bridge'),
         }
-        for name, (text, error) in cases.items():
-            with self.subTest(name=name), self.assertRaisesRegex(ValueError, error):
-                self.parse(text)
+        for label, (text, diagnostic) in cases.items():
+            with self.subTest(label=label):
+                result = self.invoke(text, dry=False)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn(diagnostic, result.stderr)
+                self.assertFalse(self.out.exists())
 
-    def test_script_managed_and_nonvideo_options_are_rejected(self):
-        for name in render.MANAGED | render.NON_VIDEO:
-            with self.subTest(name=name), self.assertRaisesRegex(ValueError, "managed|complete video"):
-                self.parse(f"### a\n#{name}\nOne.")
+    def test_disabled_merge_names_do_not_collide(self):
+        plan = self.plan('### scenes\nOne.\n### b\n#continue\nTwo.\n### scenes-merged\nThree.\n#nomerge')
+        self.assertEqual(plan['merged'], [])
 
-    def test_dry_run_has_no_outputs_and_does_not_need_a_binary(self):
-        self.input.write_text("### a\nOne.\n### b\n#continue\nTwo.")
-        out = self.root / "output"
-        stdout = io.StringIO()
-        with contextlib.redirect_stdout(stdout):
-            code = render.main([str(self.input), "--dry-run", "--no-env", "--h3cli", "/missing/binary",
-                                "-o", str(out)])
-        self.assertEqual(code, 0)
-        self.assertFalse(out.exists())
-        self.assertIn("a-merged.mp4", stdout.getvalue())
-        self.assertIn("--continue-from", stdout.getvalue())
+    def test_managed_and_nonvideo_modes_rejected(self):
+        flags = {'prompt': 'Text', 'output': 'out.mp4', 'continue-from': 'state.h3av',
+                 'save-av-state': 'state.h3av', 'keep-continuation-prefix': None,
+                 'still': None, 'info': None, 'state-only': None, 'stop-after-step': '1',
+                 'resume-sampler-state': 'state.h3sp', 'download-models': 'all', 'list-models': None}
+        for name, value in flags.items():
+            with self.subTest(name=name):
+                options = ['--' + name] + ([value] if value is not None else [])
+                result = self.invoke('### a\nOne.', *options)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn('managed', result.stderr)
 
-    def test_interrupt_stops_render_process_group_and_records_interruption(self):
-        # An actual subprocess tree verifies Ctrl-C also reaches h3cli's workers.
-        fake = self.root / "fake-h3cli"
-        worker = self.root / "worker.py"
-        pidfile = self.root / "ready.json"
-        worker.write_text("""import os, signal, sys, time
-from pathlib import Path
-def stopped(signum, frame):
-    Path(sys.argv[1]).write_text('stopped')
-    raise SystemExit(0)
-signal.signal(signal.SIGTERM, stopped)
-Path(sys.argv[2]).write_text(str(os.getpid()))
-while True:
-    time.sleep(0.05)
-""")
-        fake.write_text(f"""#!{sys.executable}
-import json, os, signal, subprocess, sys, time
-from pathlib import Path
-if '--help' in sys.argv:
-    raise SystemExit(0)
-root = Path({str(self.root)!r})
-def stopped(signum, frame):
-    child.wait(timeout=5)
-    (root/'parent-stopped').write_text('stopped')
-    raise SystemExit(0)
-signal.signal(signal.SIGTERM, stopped)
-child = subprocess.Popen([sys.executable, str(root/'worker.py'), str(root/'worker-stopped'), str(root/'worker-ready')])
-while not (root/'worker-ready').exists():
-    time.sleep(0.01)
-(root/'ready.json').write_text(json.dumps([os.getpid(), child.pid]))
-while True:
-    time.sleep(0.05)
-""")
-        fake.chmod(0o755)
-        self.input.write_text("### a\nOne.")
-        out = self.root / "interrupted"
-        child = subprocess.Popen([sys.executable, str(render.ROOT / "render.py"), str(self.input),
-                                  "--no-env", "--h3cli", str(fake), "--ffmpeg", "/usr/bin/true",
-                                  "--ffprobe", "/usr/bin/true", "-o", str(out)],
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        try:
-            deadline = time.monotonic() + 10
-            while not pidfile.exists() and child.poll() is None and time.monotonic() < deadline:
-                time.sleep(0.02)
-            self.assertTrue(pidfile.exists(), "fake render did not start")
-            self.assertEqual(json.loads((out / "run.json").read_text())["status"], "running")
-            child.send_signal(signal.SIGINT)
-            output, _ = child.communicate(timeout=15)
-            self.assertEqual(child.returncode, 130, output.decode())
-            self.assertTrue((self.root / "parent-stopped").exists())
-            self.assertTrue((self.root / "worker-stopped").exists())
-            report = json.loads((out / "run.json").read_text())
-            self.assertEqual(report["status"], "interrupted")
-            self.assertEqual(report["segments"][0]["status"], "interrupted")
-            self.assertFalse((out / "a.mp4").exists())
-        finally:
-            if child.poll() is None:
-                child.kill()
-                child.wait()
-            child.stdout.close()
-            if pidfile.exists():
-                for pid in json.loads(pidfile.read_text()):
-                    try:
-                        os.kill(pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
+    def test_native_combination_validation_runs_before_outputs(self):
+        result = self.invoke('### a\n#lora-cache cache\nText.', dry=False)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('require --lora', result.stderr)
+        self.assertFalse(self.out.exists())
+
+    def test_wrapper_uses_native_plan_without_checkout(self):
+        wrapper = self.root / 'render.py'
+        shutil.copyfile(ROOT/'render.py', wrapper)
+        text = '### a\nsummary:\nOne.\n### b\n#continue\nsummary:\nTwo.\n#nomerge'
+        native = self.plan(text)
+        result = subprocess.run([sys.executable, '-I', str(wrapper), str(self.source), '--dry-run',
+                                 '--h3cli', str(BINARY), '-o', str(self.out)], cwd=self.root,
+                                env=self.env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout), native)
+        self.assertFalse((self.root/'src').exists())
+
+    def test_wrapper_explicit_environment_only(self):
+        sys.path.insert(0, str(ROOT))
+        import render
+        from unittest.mock import patch
+        profile = self.root/'profile.sh'
+        profile.write_text('export H3_RENDER_PROFILE_TEST=yes\n')
+        with patch.dict(os.environ, {'PATH': os.environ['PATH']}, clear=True):
+            self.assertNotIn('H3_RENDER_PROFILE_TEST', render.environment())
+            self.assertEqual(render.environment(env_file=profile)['H3_RENDER_PROFILE_TEST'], 'yes')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

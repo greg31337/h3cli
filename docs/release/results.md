@@ -3,7 +3,7 @@
 Validation run: 2026-10-27. **Complete:** all five commands passed, including native
 builds/tests, signed packages, final package tests and interrupted/resumed GitHub
 publication followed by a verified published retry.
-This records the evidence for [REL001–REL008](../todo.md), not a production release.
+This records the evidence for [REL001–REL008](../release-tooling-todo.md), not a production release.
 
 ## Candidate and systems
 

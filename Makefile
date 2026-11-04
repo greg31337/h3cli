@@ -122,9 +122,18 @@ LIB_C := $(COMMON_C) $(PLATFORM_C)
 LIB_OBJ := $(LIB_C:.c=.o) $(LIB_M:.m=.o) $(LIB_CUDA:.cu=.o) $(LIB_CXX:.cpp=.o)
 SERVER_C := src/server/resources.c src/server/bundle.c src/server/json.c src/server/sglang.c src/server/server.c src/server/http.c src/server/queue.c src/server/assets.c src/server/worker.c
 MODEL_C := src/models/catalog.c src/models/common.c src/models/resolve.c src/models/transfer.c src/models/store.c
-CLI_C := src/h3cli.c src/cli/cli_progress.c src/cli/options.c src/cli/arguments.c src/request.c $(MODEL_C) $(SERVER_C)
+CLI_C := src/h3cli.c src/cli/cli_progress.c src/cli/options.c src/cli/arguments.c src/cli/render_plan.c src/cli/render.c src/request.c $(MODEL_C) $(SERVER_C)
 CLI_OBJ := $(CLI_C:.c=.o) third_party/civetweb/src/civetweb.o
 CLI_LDLIBS := -lsqlite3 -lcurl -lpthread
+RENDER_TEST_C := tests/render_driver.c src/cli/render_plan.c src/cli/render.c src/request.c src/cli/options.c src/server/json.c src/weights/lora_json.c
+bin/render_driver: $(RENDER_TEST_C) src/cli/render.h src/cli/options.def | bin
+	$(CC) $(CPPFLAGS) $(CFLAGS) -I. $(RENDER_TEST_C) -o $@ -lm
+.PHONY: test-render-script test-render-media
+test-render-script: bin/h3cli
+	python3 tests/test_render_script.py
+test-render-media: bin/render_driver
+	python3 tests/render_script_media.py
+test-current-host: test-render-script test-render-media
 src/models/catalog.inc: src/models/catalog.json scripts/embed_model_catalog.py
 	python3 scripts/embed_model_catalog.py
 src/models/catalog.o: src/models/catalog.inc

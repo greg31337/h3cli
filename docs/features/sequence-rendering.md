@@ -1,55 +1,30 @@
-# Standalone sequence rendering
+# Text-script rendering
 
-`render.py` works beside an existing standalone `h3cli` executable. It contains
-its option metadata and uses only the Python standard library. It does not need
-`options.def`, the h3cli source tree, a compiler, a CUDA toolkit or pip packages.
-It never installs software.
-
-## Prerequisites
-
-- Python 3.10 or newer.
-- A working h3cli executable and the GPU driver required by that executable.
-- The model weights required for the requested rendering modes.
-- FFmpeg and FFprobe. The standalone h3cli packages already include both; the
-  script discovers them through the existing launcher's runtime metadata.
-
-On Ubuntu/Debian, if Python is missing, these are manual installation commands:
+Use `h3cli --render <filename>` to render a sequence of shots and continuations.
+The native CLI handles the script, saves each segment, and merges the rendered
+segments in script order. Standalone macOS and Linux packages include the media
+tools; no Python interpreter or separate `render.py` is needed.
 
 ```sh
-sudo apt update
-sudo apt install python3
+./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3 --dry-run
+./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3
+./bin/h3cli --render scenes.txt --output-dir outputs/my-sequence --steps 20
 ```
 
-Only if the executable has no bundled media tools and system tools are missing:
+Replace `./bin/h3cli` with your downloaded executable when using a release.
+Source builds need their configured FFmpeg/FFprobe environment. The existing
+model discovery, downloading and `--offline` behavior also apply to render mode.
+See the [integration acceptance record](render-integration-results.md) for
+tested platforms, package coverage and validation limits.
 
-```sh
-sudo apt install ffmpeg
-```
+`--dry-run` validates the whole script and prints a JSON plan containing the
+expanded prompts, effective commands, skipped segments and merge destinations.
+It does not load models, start render workers or create output files. Native
+CLI generation options provide initial defaults; script directives override
+those defaults. Direct `--prompt`, `--output`, continuation-state overrides and
+other operation modes cannot be combined with `--render`.
 
-The `ffmpeg` package supplies FFprobe too. No installation command is executed
-by the script. The existing h3cli launcher may populate its normal runtime cache
-when first run; it uses the runtime already contained in the executable.
-
-## Run
-
-```sh
-./render.py --check
-./render.py scenes.txt -d /path/to/MiniMaxH3 --dry-run
-./render.py scenes.txt -d /path/to/MiniMaxH3 -o sequence-output
-```
-
-`--check` verifies the binary and media tools without rendering or loading model
-weights. `--dry-run` prints and validates the plan without running the binary or
-creating output files. Rendering requires a fresh output directory.
-
-The script looks for `h3cli`, `h3cli-linux-x86_64`, or `h3cli-macos-arm64` beside
-it, then a development `bin/h3cli`, then `h3cli` on PATH. Use `--h3cli PATH` or
-`H3CLI_BIN` to override this. Explicit `--ffmpeg`/`--ffprobe` options or
-`H3_FFMPEG`/`H3_FFPROBE` take precedence over bundled tools and PATH tools.
-Shell profiles load only with `--env-file PATH`; old `--no-env` invocations remain
-valid. No checkout environment is loaded automatically.
-
-## Input format
+## Script format
 
 ```text
 ### first
@@ -68,26 +43,157 @@ The boat continues past the reeds.
 A blue toy boat beside a wooden dock.
 ```
 
-This produces three clips and `first-merged.mp4` for the continuation chain.
-Ordinary settings persist until changed; references and first/last-frame
-anchors reset in each section. Repeat references on a continued Ref2VA segment
+A `### NAME` heading starts `NAME.mp4`; an existing `.mp4` suffix is retained.
+Names must be unique, contain no directories or control characters, and must
+not collide with an enabled merge output. Collisions are rejected without
+rendering, including names differing only by case.
+The real run also checks the destination filesystem's Unicode filename aliases
+before starting workers. Publishing a clip or merge never replaces an existing file.
+
+Ordinary settings persist until changed. References and first/last-frame
+anchors reset in each segment; repeat references on a continued Ref2VA segment
 so its model mode matches the previous segment. `#continue` applies only to its
-own section. Multiple independent clips and continuation chains can share one
-input file. Relative media paths are resolved beside that file.
+own segment and continues the immediately preceding segment. Multiple
+independent shots and continuation chains can share one script. Media, model
+and other directive paths are resolved beside the script; CLI paths are resolved
+from the current working directory. Quoted paths can contain spaces.
 
-`#refimage PATH` aliases `#ref-image PATH`, and other directives use native long
-option names without `--`. `#unset OPTION` removes an inherited setting. Use
-`##` for comments and `\#` for a literal leading hash in a prompt.
+`#refimage PATH`, `#refvideo PATH` and `#refaudio PATH` alias their hyphenated
+native names. Other directives use native long option names without `--`.
+`#size WIDTHxHEIGHT` sets both dimensions. `#unset OPTION` restores the native
+default; `#unset size` restores both dimensions. Repeated reference options keep
+their order. A new segment's first `#lora` replaces the inherited adapter list;
+additional `#lora` directives append to that list.
 
-Start a section with `!### NAME` to skip its rendering. Its directives still
-parse and update inherited settings normally, including `#unset`; references
-still reset in each section. Skipped sections do not need a prompt or existing
-reference files and produce no clips or saved states.
+Use `##` for comments and `\#` for a literal leading hash in a prompt. Prompts
+can span multiple lines. Directives belong before prompt text, except for the
+global `#nomerge` directive. Scripts must be UTF-8; a BOM and CRLF line endings
+are accepted. Unknown directives, malformed values and invalid native option
+combinations produce diagnostics before generation starts.
 
-A continuation chain includes its first segment and every following segment
-marked `#continue`. Either every header in that chain must use `!###`, or every
-header must use `###`. Mixing them is a preprocessing error, even if the mixed
-chain appears after an otherwise valid chain; no rendering starts first.
+## Outputs and merging
+
+By default, `scenes.txt` creates a fresh `scenes-render` directory beside the
+script. `--output-dir DIR` selects a different fresh directory. Existing output
+directories are never reused or overwritten.
+
+The example above produces:
+
+- `first.mp4`, `next.mp4` and `independent.mp4` for the individual segments.
+- `first-merged.mp4` for the continuation chain.
+- `scenes.mp4` containing **all rendered segments**, once each, in script order.
+- `run.json` with effective prompts, commands, statuses, tool paths and merge
+  results, plus logs, the original script and continuation states in `.render/`.
+
+The combined filename is the input basename with only its final extension
+removed, followed by `.mp4`. A script with one rendered segment still produces
+this combined output. Individual clips and chain merges are retained.
+
+Continuation clips exclude their inherited context. In this example, `next`
+delivers 17 new frames after its 39-frame context: the chain contains 73 frames,
+and `scenes.mp4` contains 95 frames at 24 fps. Audio is aligned to those delivered
+frames. Compatible video streams are copied; differing encodings are normalized
+to lossless RGB for merging. Different independent-shot dimensions are fitted
+and padded to the first rendered segment's canvas without cropping. Original
+clips retain their dimensions and encoding.
+
+Add this directive **anywhere** in the script to disable every merge:
+
+```text
+#nomerge
+```
+
+It works before the first heading, after prompt text, at the end of the file,
+or in a skipped segment. It applies to the whole file, including earlier
+segments, and disables both chain merges and the script-named MP4. Individual
+clips, continuation states and prompt inheritance still work. Repeating it is
+harmless; it takes no arguments. `## #nomerge`, `\#nomerge` and inline mentions
+in ordinary prose do not activate it. The directive itself is not prompt text.
+
+Only verified complete merges receive their final filename. A render or merge
+failure returns nonzero and records the error without presenting a partial
+script as a completed combined video. Ctrl+C returns 130; SIGTERM returns 143.
+Cancellation stops the active worker and its child processes, retaining completed
+clips, states and diagnostic logs.
+
+## Continued prompt sections
+
+Recognized headings appear on their own lines, with optional surrounding
+whitespace. Their bodies extend to the next recognized heading or the end of
+that segment's prompt. Effective prompts emit populated sections in this order:
+
+```text
+subject_definitions:
+...
+summary:
+...
+retention_analysis:
+...
+detailed_description:
+...
+overall_soundscape:
+...
+non_diegetic_music:
+...
+```
+
+A `#continue` segment automatically inherits each omitted section from the
+previous segment's effective prompt. Writing a heading again replaces its entire
+body; other sections still inherit. These values propagate through subsequent
+continuations in hard and bridge modes. An explicitly empty section clears it
+until a later segment supplies it again. A segment without `#continue` resets
+the prompt-section context.
+
+```text
+### opening
+#frames 56
+#size 256x256
+subject_definitions:
+A red toy boat with a white sail.
+summary:
+The boat rests beside the reeds.
+retention_analysis:
+Keep the boat shape and sail color consistent.
+detailed_description:
+A fixed camera watches the boat on a quiet pond.
+overall_soundscape:
+Soft water and a light breeze.
+non_diegetic_music:
+A quiet piano melody.
+### drifting
+#continue
+summary:
+The boat drifts away from the reeds.
+detailed_description:
+The camera slowly follows the same boat into open water.
+### farther
+#continue
+summary:
+The boat reaches the center of the pond.
+non_diegetic_music:
+```
+
+`drifting` replaces two sections and inherits the other four. `farther` keeps the
+updated description, replaces the summary and clears the inherited music section.
+The expanded prompts are visible in `--dry-run` and `run.json`.
+
+Unstructured text before the first recognized heading remains the current
+segment's preamble and is never inherited. Unrecognized headings remain ordinary
+body text. Duplicate recognized headings in one prompt are errors. An active
+segment must have a nonempty effective prompt after inheritance; a continuation
+can omit its prompt entirely if inherited sections supply one. Multiline bodies
+and their internal formatting are preserved.
+
+## Skipping segments
+
+Start a segment with `!### NAME` to skip it. Its directives still update inherited
+settings, including `#unset`; references still reset. Skipped segments need no
+prompt or existing reference files and produce no clip or state.
+
+A continuation chain includes its first segment and all following `#continue`
+segments. Every heading in that chain must be skipped, or every heading must be
+rendered. Mixing them anywhere in the script is a preprocessing error. Skipped
+chains never seed the prompt sections of a subsequent independent segment.
 
 ```text
 !### omitted-first
@@ -99,15 +205,28 @@ An omitted shot.
 #continue
 Its omitted continuation.
 ### included
-A new, independent shot using the inherited settings.
+A new independent shot using the inherited generation settings.
 ```
 
-An entirely skipped input finishes successfully without invoking h3cli or
-creating an output directory.
+An entirely skipped script succeeds without invoking render or media workers
+and without creating an output directory.
 
-Continuation output excludes its context automatically: the earlier three-clip
-example's second clip has 17 new frames after its 39-frame context, for 73 merged
-frames at 24 fps.
-The output retains clips, continuation states, logs and `run.json`, including
-the exact binary and media-tool paths used. Ctrl+C stops the owned render
-process group and preserves completed work.
+## Migrating from render.py
+
+`render.py` is now a small compatibility wrapper around native `--render`.
+Existing text scripts use the same native parser, inheritance and merging rules
+through either entry point. The wrapper requires an h3cli executable that
+supports `--render`; it no longer maintains its own option inventory or renderer.
+
+```sh
+./render.py --check
+./render.py scenes.txt --h3cli /path/to/h3cli --dry-run
+./render.py scenes.txt -d /path/to/MiniMaxH3 -o outputs/my-sequence
+```
+
+The optional wrapper itself requires Python 3.10+. It retains binary discovery
+beside the wrapper, development `bin/h3cli`, PATH, `--h3cli` and `H3CLI_BIN`.
+`--check` verifies existing binary/media tools. `--ffmpeg`/`--ffprobe` and
+`H3_FFMPEG`/`H3_FFPROBE` select source-build tools; packaged runtime rules still
+apply. An environment profile loads only with `--env-file PATH`; `--no-env`
+remains accepted. Nothing installs software automatically.

@@ -19,6 +19,8 @@
 #include <getopt.h>
 #include "src/cli/options.h"
 #include "src/cli/dispatch.h"
+#include "src/cli/render.h"
+#include "src/platform.h"
 #include "src/request.h"
 #include "src/internal.h"
 #include "src/server/server.h"
@@ -50,6 +52,10 @@ static void usage(const char *program) {
     fputs(
         "Options:\n"
         "      --server           Start queued HTTP service (--server --help)\n"
+        "      --render FILE      Render a text script; merge as FILE_STEM.mp4\n"
+        "      --output-dir DIR   Fresh directory for --render outputs\n"
+        "      --dry-run          Validate --render and print its expanded JSON plan\n"
+        "                        #nomerge anywhere disables merges; #continue inherits prompt sections\n"
         "      --models-path PATH Shared model root (default: models)\n"
         "      --download-models GROUPS Prefetch base,references,preview,image-vae,upscale,all\n"
         "      --list-models      Show pinned models and local availability\n"
@@ -1079,7 +1085,7 @@ static int cli_execute(int argc, char **argv) {
                 cli.frames_dir, strerror(errno));
         return 1;
     }
-    if (profile) setenv("H3_PROFILE", "1", 1);
+    if (profile && !(cli_hooks && cli_hooks->validate_only)) setenv("H3_PROFILE", "1", 1);
     if (params.continuation_mode == H3_CONTINUE_BRIDGE && (!continue_from || !prompt)) {
         fprintf(stderr, "h3cli: bridge continuation requires --continue-from and -p\n");
         return 2;
@@ -1214,6 +1220,28 @@ static int cli_parsed_run(int argc,char **argv,const h3_cli_hooks *hooks) {
     return status;
 }
 static volatile sig_atomic_t download_cancelled;
+/* Validate generation controls before any script worker or model preparation.
+ * Planned continuation files do not exist yet; the script planner checks chain
+ * geometry/context and the normal dispatcher validates the actual saved state. */
+static int validate_render_options(const h3_request *request) {
+    h3_request ordinary = {0}; char error[512] = {0};
+    int count = 0, status = 2;
+    for (size_t i = 0; i < request->count; i++) {
+        const h3_option_value *v = &request->values[i];
+        if (!strncmp(v->option->name, "continue-", 9) || !strcmp(v->option->name, "models-path") ||
+            !strcmp(v->option->name, "offline")) continue;
+        if (!h3_request_add(&ordinary, v->option->name, v->value, v->second, v->source, error, sizeof(error))) goto done;
+    }
+    char **argv = h3_request_argv(&ordinary, &count);
+    if (argv) {
+        h3_cli_hooks validation = {.validate_only = 1};
+        status = cli_parsed_run(count, argv, &validation);
+        h3_argv_free(argv);
+    }
+done:
+    if (*error) fprintf(stderr, "h3cli: %s\n", error);
+    h3_request_free(&ordinary); return status;
+}
 typedef struct {
     const h3_cli_hooks *hooks;
     char phase[64];
@@ -1287,6 +1315,16 @@ int h3_cli_run(int argc, char **argv, const h3_cli_hooks *hooks) {
     if (h3_request_get(&request, "verbose") || h3_request_get(&request, "profile"))
         h3_log_exchange_verbose(1);
     if (h3_request_get(&request, "help")) { usage(argv[0]); status = 0; goto done; }
+    if (h3_request_get(&request, "render")) {
+        if (hooks) { snprintf(error, sizeof(error), "--render is a CLI operation, not a server job"); goto done; }
+        char *binary = h3_executable_path();
+        if (!binary) { snprintf(error, sizeof(error), "cannot locate h3cli executable"); goto done; }
+        status = h3_render_run(&request, binary, validate_render_options);
+        free(binary); goto done;
+    }
+    if (h3_request_get(&request, "output-dir") || h3_request_get(&request, "dry-run")) {
+        snprintf(error, sizeof(error), "--output-dir and --dry-run require --render"); goto done;
+    }
     int prefetch=h3_request_get(&request,"download-models")!=NULL;
     int list=h3_request_get(&request,"list-models")!=NULL;
     if(!prefetch&&!list){
@@ -1336,12 +1374,16 @@ done:
 }
 int main(int argc,char **argv) {
     if(argc>1&&!strcmp(argv[1],"--server-worker"))return h3_server_worker_main(argc,argv);
+    int server = 0, render = 0;
     for(int i=1;i<argc;i++) {
-        if(!strcmp(argv[i],"--server"))return h3_server_main(argc,argv);
+        if(!strcmp(argv[i],"--server"))server = 1;
+        if(!strcmp(argv[i],"--render") || !strncmp(argv[i],"--render=",9))render = 1;
         const h3_option_descriptor *d=NULL;
         if(!strncmp(argv[i],"--",2)) {if(strchr(argv[i],'='))continue;d=h3_option_find(argv[i]+2);}
         else if(argv[i][0]=='-'&&argv[i][1]&&!argv[i][2])d=h3_option_short(argv[i][1]);
         if(d)i+=d->arity;
     }
+    if (server && render) { fputs("h3cli: --server and --render are incompatible\n", stderr); return 2; }
+    if (server) return h3_server_main(argc,argv);
     return h3_cli_run(argc,argv,NULL);
 }

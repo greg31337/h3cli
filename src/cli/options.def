@@ -1,4 +1,7 @@
 /* Single option inventory for getopt, HTTP lowering, IPC, discovery and coverage. */
+H3_OPTION("render", OPT_RENDER, 1, STRING, NONE, 0, "render", 0, 0, NULL, NULL, "all", "process")
+H3_OPTION("output-dir", OPT_RENDER_OUTPUT_DIR, 1, STRING, NONE, 0, "render-output", 0, 0, NULL, NULL, "all", "process")
+H3_OPTION("dry-run", OPT_RENDER_DRY_RUN, 0, BOOL, NONE, 0, "render-dry-run", 0, 0, NULL, "false", "all", "process")
 H3_OPTION("output-quality", OPT_OUTPUT_QUALITY, 1, ENUM, NONE, 0, "encoding", 0, 0, "default|maximum|high|medium|low", NULL, "all", "all")
 H3_OPTION("ffmpeg-crf", OPT_FFMPEG_CRF, 1, INT, NONE, 0, "encoding", 0, 51, NULL, NULL, "all", "all")
 H3_OPTION("lossless-video", OPT_LOSSLESS_VIDEO, 0, BOOL, NONE, 0, "encoding", 0, 0, NULL, "false", "all", "all")

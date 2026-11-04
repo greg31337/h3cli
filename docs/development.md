@@ -98,7 +98,25 @@ make test
 make test-current-host
 # Current reference-video preprocessing:
 make test-refvideo test-video-posterior
+# Native text-script parser and synthetic media/lifecycle checks:
+make test-render-script test-render-media
 ```
+
+The render checks are also included in `test-current-host`. Parser tests use
+no models or GPU; media tests use a test-only synthetic worker and the actual
+native runner with FFmpeg/FFprobe. For bounded real-model coverage, run:
+
+```sh
+python3 tests/render_integration.py --binary bin/h3cli \
+  --model /path/to/MiniMaxH3 --out outputs/render-validation
+```
+
+Add `--ssd-streaming` for a Mac with limited
+available unified memory. Use `--packaged` with a standalone executable to
+test with an empty PATH and an isolated runtime cache. See the
+[sequence-rendering guide](features/sequence-rendering.md) for user-facing behavior.
+The [integration acceptance record](features/render-integration-results.md)
+records the Mac and RTX PRO 5000 checks, package coverage and test limits.
 
 Both platforms run current host/API, CLI, serialization and tokenizer tests.
 Metal additionally runs native GPU primitives; CUDA runs its host/GPU operator
