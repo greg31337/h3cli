@@ -120,6 +120,30 @@ script as a completed combined video. Ctrl+C returns 130; SIGTERM returns 143.
 Cancellation stops the active worker and its child processes, retaining completed
 clips, states and diagnostic logs.
 
+### Media validation
+
+Validation reads the MP4/MOV container's stored frame count, dimensions, frame
+rate and video/audio durations first. This avoids decoding every frame of each
+segment, prepared merge input and final merge. A reported frame count that
+conflicts with the planned count fails validation.
+
+If the container has no usable frame count, h3cli scans only the video stream
+to count decoded frames. Each scan has a **600-second** default deadline.
+Set `H3_RENDER_SCAN_TIMEOUT` to a positive finite number of seconds to change
+that limit. `H3_RENDER_VERIFY_FRAMES=1` requests a full video-frame scan even
+when the stored count is available; the default is `0`.
+
+```sh
+H3_RENDER_SCAN_TIMEOUT=1200 H3_RENDER_VERIFY_FRAMES=1 \
+  ./bin/h3cli --render scenes.txt
+```
+
+The initial metadata query retains a 120-second deadline for stalled probes.
+Scan failures identify the file and probing phase, and cancellation stops the
+active probe. `run.json` records the selected scan timeout and verification mode
+under `validation`. Metadata checks validate container information; enable full
+frame verification when decoded-video integrity needs checking too.
+
 ## Continued prompt sections
 
 Recognized headings appear on their own lines, with optional surrounding

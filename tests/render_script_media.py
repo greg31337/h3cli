@@ -16,6 +16,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import textwrap
 import time
 import unittest
 
@@ -36,6 +37,8 @@ class NativeMediaTests(unittest.TestCase):
         self.out = self.root/'output'
         self.source = self.root/'scenes.txt'
         self.env = dict(os.environ)
+        self.env.pop('H3_RENDER_SCAN_TIMEOUT', None)
+        self.env.pop('H3_RENDER_VERIFY_FRAMES', None)
         self.ffmpeg = str(Path(shutil.which(self.env.get('H3_FFMPEG', 'ffmpeg'))).resolve())
         self.ffprobe = str(Path(shutil.which(self.env.get('H3_FFPROBE', 'ffprobe'))).resolve())
         self.env.update(H3_FFMPEG=self.ffmpeg, H3_FFPROBE=self.ffprobe)
@@ -89,6 +92,159 @@ Path(str(state)+'.presentation').write_text('Synthetic presentation.\\n')
         if canvas:
             command += ['-vf', f'scale={canvas[0]}:{canvas[1]}:force_original_aspect_ratio=decrease:force_divisible_by=2,pad={canvas[0]}:{canvas[1]}:(ow-iw)/2:(oh-ih)/2,setsar=1']
         return subprocess.check_output(command + ['-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'])
+
+    def probe_wrapper(self, edit='', on_scan='pass'):
+        wrapper = self.root/'probe wrapper.py'
+        wrapper.write_text(f'''#!{sys.executable}
+import json, signal, subprocess, sys, time
+from pathlib import Path
+root = Path({str(self.root)!r})
+args = sys.argv[1:]
+name = Path(args[-1]).name
+scan = '-count_frames' in args
+with (root/'probe-calls.jsonl').open('a') as log:
+    log.write(json.dumps(dict(name=name, scan=scan, args=args))+'\\n')
+if scan:
+{textwrap.indent(on_scan, '    ')}
+data = json.loads(subprocess.check_output([{self.ffprobe!r}, *args], text=True))
+{edit}
+print(json.dumps(data))
+''')
+        wrapper.chmod(0o755)
+        self.env['H3_FFPROBE'] = str(wrapper)
+
+    def probe_calls(self):
+        return [json.loads(line) for line in (self.root/'probe-calls.jsonl').read_text().splitlines()]
+
+    def test_metadata_validation_avoids_decoding_fourteen_segments(self):
+        self.probe_wrapper(on_scan="raise SystemExit('Unexpected full frame scan')")
+        text = ''.join(f'### shot{i}\n#size {"64x128" if i%2 else "128x64"}\n#frames 362\nred\n'
+                       for i in range(14))
+        report = self.run_script(text)
+        self.assertEqual(report['merged'][0]['frames'], 14*362)
+        self.assertTrue(report['merged'][0]['lossless_normalization'])
+        calls = self.probe_calls()
+        self.assertTrue(any(c['name'].endswith('.mov') for c in calls))
+        self.assertTrue(any(c['name']=='merge-0000.mp4' for c in calls))
+        self.assertFalse(any(c['scan'] for c in calls))
+        self.assertEqual(report['validation'], dict(verify_frames=False, scan_timeout_seconds=600))
+
+    def test_missing_container_counts_fall_back_to_video_scan(self):
+        self.probe_wrapper(edit='''if not scan and name in ('0000.mp4', '0001.mp4', '0002.mp4'):
+    video = next(s for s in data['streams'] if s['codec_type']=='video')
+    if name == '0000.mp4': video.pop('nb_frames', None)
+    else: video['nb_frames'] = 'N/A' if name == '0001.mp4' else '0'
+''')
+        self.env['H3_RENDER_SCAN_TIMEOUT'] = '720'
+        report = self.run_script('### a\n#size 96x96\n#frames 22\nred\n### b\nblue\n### c\nred\n#nomerge')
+        scans = [c for c in self.probe_calls() if c['scan']]
+        self.assertEqual([c['name'] for c in scans], ['0000.mp4','0001.mp4','0002.mp4'])
+        for call in scans:
+            self.assertEqual(call['args'][call['args'].index('-select_streams')+1], 'v:0')
+        self.assertEqual(report['validation']['scan_timeout_seconds'], 720)
+
+    def test_wrong_container_count_is_rejected_without_scan(self):
+        self.probe_wrapper(edit='''if name == '0000.mp4':
+    next(s for s in data['streams'] if s['codec_type']=='video')['nb_frames'] = '21'
+''', on_scan="raise SystemExit('A conflicting count must not trigger a scan')")
+        report = self.run_script('### a\n#size 96x96\n#frames 22\nred\n#nomerge', 1)
+        self.assertIn('0000.mp4: expected', report['error'])
+        self.assertFalse((self.out/'a.mp4').exists())
+        self.assertFalse(any(c['scan'] for c in self.probe_calls()))
+
+    def test_metadata_geometry_rate_and_durations_are_still_checked(self):
+        for kind, key, value in (('video','width',128), ('video','avg_frame_rate','30/1'),
+                                 ('video','duration','9'), ('audio','duration','9')):
+            with self.subTest(kind=kind, key=key):
+                self.out = self.root/(kind+'-'+key)
+                self.probe_wrapper(edit=f'''if name == '0000.mp4':
+    next(s for s in data['streams'] if s['codec_type']=={kind!r})[{key!r}] = {value!r}
+''', on_scan="raise SystemExit('Invalid metadata must not trigger a scan')")
+                report = self.run_script('### a\n#size 96x96\n#frames 22\nred\n#nomerge', 1)
+                self.assertIn('0000.mp4: expected', report['error'])
+                self.assertFalse((self.out/'a.mp4').exists())
+
+    def test_explicit_frame_verification_checks_decoded_count(self):
+        self.env['H3_RENDER_VERIFY_FRAMES'] = '1'
+        for count in ('22', '21', 'N/A'):
+            with self.subTest(count=count):
+                self.out = self.root/('verified-'+count.replace('/','-'))
+                self.probe_wrapper(edit=f'''if scan and name == '0000.mp4':
+    next(s for s in data['streams'] if s['codec_type']=='video')['nb_read_frames'] = {count!r}
+''')
+                report = self.run_script('### a\n#size 96x96\n#frames 22\nred\n#nomerge', 0 if count=='22' else 1)
+                self.assertTrue(report['validation']['verify_frames'])
+                self.assertTrue(any(c['scan'] and c['name']=='0000.mp4' for c in self.probe_calls()))
+                self.assertEqual((self.out/'a.mp4').exists(), count=='22')
+
+    def test_failed_frame_scan_identifies_file_and_preserves_clips(self):
+        self.probe_wrapper(edit='''if not scan and name == '0001.mp4':
+    next(s for s in data['streams'] if s['codec_type']=='video').pop('nb_frames', None)
+''', on_scan="raise SystemExit(9)")
+        report = self.run_script('### a\n#size 96x96\n#frames 22\nred\n### b\nblue\n#nomerge', 1)
+        self.assertIn('0001.mp4: frame scan:', report['error'])
+        self.assertTrue((self.out/'a.mp4').exists())
+        self.assertFalse((self.out/'b.mp4').exists())
+
+    def test_frame_scan_timeout_stops_probe_and_preserves_clips(self):
+        self.probe_wrapper(edit='''if not scan and name == '0001.mp4':
+    next(s for s in data['streams'] if s['codec_type']=='video').pop('nb_frames', None)
+''', on_scan='''def stop(sig, frame):
+    (root/'probe-stopped').touch()
+    raise SystemExit(0)
+signal.signal(signal.SIGTERM, stop)
+time.sleep(30)
+''')
+        self.env['H3_RENDER_SCAN_TIMEOUT'] = '0.5'
+        started = time.monotonic()
+        report = self.run_script('### a\n#size 96x96\n#frames 22\nred\n### b\nblue\n#nomerge', 1)
+        self.assertLess(time.monotonic()-started, 15)
+        self.assertIn('0001.mp4: frame scan:', report['error'])
+        self.assertIn('timed out', report['error'])
+        self.assertTrue((self.root/'probe-stopped').exists())
+        self.assertTrue((self.out/'a.mp4').exists())
+        self.assertFalse((self.out/'b.mp4').exists())
+
+    def test_cancellation_stops_frame_scan(self):
+        self.probe_wrapper(edit='''if not scan and name == '0000.mp4':
+    next(s for s in data['streams'] if s['codec_type']=='video').pop('nb_frames', None)
+''', on_scan='''def stop(sig, frame):
+    (root/'probe-stopped').touch()
+    raise SystemExit(0)
+signal.signal(signal.SIGTERM, stop)
+(root/'probe-ready').touch()
+time.sleep(30)
+''')
+        process = subprocess.Popen(self.command('### a\n#size 96x96\n#frames 22\nred\n#nomerge'),
+                                   env=self.env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        try:
+            deadline = time.monotonic()+15
+            while not (self.root/'probe-ready').exists() and process.poll() is None and time.monotonic()<deadline:
+                time.sleep(.02)
+            self.assertTrue((self.root/'probe-ready').exists(), 'frame scan did not start')
+            process.send_signal(signal.SIGINT)
+            output, _ = process.communicate(timeout=10)
+            (self.root/'driver.log').write_bytes(output)
+            self.assertEqual(process.returncode, 130, output.decode())
+            self.assertTrue((self.root/'probe-stopped').exists())
+            report = json.loads((self.out/'run.json').read_text())
+            self.assertEqual(report['status'], 'interrupted')
+            self.assertFalse((self.out/'a.mp4').exists())
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait()
+            process.stdout.close()
+
+    def test_invalid_probe_options_fail_before_outputs(self):
+        for key, value in [('H3_RENDER_SCAN_TIMEOUT', value) for value in ('0','-1','nan','inf','1e999','600seconds')] + [
+                ('H3_RENDER_VERIFY_FRAMES','true'), ('H3_RENDER_VERIFY_FRAMES','2')]:
+            with self.subTest(key=key, value=value):
+                result = subprocess.run(self.command('### a\nred'), env=self.env|{key:value},
+                                        capture_output=True, text=True, timeout=10)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn(key, result.stderr)
+                self.assertFalse(self.out.exists())
 
     def test_stream_copy_multiple_chains_and_independent_shots(self):
         report = self.run_script('### first clip\n#size 96x96\n#frames 56\nred\n'

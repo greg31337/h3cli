@@ -188,3 +188,33 @@ source fingerprint is
 The native rendering implementation and golden manifest were unchanged.
 Cleanup logs, sample plans and the full gate report are retained under ignored
 `outputs/render-cleanup-20261103/`.
+
+## Metadata-first validation
+
+On 2026-11-05, media validation switched to stored MP4/MOV frame counts before
+requesting decoded-frame scans. Dimensions, frame rate and video/audio durations
+remain checked. Missing counts trigger a video-only scan with a configurable
+600-second default deadline; full frame verification can also be requested.
+The [media validation guide](sequence-rendering.md#media-validation) documents
+both settings and the retained 120-second metadata-probe deadline.
+
+All **21 media tests** and **22 parser tests** passed on the Mac and RTX PRO 5000
+source builds. The Mac media suite also passed under AddressSanitizer and
+UndefinedBehaviorSanitizer. Fourteen synthetic segments alternating between
+portrait and landscape canvases produced 5,068 frames without requesting a
+decoded-frame scan for the segments, normalized inputs or final merge.
+Additional cases cover missing and conflicting counts, invalid metadata,
+explicit frame verification, configurable scan timeouts, probe cancellation
+and preservation of completed clips after failure. These runs used isolated
+synthetic media.
+
+The complete CUDA reference regression passed **204/204** unchanged golden
+outputs in 126.04 seconds (221.70 seconds including its isolated build). Its
+source fingerprint is
+`067a5ecdee5d731abed3f51ef1b2e535f54fed507d5c31b69e909e45d0080bd0`;
+the golden manifest remains
+`fa6f86cfa9db94b98d599d9044fd22a4a6605191cb48e0b2ca34dd7e022aafe3`.
+Raw logs, reports and the frozen source inventory are retained under ignored
+`outputs/render-probe-20261105/`, including the complete CUDA gate report in
+`linux-evidence/cuda-reference/result.json`. Standalone packages were not rebuilt
+for this follow-up.

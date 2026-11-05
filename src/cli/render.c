@@ -175,28 +175,78 @@ static double number(const sj_value *object, const char *key) {
     if (v && v->text) lj_number(v->text, &result);
     return result;
 }
-static sj_value *inspect(const char *probe, const char *path, int64_t frames, int width, int height,
-                         const char *log, char *error, size_t size) {
-    char *argv[] = {(char *)probe, "-v", "error", "-count_frames", "-show_streams", "-of", "json", (char *)path, NULL};
-    char *text = NULL;
-    int ok = process(argv, log, 0, &text, 120, error, size);
-    sj_value *root = ok && text ? sj_parse(text, strlen(text), error, size) : NULL; free(text);
-    const sj_value *streams = root ? sj_get(root, "streams") : NULL, *video = NULL, *audio = NULL;
-    if (streams && streams->type == LJ_ARRAY) for (size_t i = 0; i < streams->count; i++) {
-        const char *kind = sj_field(streams->items[i], "codec_type");
-        if (kind && !strcmp(kind, "video") && !video) video = streams->items[i];
-        if (kind && !strcmp(kind, "audio") && !audio) audio = streams->items[i];
+typedef struct {
+    double scan_timeout;
+    int verify_frames;
+} probe_options;
+static int probe_options_read(probe_options *options, char *error, size_t size) {
+    options->scan_timeout = 600;
+    options->verify_frames = 0;
+    const char *timeout = getenv("H3_RENDER_SCAN_TIMEOUT"), *verify = getenv("H3_RENDER_VERIFY_FRAMES");
+    if (timeout && *timeout && (!lj_number(timeout, &options->scan_timeout) || options->scan_timeout <= 0)) {
+        snprintf(error, size, "H3_RENDER_SCAN_TIMEOUT must be a positive finite number of seconds"); return 0;
     }
+    if (verify && *verify) {
+        if (strcmp(verify, "0") && strcmp(verify, "1")) {
+            snprintf(error, size, "H3_RENDER_VERIFY_FRAMES must be 0 or 1"); return 0;
+        }
+        options->verify_frames = !strcmp(verify, "1");
+    }
+    return 1;
+}
+static const sj_value *media_stream(const sj_value *root, const char *kind) {
+    const sj_value *streams = sj_get(root, "streams");
+    if (streams && streams->type == LJ_ARRAY) for (size_t i = 0; i < streams->count; i++) {
+        const char *type = sj_field(streams->items[i], "codec_type");
+        if (type && !strcmp(type, kind)) return streams->items[i];
+    }
+    return NULL;
+}
+static sj_value *probe_media(const char *probe, const char *path, int scan, double timeout,
+                            const char *log, char *error, size_t size) {
+    char *metadata[] = {(char *)probe, "-v", "error", "-show_streams", "-of", "json", (char *)path, NULL};
+    /* Only decode video when the container has no frame count or verification
+     * was requested. Counting frames without selecting a stream decodes audio too. */
+    char *frames[] = {(char *)probe, "-v", "error", "-select_streams", "v:0", "-count_frames",
+        "-show_entries", "stream=codec_type,nb_read_frames", "-of", "json", (char *)path, NULL};
+    char *text = NULL, reason[1024] = {0};
+    int ok = process(scan ? frames : metadata, log, 0, &text, timeout, reason, sizeof(reason));
+    sj_value *root = ok && text ? sj_parse(text, strlen(text), reason, sizeof(reason)) : NULL;
+    free(text);
+    if (!root) snprintf(error, size, "%s: %s: %s", path, scan ? "frame scan" : "metadata probe",
+                        *reason ? reason : "no stream metadata returned");
+    return root;
+}
+static sj_value *inspect(const char *probe, const char *path, int64_t frames, int width, int height,
+                         const probe_options *options, const char *log, char *error, size_t size) {
+    /* MP4/MOV sample tables already contain the frame count. Reading that
+     * metadata avoids decoding every clip, prepared input and complete merge. */
+    sj_value *root = probe_media(probe, path, 0, 120, log, error, size);
+    if (!root) return NULL;
+    const sj_value *video = media_stream(root, "video"), *audio = media_stream(root, "audio");
     const char *fps = video ? sj_field(video, "avg_frame_rate") : NULL;
     double numerator = 0, denominator = 1;
     if (fps) sscanf(fps, "%lf/%lf", &numerator, &denominator);
     if (!video || !audio || number(video, "width") != width || number(video, "height") != height ||
-        number(video, "nb_read_frames") != (double)frames || denominator <= 0 || numerator / denominator != 24 ||
-        fabs(number(audio, "duration") - (double)frames / 24.0) > .1) {
-        if (ok) snprintf(error, size, "%s: expected %dx%d, %lld frames at 24 fps with synchronized audio", path, width, height, (long long)frames);
-        sj_free(root); return NULL;
+        denominator <= 0 || numerator / denominator != 24 ||
+        fabs(number(video, "duration") - (double)frames / 24.0) > .1 ||
+        fabs(number(audio, "duration") - (double)frames / 24.0) > .1) goto invalid;
+    double stored = number(video, "nb_frames");
+    int missing = stored <= 0 || floor(stored) != stored;
+    if (!missing && stored != (double)frames) goto invalid;
+    if (missing || options->verify_frames) {
+        fprintf(stderr, "h3cli: %s: %s; scanning video frames (timeout %.3g s)\n", path,
+                missing ? "container frame count unavailable" : "full frame verification requested", options->scan_timeout);
+        sj_value *scanned = probe_media(probe, path, 1, options->scan_timeout, log, error, size);
+        if (!scanned) { sj_free(root); return NULL; }
+        double counted = number(media_stream(scanned, "video"), "nb_read_frames");
+        sj_free(scanned);
+        if (counted != (double)frames) goto invalid;
     }
     sj_value *result = sj_clone(video); sj_free(root); return result;
+invalid:
+    snprintf(error, size, "%s: expected %dx%d, %lld frames at 24 fps with synchronized audio", path, width, height, (long long)frames);
+    sj_free(root); return NULL;
 }
 static int signature_equal(const sj_value *a, const sj_value *b) {
     const char *keys[] = {"codec_name", "profile", "pix_fmt", "width", "height", "color_range",
@@ -209,7 +259,7 @@ static int signature_equal(const sj_value *a, const sj_value *b) {
     return 1;
 }
 static int merge(const h3_render_plan *p, size_t merge_index, sj_value *row, sj_value **videos,
-                 const char *ffmpeg, const char *probe, char *error, size_t size) {
+                 const char *ffmpeg, const char *probe, const probe_options *options, char *error, size_t size) {
     const sj_value *inputs = sj_get(row, "segments");
     size_t *indices = calloc(inputs->count, sizeof(*indices));
     if (!indices) { snprintf(error, size, "out of memory"); return 0; }
@@ -249,7 +299,7 @@ static int merge(const h3_render_plan *p, size_t merge_index, sj_value *row, sj_
         ARG("-video_track_timescale"); ARG("24000"); ARG(prepared); argv[n] = NULL;
 #undef ARG
         int prepared_ok = process(argv, log, 0, NULL, 0, error, size);
-        sj_value *verified = prepared_ok ? inspect(probe, prepared, s->delivered, first->width, first->height, NULL, error, size) : NULL;
+        sj_value *verified = prepared_ok ? inspect(probe, prepared, s->delivered, first->width, first->height, options, NULL, error, size) : NULL;
         if (verified) {
             char *next = h3_render_format("%sfile '%s'\nduration %.12f\n", listing, name, (double)s->delivered / 24.0);
             free(listing); listing = next;
@@ -265,7 +315,7 @@ static int merge(const h3_render_plan *p, size_t merge_index, sj_value *row, sj_
         "-i", list_path, "-map", "0:v:0", "-map", "0:a:0", "-map_metadata", "-1", "-c:v", "copy", "-af", audio,
         "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", partial, NULL};
     int merged = process(argv, log, 0, NULL, 0, error, size); free(log); free(audio);
-    sj_value *verified = merged ? inspect(probe, partial, frames, first->width, first->height, NULL, error, size) : NULL;
+    sj_value *verified = merged ? inspect(probe, partial, frames, first->width, first->height, options, NULL, error, size) : NULL;
     if (!verified) goto done;
     sj_free(verified);
     if (interrupted || !publish_video(partial, target, error, size)) goto done;
@@ -277,13 +327,14 @@ static int merge(const h3_render_plan *p, size_t merge_index, sj_value *row, sj_
 done:
     free(indices); free(listing); free(list_path); free(partial); free(target); return ok;
 }
-static int preflight(const h3_render_plan *p, const char *ffmpeg, const char *probe, char *error, size_t size) {
+static int preflight(const h3_render_plan *p, const char *ffmpeg, const char *probe,
+                     const probe_options *options, char *error, size_t size) {
     char *path = h3_render_format("%s/probe.mp4", p->work), *log = h3_render_format("%s/preflight.log", p->work);
     char *argv[] = {(char *)ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error", "-n", "-f", "lavfi", "-i",
         "color=c=gray:s=96x96:r=24:d=0.25", "-f", "lavfi", "-i", "anullsrc=r=32000:cl=stereo", "-t", "0.25",
         "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", path, NULL};
     int ok = process(argv, log, 0, NULL, 30, error, size);
-    sj_value *video = ok ? inspect(probe, path, 6, 96, 96, NULL, error, size) : NULL;
+    sj_value *video = ok ? inspect(probe, path, 6, 96, 96, options, NULL, error, size) : NULL;
     ok = video != NULL; sj_free(video); free(path); free(log); return ok;
 }
 int h3_render_run(const h3_request *request, const char *binary, int (*validate)(const h3_request *)) {
@@ -305,11 +356,17 @@ int h3_render_run(const h3_request *request, const char *binary, int (*validate)
     size_t active = 0;
     for (size_t i = 0; i < plan.count; i++) active += !plan.segments[i].skipped;
     if (!active) { puts("All segments skipped; nothing to render."); status = 0; goto done; }
+    probe_options options;
+    if (!probe_options_read(&options, error, sizeof(error))) goto done;
     const char *ffmpeg = getenv("H3_FFMPEG"), *probe = getenv("H3_FFPROBE");
     if (!ffmpeg || !*ffmpeg) ffmpeg = "ffmpeg";
     if (!probe || !*probe) probe = "ffprobe";
     sj_value *tools = sj_object(); sj_add(tools, "h3cli", sj_string(binary));
     sj_add(tools, "ffmpeg", sj_string(ffmpeg)); sj_add(tools, "ffprobe", sj_string(probe)); sj_add(report, "tools", tools);
+    sj_value *validation = sj_object();
+    sj_add(validation, "verify_frames", sj_bool(options.verify_frames));
+    sj_add(validation, "scan_timeout_seconds", sj_real(options.scan_timeout));
+    sj_add(report, "validation", validation);
     interrupted = 0; action.sa_handler = stop; sigemptyset(&action.sa_mask);
     sigaction(SIGINT, &action, &old_int); sigaction(SIGTERM, &action, &old_term); signals_set = 1;
     if (!directory(plan.output, 1, error, sizeof(error))) goto done;
@@ -321,7 +378,7 @@ int h3_render_run(const h3_request *request, const char *binary, int (*validate)
     sj_set(report, "status", sj_string("running"));
     if (!report_write(&plan, report, error, sizeof(error))) goto done;
     if (!check_names(&plan, report, error, sizeof(error))) goto done;
-    if (!preflight(&plan, ffmpeg, probe, error, sizeof(error))) goto done;
+    if (!preflight(&plan, ffmpeg, probe, &options, error, sizeof(error))) goto done;
     videos = calloc(plan.count, sizeof(*videos));
     if (!videos) { snprintf(error, sizeof(error), "out of memory"); goto done; }
     sj_value *segments = (sj_value *)sj_get(report, "segments");
@@ -339,7 +396,7 @@ int h3_render_run(const h3_request *request, const char *binary, int (*validate)
         int rendered = process(argv, log, 1, NULL, 0, error, sizeof(error)); free(argv); free(log);
         if (!rendered) goto done;
         char *partial = h3_render_format("%s/%04zu.mp4", plan.work, i);
-        videos[i] = inspect(probe, partial, s->delivered, s->width, s->height, NULL, error, sizeof(error));
+        videos[i] = inspect(probe, partial, s->delivered, s->width, s->height, &options, NULL, error, sizeof(error));
         char *state = h3_render_format("%s/%04zu.h3av", plan.work, i), *sidecar = h3_render_format("%s.presentation", state);
         struct stat st;
         int state_ok = !stat(state, &st) && S_ISREG(st.st_mode) && st.st_size > 0 && !stat(sidecar, &st) && S_ISREG(st.st_mode) && st.st_size > 0;
@@ -355,7 +412,7 @@ int h3_render_run(const h3_request *request, const char *binary, int (*validate)
     for (size_t i = 0; i < merges->count; i++) {
         running = merges->items[i]; sj_set(running, "status", sj_string("running"));
         if (!report_write(&plan, report, error, sizeof(error)) ||
-            !merge(&plan, i, running, videos, ffmpeg, probe, error, sizeof(error))) goto done;
+            !merge(&plan, i, running, videos, ffmpeg, probe, &options, error, sizeof(error))) goto done;
         running = NULL;
         if (!report_write(&plan, report, error, sizeof(error))) goto done;
     }
