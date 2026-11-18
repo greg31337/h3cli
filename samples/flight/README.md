@@ -21,70 +21,91 @@ as authoritative. Takeoff and landing occur once; intermediate segments advance
 the route rather than replaying completed actions. Actual continuity still needs
 visual and listening review after rendering.
 
-From the repository root, with Python 3.10+, FFmpeg, FFprobe and h3cli available:
+The [flight.txt](flight.txt) file is a native `h3cli --render` script. The launcher
+calls h3cli directly; no Python sample runner is required. Source builds need
+FFmpeg/FFprobe and their configured environment. Standalone packages include
+the media tools.
+
+From the repository root:
 
 ```sh
 sh samples/flight/run.sh --models-path models --offline
+sh samples/flight/run.sh --dry-run > /tmp/flight-plan.json
 ```
 
-For a Linux checkout configured with `scripts/setup_linux.sh`, source its
-environment before rendering and select the installed model root:
+For a source build, follow the [build guide](../../docs/build/source-build.md)
+and source `outputs/setup/macos-env.sh` on the Mac or
+`outputs/setup/linux-env.sh` on Linux. Omit `--offline` to allow missing models
+to download. `-d /path/to/MiniMaxH3` selects the main model directory separately.
+
+The launcher finds the script relative to itself and works from any directory.
+It selects `H3CLI_BIN` when set, otherwise the repository's executable
+`bin/h3cli`, then `h3cli` on PATH. All arguments go directly to h3cli:
 
 ```sh
-. outputs/setup/linux-env.sh
-sh samples/flight/run.sh --models-path /path/to/models --offline
+H3CLI_BIN=/path/to/h3cli sh samples/flight/run.sh \
+  --models-path /path/to/models --output-dir outputs/flight-another-run
 ```
 
-The runner uses the repository's `bin/h3cli` if present, otherwise `h3cli` on
-PATH. Set `H3CLI_BIN` or pass `--h3cli /path/to/h3cli` for another executable.
-Model lookup follows the CLI's usual rules; `-d /path/to/MiniMaxH3` selects a
-main model directory. Without `--offline`, h3cli can download missing models.
+The equivalent direct invocation is:
+
+```sh
+./bin/h3cli --render samples/flight/flight.txt \
+  --models-path models --output-dir outputs/flight-render
+```
 
 | Setting | Value |
 | --- | --- |
 | Render and delivery | 960×544 at 24 fps, full VAE, 50 denoising steps |
 | Segments | 50 prompts, 243 internal frames each |
-| Continuation | Previous `.h3av` via `--continue-from`, 39 context frames |
+| Seed | 42 for every segment, inherited from the first segment's `#seed 42` |
+| Conditioning | Text-only start, followed by video/audio continuation; no external references |
+| Continuation | `#continue` after the first segment, with 39 context frames |
 | Delivered frames | 243 first, then 204 per continuation |
 | Combined length | 10,239 frames, 7 minutes 6.625 seconds |
-| Conditioning | Text-only start; subsequent segments inherit video and audio state |
-| Upscaling | None |
-| Output | `flight.mp4` in the launch directory, without number overlays |
+| Default movie | `outputs/flight-render/flight.mp4`, relative to the launch directory |
+| Segment overlays | Disabled by default |
 
-Every render saves a `.h3av` state and its `.presentation` sidecar for the next
-segment. No reference image or extracted first-frame image is used. H3 already
-removes the 39 context frames from each continuation's delivered video and audio;
-the runner joins those delivered clips without trimming them again. It copies
-the video during preparation when overlays are disabled and uses PCM audio
-intermediates followed by one final AAC encode, as in panda.
+Edit the directives at the first segment to change size, frame count, steps or
+decoder. Script directives override CLI defaults, so `--steps` cannot replace
+the script's `#steps 50`; change that directive instead. For preview decoding,
+replace `#no-preview-vae` with `#preview-vae` and choose the desired `#steps`.
+The old Python-only `--h3cli`, `--preview`, `--no-overlay`, `--work-dir` and
+`-o` sample options are replaced by `H3CLI_BIN`, script directives and
+`--output-dir`.
 
-Review all 50 render commands and the assembly plan without loading models or
-creating outputs:
+To add numbered badges or render separate seed variants, uncomment the optional
+file-wide directives before the first segment:
 
-```sh
-sh samples/flight/run.sh --dry-run > /tmp/flight-plan.json
+```text
+#overlay-segment-name
+#seed-set 100,200,300
 ```
 
-Use `--steps N` to change the denoising step count. To render a shorter route,
-pass a separate prompt file to `python3 samples/flight/test.py`; sections use
-the same `### NUMBER ###` format. For numbered segment overlays, invoke that
-script without `--no-overlay`.
+Each seed-set value is added to the base seed of 42, keeping the seed constant
+throughout each variant (142, 242 or 342 in this example). Each variant gets its
+own continuation states and `seed-N/flight.mp4` under the output directory.
+Remove the seed-set directive to render a single sequence. See the
+[script-format guide](../../docs/features/sequence-rendering.md) for aliases,
+prompt inheritance, skipped segments and `#nomerge`.
 
-The runner checks media tools before generation, then verifies dimensions, frame
-count, frame rate and audio for each clip and the combined video. A fresh
-`outputs/flight-continuation-*` directory retains states, sidecars, original and
-prepared clips, logs and `run.json`. Use `--work-dir PATH` to choose a fresh
-directory and `-o PATH.mp4` to choose the output. Existing outputs are never
-overwritten.
+Native rendering retains the audio and removes inherited context once. It
+validates delivered clips and merges them in script order. The output directory
+also contains `1.mp4` through `50.mp4`, the continuation-chain movie
+`1-merged.mp4`, `run.json`, and private states, sidecars and logs in `.render/`.
+Media delivery uses the native renderer's merging and audio alignment.
+Existing output directories are never reused;
+choose a fresh `--output-dir` for another run. Without the launcher's explicit
+output option, direct `--render` defaults to `flight-render` beside the script.
 
-Run the model-free checks from the repository root:
+Run the model-free sample checks with:
 
 ```sh
+make bin/render_driver
 python3 tests/test_flight_sample.py
 ```
 
-These check the complete prompt and continuation plan and exercise a two-segment
-assembly using synthetic 960×544 clips and real FFmpeg/FFprobe. They verify state
-handoffs, frame counts, preservation of the first new continuation frame, audio,
-and output overwrite protection. They do not assess generated scenery or prove
-seamless motion across the full flight.
+They validate both samples' native continuation plans and Panda's reference
+alias, plus a short flight assembly using synthetic workers and real
+FFmpeg/FFprobe. They do not establish
+visual or sound continuity for the full generated flight.

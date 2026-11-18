@@ -1,4 +1,21 @@
-### 1 ###
+## Native render script. Run with the adjacent run.sh or h3cli --render.
+## Edit the first segment directives to change the render settings.
+## All continuations inherit the first segment's seed.
+## Uncomment either file-wide directive below to label clips or render seed variants.
+## #overlay-segment-name
+## #seed-set 100,200,300
+#ref panda panda.png
+
+
+### 1
+#size 960x544
+#frames 243
+#steps 50
+#no-preview-vae
+#continue-context 39
+#ref-image-size high
+#seed 42
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -13,7 +30,9 @@ Only natural diegetic suburban sounds: soft pawsteps on concrete, light wind in 
 non_diegetic_music:
 N/A
 
-### 2 ###
+### 2
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -28,7 +47,9 @@ Only natural diegetic suburban-to-park sounds: the same sprinkler hiss at first,
 non_diegetic_music:
 N/A
 
-### 3 ###
+### 3
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -43,7 +64,9 @@ Only natural diegetic park sounds: gravel pawsteps, wind through leaves, birds, 
 non_diegetic_music:
 N/A
 
-### 4 ###
+### 4
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -58,7 +81,9 @@ Only natural diegetic open-park sounds: grass brushing the paws, breeze, songbir
 non_diegetic_music:
 N/A
 
-### 5 ###
+### 5
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -73,7 +98,9 @@ Only natural diegetic pond sounds: water lapping softly, ducks splashing and giv
 non_diegetic_music:
 N/A
 
-### 6 ###
+### 6
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -88,7 +115,9 @@ Only natural diegetic pond-and-bridge sounds: wooden paw taps, soft creaks, flow
 non_diegetic_music:
 N/A
 
-### 7 ###
+### 7
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -103,7 +132,9 @@ Only natural diegetic backyard sounds: claws lightly contacting wood, fence crea
 non_diegetic_music:
 N/A
 
-### 8 ###
+### 8
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -118,7 +149,9 @@ Only natural diegetic backyard roof sounds: a soft landing on shingles, light cl
 non_diegetic_music:
 N/A
 
-### 9 ###
+### 9
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -133,7 +166,9 @@ Only natural diegetic rooftop sounds: claws softly ticking on shingles, wind acr
 non_diegetic_music:
 N/A
 
-### 10 ###
+### 10
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -148,7 +183,9 @@ Only natural diegetic rooftop ambience: steady breeze, distant birds, occasional
 non_diegetic_music:
 N/A
 
-### 11 ###
+### 11
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -163,7 +200,9 @@ Only natural diegetic rooftop sounds: breeze, subtle paw taps, a soft friendly c
 non_diegetic_music:
 N/A
 
-### 12 ###
+### 12
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -178,7 +217,9 @@ Only natural diegetic roof-to-yard sounds: breeze, shingle pawsteps, one soft la
 non_diegetic_music:
 N/A
 
-### 13 ###
+### 13
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -193,7 +234,9 @@ Only natural diegetic alley sounds: a soft landing, pawsteps on pavement, vine l
 non_diegetic_music:
 N/A
 
-### 14 ###
+### 14
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -208,7 +251,9 @@ Only natural diegetic garden sounds: soft soil and gravel pawsteps, bees, birds,
 non_diegetic_music:
 N/A
 
-### 15 ###
+### 15
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -223,7 +268,9 @@ Only natural diegetic garden sounds: birds, bees, leaves, a faint friendly cat t
 non_diegetic_music:
 N/A
 
-### 16 ###
+### 16
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -238,7 +285,9 @@ Only natural diegetic greenhouse sounds: soft pawsteps on damp concrete, water d
 non_diegetic_music:
 N/A
 
-### 17 ###
+### 17
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -253,7 +302,9 @@ Only natural diegetic creek-trail sounds: running water growing louder, birds, i
 non_diegetic_music:
 N/A
 
-### 18 ###
+### 18
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -268,7 +319,9 @@ Only natural diegetic creek sounds: flowing water, light splashes against stones
 non_diegetic_music:
 N/A
 
-### 19 ###
+### 19
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -283,7 +336,9 @@ Only natural diegetic underpass-to-trail sounds: echoing pawsteps, a few water d
 non_diegetic_music:
 N/A
 
-### 20 ###
+### 20
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -298,7 +353,9 @@ Only natural diegetic rail-trail sounds: wind in tall grass, birds, pawsteps, di
 non_diegetic_music:
 N/A
 
-### 21 ###
+### 21
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -313,7 +370,9 @@ Only natural diegetic overpass sounds: rhythmic train rumble below, wind across 
 non_diegetic_music:
 N/A
 
-### 22 ###
+### 22
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -328,7 +387,9 @@ Only natural diegetic service-lane sounds: stair paw taps fading into pavement s
 non_diegetic_music:
 N/A
 
-### 23 ###
+### 23
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -343,7 +404,9 @@ Only natural diegetic courtyard-transition sounds: paper rustle and scraping, qu
 non_diegetic_music:
 N/A
 
-### 24 ###
+### 24
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -358,7 +421,9 @@ Only natural diegetic courtyard sounds: fountain splash, pigeons cooing and wing
 non_diegetic_music:
 N/A
 
-### 25 ###
+### 25
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -373,7 +438,9 @@ Only natural diegetic courtyard-and-stair sounds: fountain fading behind, light 
 non_diegetic_music:
 N/A
 
-### 26 ###
+### 26
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -388,7 +455,9 @@ Only natural diegetic rooftop-entry sounds: metal stair taps fading into soft ro
 non_diegetic_music:
 N/A
 
-### 27 ###
+### 27
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -403,7 +472,9 @@ Only natural diegetic rooftop sounds: wind, distant birds and traffic, a soft ve
 non_diegetic_music:
 N/A
 
-### 28 ###
+### 28
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -418,7 +489,9 @@ Only natural diegetic rooftop sounds: steady wind, ventilation hum, distant traf
 non_diegetic_music:
 N/A
 
-### 29 ###
+### 29
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -433,7 +506,9 @@ Only natural diegetic rainy rooftop sounds: light rain tapping solar panels, sma
 non_diegetic_music:
 N/A
 
-### 30 ###
+### 30
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -448,7 +523,9 @@ Only natural diegetic post-rain rooftop sounds: occasional drips, wet pawsteps, 
 non_diegetic_music:
 N/A
 
-### 31 ###
+### 31
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -463,7 +540,9 @@ Only natural diegetic walled-garden sounds: wet leaves brushing fur, a soft land
 non_diegetic_music:
 N/A
 
-### 32 ###
+### 32
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -478,7 +557,9 @@ Only natural diegetic garden sounds: damp flagstone pawsteps, water drops from h
 non_diegetic_music:
 N/A
 
-### 33 ###
+### 33
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -493,7 +574,9 @@ Only natural diegetic post-rain garden sounds: wet leaves, birds, grass brushing
 non_diegetic_music:
 N/A
 
-### 34 ###
+### 34
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -508,7 +591,9 @@ Only natural diegetic stream sounds: trickling water, paw taps on stone changing
 non_diegetic_music:
 N/A
 
-### 35 ###
+### 35
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -523,7 +608,9 @@ Only natural diegetic woodland-edge sounds: creek water, bark and moss under paw
 non_diegetic_music:
 N/A
 
-### 36 ###
+### 36
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -538,7 +625,9 @@ Only natural diegetic bridge-and-garden sounds: creek water below, wooden paw ta
 non_diegetic_music:
 N/A
 
-### 37 ###
+### 37
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -553,7 +642,9 @@ Only natural diegetic hedge-maze sounds: close leaf rustle, soft gravel pawsteps
 non_diegetic_music:
 N/A
 
-### 38 ###
+### 38
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -568,7 +659,9 @@ Only natural diegetic garden-clearing sounds: grass and wood pawsteps, breeze, d
 non_diegetic_music:
 N/A
 
-### 39 ###
+### 39
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:
@@ -583,7 +676,9 @@ Only natural diegetic hill sounds: wind through grass, fading wind bells, birds,
 non_diegetic_music:
 N/A
 
-### 40 ###
+### 40
+#continue
+#ref-image panda
 subject_definitions:
 <Subject 1> is the black-and-white cat in <Picture 1>.
 summary:

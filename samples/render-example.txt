@@ -3,12 +3,16 @@
 ## Then: ./bin/h3cli --render samples/render-example.txt --output-dir outputs/my-sequence
 ## Replace the bundled reference and prompts with your own.
 
+#overlay-segment-name
+#seed-set 100,200
+#ref landscape ../tests/fixtures/cuda-reference/first.png
+
 ### 1
 #frames 243
 #size 1024x768
 #steps 50
 #seed 42
-#refimage ../tests/fixtures/cuda-reference/first.png
+#refimage landscape
 #ref-image-size high
 subject_definitions:
 A calm landscape resembling <Picture 1>.
@@ -26,7 +30,7 @@ A quiet piano melody.
 ### 2
 #continue
 #seed 43
-#refimage ../tests/fixtures/cuda-reference/first.png
+#refimage landscape
 ## Omitted sections inherit automatically; these two replace their old bodies.
 summary:
 The camera begins moving through the landscape.
@@ -44,7 +48,9 @@ A red ceramic teapot on a wooden table, soft studio lighting, fixed camera. Quie
 #seed 44
 Steam gradually rises from the same red ceramic teapot. Keep the camera and lighting steady.
 
-## Produces 1.mp4, 2.mp4, 3.mp4, 4.mp4, 1-merged.mp4, 3-merged.mp4
-## and render-example.mp4 containing all four segments once in script order.
+## Each of seed-100/ and seed-200/ contains 1.mp4, 2.mp4, 3.mp4, 4.mp4,
+## 1-merged.mp4, 3-merged.mp4 and render-example.mp4, with segment-name badges.
+## Effective seeds are 142/143/143/144 and 242/243/243/244 respectively.
+## Remove #seed-set for one sequence directly in the output directory.
 ## Add a standalone #nomerge directive anywhere to disable every merge.
 ## Add #unset OPTION before a later prompt to restore that option's native default.

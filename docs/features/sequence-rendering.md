@@ -75,6 +75,95 @@ global `#nomerge` directive. Scripts must be UTF-8; a BOM and CRLF line endings
 are accepted. Unknown directives, malformed values and invalid native option
 combinations produce diagnostics before generation starts.
 
+## File-wide directives
+
+These directives must appear **before the first `###` or `!###` heading**.
+They can be combined, and `--dry-run` shows the expanded seeds, alias paths,
+segment labels and output destinations.
+
+```text
+#overlay-segment-name
+#seed-set 100,200,300
+#ref fox "references/fox portrait.png"
+#ref ambience references/forest.wav
+
+### opening
+#frames 56
+#size 256x256
+#seed 42
+#ref-image fox
+#ref-audio ambience
+A fox stands in a snowy forest.
+### walking
+#continue
+#seed 43
+#ref-image fox
+#ref-audio ambience
+The fox walks toward the camera.
+```
+
+### Segment-name overlays
+
+`#overlay-segment-name` adds the heading's name in white bitmap lettering on a
+dark badge at the bottom left of each delivered clip, like the numbered badges
+in the sample videos. The name excludes the `###` delimiters and does
+not include an automatically added `.mp4` suffix or seed directory. An explicit
+`.mp4` in the heading remains part of the label.
+
+The badge appears in individual clips, continuation-chain merges and the
+script-named movie, including when `#nomerge` disables merging. It is applied
+after generation; saved continuation states stay free of overlays. Original
+unlabeled clips remain in `.render/` and are listed as `original_video` in
+`run.json`. Overlay encoding uses lossless H.264 RGB and copies the original
+audio, preserving decoded pixels outside the badge without another audio encode.
+
+The built-in alphabet needs no external fonts or FFmpeg `drawtext` support.
+Names shrink and wrap to fit; names too long for the smallest lettering end
+with an ellipsis. Non-ASCII characters appear as `[U+XXXX]` codepoint labels.
+The overlay pipeline is checked before any generation worker starts.
+
+### Seed sets
+
+`#seed-set 100,200,300` renders the **whole sequence once per offset**, in the
+listed order. Each effective seed is the segment's normal seed plus that
+offset. Existing seed inheritance and CLI defaults still apply; absent an
+override, the native seed is `42`. `#unset seed` restores that native default
+before the offset is added. Offsets never accumulate between segments or runs.
+
+In the example, the three sequences use seeds `142/143`, `242/243` and
+`342/343`. Each sequence has independent continuation states and outputs in
+`seed-100/`, `seed-200/` or `seed-300/` beneath the normal output directory.
+Each directory contains its individual clips, chain merges and script-named
+movie. A sequence's merges finish before the next seed starts; different seed
+runs are never merged together. The top-level `run.json` records all runs with
+their `seed_offset` and effective `seed` values.
+
+Use one seed-set directive with one to 1,024 distinct unsigned 64-bit integers;
+whitespace around commas is accepted, and `0` is a valid offset. Empty entries,
+duplicates, negative values and additions that would overflow the seed range
+are rejected before creating outputs. With no seed set, output layout and seed
+behavior are unchanged. `#nomerge` applies to every seed run.
+
+### Reference aliases
+
+`#ref ALIAS FILE_PATH` defines a case-sensitive alias. Paths resolve beside
+the script and may be quoted to contain spaces. Alias names must be nonempty
+and contain no whitespace, directory separators or `#`; duplicate definitions
+are errors. Definitions do not activate a reference or change the model mode.
+
+Use an alias wherever a script directive accepts a media path: `#ref-image`,
+`#ref-video`, `#ref-silent-video`, `#ref-audio`, both paths of `#ref-video-audio`,
+or `#first-frame` and `#last-frame`. The `#refimage`, `#refvideo` and `#refaudio`
+spellings work too. Reference lists still reset at each segment, so repeat
+aliases in continuation segments as needed.
+
+An exact alias match takes precedence over a literal filename. Use `./ALIAS`
+to refer to a same-named file directly. Unmatched values remain ordinary paths;
+aliases do not expand inside prompts, model paths or other settings. An alias
+definition's path is literal, not another alias. Unused aliases and aliases used
+only by skipped segments do not require existing files; active references are
+validated before rendering.
+
 ## Outputs and merging
 
 By default, `scenes.txt` creates a fresh `scenes-render` directory beside the

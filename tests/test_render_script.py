@@ -44,9 +44,142 @@ class RenderScriptTests(unittest.TestCase):
         command = row['command']
         return [command[i+1] for i, arg in enumerate(command[:-1]) if arg == '--' + flag]
 
+    def test_seed_set_expands_sequences_without_accumulating_offsets(self):
+        plan = self.plan('''#seed-set 100, 200, 0
+### first
+summary:
+First.
+### next
+#continue
+#seed 7
+summary:
+Next.
+### independent
+Third.
+### reset
+#unset seed
+Fourth.
+''')
+        self.assertEqual(plan['seed_set'], [100, 200, 0])
+        rows = plan['segments']
+        for run, offset in enumerate(plan['seed_set']):
+            shots = rows[run*4:run*4+4]
+            self.assertEqual([r['seed'] for r in shots], [42+offset, 7+offset, 7+offset, 42+offset])
+            self.assertEqual([r['label'] for r in shots], ['first','next','independent','reset'])
+            self.assertEqual([r['name'] for r in shots], [f'seed-{offset}/{n}.mp4' for n in ('first','next','independent','reset')])
+            for row in shots:
+                self.assertEqual(self.command_values(row, 'seed'), [str(row['seed'])])
+                self.assertEqual(row['seed_offset'], offset)
+            self.assertNotIn('--continue-from', shots[0]['command'])
+            self.assertEqual(self.command_values(shots[1], 'continue-from'),
+                             self.command_values(shots[0], 'save-av-state'))
+            merges = [m for m in plan['merged'] if m['seed_offset']==offset]
+            self.assertEqual([m['name'] for m in merges], [f'seed-{offset}/first-merged.mp4',f'seed-{offset}/scenes.mp4'])
+            self.assertEqual(merges[-1]['segments'], [r['name'] for r in shots])
+        self.assertEqual(len({self.command_values(r,'save-av-state')[0] for r in rows}), 12)
+
+    def test_seed_set_cli_default_and_uint64_boundary(self):
+        plan = self.plan('#seed-set=1,2\n### a\nOne.\n### b\nTwo.', '--seed', '100')
+        self.assertEqual([s['seed'] for s in plan['segments']], [101,101,102,102])
+        plan = self.plan('#seed-set 18446744073709551615\n### a\n#seed 0\nOne.')
+        self.assertEqual(plan['segments'][0]['seed'], 2**64-1)
+        self.assertEqual(self.command_values(plan['segments'][0], 'seed'), [str(2**64-1)])
+
+    def test_seed_set_rejects_malformed_duplicates_and_overflow(self):
+        for values in ('', '1,', ',1', '1,,2', '-1', '+1', '1.5', '1 2', '1,01',
+                       '18446744073709551616', '1e2'):
+            with self.subTest(values=values):
+                result = self.invoke(f'#seed-set {values}\n### a\nOne.')
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn('#seed-set', result.stderr)
+                self.assertFalse(self.out.exists())
+        for text in ('#seed-set 1\n#seed-set 2\n### a\nOne.',
+                     '#seed-set 1\n### a\n#seed 18446744073709551615\nOne.',
+                     '#seed-set 18446744073709551615\n### a\nOne.'):
+            result = self.invoke(text)
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn('seed', result.stderr)
+            self.assertFalse(self.out.exists())
+
+    def test_prelude_directives_must_precede_even_skipped_segments(self):
+        for directive in ('#seed-set 1,2', '#overlay-segment-name', '#ref actor one.png'):
+            for heading in ('### a', '!### a'):
+                result = self.invoke(f'{heading}\n{directive}\nOne.')
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn('before the first segment', result.stderr)
+        result = self.invoke('#overlay-segment-name true\n### a\nOne.')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('takes no arguments', result.stderr)
+
+    def test_overlay_names_and_literal_directives(self):
+        plan = self.plan('#overlay-segment-name\n#overlay-segment-name\n### opening shot.mp4\nOne.')
+        self.assertTrue(plan['overlay_segment_name'])
+        self.assertEqual(plan['segments'][0]['label'], 'opening shot.mp4')
+        self.assertNotIn('--overlay-segment-name', plan['segments'][0]['command'])
+        plan = self.plan('## #overlay-segment-name\n## #seed-set 1,2\n### a\n'
+                         '\\#overlay-segment-name\n\\#seed-set 1,2\n\\#ref actor one.png')
+        self.assertFalse(plan['overlay_segment_name'])
+        self.assertEqual(plan['seed_set'], [])
+        self.assertEqual(plan['references'], {})
+        self.assertIn('#ref actor one.png', plan['segments'][0]['prompt'])
+
+    def test_reference_aliases_all_media_and_literal_escape(self):
+        plan = self.plan('''#ref actor "with spaces.png"
+#ref movie clip.mp4
+#ref voice sound.wav
+#ref one.png two.png
+### a
+#refimage actor
+#ref-image one.png
+#ref-image ./one.png
+#ref-video movie
+#ref-silent-video movie
+#refaudio voice
+#ref-video-audio movie voice
+One.
+### b
+Two.
+''')
+        row = plan['segments'][0]
+        self.assertEqual(plan['references']['actor'], str(self.root/'with spaces.png'))
+        self.assertEqual(self.command_values(row, 'ref-image'),
+                         [str(self.root/n) for n in ('with spaces.png','two.png','one.png')])
+        for flag, name in (('ref-video','clip.mp4'), ('ref-silent-video','clip.mp4'), ('ref-audio','sound.wav')):
+            self.assertEqual(self.command_values(row, flag), [str(self.root/name)])
+        at = row['command'].index('--ref-video-audio')
+        self.assertEqual(row['command'][at+1:at+3], [str(self.root/'clip.mp4'), str(self.root/'sound.wav')])
+        self.assertNotIn('--ref-image', plan['segments'][1]['command'])
+        anchors = self.plan('#ref start one.png\n#ref end two.png\n### a\n#first-frame start\n#last-frame end\nOne.')
+        self.assertEqual(self.command_values(anchors['segments'][0], 'first-frame'), [str(self.root/'one.png')])
+
+    def test_reference_aliases_lazy_validation_and_invalid_definitions(self):
+        plan = self.plan('#ref unused missing.png\n!### skipped\n#ref-image unused\n### a\nOne.')
+        self.assertEqual(plan['segments'][0]['status'], 'skipped')
+        for definition in ('#ref', '#ref actor', '#ref actor one.png extra', '#ref "" one.png',
+                           '#ref actor ""', '#ref ../actor one.png', '#ref "two names" one.png',
+                           '#ref actor one.png\n#ref actor two.png'):
+            result = self.invoke(definition+'\n### a\nOne.')
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn('#ref', result.stderr)
+        result = self.invoke('#ref missing missing.png\n### a\n#ref-image missing\nOne.')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn(str(self.root/'missing.png'), result.stderr)
+        result = self.invoke('### a\n#ref-image undefined_alias\nOne.')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('undefined_alias', result.stderr)
+
+    def test_seed_set_nomerge_and_all_skipped_remain_noops(self):
+        text = '#seed-set 1,2\n#overlay-segment-name\n#ref absent missing.png\n!### a\n#ref-image absent\n#nomerge'
+        plan = self.plan(text)
+        self.assertEqual(plan['merged'], [])
+        self.assertEqual([r['status'] for r in plan['segments']], ['skipped','skipped'])
+        result = self.invoke(text, dry=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(self.out.exists())
+
     def test_help_and_mode_conflicts(self):
         result = subprocess.run([str(BINARY), '--help'], capture_output=True, text=True)
-        for flag in ('--render', '--output-dir', '--dry-run', '#nomerge'):
+        for flag in ('--render', '--output-dir', '--dry-run', '#nomerge', '#overlay-segment-name', '#seed-set', '#ref ALIAS'):
             self.assertIn(flag, result.stdout + result.stderr)
         for flags in (['--dry-run'], ['--output-dir', 'out'],
                       ['--server', '--render', 'missing'], ['--render', 'missing', '--server']):

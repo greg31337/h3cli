@@ -56,6 +56,8 @@ static void usage(const char *program) {
         "      --output-dir DIR   Fresh directory for --render outputs\n"
         "      --dry-run          Validate --render and print its expanded JSON plan\n"
         "                        #nomerge anywhere disables merges; #continue inherits prompt sections\n"
+        "                        Before first segment: #overlay-segment-name, #seed-set N,...,\n"
+        "                        #ref ALIAS PATH (use ALIAS in later media references)\n"
         "      --models-path PATH Shared model root (default: models)\n"
         "      --download-models GROUPS Prefetch base,references,preview,image-vae,upscale,all\n"
         "      --list-models      Show pinned models and local availability\n"

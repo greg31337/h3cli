@@ -12,65 +12,79 @@ The soundtrack follows the action with pawsteps, birds, leaves, water and distan
 neighborhood activity, including occasional background dialogue. There is no
 music or narration.
 
-From the repository root, with Python 3.10+, FFmpeg, FFprobe and h3cli available:
+The [panda.txt](panda.txt) file is a native `h3cli --render` script. The launcher
+calls h3cli directly; no Python sample runner is required. Source builds need
+FFmpeg/FFprobe and their configured environment. Standalone packages include
+the media tools.
+
+From the repository root:
 
 ```sh
-sh samples/panda/run.sh --models-path models
+sh samples/panda/run.sh --models-path models --offline
+sh samples/panda/run.sh --dry-run > /tmp/panda-plan.json
 ```
 
-For a Linux checkout configured with `scripts/setup_linux.sh`, first source
-`outputs/setup/linux-env.sh`, then select the installed model root:
+For a source build, follow the [build guide](../../docs/build/source-build.md)
+and source `outputs/setup/macos-env.sh` on the Mac or
+`outputs/setup/linux-env.sh` on Linux. Omit `--offline` to allow missing models
+to download. `-d /path/to/MiniMaxH3` selects the main model directory separately.
+
+The launcher finds the script relative to itself and works from any directory.
+It selects `H3CLI_BIN` when set, otherwise the repository's executable
+`bin/h3cli`, then `h3cli` on PATH. All arguments go directly to h3cli:
 
 ```sh
-. outputs/setup/linux-env.sh
-sh samples/panda/run.sh --models-path /path/to/models
+H3CLI_BIN=/path/to/h3cli sh samples/panda/run.sh \
+  --models-path /path/to/models --output-dir outputs/panda-another-run
 ```
 
-The launcher resolves the script, prompts and reference image relative to its
-own location, so it can be invoked from any working directory. It uses the
-repository's executable `bin/h3cli` when available, otherwise `h3cli` on PATH.
-Set `H3CLI_BIN` or pass `--h3cli /path/to/h3cli` to select another executable.
-`-d /path/to/MiniMaxH3` selects the main model directory separately.
-Set `H3_OFFLINE=1` to require local weights and disable model downloads.
+The equivalent direct invocation is:
+
+```sh
+./bin/h3cli --render samples/panda/panda.txt \
+  --models-path models --output-dir outputs/panda-render
+```
 
 | Setting | Value |
 | --- | --- |
-| Theme | An Afternoon Walk of a Cat Called Panda |
 | Render and delivery | 960×544 at 24 fps, full VAE, 50 denoising steps |
 | Segments | 40 prompts, 243 internal frames each |
-| Reference | The same `panda.png` in every segment, high reference size |
-| Continuation | Previous `.h3av` via `--continue-from`, 39 context frames |
+| Seed | 42 for every segment, inherited from the first segment's `#seed 42` |
+| Conditioning | `#ref panda panda.png`, reused with `#ref-image panda` in every segment; high reference size |
+| Continuation | `#continue` after the first segment, with 39 context frames |
 | Delivered frames | 243 first, then 204 per continuation |
 | Combined length | 8,199 frames, 5 minutes 41.625 seconds |
-| Output | `panda.mp4` in the launch directory, without number overlays |
+| Default movie | `outputs/panda-render/panda.mp4`, relative to the launch directory |
+| Segment overlays | Disabled by default |
 
-Every segment saves its video/audio state and a `.presentation` sidecar for the
-next segment. H3 removes the inherited 39 context frames from each continuation's
-delivered video and audio; the runner joins those clips without trimming them
-again. With overlays disabled, preparation and assembly copy the video, while
-PCM audio intermediates feed one final AAC encode. There is no upscaling.
+Edit the directives at the first segment to change size, frame count, steps or
+decoder. Script directives override CLI defaults, so `--steps` cannot replace
+the script's `#steps 50`; change that directive instead. For preview decoding,
+replace `#no-preview-vae` with `#preview-vae` and choose the desired `#steps`.
+The old Python-only `--h3cli`, `--preview`, `--no-overlay`, `--work-dir` and
+`-o` sample options are replaced by `H3CLI_BIN`, script directives and
+`--output-dir`.
 
-Additional launcher arguments are passed through to [test.py](test.py). Later
-arguments override the default step count and output path:
+To add numbered badges or render separate seed variants, uncomment the optional
+file-wide directives before the first segment:
 
-```sh
-sh samples/panda/run.sh --models-path models --steps 30 -o panda-walk.mp4
-sh samples/panda/run.sh --models-path models --preview --steps 10 -o panda-preview.mp4
+```text
+#overlay-segment-name
+#seed-set 100,200,300
 ```
 
-The preview example explicitly sets ten steps because the launcher otherwise
-requests fifty. To use a different prompt file or reference image, or to include
-numbered segment badges, invoke the Python runner directly:
+Each seed-set value is added to the base seed of 42, keeping the seed constant
+throughout each variant (142, 242 or 342 in this example). Each variant gets its
+own continuation states and `seed-N/panda.mp4` under the output directory.
+Remove the seed-set directive to render a single sequence. See the
+[script-format guide](../../docs/features/sequence-rendering.md) for aliases,
+prompt inheritance, skipped segments and `#nomerge`.
 
-```sh
-python3 samples/panda/test.py samples/panda/panda.txt samples/panda/panda.png \
-  --h3cli bin/h3cli --models-path models -o panda-numbered.mp4
-```
-
-Before generation, the runner checks the media tools. It then verifies the
-dimensions, frame count, frame rate and presence of audio in every clip and the
-combined movie. Actual visual and sound continuity still need review after
-rendering. A fresh `outputs/panda-continuation-*` directory in the launch
-directory retains states, sidecars, original and prepared clips, logs and
-`run.json`. Use `--work-dir PATH` for another fresh directory and `-o PATH.mp4`
-for another final output. Existing final movies are never overwritten.
+Native rendering retains the audio and removes inherited context once. It
+validates delivered clips and merges them in script order. The output directory
+also contains `1.mp4` through `40.mp4`, the continuation-chain movie
+`1-merged.mp4`, `run.json`, and private states, sidecars and logs in `.render/`.
+Media delivery uses the native renderer's merging and audio alignment.
+Existing output directories are never reused;
+choose a fresh `--output-dir` for another run. Without the launcher's explicit
+output option, direct `--render` defaults to `panda-render` beside the script.

@@ -100,7 +100,10 @@ static size_t write_data(char *data, size_t unit, size_t count, void *opaque) {
     transfer *t = opaque;
     if (unit && count > SIZE_MAX/unit) return 0;
     size_t n = unit*count;
-    if (t->status >= 300 && t->status < 400) return 0;
+    /* Discard redirect bodies without aborting the transfer. Apple's libcurl
+     * can report a receive error when a redirect body callback returns zero,
+     * preventing the validated Location below from being followed. */
+    if (t->status >= 300 && t->status < 400) return n;
     if ((t->offset && (t->status != 206 || !t->have_range ||
             t->range_start != t->offset || t->range_total != t->artifact->bytes)) ||
         (!t->offset && t->status != 200 && !(t->status == 206 && t->have_range &&

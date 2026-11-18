@@ -1,6 +1,7 @@
 #include "src/cli/render.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <math.h>
 #include <poll.h>
 #include <signal.h>
@@ -136,6 +137,15 @@ static int publish_video(const char *source, const char *target, char *error, si
     if (status) snprintf(error, size, "cannot publish video %s without overwriting an existing file: %s", target, strerror(errno));
     return status == 0;
 }
+static int seed_directories(const h3_render_plan *p, const char *root, int create, char *error, size_t size) {
+    for (size_t i = 0; i < p->seed_count; i++) {
+        char *path = h3_render_format("%s/seed-%" PRIu64, root, p->seed_set[i]);
+        int ok = !create || directory(path, 1, error, size);
+        if (!create) rmdir(path);
+        free(path); if (!ok) return 0;
+    }
+    return 1;
+}
 /* Check the destination filesystem's actual name equivalence before rendering.
  * APFS, for example, can alias differently encoded Unicode names. Dry runs
  * stay read-only; this check runs in the fresh output's private work directory. */
@@ -143,7 +153,7 @@ static int check_names(const h3_render_plan *p, const sj_value *report, char *er
     char *folder = h3_render_format("%s/name-check", p->work);
     if (!directory(folder, 1, error, size)) { free(folder); return 0; }
     const sj_value *collections[] = {sj_get(report, "segments"), sj_get(report, "merged")};
-    int ok = 1;
+    int ok = seed_directories(p, folder, 1, error, size);
     for (size_t group = 0; group < 2 && ok; group++) {
         for (size_t i = 0; i < collections[group]->count; i++) {
             const sj_value *row = collections[group]->items[i];
@@ -161,6 +171,7 @@ static int check_names(const h3_render_plan *p, const sj_value *report, char *er
         char *name = h3_render_format("%s/%s", folder, sj_field(collections[group]->items[i], "name"));
         unlink(name); free(name);
     }
+    seed_directories(p, folder, 0, error, size);
     rmdir(folder); free(folder); return ok;
 }
 static int report_write(const h3_render_plan *p, const sj_value *report, char *error, size_t size) {
@@ -258,6 +269,20 @@ static int signature_equal(const sj_value *a, const sj_value *b) {
     }
     return 1;
 }
+static int label_video(const char *ffmpeg, const char *source, const char *label, int width, int height,
+                       const char *image, const char *destination, const char *log, char *error, size_t size) {
+    int margin;
+    if (!h3_render_badge(image, label, width, height, &margin, error, size)) return 0;
+    char *filter = h3_render_format("[0:v]format=rgb24[base];[base][1:v]overlay=x=%d:y=H-h-%d:eof_action=repeat:format=rgb[v]", margin, margin);
+    /* Preserve decoded pixels outside the badge and copy the existing audio.
+     * No additional AAC encoder delay is introduced at each overlay stage. */
+    char *argv[] = {(char *)ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "warning", "-n",
+        "-i", (char *)source, "-i", (char *)image, "-filter_complex", filter, "-map", "[v]", "-map", "0:a:0",
+        "-map_metadata", "0", "-c:v", "libx264rgb", "-crf", "0", "-preset", "fast", "-pix_fmt", "rgb24",
+        "-c:a", "copy", "-video_track_timescale", "24000", "-movflags", "+faststart", (char *)destination, NULL};
+    int ok = process(argv, log, 0, NULL, 0, error, size);
+    free(filter); return ok;
+}
 static int merge(const h3_render_plan *p, size_t merge_index, sj_value *row, sj_value **videos,
                  const char *ffmpeg, const char *probe, const probe_options *options, char *error, size_t size) {
     const sj_value *inputs = sj_get(row, "segments");
@@ -335,7 +360,16 @@ static int preflight(const h3_render_plan *p, const char *ffmpeg, const char *pr
         "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", path, NULL};
     int ok = process(argv, log, 0, NULL, 30, error, size);
     sj_value *video = ok ? inspect(probe, path, 6, 96, 96, options, NULL, error, size) : NULL;
-    ok = video != NULL; sj_free(video); free(path); free(log); return ok;
+    ok = video != NULL; sj_free(video);
+    if (ok && p->overlay_segment_name) {
+        char *image = h3_render_format("%s/probe-label.ppm", p->work);
+        char *labeled = h3_render_format("%s/probe-labeled.mp4", p->work);
+        char *label_log = h3_render_format("%s/preflight-overlay.log", p->work);
+        ok = label_video(ffmpeg, path, "segment", 96, 96, image, labeled, label_log, error, size);
+        video = ok ? inspect(probe, labeled, 6, 96, 96, options, NULL, error, size) : NULL;
+        ok = video != NULL; sj_free(video); free(image); free(labeled); free(label_log);
+    }
+    free(path); free(log); return ok;
 }
 int h3_render_run(const h3_request *request, const char *binary, int (*validate)(const h3_request *)) {
     h3_render_plan plan = {0}; sj_value *report = NULL, **videos = NULL, *running = NULL;
@@ -378,43 +412,60 @@ int h3_render_run(const h3_request *request, const char *binary, int (*validate)
     sj_set(report, "status", sj_string("running"));
     if (!report_write(&plan, report, error, sizeof(error))) goto done;
     if (!check_names(&plan, report, error, sizeof(error))) goto done;
+    if (!seed_directories(&plan, plan.output, 1, error, sizeof(error))) goto done;
     if (!preflight(&plan, ffmpeg, probe, &options, error, sizeof(error))) goto done;
     videos = calloc(plan.count, sizeof(*videos));
     if (!videos) { snprintf(error, sizeof(error), "out of memory"); goto done; }
     sj_value *segments = (sj_value *)sj_get(report, "segments");
-    size_t completed = 0;
-    for (size_t i = 0; i < plan.count; i++) {
-        const h3_render_segment *s = &plan.segments[i]; if (s->skipped) continue;
-        running = segments->items[i]; sj_set(running, "status", sj_string("running"));
-        if (!report_write(&plan, report, error, sizeof(error))) goto done;
-        fprintf(stderr, "h3cli: segment %zu/%zu: %s (%d delivered frames)\n", ++completed, active, s->name, s->delivered);
-        const sj_value *command = sj_get(running, "command");
-        char **argv = calloc(command->count + 1, sizeof(*argv));
-        if (!argv) { snprintf(error, sizeof(error), "out of memory"); goto done; }
-        for (size_t j = 0; j < command->count; j++) argv[j] = (char *)sj_text(command->items[j]);
-        char *log = h3_render_format("%s/%04zu.log", plan.work, i);
-        int rendered = process(argv, log, 1, NULL, 0, error, sizeof(error)); free(argv); free(log);
-        if (!rendered) goto done;
-        char *partial = h3_render_format("%s/%04zu.mp4", plan.work, i);
-        videos[i] = inspect(probe, partial, s->delivered, s->width, s->height, &options, NULL, error, sizeof(error));
-        char *state = h3_render_format("%s/%04zu.h3av", plan.work, i), *sidecar = h3_render_format("%s.presentation", state);
-        struct stat st;
-        int state_ok = !stat(state, &st) && S_ISREG(st.st_mode) && st.st_size > 0 && !stat(sidecar, &st) && S_ISREG(st.st_mode) && st.st_size > 0;
-        sj_add(running, "state", sj_string(state)); free(state); free(sidecar);
-        if (!videos[i] || !state_ok || interrupted || !publish_video(partial, sj_field(running, "video"), error, sizeof(error))) {
-            if (!*error) snprintf(error, sizeof(error), "segment %s did not produce a complete clip and continuation state", s->name);
-            free(partial); goto done;
-        }
-        free(partial); sj_set(running, "status", sj_string("complete")); running = NULL;
-        if (!report_write(&plan, report, error, sizeof(error))) goto done;
-    }
     sj_value *merges = (sj_value *)sj_get(report, "merged");
-    for (size_t i = 0; i < merges->count; i++) {
-        running = merges->items[i]; sj_set(running, "status", sj_string("running"));
-        if (!report_write(&plan, report, error, sizeof(error)) ||
-            !merge(&plan, i, running, videos, ffmpeg, probe, &options, error, sizeof(error))) goto done;
-        running = NULL;
-        if (!report_write(&plan, report, error, sizeof(error))) goto done;
+    size_t completed = 0;
+    size_t runs = plan.seed_count ? plan.seed_count : 1, per_run = plan.count / runs;
+    for (size_t run = 0; run < runs; run++) {
+        for (size_t i = run * per_run; i < (run + 1) * per_run; i++) {
+            const h3_render_segment *s = &plan.segments[i]; if (s->skipped) continue;
+            running = segments->items[i]; sj_set(running, "status", sj_string("running"));
+            if (!report_write(&plan, report, error, sizeof(error))) goto done;
+            fprintf(stderr, "h3cli: segment %zu/%zu: %s (%d delivered frames)\n", ++completed, active, s->name, s->delivered);
+            const sj_value *command = sj_get(running, "command");
+            char **argv = calloc(command->count + 1, sizeof(*argv));
+            if (!argv) { snprintf(error, sizeof(error), "out of memory"); goto done; }
+            for (size_t j = 0; j < command->count; j++) argv[j] = (char *)sj_text(command->items[j]);
+            char *log = h3_render_format("%s/%04zu.log", plan.work, i);
+            int rendered = process(argv, log, 1, NULL, 0, error, sizeof(error)); free(argv); free(log);
+            if (!rendered) goto done;
+            char *partial = h3_render_format("%s/%04zu.mp4", plan.work, i);
+            videos[i] = inspect(probe, partial, s->delivered, s->width, s->height, &options, NULL, error, sizeof(error));
+            char *state = h3_render_format("%s/%04zu.h3av", plan.work, i), *sidecar = h3_render_format("%s.presentation", state);
+            struct stat st;
+            int state_ok = !stat(state, &st) && S_ISREG(st.st_mode) && st.st_size > 0 && !stat(sidecar, &st) && S_ISREG(st.st_mode) && st.st_size > 0;
+            sj_add(running, "state", sj_string(state)); free(state); free(sidecar);
+            if (videos[i] && state_ok && !interrupted && plan.overlay_segment_name) {
+                char *image = h3_render_format("%s/%04zu-label.ppm", plan.work, i);
+                char *labeled = h3_render_format("%s/%04zu-labeled.mp4", plan.work, i);
+                char *label_log = h3_render_format("%s/%04zu-overlay.log", plan.work, i);
+                fprintf(stderr, "h3cli: overlay segment name: %s\n", s->label);
+                int labeled_ok = label_video(ffmpeg, partial, s->label, s->width, s->height, image, labeled, label_log, error, sizeof(error));
+                sj_free(videos[i]);
+                videos[i] = labeled_ok ? inspect(probe, labeled, s->delivered, s->width, s->height, &options, NULL, error, sizeof(error)) : NULL;
+                sj_add(running, "original_video", sj_string(partial));
+                free(image); free(label_log); free(partial); partial = labeled;
+            }
+            if (!videos[i] || !state_ok || interrupted || !publish_video(partial, sj_field(running, "video"), error, sizeof(error))) {
+                if (!*error) snprintf(error, sizeof(error), "segment %s did not produce a complete clip and continuation state", s->name);
+                free(partial); goto done;
+            }
+            free(partial); sj_set(running, "status", sj_string("complete")); running = NULL;
+            if (!report_write(&plan, report, error, sizeof(error))) goto done;
+        }
+        for (size_t i = 0; i < merges->count; i++) {
+            uint64_t offset = 0;
+            if (plan.seed_count && (!sj_u64(sj_get(merges->items[i], "seed_offset"), &offset) || offset != plan.seed_set[run])) continue;
+            running = merges->items[i]; sj_set(running, "status", sj_string("running"));
+            if (!report_write(&plan, report, error, sizeof(error)) ||
+                !merge(&plan, i, running, videos, ffmpeg, probe, &options, error, sizeof(error))) goto done;
+            running = NULL;
+            if (!report_write(&plan, report, error, sizeof(error))) goto done;
+        }
     }
     status = 0;
 done:

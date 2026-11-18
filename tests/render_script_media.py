@@ -44,7 +44,7 @@ class NativeMediaTests(unittest.TestCase):
         self.env.update(H3_FFMPEG=self.ffmpeg, H3_FFPROBE=self.ffprobe)
         self.worker = self.root/'synthetic worker.py'
         self.worker.write_text(f'''#!{sys.executable}
-import math, os, subprocess, sys
+import json, math, os, subprocess, sys
 from pathlib import Path
 args = sys.argv[1:]
 def value(name, default=None):
@@ -73,6 +73,7 @@ command = [os.environ['H3_FFMPEG'], '-nostdin','-v','error','-n', '-f','lavfi','
 subprocess.run(command, check=True)
 state = Path(value('save-av-state'))
 state.write_text('Synthetic test state; not inference evidence.\\n')
+state.with_suffix('.argv.json').write_text(json.dumps(args))
 Path(str(state)+'.presentation').write_text('Synthetic presentation.\\n')
 ''')
         self.worker.chmod(0o755)
@@ -115,6 +116,92 @@ print(json.dumps(data))
 
     def probe_calls(self):
         return [json.loads(line) for line in (self.root/'probe-calls.jsonl').read_text().splitlines()]
+
+    def test_seed_runs_aliases_overlays_and_independent_continuations(self):
+        reference = self.root/'reference image.png'
+        reference.touch()
+        report = self.run_script('''#overlay-segment-name
+#seed-set 100,200
+#ref actor "reference image.png"
+### A
+#size 128x96
+#frames 56
+#ref-image actor
+red
+### B
+#continue
+#seed 2
+#ref-image actor
+blue
+### C
+#frames 22
+red
+''')
+        self.assertEqual(report['status'], 'complete')
+        self.assertTrue(report['overlay_segment_name'])
+        self.assertEqual([s['seed'] for s in report['segments']], [142,102,102,242,202,202])
+        self.assertEqual(list(self.out.glob('*.mp4')), [])
+        for run, offset in enumerate((100,200)):
+            folder = self.out/f'seed-{offset}'
+            self.assertEqual(sorted(p.name for p in folder.glob('*.mp4')), ['A-merged.mp4','A.mp4','B.mp4','C.mp4','scenes.mp4'])
+            clips = [self.rgb(folder/(name+'.mp4')) for name in ('A','B','C')]
+            self.assertEqual(self.rgb(folder/'scenes.mp4'), b''.join(clips))
+            self.assertEqual(self.rgb(folder/'A-merged.mp4'), b''.join(clips[:2]))
+            for j, row in enumerate(report['segments'][run*3:run*3+3]):
+                original = self.rgb(Path(row['original_video']))
+                labeled = clips[j]
+                self.assertNotEqual(original, labeled)
+                self.assertEqual(original[:128*48*3], labeled[:128*48*3])
+                self.assertIn(b'\xff\xff\xff', labeled[128*48*3:128*96*3])
+                self.assertIn(b'\xff\xff\xff', labeled[-128*48*3:])
+                audio_args = ['-map','0:a:0','-f','s16le','-']
+                before = subprocess.check_output([self.ffmpeg,'-v','error','-i',row['original_video'],*audio_args])
+                after = subprocess.check_output([self.ffmpeg,'-v','error','-i',row['video'],*audio_args])
+                self.assertEqual(before, after)
+                args = json.loads((self.out/f'.render/{run*3+j:04d}.argv.json').read_text())
+                self.assertEqual(args[args.index('--seed')+1], str(row['seed']))
+                if j==0:
+                    self.assertNotIn('--continue-from', args)
+                elif j==1:
+                    self.assertEqual(args[args.index('--continue-from')+1], report['segments'][run*3]['state'])
+                    self.assertEqual(args[args.index('--ref-image')+1], str(reference))
+                else:
+                    self.assertNotIn('--ref-image', args)
+
+    def test_seed_run_completes_merges_before_next_run_fails(self):
+        self.worker.write_text(self.worker.read_text().replace("prompt = value('prompt', '')",
+            "if value('seed') == '242': raise SystemExit(7)\nprompt = value('prompt', '')"))
+        report = self.run_script('#seed-set 100,200\n### a\n#size 96x96\n#frames 22\nred', 1)
+        self.assertTrue((self.out/'seed-100/scenes.mp4').exists())
+        self.assertFalse((self.out/'seed-200/scenes.mp4').exists())
+        self.assertEqual([s['status'] for s in report['segments']], ['complete','failed'])
+        self.assertEqual([s['status'] for s in report['merged']], ['complete','planned'])
+
+    def test_overlay_preflight_failure_prevents_workers(self):
+        wrapper = self.root/'no-overlay.py'
+        wrapper.write_text(f'''#!{sys.executable}
+import os,sys
+if '-filter_complex' in sys.argv: raise SystemExit(9)
+os.execv({self.ffmpeg!r}, [{self.ffmpeg!r}, *sys.argv[1:]])
+''')
+        wrapper.chmod(0o755)
+        self.env['H3_FFMPEG'] = str(wrapper)
+        report = self.run_script('#overlay-segment-name\n### a\n#size 96x96\n#frames 22\nred', 1)
+        self.assertEqual(report['segments'][0]['status'], 'planned')
+        self.assertFalse(list((self.out/'.render').glob('*.h3av')))
+        self.assertFalse((self.out/'a.mp4').exists())
+
+    def test_overlay_nomerge_small_canvas_long_unicode_and_punctuation_names(self):
+        names = ['A: [B], % C; "D"', 'snow \u96ea', 'long name ' * 20]
+        text = '#overlay-segment-name\n#nomerge\n' + ''.join(
+            f'### {name}\n#size 32x32\n#frames 22\nred\n' for name in names)
+        report = self.run_script(text)
+        self.assertEqual(report['merged'], [])
+        self.assertEqual(len(list(self.out.glob('*.mp4'))), 3)
+        for row in report['segments']:
+            data = self.rgb(Path(row['video']))
+            self.assertEqual(len(data), 22*32*32*3)
+            self.assertNotEqual(data, self.rgb(Path(row['original_video'])))
 
     def test_metadata_validation_avoids_decoding_fourteen_segments(self):
         self.probe_wrapper(on_scan="raise SystemExit('Unexpected full frame scan')")

@@ -5,15 +5,21 @@
 
 /* The planner never starts workers, reads models or creates outputs. */
 typedef struct {
-    char *name, *prompt, *preamble, *sections[6];
+    char *name, *label, *prompt, *preamble, *sections[6];
     int line, continuing, skipped, frames, delivered, width, height;
+    uint64_t seed_offset;
     h3_request settings;
 } h3_render_segment;
+typedef struct { char *name, *path; } h3_render_reference;
 typedef struct {
     char *source, *source_text, *output, *work, *merged;
     h3_render_segment *segments;
     size_t count;
-    int nomerge, dry_run;
+    uint64_t *seed_set;
+    size_t seed_count;
+    h3_render_reference *references;
+    size_t reference_count;
+    int nomerge, dry_run, overlay_segment_name;
 } h3_render_plan;
 
 int h3_render_plan_read(h3_render_plan *plan, const h3_request *request,
@@ -29,4 +35,6 @@ int h3_render_run(const h3_request *request, const char *binary,
 /* Owned strings; allocation failures terminate the one-shot command. */
 char *h3_render_format(const char *format, ...) __attribute__((format(printf, 1, 2)));
 char *h3_render_absolute(const char *base, const char *value);
+int h3_render_badge(const char *path, const char *label, int width, int height,
+                    int *margin, char *error, size_t size);
 #endif

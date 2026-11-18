@@ -1,9 +1,22 @@
-Swiss Alps paraglider flight: fifty adjacent stages of one continuous descent.
-A fictional connected valley, with a high rock launch platform and a lakeside chapel meadow.
-Each later segment inherits the previous AV state, motion and natural soundscape.
-Begin each continuation at the exact preceding endpoint; do not replay its completed action.
+## Native render script. Run with the adjacent run.sh or h3cli --render.
+## Edit the first segment directives to change the render settings.
+## All continuations inherit the first segment's seed.
+## Uncomment either file-wide directive below to label clips or render seed variants.
+## #overlay-segment-name
+## #seed-set 100,200,300
+## Swiss Alps paraglider flight: fifty adjacent stages of one continuous descent.
+## A fictional connected valley, with a high rock launch platform and a lakeside chapel meadow.
+## Each later segment inherits the previous AV state, motion and natural soundscape.
+## Begin each continuation at the exact preceding endpoint; do not replay its completed action.
 
-### 1 ###
+
+### 1
+#size 960x544
+#frames 243
+#steps 50
+#no-preview-vae
+#continue-context 39
+#seed 42
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -20,7 +33,8 @@ Boot soles tap the timber for the first few steps, harness fabric rustles, and a
 non_diegetic_music:
 N/A
 
-### 2 ###
+### 2
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -38,7 +52,8 @@ The airborne wind rush settles to a steady level. The last brief harness creak f
 non_diegetic_music:
 N/A
 
-### 3 ###
+### 3
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -56,7 +71,8 @@ Steady natural airflow with a faint whisper from the slope-side trees, fading as
 non_diegetic_music:
 N/A
 
-### 4 ###
+### 4
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -74,7 +90,8 @@ Maintain the soft wind bed and occasional very quiet canopy fabric flutter overh
 non_diegetic_music:
 N/A
 
-### 5 ###
+### 5
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -92,7 +109,8 @@ Natural wind stays even through the shallow turn; a soft harness creak accompani
 non_diegetic_music:
 N/A
 
-### 6 ###
+### 6
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -110,7 +128,8 @@ Keep the same wind and faint canopy rustle. The other pilot is too far away for 
 non_diegetic_music:
 N/A
 
-### 7 ###
+### 7
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -128,7 +147,8 @@ Even airflow and a low natural valley hush continue without a new sound cue when
 non_diegetic_music:
 N/A
 
-### 8 ###
+### 8
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -146,7 +166,8 @@ Continuous wind with one mild cloth ripple overhead. A distant bird call blends 
 non_diegetic_music:
 N/A
 
-### 9 ###
+### 9
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -164,7 +185,8 @@ Soft wind remains dominant. Tree movement adds only a faint diffuse rustle below
 non_diegetic_music:
 N/A
 
-### 10 ###
+### 10
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -182,7 +204,8 @@ Preserve the wind texture through the occlusion. A very faint cowbell becomes au
 non_diegetic_music:
 N/A
 
-### 11 ###
+### 11
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -200,7 +223,8 @@ The faint cowbell remains distant beneath the wind, changing smoothly with the a
 non_diegetic_music:
 N/A
 
-### 12 ###
+### 12
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -218,7 +242,8 @@ The cowbell drifts farther to the left and begins to soften. Wind and a light ca
 non_diegetic_music:
 N/A
 
-### 13 ###
+### 13
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -236,7 +261,8 @@ The cowbell fades with distance. A faint water hiss emerges gradually from the r
 non_diegetic_music:
 N/A
 
-### 14 ###
+### 14
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -254,7 +280,8 @@ The cascade's soft hiss becomes a little clearer from the left while the constan
 non_diegetic_music:
 N/A
 
-### 15 ###
+### 15
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -272,7 +299,8 @@ Water hiss peaks gently and then begins to recede behind left. Keep the same win
 non_diegetic_music:
 N/A
 
-### 16 ###
+### 16
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -290,7 +318,8 @@ The small cascade fades gradually. Wind returns to being the main sound, with a 
 non_diegetic_music:
 N/A
 
-### 17 ###
+### 17
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -308,7 +337,8 @@ Natural wind and very faint birds over the slope. The distant paraglider adds no
 non_diegetic_music:
 N/A
 
-### 18 ###
+### 18
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -326,7 +356,8 @@ The same wind bed persists, with a short soft flutter of the pilot's own wing fa
 non_diegetic_music:
 N/A
 
-### 19 ###
+### 19
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -344,7 +375,8 @@ Keep wind smooth through the bend. The valley sounds remain distant; do not intr
 non_diegetic_music:
 N/A
 
-### 20 ###
+### 20
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -362,7 +394,8 @@ Continuous natural airflow with the faint broad hush of the valley opening benea
 non_diegetic_music:
 N/A
 
-### 21 ###
+### 21
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -380,7 +413,8 @@ Steady wind, subtle harness creaks, and a very faint wash of distant flowing wat
 non_diegetic_music:
 N/A
 
-### 22 ###
+### 22
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -398,7 +432,8 @@ The wind remains unchanged as the other pilot is occluded. Faint water ambience 
 non_diegetic_music:
 N/A
 
-### 23 ###
+### 23
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -416,7 +451,8 @@ Soft distant stream hiss joins the continuous wind. No splashes close to the mic
 non_diegetic_music:
 N/A
 
-### 24 ###
+### 24
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -434,7 +470,8 @@ The stream hiss is gently strongest below right, then begins to fade behind; air
 non_diegetic_music:
 N/A
 
-### 25 ###
+### 25
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -452,7 +489,8 @@ Natural wind with increasingly discernible leaf and needle rustle below. A faint
 non_diegetic_music:
 N/A
 
-### 26 ###
+### 26
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -470,7 +508,8 @@ The tributary adds a faint localized trickle beneath the wind; nearby tree rustl
 non_diegetic_music:
 N/A
 
-### 27 ###
+### 27
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -488,7 +527,8 @@ The tributary sound recedes behind left. Maintain the steady airflow and broad, 
 non_diegetic_music:
 N/A
 
-### 28 ###
+### 28
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -506,7 +546,8 @@ Soft natural wind continues. The distant blue-and-white pilot is inaudible; only
 non_diegetic_music:
 N/A
 
-### 29 ###
+### 29
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -524,7 +565,8 @@ Wind and soft harness creaks accompany the shallow bank. A distant, low waterfal
 non_diegetic_music:
 N/A
 
-### 30 ###
+### 30
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -542,7 +584,8 @@ The waterfall is a soft distant wash under the same wind, growing naturally as t
 non_diegetic_music:
 N/A
 
-### 31 ###
+### 31
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -560,7 +603,8 @@ Maintain the wind bed, distant waterfall wash and a faint rustle from the remain
 non_diegetic_music:
 N/A
 
-### 32 ###
+### 32
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -578,7 +622,8 @@ Uninterrupted natural wind and distant waterfall wash. The departing pilot produ
 non_diegetic_music:
 N/A
 
-### 33 ###
+### 33
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -596,7 +641,8 @@ Wind remains the main sound, with the waterfall becoming a little clearer and oc
 non_diegetic_music:
 N/A
 
-### 34 ###
+### 34
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -614,7 +660,8 @@ Smooth airflow through the shallow turn, a soft harness creak, and a continuous 
 non_diegetic_music:
 N/A
 
-### 35 ###
+### 35
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -632,7 +679,8 @@ Wind stays steady while grass and leaf rustle become faintly discernible. The wa
 non_diegetic_music:
 N/A
 
-### 36 ###
+### 36
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -650,7 +698,8 @@ Continuous wind with faint rustling vegetation below. Retain the same natural wa
 non_diegetic_music:
 N/A
 
-### 37 ###
+### 37
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -668,7 +717,8 @@ Keep the airborne wind smooth. The waterfall and lakeside birds become slightly 
 non_diegetic_music:
 N/A
 
-### 38 ###
+### 38
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -686,7 +736,8 @@ Wind, distant waterfall and light birdsong continue. The people at the boundary 
 non_diegetic_music:
 N/A
 
-### 39 ###
+### 39
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -704,7 +755,8 @@ The wind keeps its established texture, with a faint localized flap from the win
 non_diegetic_music:
 N/A
 
-### 40 ###
+### 40
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -722,7 +774,8 @@ Wind still dominates softly. The waterfall wash and scattered birds are more pre
 non_diegetic_music:
 N/A
 
-### 41 ###
+### 41
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -740,7 +793,8 @@ Natural wind, low waterfall wash and light grass rustle remain continuous; a qui
 non_diegetic_music:
 N/A
 
-### 42 ###
+### 42
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -758,7 +812,8 @@ A brief soft harness creak and cloth movement join the same steady airflow. Bird
 non_diegetic_music:
 N/A
 
-### 43 ###
+### 43
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -776,7 +831,8 @@ Airflow stays smooth with more audible grass and lakeside leaf rustle below. Pre
 non_diegetic_music:
 N/A
 
-### 44 ###
+### 44
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -794,7 +850,8 @@ Natural wind continues with faint fabric movement from the pilot's own harness. 
 non_diegetic_music:
 N/A
 
-### 45 ###
+### 45
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -812,7 +869,8 @@ A soft fabric shift and harness creak accompany the leg movement. The steady win
 non_diegetic_music:
 N/A
 
-### 46 ###
+### 46
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -830,7 +888,8 @@ Wind is still continuous, with subtle wing-fabric rustle and clearer soft sounds
 non_diegetic_music:
 N/A
 
-### 47 ###
+### 47
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -848,7 +907,8 @@ The airflow begins to soften slightly as forward speed eases. A small harness cr
 non_diegetic_music:
 N/A
 
-### 48 ###
+### 48
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -866,7 +926,8 @@ The wind rush diminishes gradually with the slowed flight. Nearby grass movement
 non_diegetic_music:
 N/A
 
-### 49 ###
+### 49
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
@@ -884,7 +945,8 @@ Soft boot steps on grass replace the airborne rush gradually. Harness and wing f
 non_diegetic_music:
 N/A
 
-### 50 ###
+### 50
+#continue
 subject_definitions:
 One continuous first-person paraglider flight in a connected Swiss Alpine valley, from a timber takeoff platform on a high limestone outcrop down to a lakeside meadow. The same pilot wears dark boots and a dark harness; only brief boot tips and subtle harness edges can enter the lower frame. The wing stays inflated overhead, mostly outside the forward view. The mountainside is generally on the left and the open valley on the right. Preserve one distant split snowy ridge, the connected stream and the elongated turquoise lake as they are gradually revealed.
 summary:
