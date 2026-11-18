@@ -66,8 +66,9 @@ and output directories must be fresh; failures preserve their logs.
 Use an ordinary source checkout without symlinks or special permission bits.
 On a shared volume that inherits setgid onto checkout directories, prepare a
 private checkout with ordinary directory permissions before production. The
-producer normalizes its own Linux payload root; archived recipe directories
-still preserve source permissions and are checked by the archive policy.
+producer clears inherited directory setgid on its own Linux payload root and
+copied cache directories. Shared caches retain their permissions. Archived recipe
+directories still preserve source permissions and are checked by the archive policy.
 
 ```sh
 python3 scripts/dependencies.py identity --platform linux-x86_64

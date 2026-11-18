@@ -7,17 +7,74 @@ import os
 from pathlib import Path
 import signal
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
 import tempfile
 import time
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'scripts'))
 import dependency_bundle as bundles
+
+
+class LinuxDependencyProduction(unittest.TestCase):
+    def test_shared_cache_setgid_directories_produce_portable_archive(self):
+        producer = bundles.adapter(ROOT, 'linux-x86_64')
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cache = root/'cache';cache.mkdir();cache.chmod(0o2775)
+            image = cache/'images/builder'
+            blobs = image/'blobs/sha256';blobs.mkdir(parents=True)
+            data = b'OCI blob fixture'
+            blob = blobs/'temporary';blob.write_bytes(data)
+            blob.rename(blobs/bundles.sha(blob))
+            (image/'index.json').write_text('{}\n')
+            (image/'origin.json').write_text('cache metadata\n')
+            inputs = cache/'inputs'
+            sources = inputs/'source-packages';sources.mkdir(parents=True)
+            (sources/'source.tar').write_bytes(b'corresponding source')
+            (inputs/'source.tar').write_bytes(b'pinned source')
+            tools = cache/'tools';tools.mkdir()
+            (tools/'proot').write_bytes(b'proot fixture')
+            for folder in (image, image/'blobs', blobs, sources):
+                folder.chmod(0o2775)
+            before = {str(p.relative_to(cache)): (p.lstat().st_mode,
+                      p.read_bytes() if p.is_file() else None) for p in cache.rglob('*')}
+            lock = dict(sources={'source.tar': {}}, images={'builder': {}},
+                        glibc_max='2.35', driver_min='fixture')
+            build = SimpleNamespace(fetch=lambda *_: inputs, run_builder=lambda *_: None)
+            payload = root/'payload'
+            with patch.dict(sys.modules, build=build, environment=SimpleNamespace(LOCK=lock)), \
+                    patch.object(producer.build_process, 'run'):
+                producer.produce(ROOT, cache, root/'work', payload, 1, offline=True)
+            after = {str(p.relative_to(cache)): (p.lstat().st_mode,
+                     p.read_bytes() if p.is_file() else None) for p in cache.rglob('*')}
+            self.assertEqual(before, after)
+            for folder in ('images/builder', 'images/builder/blobs',
+                           'images/builder/blobs/sha256', 'inputs/source-packages'):
+                self.assertEqual(stat.S_IMODE((payload/folder).stat().st_mode), 0o775)
+            self.assertFalse((payload/'images/builder/origin.json').exists())
+            recipe = dict(schema=1, platform='linux-x86_64', lock={}, recipes={})
+            archive = root/'bundle.tar'
+            bundles.pack(payload, archive, recipe, {})
+            bundles.extract(archive, root/'unpacked')
+            bundles.verify(root/'unpacked', recipe)
+
+    def test_other_special_permissions_are_still_rejected(self):
+        producer = bundles.adapter(ROOT, 'linux-x86_64')
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root/'cache';source.mkdir()
+            item = source/'sticky';item.mkdir();item.chmod(0o1755)
+            destination = root/'copy'
+            producer.copy_cached_tree(source, destination)
+            with self.assertRaisesRegex(ValueError, 'Special permission bits'):
+                bundles.inventory(destination)
 
 
 class Bundles(unittest.TestCase):

@@ -1,12 +1,22 @@
 """Produce a pinned OCI builder containing the compiled Linux dependencies."""
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import build_process
 import dependency_bundle as bundles
+
+
+def copy_cached_tree(source, destination):
+    """Keep shared-cache setgid directories out of the private payload copy."""
+    shutil.copytree(source, destination)
+    for path in [destination, *destination.rglob('*')]:
+        mode = path.lstat().st_mode
+        if stat.S_ISDIR(mode) and mode & stat.S_ISGID:
+            path.chmod(stat.S_IMODE(mode) & ~stat.S_ISGID)
 
 
 def produce(source, cache, work, payload, jobs, offline=False):
@@ -19,7 +29,7 @@ def produce(source, cache, work, payload, jobs, offline=False):
     # archive deliberately rejects special permission bits, including on dirs.
     payload.chmod(0o755)
     image = payload/'images/builder'
-    shutil.copytree(cache/'images/builder', image)
+    copy_cached_tree(cache/'images/builder', image)
     image.joinpath('origin.json').unlink(missing_ok=True)
     build_process.run(['umoci', 'unpack', '--rootless', '--image', str(image)+':base', work/'builder'], check=True)
     root = work/'builder/rootfs'
@@ -41,7 +51,7 @@ def produce(source, cache, work, payload, jobs, offline=False):
     lock = environment.LOCK
     for name in lock['sources'] | lock.get('materials', {}):
         shutil.copyfile(inputs/name, target/name)
-    shutil.copytree(inputs/'source-packages', target/'source-packages')
+    copy_cached_tree(inputs/'source-packages', target/'source-packages')
     (payload/'tools').mkdir();shutil.copyfile(cache/'tools/proot', payload/'tools/proot')
     (payload/'tools/proot').chmod(0o755)
     for blob in (image/'blobs/sha256').iterdir():
