@@ -1,7 +1,7 @@
 # Single-still feature tasks (archived)
 
 Archived from the completed plan on 2026-09-22. Current work is tracked in
-[todo.md](todo.md).
+[todo.md](../todo.md).
 
 Design: [design-single-still.md](design-single-still.md).
 

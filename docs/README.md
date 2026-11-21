@@ -56,7 +56,9 @@ that path with your downloaded executable when using a release package.
 
 ## Development and releases
 
-- [Completed rendering milestone](todo.md): built-in text-script rendering,
+- [Current implementation tasks](todo.md): replace still generation's dedicated
+  image VAE with the stock video VAE and support native 8 MP output.
+- [Completed rendering milestone](render-integration-todo.md): built-in text-script rendering,
   script-wide merging and structured prompt inheritance, with
   [acceptance evidence](features/render-integration-results.md).
 - [Completed release-tooling milestone](release-tooling-todo.md) and its

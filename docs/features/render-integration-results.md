@@ -1,6 +1,6 @@
 # Integrated rendering acceptance
 
-All eight tasks in the [integrated rendering milestone](../todo.md) are
+All eight tasks in the [integrated rendering milestone](../render-integration-todo.md) are
 complete. Validation ran on 2026-11-03–04. The
 [sequence-rendering guide](sequence-rendering.md) describes the resulting
 command and script format.

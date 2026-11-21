@@ -1,202 +1,267 @@
-# Integrated text-script rendering
+# Replace `--still` with empty-latent generation and stock video VAE decoding
 
-Status: **complete — 8/8 tasks complete**.
-Updated 2026-11-03.
+Status: **planned — 0/20 tasks complete**.
+Updated 2026-11-21.
 
-Text-script rendering is built into h3cli as `--render <filename>`.
-The native command renders the text script's segments, merges all rendered
-segments into `<text_script_name>.mp4` by default, and inherits structured
-prompt sections through continued segments unless the new prompt overrides them.
+Replace the current dedicated-image-VAE implementation of `--still` with the
+single-image technique supported by ComfyUI's standard `Empty Latent Image`
+and `VAE Decode` nodes. Generate directly at the requested resolution,
+including **3872×2176 (8,425,472 pixels)**, using the existing H3 FL2VA/Ref2VA
+weights and stock video VAE. Keep one PNG as the public result.
 
-The completed **8/8** release-tooling milestone is
-[archived intact](release-tooling-todo.md), with its
-[acceptance evidence](release/results.md). The requirements below describe
-implemented behavior; the [sequence-rendering guide](features/sequence-rendering.md)
-documents the native command. The
-[rendering acceptance record](features/render-integration-results.md) records
-source and standalone checks on the Mac and RTX PRO 5000, including the
-unchanged 204-output CUDA reference gate.
+The completed **8/8 integrated text-script rendering milestone** is
+[archived intact](render-integration-todo.md), with its
+[acceptance evidence](features/render-integration-results.md). The original
+[still implementation tasks](features/single-still-tasks.md),
+[sampling contract](features/single-still-generation-contract.md) and
+[results](features/single-still-results.md) remain historical evidence for the
+implementation being replaced. This checklist records future work.
 
-## Built-in rendering
+## Existing implementation and intended change
 
-```sh
-./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3
-./bin/h3cli --render scenes.txt --dry-run
-```
+The current code already samples a single video latent frame and two auxiliary
+audio positions in [engine.c](../src/engine.c), using
+`h3_still_layout_build` in [host.c](../src/host.c). Reuse this foundation.
+The principal changes are decoder selection, high-resolution admission,
+resource handling and the associated CLI/model/artifact contracts.
 
-- Make `--render` a first-class CLI mode in source builds and standalone macOS
-  and Linux packages. It must work without a helper script, a source
-  checkout, or a user-installed Python interpreter. Reuse the native option
-  registry, generation/continuation paths and packaged FFmpeg/FFprobe support.
-- Preserve the script format and behavior: `### NAME`, `!### NAME`, native
-  option directives and aliases, inherited settings, `#unset`, per-segment
-  reference/anchor resets, relative paths beside the script, comments, escaped
-  hashes, multiline prompts, hard/bridge continuation and context trimming.
-  Retain the rule that a continuation chain is entirely rendered or skipped.
-- Use native CLI generation options as initial defaults, with script directives
-  overriding them. Validate incompatible operation modes and options managed by
-  the script, including direct prompt/output and continuation-state overrides,
-  before rendering. Keep ordinary single-video CLI behavior unchanged.
-- Retain the default fresh output directory `<text_script_name>-render` beside
-  the input and expose `--output-dir` in render mode for an explicit directory.
-  Preserve individual clips, continuation states, logs and `run.json`.
-  `<text_script_name>` means the input basename with its final extension removed:
-  `scenes.txt` produces `scenes-render/scenes.mp4` by default.
-- Validate the entire script before starting generation. A dry run shows the
-  effective prompts, settings, skip decisions and merge destinations without
-  loading models or creating output files. Failures and cancellation return
-  nonzero, stop owned workers and retain completed clips and diagnostics.
+| Area | Current behavior | Replacement requirement |
+| --- | --- | --- |
+| Denoising target | Video `[1,24,1,H/16,W/16]`, audio `[1,32,2,2]` | Retain these shapes and generate at the final canvas |
+| Final decoder | Dedicated `minimax_h3_t1_image_vae_step1597.safetensors`, direct T=1 decode | Stock video VAE, five copies of the generated latent, raw decoded frame index 3 |
+| Output dimensions | Shared 768×1344 / 1,032,192-pixel limit | Separate checked still limits admitting at least 3872×2176 and its transpose |
+| Model dependency | Automatic image-VAE download and `--image-vae` selection | Use the normal model directory and stock video VAE; retire the dedicated checkpoint requirement |
+| Saved still | Schema 1 with dedicated image-encoder/whitening digest | Explicit stock-VAE compatibility and decoder recipe, with a documented old-artifact policy |
 
-## Merge all rendered segments
+The existing video decoder is also not a drop-in T=1 API: its public temporal
+paths expect `T=5*k+2`, normally at least seven tokens. The dedicated image path
+uses different weights and T=1 positions. Neither assumption establishes the
+required five-token stock-VAE decode; implement and validate that case explicitly
+in [video_vae.c](../src/vae/video_vae.c).
 
-- After all active segments succeed, concatenate their delivered clips once
-  each, in script order, into `<text_script_name>.mp4`. Include independent shots
-  and every continuation chain. Omit skipped segments and avoid repeating
-  continuation context or including both a chain merge and its source clips.
-- Preserve the existing `<first_segment>-merged.mp4` chain outputs by default;
-  the script-wide file is an additional output. Keep the original clips.
-- Recognize a standalone `#nomerge` directive anywhere in the text script:
-  before the first segment, inside any segment (including a skipped one), after
-  prompt text, or at the end. Scan the complete file before execution. Its
-  presence disables all merged outputs for the entire run, including chain
-  merges; it does not affect generation, continuation, or prompt inheritance.
-  Repeated directives are harmless. It takes no arguments and is removed from
-  prompt text. Comments (`## ...`), escaped literal text (`\#nomerge`) and inline
-  mentions in prose do not activate it.
-- With one rendered segment, still produce the script-named MP4. With every
-  segment skipped, succeed without rendering or creating outputs. Reject
-  collisions among segment names, chain outputs and the script-wide filename
-  before rendering; disabled merge destinations do not reserve filenames.
-- Preserve audio/video order and synchronization. The merged frame count must
-  equal the sum of delivered segment frames at the existing 24 fps. Normalize
-  incompatible encodings when needed. For independent shots with different
-  dimensions, use the first rendered segment's canvas and fit/pad other shots
-  without cropping or changing their duration; individual clips stay intact.
-- Publish the final filename only after the complete merge passes media
-  validation. Report render or merge failures accurately; a partial script
-  cannot leave a file presented as the successful full result. Record the merge
-  inputs, normalization and final output, or the `#nomerge` decision, in `run.json`.
+## Source evidence and execution contract
 
-## Structured prompt inheritance
+[ComfyUI PR #15677](https://github.com/Comfy-Org/ComfyUI/pull/15677), merged
+2026-08-17, adds model-specific adaptation of an empty image latent into H3
+video/audio streams. Its
+[change at `d937b223d58ebe1c30156d725b6b15761208607c`](https://github.com/Comfy-Org/ComfyUI/pull/15677/commits/d937b223d58ebe1c30156d725b6b15761208607c)
+and [sampling preparation](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/sample.py)
+explain why the generic four-channel image node can be used. Native h3cli can
+construct the final H3 shapes directly; it needs no ComfyUI node runtime or
+intermediate four-channel allocation.
 
-Recognize these prompt section headings and emit populated sections in exactly
-this order, regardless of their order in the source prompt:
+The [stock H3 VAE source](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/ldm/minimax/vae.py),
+inspected on 2026-11-21, unwhitens the latent, repeats a T=1 input over its
+five-token chunk, selects raw pixel frame 3, and finalizes pixels. This is the
+stock-video branch; dedicated image VAEs have separate handling. Pin the exact
+source revision and reference fixtures in ELS001 before implementation.
 
-```text
-subject_definitions:
-...
-summary:
-...
-retention_analysis:
-...
-detailed_description:
-...
-overall_soundscape:
-...
-non_diegetic_music:
-...
-```
+The replacement contract is:
 
-- A heading occupies its own line, with optional surrounding whitespace. Its
-  body is all following text up to the next recognized heading or the end of
-  that segment's prompt. Preserve multiline bodies and internal formatting.
-  These are prompt sections, not `#` option directives.
-- A `#continue` segment inherits each omitted section from the immediately
-  preceding segment's **effective** prompt. Carry inherited or replaced values
-  forward through any number of continued segments, in hard and bridge modes.
-  A segment without `#continue` starts a fresh prompt-section context.
-- A heading present in the new prompt replaces that entire inherited section;
-  other sections still inherit. An explicitly empty section clears that section
-  for this and subsequent continuations until it is supplied again. Do not
-  manufacture missing sections or retain both old and new copies.
-- Keep the current segment's unstructured preamble before the ordered sections;
-  never inherit that preamble. Unrecognized headings are ordinary body text.
-  Prompts without recognized headings retain their existing behavior when
-  there are no structured sections to inherit.
-- Reject duplicate recognized headings within one prompt with a script line
-  diagnostic. Resolve inheritance before checking whether an active segment's
-  effective prompt is empty. Fully skipped chains cannot seed later independent
-  prompts, and mixed skipped/rendered chains remain invalid.
-- Pass the expanded prompt to generation and include it in the dry run and
-  execution report so users can inspect what each segment actually receives.
+- Batch size one, target video T=1 and auxiliary audio T=2. An empty latent
+  specifies target geometry; generation still starts from seeded noise and
+  samples both streams. Discard generated audio without loading an audio VAE.
+- Denoise only the single target latent. Temporal replication happens during
+  final decoding, after sampling. Save the original normalized T=1 latent.
+- Decode with the ordinary H3 video weights and their normalization. Unwhiten
+  exactly once, preserve all five temporal positions in VAE attention, and
+  return zero-based raw frame 3 as the sole output image. Preserve spatial
+  tiling, blending, pixel normalization and clipping from the pinned reference.
+- Keep prompt-only FL2VA and ordered image-reference Ref2VA, including the
+  existing `--ref-image-size match|high|max` behavior. Target canvas dimensions
+  and reference preprocessing remain separate settings.
+- Preserve h3cli's existing Euler/shifted-flow sampler and seeded-noise contract
+  for this replacement. The supplied
+  [Fizgig example workflow](https://github.com/shootthesound/ComfyUI-Fizgig-H3-Still/blob/main/example_workflows/h3_still_text_to_image-8MP-NoTurboVersion.json)
+  uses `er_sde` and `simple`; adopting the latent/decode technique does not
+  reproduce that trajectory. Record this difference in qualification results.
+- Keep PNG delivery, final display/callbacks, progress, cancellation and
+  save/re-decode support. Ordinary video, continuation and upscaling retain
+  their existing geometry, sampling, decoder and saved-state contracts.
 
-For example, in `scenes.txt`:
+This milestone uses the existing video-model checkpoints. A separate H3 Image
+model, a new upscaler, new samplers and broader acceleration support are outside
+this replacement. Retain unsupported-option checks unless a task explicitly
+qualifies a combination. Higher resolution alone does not establish prompt
+quality or identity fidelity.
 
-```text
-### opening
-#frames 56
-#size 256x256
-subject_definitions:
-A red toy boat with a white sail.
-summary:
-The boat rests beside the reeds.
-retention_analysis:
-Keep the boat's shape and sail color consistent.
-detailed_description:
-A fixed camera watches the boat on a quiet pond.
-overall_soundscape:
-Soft water and a light breeze.
-non_diegetic_music:
-A quiet piano melody.
+Expected target geometry (reference and text tokens are additional):
 
-### drifting
-#continue
-summary:
-The boat drifts away from the reeds.
-detailed_description:
-The camera slowly follows the same boat into open water.
+| Output canvas | Video latent `[B,C,T,h,w]` | DiT target visual rows after 2×2 patching |
+| --- | --- | --- |
+| 640×480 | `[1,24,1,30,40]` | 300 |
+| 1344×768 | `[1,24,1,48,84]` | 1,008 |
+| 2144×1216 | `[1,24,1,76,134]` | 2,546 |
+| 3872×2176 | `[1,24,1,136,242]` | 8,228 |
 
-### farther
-#continue
-summary:
-The boat reaches the center of the pond.
-```
+All cases retain audio `[1,32,2,2]`: 128 scalar values / four packed audio rows.
+The DiT row count is not a VAE tile-token count or a memory estimate.
 
-`drifting` inherits four sections and replaces `summary` and
-`detailed_description`. `farther` inherits the resulting five omitted sections,
-including `drifting`'s new `detailed_description`, and replaces only `summary`.
-All effective prompts use the six-section order above. The default outputs
-include `opening.mp4`, `drifting.mp4`, `farther.mp4`, `opening-merged.mp4` and
-`scenes.mp4`. Adding `#nomerge` anywhere as a directive leaves only the three
-individual MP4s, plus the normal states, logs and report.
+## M0 — Freeze the replacement contract
 
-## Implementation milestone
+- [ ] ELS001 Pin the upstream empty-latent conversion and stock-video still
+  decode sources, model configuration, tensor layouts, whitening, RoPE and
+  tile profile. Record revision/source identities and the independent reference
+  command. Capture deterministic normalized-latent fixtures and decoded pixels;
+  choose numerical tolerances before comparing native results. Treat the supplied
+  matching-images report as motivation, not an acceptance oracle.
+- [ ] ELS002 Specify the CLI/API and artifact migration before changing them:
+  `--still` selects the stock video VAE, `--decode-still-latent` resolves that VAE
+  without a denoiser, and retired `--image-vae` usage receives migration guidance.
+  Define a still-specific maximum area and dimension bounds that admit the full
+  8,425,472-pixel target and its transpose. Define the schema-1 compatibility
+  policy and a distinct decoder recipe identity; do not silently reinterpret an
+  old checkpoint path or claim identical images from the two decoders.
 
-- [x] RND001 Add `--render <filename>`, render-mode `--output-dir` and
-  `--dry-run` to the native CLI inventory, help and dispatch. Define option
-  precedence and reject incompatible modes before model initialization.
-- [x] RND002 Integrate script parsing and planning with the native option
-  registry. Preserve existing directives, path handling, skip/continuation
-  rules and diagnostics; parse whole-file `#nomerge` before prompt processing.
-- [x] RND003 Implement structured-section parsing, transitive inheritance,
-  section replacement/clearing, independent-segment resets and canonical order.
-  Expose the expanded prompt in dry runs and reports.
-- [x] RND004 Execute plans through the existing generation and continuation
-  paths, preserving saved states, trimmed clips, logs, progress and cancellation
-  behavior. Use `--render` as the single entry point for text-script rendering.
-- [x] RND005 Implement the script-wide merge, preserve chain merges, and apply
-  `#nomerge` globally. Handle audio, mixed encoding/canvas normalization, skipped
-  segments, filename collisions, one-clip inputs and atomic final publication.
-- [x] RND006 Add host/parser and synthetic-media coverage. Test every inherited
-  heading, canonical order, partial/full/empty overrides, multiline bodies,
-  transitive propagation, independent resets, preambles and duplicate headings.
-  Cover `#nomerge` at every allowed location, repeated/literal/comment forms,
-  scripts with multiple independent shots and chains, zero/one active clip,
-  paths with spaces, merge frame/audio correctness and failure/cancellation.
-  Port relevant coverage from [script tests](../tests/test_render_script.py) and
-  [media tests](../tests/render_script_media.py).
-- [x] RND007 Validate source and standalone macOS/Linux entry points, packaged
-  media discovery and bounded real-model rendering with continuation. Run the
-  applicable host/current-feature checks and the unchanged full **204-output
-  CUDA reference regression** required by [CONTRIBUTING.md](../CONTRIBUTING.md).
-  Record actual evidence and limitations; missing prerequisites are not passes.
-- [x] RND008 Update CLI help, the project README, usage and sequence-rendering
-  guides, and [samples/render-example.txt](../samples/render-example.txt) with
-  the built-in command, output locations, global `#nomerge` behavior and prompt
-  inheritance/override examples. Record acceptance against this checklist.
+Exit: reproducible decode reference, explicit public behavior and migration
+rules. M1 and M2 implement this contract before M3 switches the default.
 
-All eight tasks are complete. The [acceptance evidence](features/render-integration-results.md)
-confirms that the built-in command renders scripts, creates the complete
-script-named MP4 by default, honors global `#nomerge`, and supplies expanded
-prompts to continued segments on both supported platforms. The record includes
-test limits and unrelated platform/filesystem skips.
+## M1 — Native single-frame targets at high resolution
+
+- [ ] ELS003 Reuse and make explicit the existing T=1/audio-T=2 target construction
+  in [engine.c](../src/engine.c) and [host.c](../src/host.c). Verify seeded video
+  and audio noise, packed segments, task IDs, reference slots and positional
+  coordinates. No video frame alignment or decoder repetition may expand the
+  denoising target. Assert the table's shapes and target-row counts.
+- [ ] ELS004 Introduce one checked still-geometry policy and use it for CLI/API
+  admission, generation, latent save/load and codec-only decode. Remove the
+  still path's accidental dependence on `H3_MAX_PIXELS` and
+  `h3_geometry_valid` in [engine.c](../src/engine.c) and
+  [image_vae.c](../src/vae/image_vae.c). Audit downstream helpers for residual
+  limits or automatic shrinking. Keep multiples-of-32 alignment and positive
+  dimensions; use checked multiplication. Preserve video, reference-image and
+  upscale limits rather than increasing a shared global cap.
+- [ ] ELS005 Audit high-resolution allocation/index arithmetic through text and
+  image conditioning, DiT packing/RoPE/attention, sampler buffers, VAE tiles and
+  final RGB/PNG delivery on Metal and CUDA. Account for text/reference tokens,
+  both audio/video streams and live weights/scratch. Fail with an actionable
+  memory error before oversized allocation; preserve the process memory guard.
+  No silent resize, reduced layer count, reference dropping or preview fallback.
+
+Exit: host validation admits the target canvases with exact shapes, rejects
+invalid/overflowing dimensions, and leaves ordinary video admission unchanged.
+
+## M2 — Stock video VAE still decoding
+
+- [ ] ELS006 Add an explicit still entry point in
+  [video_vae.h](../src/vae/video_vae.h) and
+  [video_vae.c](../src/vae/video_vae.c). Consume normalized channel-major T=1,
+  construct five temporal copies, and execute the stock decoder with the correct
+  five-token positions, register/suffix layout and output projection. Audit
+  fixed-seven assumptions and backend kernels. Extract raw frame index 3 before
+  ordinary video trimming; padding to seven tokens or decoding T=1 directly is
+  not a substitute for the independently checked five-token computation.
+- [ ] ELS007 Implement spatially tiled still decoding with bounded scratch and
+  exactly one assembled image. Keep the reference tile-overlap/blending and
+  pixel-finalization order; avoid retaining a full-resolution multi-frame RGB
+  movie. Replication may be materialized per tile if mathematically equivalent.
+  Preserve all temporal attention inputs while reducing delivery storage.
+  Validate partial edge tiles, seam intersections and portrait geometry.
+- [ ] ELS008 Route final generation and codec-only delivery through this decoder
+  in [engine.c](../src/engine.c) and [media/decode.c](../src/media/decode.c).
+  Release completed denoiser resources before decode as needed; isolate decoder
+  cache identities by weights, recipe, temporal geometry, precision and tiles.
+  Keep exactly one final frame callback (index 0/count 1), PNG publication,
+  result ownership, progress accounting and cancellation cleanup.
+
+Exit: identical input latents pass the independent stock-VAE decode comparison
+on Metal and CUDA, without altering normal video chunk decoding.
+
+## M3 — Model selection, saved latents and retirement
+
+- [ ] ELS009 Update [model resolution](../src/models/resolve.c), catalog/group
+  handling and CLI defaults so still generation no longer requires or downloads
+  the dedicated image VAE. Resolve the stock VAE for the selected FL2VA/Ref2VA
+  model. Codec-only decode must resolve only its VAE/configuration dependencies,
+  with no tokenizer, DiT or audio decoder. Cover explicit paths, default model
+  roots, offline operation, missing files and packaged model discovery.
+- [ ] ELS010 Implement the saved-latent contract from ELS002 in
+  [image_vae.c](../src/vae/image_vae.c) or a dedicated still-artifact module.
+  Save finite normalized F32 `[1,24,1,h,w]`, normalization compatibility and
+  decoder recipe metadata. The current digest includes dedicated F16 encoder
+  tensors; matching whitening alone cannot validate that digest against stock
+  weights. Version metadata where semantics change. Test the documented
+  schema-1 migration or clear rejection, including codec-only re-decode, rather
+  than retaining an implicit dependency on the retired checkpoint.
+- [ ] ELS011 Update [CLI parsing/help](../src/h3cli.c),
+  [option descriptors](../src/cli/options.def), [public API](../src/h3.h),
+  shared request validation and server job/model planning for the new selection
+  rules. Preserve `--frames 1`, PNG defaults and existing unsupported-mode
+  diagnostics. Define the public API transition for `image_vae` and the decode
+  function's model argument. Keep `--render` a video-script operation. Verify
+  HTTP still jobs report one image with no AV/audio state.
+- [ ] ELS012 Remove the replaced dedicated-image decoder path, mandatory
+  capability checks, automatic image-VAE selection and dead implementation/test
+  branches after the stock path passes. Audit low-level codec consumers before
+  deleting shared utilities. Preserve historical task/results/provenance records
+  and user model files. Default still execution must have one documented decoder
+  path and no silent fallback to the previous implementation.
+
+Exit: prompt-only and reference stills, saved latents, CLI/API/server operations
+and codec-only decode all work without the dedicated image checkpoint installed.
+
+## M4 — Verification and qualification
+
+- [ ] ELS013 Extend the existing [still host tests](../tests/test_still.c),
+  [CLI tests](../tests/test_still_cli.py),
+  [layout tests](../tests/test_still_layout.py) and model-resolution tests.
+  Cover all geometry rows and their transposes, accepted/rejected policy
+  boundaries, malformed/nonfinite/truncated artifacts, schema migration,
+  explicit flag conflicts and reference sizing. Confirm oversized ordinary
+  video requests still fail and invalid input fails before downloads/GPU work.
+- [ ] ELS014 Add an independent stock-VAE fixture runner using ELS001's pinned
+  source and compatible weights. Compare unwhitening, five-token RoPE/attention,
+  selected raw frame, tile blending and final pixels at small sizes and across
+  tile boundaries. Exercise Metal and CUDA with guard/sanitizer coverage. Require
+  the predeclared numerical thresholds; old dedicated-VAE output and comparisons
+  of the native implementation against itself are not reference evidence.
+- [ ] ELS015 Run end-to-end prompt-only and ordered image-reference renders on
+  both backends at 640×480 and 1344×768. Verify finite trajectories, exact seed
+  repeatability within the same execution policy, saved T=1 latent re-decode,
+  reference ordering and all three reference-size modes. Check final PNG size,
+  one callback/result frame and zero audio decode/output. Record semantic quality
+  separately from numerical and lifecycle correctness.
+- [ ] ELS016 Qualify direct 2144×1216 and 3872×2176 generation on capable hardware,
+  including prompt-only, reference-conditioned and portrait cases. Begin with
+  bounded 2–6-evaluation functional probes, then record representative 50-step
+  prompt/reference quality runs at the 8 MP target. Retain commands, seed,
+  shapes, PNG dimensions, device/build identity, timings and peak memory by
+  phase. Demonstrate 8,228 denoised target visual rows, with no lower-resolution
+  render or post-generation upscale. Record each backend's tested limits;
+  unavailable hardware or OOM is not a passing 8 MP result.
+- [ ] ELS017 Exercise resource lifetime and failure recovery: repeated stills,
+  video→still→video in a reused context, cancellation during loading/sampling/
+  tiles/delivery, allocation failures, encoder failures and existing output
+  destinations. Confirm no leaks/stale decoder state, no partial PNG publication,
+  no unintended audio/model loads and successful reuse after supported failures.
+- [ ] ELS018 Run applicable `make test-still-host`, `make test-current-host`,
+  backend tests and current-feature integration. Follow
+  [CONTRIBUTING.md](../CONTRIBUTING.md): after every coherent implementation
+  change, run the complete immutable **204-output CUDA reference regression**.
+  Do not weaken it or regenerate golden hashes. Include ordinary video decoding,
+  continuation, reference conditioning and upscale coverage; record missing
+  prerequisites as unverified, never as passes.
+
+Exit: codec and generation evidence are complete, high-resolution generation is
+measured, and the unchanged video regression contract passes.
+
+## M5 — Documentation and packaged acceptance
+
+- [ ] ELS019 Update the project README, [still guide](features/single-still.md),
+  [sampling contract](features/single-still-generation-contract.md), usage,
+  model-download guide, API examples and hardware requirements. Describe the
+  stock-VAE dependency, high-resolution limits, `--image-vae`/artifact migration,
+  decode-only command and measured memory. Include native 8 MP examples and
+  the sampler difference from ComfyUI. Retain earlier results as dated evidence
+  and publish a distinct replacement acceptance record with source provenance.
+- [ ] ELS020 Validate source builds and standalone macOS/Linux packages, including
+  offline still generation, saved-latent decode, model selection and bundled PNG
+  encoding with no image-VAE checkpoint. Reconcile every task against retained
+  evidence, document backend/resource limits, validate documentation links and
+  update completion status only after all required work passes.
+
+Completion requires the stock-video-VAE path to replace the current `--still`
+implementation, genuine 8 MP denoising/delivery to be demonstrated, and saved
+latent/model selection behavior to be explicit and tested. Codec-only success,
+a high-resolution dry run or resizing a small generated image does not complete
+this milestone.
