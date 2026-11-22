@@ -1055,15 +1055,6 @@
       "revision": "62f7591f59dfbb4c3c02b7a621d180a9eeaba26c"
     },
     {
-      "path": "image-vae/minimax_h3_t1_image_vae_step1597.safetensors",
-      "group": "image-vae",
-      "url": "https://huggingface.co/Mamad8/MiniMax-H3-Image-VAE/resolve/c7b9252c73707dba494cf4d99ca45d3f33f561b3/minimax_h3_t1_image_vae_step1597.safetensors",
-      "bytes": 5207808784,
-      "sha256": "6c3d0bfa055986a803a566a862fcde283a1e63db62829e5ef4a2a5aebf50bb86",
-      "repository": "Mamad8/MiniMax-H3-Image-VAE",
-      "revision": "c7b9252c73707dba494cf4d99ca45d3f33f561b3"
-    },
-    {
       "path": "latent-upscale/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors",
       "group": "upscale",
       "url": "https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler/resolve/3f941d5d182014dd5c0a5e16330420ee2d4aa0c6/minimax_h3_latent_upscaler_3d_conv_v1/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors",

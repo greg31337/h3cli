@@ -1,102 +1,104 @@
 # Single-still rendering
 
-`--still` renders one image using an actual T=1 H3 target. Prompt-only FL2VA
-and ordered image-reference Ref2VA requests are implemented. The initial path
-uses original BF16 weights, dense attention, all 50 blocks, reference RoPE and
-the ordinary Euler sampler. See the
-[measured results](single-still-results.md) and [sampling contract](single-still-generation-contract.md). Default CUDA execution
-is also [qualified on RTX PRO 6000 Blackwell](single-still-cuda-results.md).
-
-## Image checkpoint
-
-`--image-vae` defaults to
-`ROOT/image-vae/minimax_h3_t1_image_vae_step1597.safetensors`, where
-`--models-path ROOT` defaults to cwd `models`. Missing weights download
-automatically for `--still` and `--decode-still-latent`. Explicit file overrides
-win. Prefetch with `--download-models image-vae`; use `--offline` to require local
-files. See the [download guide](model-downloads.md) and
-[pinned provenance](single-still-sources.md). The qualified full-file checksum is
-`6c3d0bfa055986a803a566a862fcde283a1e63db62829e5ef4a2a5aebf50bb86`.
-
-```sh
-shasum -a 256 models/image-vae/minimax_h3_t1_image_vae_step1597.safetensors
-# 6c3d0bfa055986a803a566a862fcde283a1e63db62829e5ef4a2a5aebf50bb86
-```
-
-The decoder checks capability, format, architecture, all 562 tensor shapes,
-whitening and the declared output slice. It expands F16 checkpoint values to
-F32 with bounded conversion buffers and uses the released 256/64 spatial tiles.
-Expanded decoder weights and scratch use about 9.75 GB on Metal. The existing
-110 GB default memory guard remains active.
-
-## Render an image
-
-Build normally with `make -j8`. These commands use the original model and
-FFmpeg's PNG encoder:
+`--still` generates one PNG directly at the requested canvas using the ordinary
+FL2VA or Ref2VA weights and the stock video VAE. It samples one video latent
+frame and two auxiliary audio positions; audio is discarded. After sampling,
+the decoder repeats the latent five times and returns raw frame 3. See the
+[sampling contract](single-still-generation-contract.md) and
+[qualification record](empty-still-results.md).
 
 ```sh
 ./bin/h3cli -d models/MiniMax-H3 --still \
-  -p "A polished red ceramic teapot on a pale wooden table, a single still photograph, soft studio lighting." \
-  --width 640 --height 480 --steps 6 --seed 42 \
+  -p 'A polished red ceramic teapot on a pale wooden table, soft studio lighting.' \
+  --width 3872 --height 2176 --steps 50 --seed 42 \
   --save-still-latent outputs/teapot.safetensors -o outputs/teapot.png
 
 ./bin/h3cli -d models/MiniMax-H3 --still \
-  -p "A portrait photograph of the woman in <Picture 1>, smiling softly, soft studio lighting, neutral background." \
-  --ref-image inputs/2.jpg --ref-image-size match \
-  --width 640 --height 480 --steps 6 --seed 42 -o outputs/portrait.png
+  --ref-image inputs/2.jpg --ref-image-size high \
+  -p 'A portrait photograph of the person in image 1 in a sunlit garden.' \
+  --width 3872 --height 2176 --steps 50 --seed 42 -o outputs/portrait.png
+
+./bin/h3cli -d models/MiniMax-H3 --offline \
+  --decode-still-latent outputs/teapot.safetensors -o outputs/teapot-decoded.png
 ```
 
-`--frames` is unnecessary; an explicit `--frames 1` is accepted. Canvas dimensions
-must be multiples of 32 and within the existing 1,032,192-pixel limit. Reference
-image order and `match`/`high`/`max` sizing use the shared
-[reference-image rules](design-reference-image-size.md): `high` fixes the long
-edge to 2048 and `max` fixes the short edge, including upscaling. Six evaluations
-were used for qualification; no 50-step generation quality claim is made.
+Canvas dimensions must be positive multiples of 32, at most 16,777,216 pixels
+and 8192 per side. Both 3872×2176 and 2176×3872 are admitted. These are genuine
+T=1 target canvases; no smaller render or final upscaler is used. Device memory
+still determines feasibility; consult the measured limits before a large run.
+`--frames` is unnecessary; explicit `--frames 1` is accepted.
 
-Add `--show` for the final terminal image, `--frames-dir DIR` for one final PPM,
-and `--profile` for loading, denoising and image delivery measurements. PNGs and
-saved latents are staged and renamed after successful writing. A failed PNG
-encoder or cancelled final callback preserves an existing destination.
+Ordered image references retain the shared [reference-size rules](design-reference-image-size.md).
+`match` follows the target, `high` fixes the long edge at 2048, and `max` fixes
+the short edge, including upscaling. Reference dimensions and target dimensions
+are separate. Larger references can substantially increase conditioning cost.
 
-The target has one video latent frame and two auxiliary audio ticks (four
-packed rows). Audio is sampled with the existing audio schedule and discarded;
-no audio VAE, audio output or MP4 is created. The DiT is freed before image VAE
-loading. This is not a hidden short-video render.
+`--show` displays the final image, `--frames-dir DIR` writes one final PPM, and
+`--profile` reports phase timing and memory. PNGs and saved latents use atomic
+publication. A cancelled final callback or failed PNG encoder preserves an
+existing PNG; a saved latent remains usable if later delivery fails.
 
-Initial still mode rejects duration, first/last anchors, audio/video references,
-continuation/bridge settings, sampler/AV checkpoint options, conditioning files,
-a separate internal canvas, preview VAE and live video preview. SOL, native
-Metal, ANE, CUDA Sage/quantization, Q8, reuse and reduced-layer execution are
-also rejected for this baseline. Explicit LoRA selection retains its existing
-provenance but is not qualified by these examples.
+The sampler remains h3cli Euler with its existing shifted flow schedules and
+seed semantics. The ComfyUI example uses `er_sde`/`simple`, so copying its seed
+and step count does not imply identical images. Quality and identity observations
+are recorded separately from numerical and lifecycle checks.
 
-## Decode a saved still
+Still mode rejects duration, anchors, audio/video references, continuation,
+sampler/AV checkpoints, conditioning files, a separate render canvas, video
+previews, acceleration/quantization/reuse and reduced-layer execution. `--render`
+continues to execute video scripts. LoRA behavior is unchanged and not qualified
+by the still examples.
 
-This command needs neither `-d` nor tokenizer, DiT or audio weights:
+## Models and migration
 
-```sh
-./bin/h3cli --decode-still-latent outputs/teapot.safetensors \
-  -o outputs/teapot-decoded.png --profile
-```
+Generation resolves the selected model's stock `video_vae` and never downloads
+an image VAE or audio VAE. Codec-only decode reads the saved model variant and
+resolves only its three video-VAE/configuration files; it needs no tokenizer,
+DiT or audio weights. Explicit `-d`, default model roots and `--offline` follow
+the [model-download guide](model-downloads.md).
 
-The artifact contains exactly one finite F32 tensor `latent` with shape
-`[1,24,1,H/16,W/16]`, schema `1`, latent space `h3-normalized-v1`, and an
-encoder/whitening compatibility digest. Untyped tensors and incompatible
-checkpoints fail before decoder weight allocation. The decoder unwhitens once
-and uses the metadata slice (3 for this checkpoint); there is no public slice
-or larger-tile override.
+`--image-vae` and `--download-models image-vae` are retired and return migration
+guidance. Existing user checkpoint files are left in place. The schema-1 latent
+format is rejected; regenerate with `--still` to produce schema 2. The new stock
+VAE is a different decoder and does not promise the old image's pixels.
+
+Schema 2 stores finite normalized F32 `[1,24,1,H/16,W/16]`, model variant,
+normalization compatibility and an explicit five-copy/frame-3 decoder recipe.
+The decoder validates these before weight allocation. There is no public raw
+frame or tile-size override.
 
 ## Library use
 
-In C, initialize `h3_params` with `H3_PARAMS_DEFAULT`, set `still=1`, `frames=1`
-and `image_vae`, then call `h3_generate`. `h3_decode_still_latent` is the
-codec-only entry point. Use `src/vae/image_vae.h` for the low-level image encoder,
-decoder and still-latent interchange functions.
+Initialize `h3_params` with `H3_PARAMS_DEFAULT`, set `still=1`, `frames=1`, the
+canvas and normal model directory, then call `h3_generate`. Leave the deprecated
+`image_vae` field NULL; a non-NULL value returns migration guidance.
 
-A successful still result has `kind=H3_RESULT_STILL`, `frames=1`, `fps=0`, no
-AV/sampler state and zero audio fields. It owns `still_latent`; `h3_result_free`
-releases it. Final RGB24 callbacks borrow their pixels for the call, receive
-index 0/count 1/step -1 exactly once, and may cancel before PNG publication.
-A library caller may omit an output path and consume only the callback/result.
-Video result kind remains zero. Rebuild C clients for the extended structs;
-existing `.h3av`, `.h3sample` and video presentation formats are unchanged.
+```c
+h3_ctx *ctx = h3_load_dir("models/MiniMax-H3");
+h3_params p = H3_PARAMS_DEFAULT;
+p.still = 1; p.frames = 1; p.width = 640; p.height = 480;
+p.steps = 6; p.output_path = "output.png";
+p.save_still_latent = "still.safetensors";
+h3_result *result = h3_generate(ctx, "A red ceramic teapot.", &p);
+h3_result_free(result);
+h3_free(ctx);
+
+h3_decode_options options = {.output_path = "decoded.png"};
+char error[512];
+result = h3_decode_still_latent("still.safetensors", "models/MiniMax-H3",
+                              &options, error, sizeof(error));
+h3_result_free(result);
+```
+
+The decode API's second argument is now the main model directory, replacing the
+retired image-checkpoint filename. Rebuild clients and update that argument.
+Successful results have `kind=H3_RESULT_STILL`, `frames=1`, `fps=0`, no AV/sampler
+state and zero audio fields. `h3_result_free` releases the owned still latent.
+Final RGB24 callbacks borrow pixels for the call and receive index 0/count 1/
+step -1 exactly once; they can cancel before PNG publication. A library caller
+may omit the output path and consume the callback. Low-level still decoding is
+in `video_vae.h`; `image_vae.h` retains geometry/artifact helpers.
+
+The [original results](single-still-results.md),
+[CUDA results](single-still-cuda-results.md), and
+[dedicated-VAE provenance](single-still-sources.md) remain dated historical evidence.

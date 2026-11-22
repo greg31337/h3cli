@@ -97,7 +97,7 @@ reference comparison, all four distro/mode comparisons and runtime isolation tes
 macOS runs its native package tests and Metal feature matrix. The existing feature
 suite includes a real model-download test, so qualification needs network access.
 The selected model root must already contain all pinned model groups, including
-the preview VAE, image VAE and latent upscaler. Provision them with an existing
+the preview VAE and latent upscaler. Provision them with an existing
 development or installed executable before starting the qualification:
 
 ```sh

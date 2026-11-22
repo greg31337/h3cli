@@ -1,6 +1,6 @@
 # Replace `--still` with empty-latent generation and stock video VAE decoding
 
-Status: **planned — 0/20 tasks complete**.
+Status: **complete — 20/20 tasks complete**.
 Updated 2026-11-21.
 
 Replace the current dedicated-image-VAE implementation of `--still` with the
@@ -13,19 +13,20 @@ The completed **8/8 integrated text-script rendering milestone** is
 [archived intact](render-integration-todo.md), with its
 [acceptance evidence](features/render-integration-results.md). The original
 [still implementation tasks](features/single-still-tasks.md),
-[sampling contract](features/single-still-generation-contract.md) and
+[sampling contract](features/single-still-generation-contract-v1.md) and
 [results](features/single-still-results.md) remain historical evidence for the
-implementation being replaced. This checklist records future work.
+implementation being replaced. The [replacement acceptance record](features/empty-still-results.md)
+tracks current verification and resource measurements.
 
-## Existing implementation and intended change
+## Implementation baseline and replacement scope
 
-The current code already samples a single video latent frame and two auxiliary
+The previous implementation already sampled a single video latent frame and two auxiliary
 audio positions in [engine.c](../src/engine.c), using
 `h3_still_layout_build` in [host.c](../src/host.c). Reuse this foundation.
 The principal changes are decoder selection, high-resolution admission,
 resource handling and the associated CLI/model/artifact contracts.
 
-| Area | Current behavior | Replacement requirement |
+| Area | Previous behavior | Replacement requirement |
 | --- | --- | --- |
 | Denoising target | Video `[1,24,1,H/16,W/16]`, audio `[1,32,2,2]` | Retain these shapes and generate at the final canvas |
 | Final decoder | Dedicated `minimax_h3_t1_image_vae_step1597.safetensors`, direct T=1 decode | Stock video VAE, five copies of the generated latent, raw decoded frame index 3 |
@@ -33,7 +34,7 @@ resource handling and the associated CLI/model/artifact contracts.
 | Model dependency | Automatic image-VAE download and `--image-vae` selection | Use the normal model directory and stock video VAE; retire the dedicated checkpoint requirement |
 | Saved still | Schema 1 with dedicated image-encoder/whitening digest | Explicit stock-VAE compatibility and decoder recipe, with a documented old-artifact policy |
 
-The existing video decoder is also not a drop-in T=1 API: its public temporal
+The ordinary video decoder is not a drop-in T=1 API: its public temporal
 paths expect `T=5*k+2`, normally at least seven tokens. The dedicated image path
 uses different weights and T=1 positions. Neither assumption establishes the
 required five-token stock-VAE decode; implement and validate that case explicitly
@@ -99,13 +100,13 @@ The DiT row count is not a VAE tile-token count or a memory estimate.
 
 ## M0 — Freeze the replacement contract
 
-- [ ] ELS001 Pin the upstream empty-latent conversion and stock-video still
+- [x] ELS001 Pin the upstream empty-latent conversion and stock-video still
   decode sources, model configuration, tensor layouts, whitening, RoPE and
   tile profile. Record revision/source identities and the independent reference
   command. Capture deterministic normalized-latent fixtures and decoded pixels;
   choose numerical tolerances before comparing native results. Treat the supplied
   matching-images report as motivation, not an acceptance oracle.
-- [ ] ELS002 Specify the CLI/API and artifact migration before changing them:
+- [x] ELS002 Specify the CLI/API and artifact migration before changing them:
   `--still` selects the stock video VAE, `--decode-still-latent` resolves that VAE
   without a denoiser, and retired `--image-vae` usage receives migration guidance.
   Define a still-specific maximum area and dimension bounds that admit the full
@@ -118,12 +119,12 @@ rules. M1 and M2 implement this contract before M3 switches the default.
 
 ## M1 — Native single-frame targets at high resolution
 
-- [ ] ELS003 Reuse and make explicit the existing T=1/audio-T=2 target construction
+- [x] ELS003 Reuse and make explicit the existing T=1/audio-T=2 target construction
   in [engine.c](../src/engine.c) and [host.c](../src/host.c). Verify seeded video
   and audio noise, packed segments, task IDs, reference slots and positional
   coordinates. No video frame alignment or decoder repetition may expand the
   denoising target. Assert the table's shapes and target-row counts.
-- [ ] ELS004 Introduce one checked still-geometry policy and use it for CLI/API
+- [x] ELS004 Introduce one checked still-geometry policy and use it for CLI/API
   admission, generation, latent save/load and codec-only decode. Remove the
   still path's accidental dependence on `H3_MAX_PIXELS` and
   `h3_geometry_valid` in [engine.c](../src/engine.c) and
@@ -131,7 +132,7 @@ rules. M1 and M2 implement this contract before M3 switches the default.
   limits or automatic shrinking. Keep multiples-of-32 alignment and positive
   dimensions; use checked multiplication. Preserve video, reference-image and
   upscale limits rather than increasing a shared global cap.
-- [ ] ELS005 Audit high-resolution allocation/index arithmetic through text and
+- [x] ELS005 Audit high-resolution allocation/index arithmetic through text and
   image conditioning, DiT packing/RoPE/attention, sampler buffers, VAE tiles and
   final RGB/PNG delivery on Metal and CUDA. Account for text/reference tokens,
   both audio/video streams and live weights/scratch. Fail with an actionable
@@ -143,7 +144,7 @@ invalid/overflowing dimensions, and leaves ordinary video admission unchanged.
 
 ## M2 — Stock video VAE still decoding
 
-- [ ] ELS006 Add an explicit still entry point in
+- [x] ELS006 Add an explicit still entry point in
   [video_vae.h](../src/vae/video_vae.h) and
   [video_vae.c](../src/vae/video_vae.c). Consume normalized channel-major T=1,
   construct five temporal copies, and execute the stock decoder with the correct
@@ -151,13 +152,13 @@ invalid/overflowing dimensions, and leaves ordinary video admission unchanged.
   fixed-seven assumptions and backend kernels. Extract raw frame index 3 before
   ordinary video trimming; padding to seven tokens or decoding T=1 directly is
   not a substitute for the independently checked five-token computation.
-- [ ] ELS007 Implement spatially tiled still decoding with bounded scratch and
+- [x] ELS007 Implement spatially tiled still decoding with bounded scratch and
   exactly one assembled image. Keep the reference tile-overlap/blending and
   pixel-finalization order; avoid retaining a full-resolution multi-frame RGB
   movie. Replication may be materialized per tile if mathematically equivalent.
   Preserve all temporal attention inputs while reducing delivery storage.
   Validate partial edge tiles, seam intersections and portrait geometry.
-- [ ] ELS008 Route final generation and codec-only delivery through this decoder
+- [x] ELS008 Route final generation and codec-only delivery through this decoder
   in [engine.c](../src/engine.c) and [media/decode.c](../src/media/decode.c).
   Release completed denoiser resources before decode as needed; isolate decoder
   cache identities by weights, recipe, temporal geometry, precision and tiles.
@@ -169,13 +170,13 @@ on Metal and CUDA, without altering normal video chunk decoding.
 
 ## M3 — Model selection, saved latents and retirement
 
-- [ ] ELS009 Update [model resolution](../src/models/resolve.c), catalog/group
+- [x] ELS009 Update [model resolution](../src/models/resolve.c), catalog/group
   handling and CLI defaults so still generation no longer requires or downloads
   the dedicated image VAE. Resolve the stock VAE for the selected FL2VA/Ref2VA
   model. Codec-only decode must resolve only its VAE/configuration dependencies,
   with no tokenizer, DiT or audio decoder. Cover explicit paths, default model
   roots, offline operation, missing files and packaged model discovery.
-- [ ] ELS010 Implement the saved-latent contract from ELS002 in
+- [x] ELS010 Implement the saved-latent contract from ELS002 in
   [image_vae.c](../src/vae/image_vae.c) or a dedicated still-artifact module.
   Save finite normalized F32 `[1,24,1,h,w]`, normalization compatibility and
   decoder recipe metadata. The current digest includes dedicated F16 encoder
@@ -183,14 +184,14 @@ on Metal and CUDA, without altering normal video chunk decoding.
   weights. Version metadata where semantics change. Test the documented
   schema-1 migration or clear rejection, including codec-only re-decode, rather
   than retaining an implicit dependency on the retired checkpoint.
-- [ ] ELS011 Update [CLI parsing/help](../src/h3cli.c),
+- [x] ELS011 Update [CLI parsing/help](../src/h3cli.c),
   [option descriptors](../src/cli/options.def), [public API](../src/h3.h),
   shared request validation and server job/model planning for the new selection
   rules. Preserve `--frames 1`, PNG defaults and existing unsupported-mode
   diagnostics. Define the public API transition for `image_vae` and the decode
   function's model argument. Keep `--render` a video-script operation. Verify
   HTTP still jobs report one image with no AV/audio state.
-- [ ] ELS012 Remove the replaced dedicated-image decoder path, mandatory
+- [x] ELS012 Remove the replaced dedicated-image decoder path, mandatory
   capability checks, automatic image-VAE selection and dead implementation/test
   branches after the stock path passes. Audit low-level codec consumers before
   deleting shared utilities. Preserve historical task/results/provenance records
@@ -202,26 +203,26 @@ and codec-only decode all work without the dedicated image checkpoint installed.
 
 ## M4 — Verification and qualification
 
-- [ ] ELS013 Extend the existing [still host tests](../tests/test_still.c),
+- [x] ELS013 Extend the existing [still host tests](../tests/test_still.c),
   [CLI tests](../tests/test_still_cli.py),
   [layout tests](../tests/test_still_layout.py) and model-resolution tests.
   Cover all geometry rows and their transposes, accepted/rejected policy
   boundaries, malformed/nonfinite/truncated artifacts, schema migration,
   explicit flag conflicts and reference sizing. Confirm oversized ordinary
   video requests still fail and invalid input fails before downloads/GPU work.
-- [ ] ELS014 Add an independent stock-VAE fixture runner using ELS001's pinned
+- [x] ELS014 Add an independent stock-VAE fixture runner using ELS001's pinned
   source and compatible weights. Compare unwhitening, five-token RoPE/attention,
   selected raw frame, tile blending and final pixels at small sizes and across
   tile boundaries. Exercise Metal and CUDA with guard/sanitizer coverage. Require
   the predeclared numerical thresholds; old dedicated-VAE output and comparisons
   of the native implementation against itself are not reference evidence.
-- [ ] ELS015 Run end-to-end prompt-only and ordered image-reference renders on
+- [x] ELS015 Run end-to-end prompt-only and ordered image-reference renders on
   both backends at 640×480 and 1344×768. Verify finite trajectories, exact seed
   repeatability within the same execution policy, saved T=1 latent re-decode,
   reference ordering and all three reference-size modes. Check final PNG size,
   one callback/result frame and zero audio decode/output. Record semantic quality
   separately from numerical and lifecycle correctness.
-- [ ] ELS016 Qualify direct 2144×1216 and 3872×2176 generation on capable hardware,
+- [x] ELS016 Qualify direct 2144×1216 and 3872×2176 generation on capable hardware,
   including prompt-only, reference-conditioned and portrait cases. Begin with
   bounded 2–6-evaluation functional probes, then record representative 50-step
   prompt/reference quality runs at the 8 MP target. Retain commands, seed,
@@ -229,12 +230,12 @@ and codec-only decode all work without the dedicated image checkpoint installed.
   phase. Demonstrate 8,228 denoised target visual rows, with no lower-resolution
   render or post-generation upscale. Record each backend's tested limits;
   unavailable hardware or OOM is not a passing 8 MP result.
-- [ ] ELS017 Exercise resource lifetime and failure recovery: repeated stills,
+- [x] ELS017 Exercise resource lifetime and failure recovery: repeated stills,
   video→still→video in a reused context, cancellation during loading/sampling/
   tiles/delivery, allocation failures, encoder failures and existing output
   destinations. Confirm no leaks/stale decoder state, no partial PNG publication,
   no unintended audio/model loads and successful reuse after supported failures.
-- [ ] ELS018 Run applicable `make test-still-host`, `make test-current-host`,
+- [x] ELS018 Run applicable `make test-still-host`, `make test-current-host`,
   backend tests and current-feature integration. Follow
   [CONTRIBUTING.md](../CONTRIBUTING.md): after every coherent implementation
   change, run the complete immutable **204-output CUDA reference regression**.
@@ -247,14 +248,14 @@ measured, and the unchanged video regression contract passes.
 
 ## M5 — Documentation and packaged acceptance
 
-- [ ] ELS019 Update the project README, [still guide](features/single-still.md),
+- [x] ELS019 Update the project README, [still guide](features/single-still.md),
   [sampling contract](features/single-still-generation-contract.md), usage,
   model-download guide, API examples and hardware requirements. Describe the
   stock-VAE dependency, high-resolution limits, `--image-vae`/artifact migration,
   decode-only command and measured memory. Include native 8 MP examples and
   the sampler difference from ComfyUI. Retain earlier results as dated evidence
   and publish a distinct replacement acceptance record with source provenance.
-- [ ] ELS020 Validate source builds and standalone macOS/Linux packages, including
+- [x] ELS020 Validate source builds and standalone macOS/Linux packages, including
   offline still generation, saved-latent decode, model selection and bundled PNG
   encoding with no image-VAE checkpoint. Reconcile every task against retained
   evidence, document backend/resource limits, validate documentation links and
@@ -265,3 +266,13 @@ implementation, genuine 8 MP denoising/delivery to be demonstrated, and saved
 latent/model selection behavior to be explicit and tested. Codec-only success,
 a high-resolution dry run or resizing a small generated image does not complete
 this milestone.
+
+## Completion evidence
+
+All 20 tasks are reconciled in the [acceptance report](features/empty-still-results.md#task-reconciliation)
+and [machine-readable record](features/empty-still-results.json). Metal and CUDA
+passed direct 8 MP text/reference/portrait generation; CUDA also completed both
+50-step quality runs. Final source and standalone CUDA builds each match all
+204 immutable golden outputs. Both standalone packages pass offline generation
+without audio/image VAEs and exact codec-only PNG replay. Tested resource limits
+and the optional unverified Linux noexec-mount case are recorded explicitly.

@@ -233,9 +233,9 @@ typedef struct {
     int conditioning_schedule;
     h3_metal_attention_options metal_attention;
     /* Direct T=1 image target; auxiliary audio T=2 is sampled
-     * and discarded. No video rounding or audio decode. Explicit image VAE. */
+     * and discarded. Final decoding uses the model's stock video VAE. */
     int still;
-    const char *image_vae;
+    const char *image_vae; /* Retired; must be NULL. Non-NULL gets migration guidance. */
     const char *save_still_latent;
     h3_cuda_sol_options cuda_sol;
     unsigned cuda_sol_set; /* Explicit shared SOL option bits; resume checks only these. */
@@ -407,10 +407,11 @@ h3_result *h3_generate(h3_ctx *ctx, const char *prompt,
                        const h3_params *params);
 void h3_result_free(h3_result *result);
 /* Decoder-only entry point: no prompt, tokenizer, encoders or denoiser. */
-/* Direct T=1 image decode; no model directory, text encoder, DiT or audio.
+/* Schema-2 T=1 still decode using a model directory's stock video VAE.
+ * No text encoder, DiT or audio weights are loaded.
  * options only uses output_path/on_frame/on_progress/callback_opaque. One final
  * borrowed RGB24 callback; nonzero cancels before PNG publication. */
-h3_result *h3_decode_still_latent(const char *latent_path, const char *image_vae,
+h3_result *h3_decode_still_latent(const char *latent_path, const char *model_dir,
     const h3_decode_options *options, char *error, size_t error_size);
 
 h3_result *h3_decode_av_state(const char *model_dir, const char *state_path,

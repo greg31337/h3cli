@@ -22,7 +22,4 @@ def sparse_checkpoint(path, header, truncate=False):
         f.truncate(8 + len(raw) + payload - (2 if truncate else 0))
 
 if __name__ == '__main__':
-    with tempfile.TemporaryDirectory(prefix='h3-still-host-') as directory:
-        path = Path(directory) / 'metadata.safetensors'
-        sparse_checkpoint(path, json.loads(HEADER.read_text()))
-        subprocess.run([sys.argv[1], 'host', str(path)], check=True)
+    subprocess.run([sys.argv[1], 'host'], check=True)

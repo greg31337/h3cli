@@ -95,7 +95,6 @@ model paths. Default paths stay relative to the caller's working directory:
 
 ```text
 models/MiniMax-H3
-models/image-vae/minimax_h3_t1_image_vae_step1597.safetensors
 models/latent-upscale/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors
 models/preview-vae/taeh3.safetensors
 ```

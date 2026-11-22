@@ -174,6 +174,11 @@ covered in the [reference guide](docs/usage.md#8-add-image-video-and-audio-refer
 
 ## Go further
 
+`--still` generates one PNG directly at the requested resolution, including
+3872×2176, using the stock H3 model. The dedicated `--image-vae` option is retired.
+See the [still guide](docs/features/single-still.md) for examples, saved-latent
+migration and measured hardware limits.
+
 | Goal | Guide |
 | --- | --- |
 | Continue a video across segments | [Continuation](docs/continuation/continuation.md) |
@@ -182,7 +187,7 @@ covered in the [reference guide](docs/usage.md#8-add-image-video-and-audio-refer
 | Upscale a saved generation | [Latent upscaling](docs/features/latent-upscaling.md) |
 | Apply an adapter | [LoRA](lora/README.md) |
 | Queue jobs and fetch results over HTTP | [Server API](docs/features/server.md) |
-| Generate a still image | [Still generation](docs/features/single-still.md) |
+| Generate a still image at native resolution (including 8 MP) | [Still generation](docs/features/single-still.md) |
 | Explore advanced controls | [Usage guide](docs/usage.md) |
 
 To start the local job server, run `./h3cli --server`. The server guide explains

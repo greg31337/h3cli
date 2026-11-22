@@ -38,7 +38,6 @@
 #include <unistd.h>
 
 #define DEFAULT_MODEL_DIR "models/MiniMaxH3"
-#define DEFAULT_IMAGE_VAE "models/image-vae/minimax_h3_t1_image_vae_step1597.safetensors"
 #define DEFAULT_UPSCALE_MODEL "models/latent-upscale/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors"
 
 static void usage(const char *program) {
@@ -47,7 +46,7 @@ static void usage(const char *program) {
         "       %s [-d MODEL_DIR] --info\n"
         "       %s [-d MODEL_DIR] --resume-sampler-state PATH [options]\n"
         "       %s [-d MODEL_DIR] --decode-av-state PATH [-o OUTPUT] [options]\n"
-        "       %s --decode-still-latent PATH [--image-vae PATH] [-o OUTPUT] [options]\n\n",
+        "       %s --decode-still-latent PATH [-d MODEL_DIR] [-o OUTPUT] [options]\n\n",
         program, program, program, program, program);
     fputs(
         "Options:\n"
@@ -59,7 +58,7 @@ static void usage(const char *program) {
         "                        Before first segment: #overlay-segment-name, #seed-set N,...,\n"
         "                        #ref ALIAS PATH (use ALIAS in later media references)\n"
         "      --models-path PATH Shared model root (default: models)\n"
-        "      --download-models GROUPS Prefetch base,references,preview,image-vae,upscale,all\n"
+        "      --download-models GROUPS Prefetch base,references,preview,upscale,all\n"
         "      --list-models      Show pinned models and local availability\n"
         "      --offline          Disable model downloads (also H3_OFFLINE=1)\n"
         "                        Missing required models download automatically\n"
@@ -173,8 +172,7 @@ static void usage(const char *program) {
         "      --no-preview-vae   Use the full VAE, including with preview quality\n"
         "      --preview-vae-model PATH  Optional tiny model (default: models/preview-vae/taeh3.safetensors)\n"
         "      --decode-still-latent PATH  Decode one normalized .safetensors latent to PNG\n"
-        "      --image-vae PATH    full_decoder_v1 image VAE checkpoint\n"
-        "                            Default: " DEFAULT_IMAGE_VAE "\n"
+        "      --image-vae PATH    Retired; use the stock video VAE in --model-dir\n"
         "      --still             Single-image generation, PNG output\n"
         "      --save-still-latent PATH  Save normalized still .safetensors latent\n"
         "      --decode-av-state PATH  Decode saved final latents without sampling\n"
@@ -404,7 +402,7 @@ static int cli_execute(int argc, char **argv) {
     if(!cli_lora_args){fprintf(stderr,"h3cli: out of memory\n");return 1;}
     lora.adapters=cli_lora_args;
     const char *continue_from = NULL, *save_av_state = NULL, *decode_av_state = NULL;
-    const char *decode_still = NULL, *image_vae = NULL;
+    const char *decode_still = NULL;
 
     int context_given = 0;
     const char *prompt = NULL;
@@ -537,7 +535,8 @@ static int cli_execute(int argc, char **argv) {
             case OPT_CONDITIONING_SCHEDULE: params.conditioning_schedule=1;break;
             case OPT_PREVIEW_VAE_MODEL: params.preview_vae_model = optarg; break;
             case OPT_DECODE_STILL: decode_still=optarg; break;
-            case OPT_IMAGE_VAE: image_vae=optarg; params.image_vae=optarg; break;
+            case OPT_IMAGE_VAE:
+                fprintf(stderr,"h3cli: --image-vae is retired; use --still or --decode-still-latent with --model-dir and the stock video VAE\n");return 2;
             case OPT_STILL: params.still=1; break;
             case OPT_SAVE_STILL: params.save_still_latent=optarg; break;
             case OPT_DECODE_AV_STATE: decode_av_state = optarg; break;
@@ -905,17 +904,16 @@ static int cli_execute(int argc, char **argv) {
         fprintf(stderr,"h3cli: --cuda-denoise-quant-verify requires quantized generation or sampler resume\n");return 2;
     }
     if(!output_given && (decode_still || params.still))output="outputs/h3cli.png";
-    if((decode_still || params.still) && !image_vae)image_vae=params.image_vae=DEFAULT_IMAGE_VAE;
     if((decode_still||decode_av_state)&&(params.adaptive_cache_max_bytes_set||params.adaptive_cache_threshold_set||params.adaptive_cache_max_hits_set)) {
         fprintf(stderr,"h3cli: decode-only does not use adaptive-cache controls\n");return 2;
     }
     if (decode_still) {
-        if (!image_vae || !*image_vae || generation_given || info || decode_av_state ||
+        if (generation_given || info || decode_av_state ||
             params.preview_vae || params.preview_vae_model || save_av_state || params.resume_sampler_state ||
             params.save_sampler_state || params.stop_after_step>=0 || params.preview_on_stop ||
             params.cuda_attention_set || params.cuda_denoise_quant || params.cuda_denoise_quant_cache ||
             lora.count || lora.cache_dir || lora.memory_mib) {
-            fprintf(stderr,"h3cli: --decode-still-latent accepts only image VAE, PNG output, display and profile options; --image-vae must be nonempty\n");return 2;
+            fprintf(stderr,"h3cli: --decode-still-latent accepts only model directory, PNG output, display and profile options\n");return 2;
         }
         if(cli_hooks&&cli_hooks->validate_only)return 0;
         if(cli.frames_dir && mkdir(cli.frames_dir,0755) && errno!=EEXIST) {
@@ -925,7 +923,7 @@ static int cli_execute(int argc, char **argv) {
         if(show)cli.terminal=h3_terminal_detect();
         char error[512];h3_decode_options decode={.output_path=output,
             .on_frame=(show||cli.frames_dir)?cli_frame:NULL,.on_progress=cli_progress,.callback_opaque=&cli};
-        h3_result *r=h3_decode_still_latent(decode_still,image_vae,&decode,error,sizeof(error));
+        h3_result *r=h3_decode_still_latent(decode_still,model_dir,&decode,error,sizeof(error));
         h3_cli_progress_finish(&cli.progress,stderr);
         if(!r){fprintf(stderr,"h3cli: %s\n",error);return 1;}
         if (cli_hooks && cli_hooks->result)
@@ -940,7 +938,7 @@ static int cli_execute(int argc, char **argv) {
         }
         params.frames=1;params.output_path=output;params.references=references;params.reference_count=reference_count;
         char error[512];if(!h3_still_options(&params,error,sizeof(error))){fprintf(stderr,"h3cli: %s\n",error);return 2;}
-    } else if(image_vae || params.save_still_latent){fprintf(stderr,"h3cli: image VAE and still latent output require --still\n");return 2;}
+    } else if(params.save_still_latent){fprintf(stderr,"h3cli: still latent output requires --still\n");return 2;}
     char preview_error[512];
     if(!h3_backend_preflight(H3_BACKEND_SCOPE(&params),
         params.backend_set,preview_error,sizeof(preview_error)) ||

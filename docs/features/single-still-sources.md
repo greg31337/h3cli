@@ -14,7 +14,7 @@ contains tensor names/shapes from the pinned artifact, not weight data.
 | [VPIPE](https://github.com/tgo-app-dev/vpipe/commit/351b20c10761eca8ba2f07f923323ca78bd7da15) | `351b20c10761eca8ba2f07f923323ca78bd7da15` | Direct T=1 decoder capability, explicit temporal slice, released spatial tiling; conceptual reference, no C++ source imported. VPIPE is Apache-2.0. |
 | [Image VAE](https://huggingface.co/Mamad8/MiniMax-H3-Image-VAE/tree/c7b9252c73707dba494cf4d99ca45d3f33f561b3) | `c7b9252c73707dba494cf4d99ca45d3f33f561b3` | Explicit model artifact; model licensing remains separate from h3cli code. |
 | [Original VAE equations](https://github.com/MiniMax-AI/MiniMax-H3/tree/d21241f0a4b3acbb34c97dae47fa417b7065e438/FL2VA/video_vae) | `d21241f0a4b3acbb34c97dae47fa417b7065e438` | Independent test equations: `vae_vit.py`, `base_module.py`, `attention.py`, `conv.py`, `vae_cnn.py`, `func.py`, `klvae.py`. These sources declare Apache-2.0; tests acknowledge MiniMax's implementation. |
-| Community sampler references | See [generation contract](single-still-generation-contract.md) | Independently corroborated T=1 + auxiliary audio T=2 recipe; no sampler code imported. |
+| Community sampler references | See [generation contract](single-still-generation-contract-v1.md) | Independently corroborated T=1 + auxiliary audio T=2 recipe; no sampler code imported. |
 
 The complete downloaded artifact has SHA-256
 `6c3d0bfa055986a803a566a862fcde283a1e63db62829e5ef4a2a5aebf50bb86`,

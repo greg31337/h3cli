@@ -4,34 +4,23 @@
 #include "src/vae/video_vae.h"
 #include "src/vae/video_encoder.h"
 
-typedef struct {
-    int output_slice;
-    float mean[24], deviation[24];
-    char artifact_sha256[65], compatibility_sha256[65], identity[65];
-} h3_image_vae_info;
-/* No GPU allocation. Strict full_decoder_v1 metadata and tensor inventory. */
-int h3_image_vae_validate(const h3_st_header *, h3_image_vae_info *, char *, size_t);
-/* Also hashes the actual file and encoder/normalization compatibility. */
-int h3_image_vae_inspect(const char *, h3_image_vae_info *, char *, size_t);
+#define H3_STILL_MAX_PIXELS (4096 * 4096)
+#define H3_STILL_MAX_DIMENSION 8192
+#define H3_STILL_DECODER_RECIPE "stock-video-repeat5-frame3-f32-v1"
+/* The schema-2 compatibility digest binds the normalized latent format and
+ * stock VAE whitening, not the retired F16 image encoder's tensor bytes. */
+int h3_still_vae_compatibility(const char *weight_directory, char digest[65],
+    char *error, size_t error_size);
 int h3_still_geometry(int latent_h, int latent_w, char *, size_t);
-
-typedef struct h3_image_vae_decoder h3_image_vae_decoder;
-h3_image_vae_decoder *h3_image_vae_load(const char *path, const char *shader,
-    int latent_h, int latent_w, h3_video_vae_progress, void *, char *, size_t);
-const h3_image_vae_info *h3_image_vae_info_get(const h3_image_vae_decoder *);
-int h3_image_vae_decode(h3_image_vae_decoder *, const float *normalized,
-    h3_video_vae_progress, void *, h3_video_frames *, char *, size_t);
-void h3_image_vae_free(h3_image_vae_decoder *);
-/* Deterministic posterior mean, checkpoint's own encoder, then full teardown. */
-int h3_image_vae_encode(const char *path, const char *shader, const float *pixels,
-    int height, int width, h3_video_encoder_progress, void *,
-    h3_video_latent *, char *, size_t);
+int h3_still_protect_vae(const char *directory, const char *output,
+    const char *latent_output, char *error, size_t error_size);
 
 /* Owned channel-major F32 [24,1,h,w]. No video/audio state semantics. */
 struct h3_still_latent {
     int height, width;
     float *values;
     char compatibility_sha256[65];
+    int reference_model; /* 0 FL2VA, 1 Ref2VA: selects the stock VAE on re-decode. */
 };
 int h3_still_latent_load(const char *, h3_still_latent *, char *, size_t);
 int h3_still_latent_save(const char *, const h3_still_latent *, char *, size_t);

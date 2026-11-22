@@ -14,7 +14,7 @@ The local qualification run is dated 2026-09-22 (the node's UTC logs use
 This record covers the default CUDA backend, F16 image-checkpoint weights
 expanded to F32, and dense BF16 still generation. It does not qualify Sage,
 NVFP4, fast CUDA, cuDNN, Turbo or other accelerated compositions. The original
-[still contract](single-still-generation-contract.md) and frozen codec gates
+[still contract](single-still-generation-contract-v1.md) and frozen codec gates
 remain unchanged. The feature uses the existing CUDA operators; no new CUDA
 kernel was needed for the T=1 path.
 

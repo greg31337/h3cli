@@ -5,6 +5,10 @@ updated 2026-09-30. All 36 implementation tasks are complete; see the
 [qualification report](model-downloads-results.md).
 Implementation checklist: [completed model-download tasks](model-downloads-tasks.md).
 
+The 2026-11-21 [still replacement](single-still.md) retires the image-VAE
+selection described in this original design. The current
+[dependency table](model-download-dependencies.md) records the stock-VAE closure.
+
 ## Outcome
 
 A normal h3cli command downloads missing, supported model components before

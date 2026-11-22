@@ -8,7 +8,7 @@
 
 enum {
     H3_MODEL_BASE = 1, H3_MODEL_REFERENCES = 2, H3_MODEL_PREVIEW = 4,
-    H3_MODEL_IMAGE = 8, H3_MODEL_UPSCALE = 16, H3_MODEL_ALL = 31
+    H3_MODEL_UPSCALE = 16, H3_MODEL_ALL = 23
 };
 typedef struct {
     const char *path, *url, *sha256, *repository, *revision;
@@ -20,7 +20,7 @@ extern const size_t h3_model_catalog_count;
 extern const char h3_model_catalog_sha256[];
 
 typedef struct {
-    char *root, *main, *preview, *image, *upscale;
+    char *root, *main, *preview, *upscale;
 } h3_model_paths;
 typedef struct {
     const h3_model_artifact *artifact;

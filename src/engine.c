@@ -194,7 +194,7 @@ char *h3_conditioning_key(const char *prompt, const h3_params *params,
     h3_qwen_gqa_scale_mode scale_mode;
     if (!h3_qwen_gqa_scale_parse(getenv("H3_QWEN_GQA_SCALE_MODE"),
                                  &scale_mode, NULL, 0)) return NULL;
-    if (params->still && !h3_key_append(&key,"operation=still-v1:audio2-generated-discarded|")) goto failed;
+    if (params->still && !h3_key_append(&key,"operation=still-v2:audio2-generated-discarded|")) goto failed;
     if (!h3_key_append(&key, "mode=%d|prompt=%zu:%s", ref2va,
                        strlen(prompt), prompt)) goto failed;
     if (!h3_key_execution(&key,params)) goto failed;
@@ -595,11 +595,25 @@ h3_ctx *h3_load_dir_with_lora(const char *model_dir,const h3_lora_options *optio
         snprintf(relative,sizeof(relative),"%s/tokenizer/tokenizer.json",primary);
         ok=h3_require_file(ctx,relative);
     }
-    const char *components[]={"text_encoder","video_vae/source","audio_vae"};
-    h3_component_info *inventories[]={&ctx->model.text_encoder,&ctx->model.video_vae,&ctx->model.audio_vae};
-    for(size_t i=0;ok && i<3;i++) {
+    const char *components[]={"text_encoder","video_vae/source"};
+    h3_component_info *inventories[]={&ctx->model.text_encoder,&ctx->model.video_vae};
+    for(size_t i=0;ok && i<2;i++) {
         snprintf(relative,sizeof(relative),"%s/%s",primary,components[i]);
         ok=h3_inventory(ctx,relative,inventories[i]);
+    }
+    /* Audio is optional at startup: still installs omit it entirely. Keep
+     * available inventory for --info; video requests validate their selected
+     * mode's AV dependencies before conditioning in h3_generate_state. */
+    if(ok) {
+        snprintf(relative,sizeof(relative),"%s/audio_vae",primary);
+        char *audio_path=h3_path(ctx->model_dir,relative);
+        if(!audio_path) { h3_set_error(ctx,"out of memory resolving component path");ok=0; }
+        else {
+            char detail[384];
+            if(!h3_st_inventory_dir(audio_path,&ctx->model.audio_vae,detail,sizeof(detail)))
+                memset(&ctx->model.audio_vae,0,sizeof(ctx->model.audio_vae));
+            free(audio_path);
+        }
     }
     if(ok && has_fl2va)ok=h3_inventory(ctx,"FL2VA/transformer",&ctx->model.fl2va_transformer);
     if(ok && has_ref2va)ok=h3_inventory(ctx,"Ref2VA/transformer",&ctx->model.ref2va_transformer);
@@ -659,7 +673,7 @@ int h3_request_params_valid(const h3_params *params, const h3_device_info *devic
         snprintf(error,error_size, "width and height must be multiples of 32 and at least 32");
         return 0;
     }
-    if (!h3_geometry_valid(params->width,params->height,params->geometry_profile)) {
+    if (!params->still && !h3_geometry_valid(params->width,params->height,params->geometry_profile)) {
         snprintf(error,error_size, "canvas exceeds the released 768*1344 pixel limit");
         return 0;
     }
@@ -1200,11 +1214,10 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
         (double)(temporal.frame_count-context_frames)/H3_FPS,
         ref2va ? "Ref2VA" : "T2VA",params->reference_count,
         params->keep_continuation_prefix ? "off" : "on");
-    h3_image_vae_info image_info={0};
+    char still_compatibility[65]={0};
     if(params->still) {
-        if(!h3_image_vae_inspect(params->image_vae,&image_info,ctx->error,sizeof(ctx->error)))return NULL;
         H3_VERBOSE("h3cli: single-still: video T=1, auxiliary audio T=2 (generated and discarded), dense BF16, 50 blocks\n");
-        /* A still never retains a video decoder beside its own final decoder. */
+        /* Still decoding has its own five-token context. */
         h3_video_vae_decoder_free(ctx->video_decoder);ctx->video_decoder=NULL;
         free(ctx->video_decoder_key);ctx->video_decoder_key=NULL;
         h3_tiny_vae_free(ctx->tiny_decoder);ctx->tiny_decoder=NULL;
@@ -1322,6 +1335,10 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
         h3_set_error(ctx, "out of memory resolving generation model paths");
         goto cleanup;
     }
+    if(params->still &&
+       (!h3_still_protect_vae(vae_path,params->output_path,params->save_still_latent,ctx->error,sizeof(ctx->error)) ||
+        !h3_still_vae_compatibility(vae_path,still_compatibility,ctx->error,sizeof(ctx->error))))goto cleanup;
+
     for (size_t i = 0; i < params->reference_count; i++) {
         int is_video = resume ? resume->references[i].kind == H3_LAYOUT_REF_VIDEO :
             (params->references[i].kind == H3_REFERENCE_VIDEO || params->references[i].kind == H3_REFERENCE_VIDEO_AUDIO);
@@ -2478,12 +2495,12 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     if(params->still) {
         h3_still_latent *z=calloc(1,sizeof(*z));
         if(!z){h3_set_error(ctx,"cannot retain still latent");goto cleanup;}
-        z->height=latent_h;z->width=latent_w;z->values=video;
-        memcpy(z->compatibility_sha256,image_info.compatibility_sha256,65);
+        z->height=latent_h;z->width=latent_w;z->values=video;z->reference_model=ref2va;
+        memcpy(z->compatibility_sha256,still_compatibility,65);
         if(params->save_still_latent && !h3_still_latent_save(params->save_still_latent,z,ctx->error,sizeof(ctx->error))) {free(z);goto cleanup;}
         h3_decode_options options={.output_path=params->output_path,.output_encoding=params->output_encoding,.on_frame=params->on_frame,
             .on_progress=params->on_progress,.callback_opaque=params->callback_opaque};
-        result=h3_decode_still_values(z,params->image_vae,&options,ctx->error,sizeof(ctx->error));
+        result=h3_decode_still_values(z,vae_path,&options,ctx->error,sizeof(ctx->error));
         if(result) {
             result->still_latent=z;video=NULL;result->seed=params->seed;
             result->completed_steps=params->steps;result->total_steps=params->steps;

@@ -25,6 +25,15 @@ typedef int (*h3_video_batch_callback)(const float *rgb, int first, int count,
 
 typedef struct h3_video_vae_decoder h3_video_vae_decoder;
 
+/* Stock weights, five copies of a normalized T=1 latent, raw output frame 3.
+ * This decoder is isolated from resident video caches and always uses the
+ * released 256/64 tile profile. All pixels are finalized after tile blending. */
+h3_video_vae_decoder *h3_video_vae_still_load(const char *weight_directory,
+    const char *shader, int latent_h, int latent_w, h3_video_vae_progress,
+    void *, char *error, size_t error_size);
+int h3_video_vae_still_decode(h3_video_vae_decoder *, const float *normalized,
+    h3_video_vae_progress, void *, h3_video_frames *, char *, size_t);
+
 /* Resident tiled decoder used by live denoising previews. It decodes one
  * representative middle frame per preview call and can then produce the final
  * complete video without loading the 9.7 GiB weight set again. */

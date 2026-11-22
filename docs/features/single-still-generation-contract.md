@@ -1,50 +1,59 @@
-# Single-still sampling contract, version 1
+# Single-still sampling and decoding contract, version 2
 
-This is an optional H3 execution mode, not a newly trained image model.
-The image codec passed its independent F32 equations gate at 256×256, 512×512
-and 640×480 before generation tests. Reconstruction does not establish prompt
-quality. The six-evaluation generation tests below cannot qualify 50-step quality.
+Updated 2026-11-21. The [version 1 contract](single-still-generation-contract-v1.md)
+and dedicated-image-VAE results are historical. Version 2 retains its denoising
+trajectory and replaces the final decoder with the stock H3 video VAE.
 
-The sampling geometry is independently corroborated by two pinned implementations:
+The frozen [source and model identities](../../tests/empty_still_contract.json)
+pin ComfyUI revision `5df2ce62f1408572c18a12a3aefee326cd2305a5`.
+Its empty-latent adaptation, sampling preparation and stock VAE establish this
+contract. Native h3cli constructs the H3 target directly; it does not allocate
+ComfyUI's intermediate four-channel empty image latent.
 
-- [Combined Image and Reference node, `40c74969`](https://github.com/entropicnoise/MiniMax-H3-Combined-Image-And-Reference-to-Video/blob/40c74969fd805174bf3e1aed1f83f66ef7de6838/minimax_h3_combined_image_and_reference.py): `_empty_av_latent_allow_single_frame` explicitly sets frame count and video T to 1, with two audio ticks.
-- [T8 still implementation, `6063fafb`](https://github.com/T8mars/comfyui-minimax-h3-audio-T8/blob/6063fafbd9c3b85c5ff40aef435ae11b2844e558/h3_t8/still_image.py): `direct_1_frame`, `resolve_still_target`, `empty_still_av_latent`, and `assert_still_layout_contract` agree on T=1, audio T=2 and ordinary packed image-reference/audio/video segments. Choose its `generate_and_discard` policy; do not lock audio to silence.
+- Batch one, normalized video `[1,24,1,H/16,W/16]`, auxiliary audio `[1,32,2,2]`.
+  Audio contributes four packed rows, is sampled, and is discarded without an
+  audio decoder. Video contributes `(H/32)*(W/32)` target rows, including 8,228
+  at 3872×2176. Text and ordered reference rows are additional.
+- All 50 DiT blocks, dense BF16, reference RoPE, separate seeded video/audio
+  noise generators, Euler updates and shifted flow schedules (12 video, 3 audio).
+  This differs from the supplied ComfyUI workflow's `er_sde`/`simple` trajectory;
+  output images and PyTorch noise sequences are not claimed identical.
+- FL2VA for prompt-only generation; Ref2VA for ordered image references.
+  Shared `match`, `high`, and `max` reference preprocessing stays independent of
+  target size. Existing task IDs, slot order and packed positions are retained.
+- Positive multiples of 32, at most 16,777,216 pixels and 8192 per side. The
+  geometry check is shared by generation, artifact I/O and codec-only decode.
+  Ordinary video/upscale/reference limits are unchanged. Admission does not
+  guarantee sufficient device memory.
+- After denoising, save the original T=1 normalized tensor. Only the decoder
+  repeats it five times, separately per tile; unwhiten exactly once using the
+  selected stock VAE configuration. All five temporal positions and the four
+  register tokens plus zero suffix participate in all 36 F32 decoder blocks.
+  Select zero-based raw frame 3, before video trimming.
+- Tiles use the pinned 256-pixel profile and minimum 64-pixel overlap, including
+  adjusted edge overlaps. Blend the previous blended bottom strip, then the
+  previous blended right tail. Assemble one image; normalize RGB with
+  mean `[.485,.456,.406]`, std `[.229,.224,.225]`, then clip to `[0,1]`.
+  No full-resolution multi-frame movie is retained.
+- The decoder has a separate lifetime from video caches. Release the completed
+  DiT before loading it. Deliver exactly one final RGB24 callback (index 0,
+  count 1, step -1), then atomically publish PNG. Cancellation before publication
+  preserves an existing PNG. Results own their normalized still latent and
+  have no AV/sampler state, frame rate or audio fields.
 
-Retained source files, API commit records and file hashes are under
-`outputs/single-still/source/` and `source-manifest.json`.
+Saved artifacts require schema `2`, recipe `stock-video-repeat5-frame3-f32-v1`,
+latent space `h3-normalized-v1`, model variant `FL2VA` or `Ref2VA`, and a SHA-256
+compatibility identity over the recipe and 24 F32 normalization means/stds.
+The digest binds normalization and decode semantics, not every model weight.
+Schema 1 is rejected with guidance to regenerate. Changing its metadata is not
+migration: its encoder/whitening identity describes the retired dedicated VAE.
+Existing `.h3av`, `.h3sample` and video presentation formats are unchanged.
 
-Frozen recipe:
-
-- Target latent `[1,24,1,H/16,W/16]`, normalized H3 latent space. At 640×480,
-  DiT 2×2 patching gives 300 visual target rows.
-- Auxiliary audio `[1,32,2,2]`: four packed rows / 128 F32 scalar values. Sample
-  with the ordinary audio head and audio sigma schedule, then discard. Never
-  load the audio VAE or create an audio output stream.
-- Ordinary FL2VA task/packed positions for prompt-only generation; ordinary
-  Ref2VA image slots for ordered image references, with `match`/`high`/`max` sizing
-  under the shared [reference-image policy](design-reference-image-size.md).
-  No first/last anchors, video/audio references or continuation.
-- Existing shifted flow schedule (video 12, audio 3), ordinary Euler updates,
-  all 50 blocks and dense BF16 model execution. Keep the existing h3cli RNG:
-  separate video/audio generators, each initialized with the requested seed.
-  This preserves h3cli seed semantics; it does not claim PyTorch RNG identity.
-- Image VAE uses the metadata-declared output slice and released 256/64 tiles.
-  The sampled video target has **one** temporal latent; no video rounding,
-  frame repetition, hidden five/22-frame render or audio decode.
-- No change to `.h3av`/`.h3sample`; save a normalized `.safetensors` still
-  artifact instead. Generation/cache keys identify `still-v1:audio2` separately.
-
-The gate is a **go for integration** based on the independent
-sampling recipe and existing DiT equations. Local layout/noise/schedule fixtures
-and bounded real DiT transitions must pass. Retained velocity/trajectory records
-are regression fixtures for this implementation, not a claim of independent
-full-model numerical parity with ComfyUI. Production-quality promotion requires
-separate prompt/reference evidence; failed screens remain failures.
-
-Generation test contract: fixed 640×480, original BF16 model, seed 42, six
-Euler evaluations; prompt-only and `inputs/2.jpg` image-reference cases; repeat
-prompt-only with the same seed. Require finite states, exact target counts,
-exact repeated latent checksum on the same execution policy, one final image
-callback, no AV state/audio stream, and successful still-latent re-decode.
-Record prompt/reference semantic screens independently from deterministic
-execution and codec numerical gates. No automatic human-review gate.
+The independent runner is [empty_still_reference.py](../../tests/empty_still_reference.py).
+It implements the F32 transformer equations in PyTorch and executes the
+hash-verified upstream tile methods. Gates were frozen before comparison:
+RGB MAE ≤0.01 and PSNR ≥35 dB. Layout/RNG/schedule tests independently check
+packing. Native trajectory repeats establish same-policy determinism, not
+independent full-model sampling equivalence. See the
+[replacement qualification record](empty-still-results.md) for tested geometry,
+quality observations, resources, backend limits and reproducible commands.

@@ -1,5 +1,6 @@
 #include "src/log.h"
 #include "src/memory.h"
+#include "src/digest.h"
 #include "src/vae/image_vae.h"
 #include "src/vae/video_vae.h"
 #include "src/sglang/sglang.h"
@@ -99,8 +100,7 @@ typedef struct {
     int latent_w;
     int latent_t;
     int output_frames;
-    int image_weights;
-    int image_slice;
+    int still;
     int sglang_captured;
 } vae_context;
 
@@ -137,11 +137,9 @@ static void free_tensor(h3_gpu_tensor **tensor) {
 static h3_gpu_tensor *load_f32(vae_context *vae, const char *name, int ndim,
                                const uint64_t *shape, char *error,
                                size_t error_size) {
-    h3_gpu_tensor *weight=vae->image_weights ?
-        h3_weight_load_f16_f32(vae->weights, vae->gpu, name, ndim, shape, error, error_size) :
-        h3_weight_load_f32(vae->weights, vae->gpu, name, ndim, shape, error, error_size);
+    h3_gpu_tensor *weight=h3_weight_load_f32(vae->weights, vae->gpu, name, ndim, shape, error, error_size);
 #ifndef __APPLE__
-    if(weight && !vae->image_weights && h3_gpu_sglang_vae_enabled(vae->gpu) &&
+    if(weight && !vae->still && h3_gpu_sglang_vae_enabled(vae->gpu) &&
        ((!strncmp(name,"decoder.transformer_blocks.",27) &&
        (strstr(name,".attn.to_qkv.") || strstr(name,".attn.to_out.") ||
         strstr(name,".ff.w1.") || strstr(name,".ff.w2."))) ||
@@ -347,6 +345,18 @@ static int load_latent_normalization(const char *weight_directory,
     return ok;
 }
 
+int h3_still_vae_compatibility(const char *path, char digest[65], char *error, size_t size) {
+    float mean[24],std[24];
+    if(!path || !digest || !load_latent_normalization(path,mean,std,error,size))return 0;
+    h3_sha256_ctx hash;uint8_t bytes[32];
+    static const char format[]="h3-normalized-v1:stock-video:24:16:repeat5-frame3:f32";
+    h3_sha256_init(&hash);h3_sha256_update(&hash,format,sizeof(format)-1);
+    h3_sha256_update(&hash,mean,sizeof(mean));h3_sha256_update(&hash,std,sizeof(std));
+    h3_sha256_final(bytes,&hash);
+    for(int i=0;i<32;i++)snprintf(digest+2*i,3,"%02x",bytes[i]);
+    return 1;
+}
+
 static int prepare_input(vae_context *vae, const float *input,
                          const float *mean, const float *deviation,
                          char *error, size_t error_size) {
@@ -443,7 +453,7 @@ static int allocate_activations(vae_context *vae, char *error,
                                 size_t error_size) {
     vae->reuse_buffers=0;
 #ifndef __APPLE__
-    if(!vae->image_weights && h3_gpu_sglang_vae_enabled(vae->gpu))vae->reuse_buffers=1;
+    if(!vae->still && h3_gpu_sglang_vae_enabled(vae->gpu))vae->reuse_buffers=1;
 #endif
     size_t patches = vae->patches, sequence = vae->sequence;
 #define F32(field, elements) (vae->field = h3_gpu_tensor_new_f32(vae->gpu, (elements)))
@@ -702,7 +712,7 @@ static int run_resident_tile(vae_context *vae, h3_video_vae_progress progress,
 
 static int reference_video(const vae_context *vae) {
 #ifndef __APPLE__
-    return !vae->image_weights && h3_gpu_sglang_vae_enabled(vae->gpu);
+    return !vae->still && h3_gpu_sglang_vae_enabled(vae->gpu);
 #else
     (void)vae;return 0;
 #endif
@@ -737,7 +747,7 @@ static int unpack_frame_range(vae_context *vae, int first_frame,
     size_t rgb_count = (size_t)frame_count * (size_t)pixel_h *
                        (size_t)pixel_w * 3;
     float *rgb = malloc(rgb_count * sizeof(*rgb));
-    if(rgb && !vae->image_weights && reference_video(vae)) {
+    if(rgb && !vae->still && reference_video(vae)) {
         int status=h3_gpu_video_unpack(vae->gpu,vae->projected,rgb,vae->latent_h,
             vae->latent_w,vae->output_frames,first_frame,frame_count);
         if(status<0){free(rgb);fail(error,error_size,"VAE GPU unpack: %s",h3_gpu_error(vae->gpu));return 0;}
@@ -761,11 +771,11 @@ static int unpack_frame_range(vae_context *vae, int first_frame,
     double unpack_start=vae_clock();
     static const float mean[] = {0.485f, 0.456f, 0.406f};
     static const float deviation[] = {0.229f, 0.224f, 0.225f};
-    int raw=reference_video(vae);
+    int raw=vae->still || reference_video(vae);
     for (int output_frame = 0; output_frame < frame_count; output_frame++) {
         int frame = first_frame + output_frame;
-        int decoded_t = vae->image_weights ? vae->image_slice : frame + FRAME_OFFSET;
-        if (!vae->image_weights && vae->output_frames == FIRST_CHUNK_FRAMES && frame >= 17)
+        int decoded_t = frame + FRAME_OFFSET;
+        if (!vae->still && vae->output_frames == FIRST_CHUNK_FRAMES && frame >= 17)
             decoded_t += 3;
         int patch_t = decoded_t / 4;
         int within_t = decoded_t % 4;
@@ -782,10 +792,10 @@ static int unpack_frame_range(vae_context *vae, int first_frame,
                         (size_t)within_x);
                     float value = raw ? rows[patch * OUTPUT_PATCH + component] :
                         rows[patch * OUTPUT_PATCH + component] * deviation[channel] + mean[channel];
-                    if (vae->image_weights && !isfinite(value)) {
+                    if (vae->still && !isfinite(value)) {
                         free(rows); free(rgb); fail(error, error_size, "nonfinite image VAE output"); return 0;
                     }
-                    if (!vae->image_weights && !raw) {
+                    if (!vae->still && !raw) {
                         if (value < 0.0f) value = 0.0f;
                         if (value > 1.0f) value = 1.0f;
                     }
@@ -1626,79 +1636,113 @@ int h3_video_vae_decoder_preview(h3_video_vae_decoder *decoder,
         NULL, NULL, output, frame_index, error, error_size);
 }
 
-/* The image role owns its own context; it can never enter the video cache. */
-struct h3_image_vae_decoder {
-    h3_video_vae_decoder core;
-    h3_image_vae_info info;
-};
-const h3_image_vae_info *h3_image_vae_info_get(const h3_image_vae_decoder *d) { return d ? &d->info : NULL; }
-void h3_image_vae_free(h3_image_vae_decoder *d) {
-    if (!d) return;
-    cleanup(&d->core.vae); tile_axis_free(&d->core.y_axis); tile_axis_free(&d->core.x_axis); free(d);
-}
-h3_image_vae_decoder *h3_image_vae_load(const char *path, const char *shader,
+/* A still has its own decoder lifetime; it never enters the video cache. */
+h3_video_vae_decoder *h3_video_vae_still_load(const char *path, const char *shader,
     int h, int w, h3_video_vae_progress progress, void *opaque, char *error, size_t size) {
     if (error && size) *error = 0;
     if (!path || !*path || !shader || !*shader || !h3_still_geometry(h,w,error,size)) return NULL;
     const char *override = getenv("H3_VAE_TILE_PIXELS");
-    if (override && *override && strcmp(override,"256")) {
-        fail(error,size,"image VAE requires the released 256/64 tile profile; unset H3_VAE_TILE_PIXELS"); return NULL;
+    if (override && strcmp(override,"256")) {
+        fail(error,size,"still decode requires the released 256/64 tiles; unset H3_VAE_TILE_PIXELS"); return NULL;
     }
-    if (!h3_memory_checkpoint(progress && progress(0,LAYERS,opaque),"image VAE load",error,size)) return NULL;
-    h3_image_vae_decoder *d = calloc(1,sizeof(*d));
-    if (!d) { fail(error,size,"out of memory creating image decoder"); return NULL; }
-    h3_video_vae_decoder *core = &d->core; vae_context *v = &core->vae;
-    int ok = h3_image_vae_inspect(path,&d->info,error,size) &&
-        h3_memory_check(UINT64_C(11000000000),"image VAE resident load",error,size) &&
-        tile_axis_build(h*16,256,&core->y_axis,error,size) && tile_axis_build(w*16,256,&core->x_axis,error,size);
+    uint64_t reserve = UINT64_C(11000000000) + (uint64_t)h * (uint64_t)w * 256 * 16;
+    if (!h3_memory_checkpoint(progress && progress(0,LAYERS,opaque),"still VAE load",error,size) ||
+        !h3_memory_check(reserve,"stock still VAE and image",error,size)) return NULL;
+    h3_video_vae_decoder *d = calloc(1,sizeof(*d));
+    if (!d) { fail(error,size,"out of memory creating still decoder"); return NULL; }
+    d->latent_h=h; d->latent_w=w;
+    int ok=load_latent_normalization(path,d->latent_mean,d->latent_std,error,size) &&
+        tile_axis_build(h*16,256,&d->y_axis,error,size) && tile_axis_build(w*16,256,&d->x_axis,error,size);
+    vae_context *v=&d->vae;
     if (ok) {
-        core->latent_h=h; core->latent_w=w;
-        memcpy(core->latent_mean,d->info.mean,sizeof(core->latent_mean));
-        memcpy(core->latent_std,d->info.deviation,sizeof(core->latent_std));
-        v->image_weights=1;v->image_slice=d->info.output_slice;v->latent_t=1;v->output_frames=1;
-        v->latent_h=core->y_axis.length/16;v->latent_w=core->x_axis.length/16;
-        v->patches=(uint32_t)(v->latent_h*v->latent_w);v->sequence=v->patches+SUFFIX;
-        v->weights=h3_weight_store_open_file(path,error,size);
+        v->still=1; v->latent_t=5; v->output_frames=1;
+        v->latent_h=d->y_axis.length/16; v->latent_w=d->x_axis.length/16;
+        v->patches=(uint32_t)(5*v->latent_h*v->latent_w); v->sequence=v->patches+SUFFIX;
+        v->weights=h3_weight_store_open(path,error,size);
+        int previous=h3_sglang_exchange(0);
         if(v->weights)v->gpu=h3_gpu_create(shader,error,size);
-        if(v->gpu)h3_gpu_profile_set_label(v->gpu,"image VAE decoder F16-to-F32 T=1");
+        h3_sglang_exchange(previous);
+        if(v->gpu)h3_gpu_profile_set_label(v->gpu,"stock still VAE F32 repeat5 frame3");
         ok=v->weights && v->gpu && load_resident_weights(v,progress,opaque,error,size) &&
             prepare_rope(v,error,size) && allocate_activations(v,error,size);
     }
-    if (!ok) { h3_image_vae_free(d);return NULL; }
+    if(!ok){h3_video_vae_decoder_free(d);return NULL;}
     return d;
 }
-int h3_image_vae_decode(h3_image_vae_decoder *d, const float *z,
+
+int h3_video_vae_still_decode(h3_video_vae_decoder *d, const float *z,
     h3_video_vae_progress progress, void *opaque, h3_video_frames *out, char *error, size_t size) {
-    if (error && size)
-        *error = 0;
-    if (out)
-        memset(out, 0, sizeof(*out));
-    if(!d || !z || !out || d->info.output_slice<0 || d->info.output_slice>3 ||
-        d->core.vae.latent_t!=1 || !d->core.vae.image_weights) {
-        fail(error,size,"invalid direct image decode arguments");return 0;
+    if(error && size)*error=0;
+    if(out)memset(out,0,sizeof(*out));
+    if(!d || !z || !out || !d->vae.still || d->vae.latent_t!=5) {
+        fail(error,size,"invalid stock still decode arguments");return 0;
     }
-    h3_video_vae_decoder *c=&d->core;vae_context *v=&c->vae;
-    size_t count=(size_t)24*c->latent_h*c->latent_w;
-    for(size_t i=0;i<count;i++)if(!isfinite(z[i])) {fail(error,size,"nonfinite still latent");return 0;}
+    size_t area=(size_t)d->latent_h*d->latent_w;
+    for(size_t i=0;i<24*area;i++)if(!isfinite(z[i])){fail(error,size,"nonfinite still latent");return 0;}
+    vae_context *v=&d->vae;
     decode_progress work;
-    if(!decode_progress_init(&work,progress,opaque,1,c->y_axis.count,c->x_axis.count,error,size))return 0;
-    int tiles=c->y_axis.count*c->x_axis.count;
-    float **rgb=calloc((size_t)tiles,sizeof(*rgb));
-    if(!rgb){fail(error,size,"out of memory assembling still");return 0;}
-    int ok=1;
-    for(int y=0;ok && y<c->y_axis.count;y++)for(int x=0;ok && x<c->x_axis.count;x++) {
-        if(!(ok=h3_memory_checkpoint(progress && progress(work.offset,work.total,opaque),"image VAE decode",error,size)))break;
-        float *input=extract_latent_tile(z,1,c->latent_h,c->latent_w,0,c->y_axis.starts[y]/16,c->x_axis.starts[x]/16,1,v->latent_h,v->latent_w,error,size);
-        ok=input && prepare_input(v,input,c->latent_mean,c->latent_std,error,size) && run_resident_tile(v,decode_progress_block,&work,error,size);
-        free(input);work.offset+=LAYERS;
-        h3_video_frames tile={0};
-        if(ok)ok=unpack_frame_range(v,0,1,&tile,error,size);
-        if(ok)rgb[y*c->x_axis.count+x]=tile.rgb;
+    if(!decode_progress_init(&work,progress,opaque,1,d->y_axis.count,d->x_axis.count,error,size))return 0;
+    int width=d->latent_w*16,height=d->latent_h*16,th=d->y_axis.length,tw=d->x_axis.length;
+    float *canvas=malloc((size_t)height*width*3*sizeof(float)),*strip=NULL;
+    int ok=canvas!=NULL;
+    if(!ok)fail(error,size,"out of memory assembling still image");
+    /* Keep only the blended lower strip and right tail. At seam intersections
+     * the pinned ComfyUI recipe blends already-blended neighbours, not raw tiles. */
+    for(int y=0;ok && y<d->y_axis.count;y++) {
+        int bottom=y+1<d->y_axis.count?d->y_axis.overlaps[y]:0;
+        float *next=bottom?malloc((size_t)bottom*width*3*sizeof(float)):NULL,*left=NULL;
+        if(bottom && !next){fail(error,size,"out of memory retaining still tile strip");ok=0;}
+        for(int x=0;ok && x<d->x_axis.count;x++) {
+            if(!h3_memory_checkpoint(progress && progress(work.offset,work.total,opaque),"still VAE decode",error,size)){ok=0;break;}
+            size_t tile_area=(size_t)v->latent_h*v->latent_w;
+            float *input=malloc(24*5*tile_area*sizeof(float));
+            if(!input){fail(error,size,"out of memory repeating still latent tile");ok=0;break;}
+            for(int c=0;c<24;c++)for(int t=0;t<5;t++)for(int row=0;row<v->latent_h;row++) {
+                size_t source=(size_t)c*area+(size_t)(d->y_axis.starts[y]/16+row)*d->latent_w+d->x_axis.starts[x]/16;
+                memcpy(input+((size_t)c*5+t)*tile_area+(size_t)row*v->latent_w,z+source,(size_t)v->latent_w*sizeof(float));
+            }
+            ok=prepare_input(v,input,d->latent_mean,d->latent_std,error,size) &&
+                run_resident_tile(v,decode_progress_block,&work,error,size);
+            free(input);work.offset+=LAYERS;
+            h3_video_frames tile={0};
+            if(ok)ok=unpack_frame_range(v,0,1,&tile,error,size);
+            if(!ok){h3_video_frames_free(&tile);break;}
+            int top=y?d->y_axis.overlaps[y-1]:0,prior=x?d->x_axis.overlaps[x-1]:0;
+            int right=x+1<d->x_axis.count?d->x_axis.overlaps[x]:0;
+            for(int row=0;row<top;row++)for(int col=0;col<tw;col++)for(int c=0;c<3;c++) {
+                size_t at=((size_t)row*tw+col)*3+c;
+                float a=(float)row/(float)top;
+                tile.rgb[at]=strip[((size_t)row*width+d->x_axis.starts[x]+col)*3+c]*(1-a)+tile.rgb[at]*a;
+            }
+            for(int row=0;row<th;row++)for(int col=0;col<prior;col++)for(int c=0;c<3;c++) {
+                size_t at=((size_t)row*tw+col)*3+c;
+                float a=(float)col/(float)prior;
+                tile.rgb[at]=left[((size_t)row*prior+col)*3+c]*(1-a)+tile.rgb[at]*a;
+            }
+            free(left);left=right?malloc((size_t)th*right*3*sizeof(float)):NULL;
+            if(right && !left){fail(error,size,"out of memory retaining still tile tail");ok=0;}
+            for(int row=0;ok && row<th;row++) {
+                if(right)memcpy(left+(size_t)row*right*3,tile.rgb+((size_t)row*tw+tw-right)*3,(size_t)right*3*sizeof(float));
+                if(row<th-bottom)memcpy(canvas+((size_t)(d->y_axis.starts[y]+row)*width+d->x_axis.starts[x])*3,
+                    tile.rgb+(size_t)row*tw*3,(size_t)(tw-right)*3*sizeof(float));
+                else memcpy(next+((size_t)(row-th+bottom)*width+d->x_axis.starts[x])*3,
+                    tile.rgb+(size_t)row*tw*3,(size_t)(tw-right)*3*sizeof(float));
+            }
+            h3_video_frames_free(&tile);
+        }
+        free(left);free(strip);strip=next;
     }
-    if(ok)ok=stitch_tiles(rgb,&c->y_axis,&c->x_axis,1,0,out,error,size) &&
-        h3_gpu_get_stats(v->gpu,&out->gpu_stats) && decode_progress_finish(&work,error,size);
-    for (int i = 0; i < tiles; i++)
-        free(rgb[i]);
-    free(rgb);
-    if(!ok){h3_gpu_cancel(v->gpu);h3_video_frames_free(out);}return ok;
+    free(strip);
+    if(ok) {
+        static const float mean[]={.485f,.456f,.406f},std[]={.229f,.224f,.225f};
+        for(size_t i=0;i<(size_t)height*width*3;i++) {
+            float value=canvas[i]*std[i%3]+mean[i%3];
+            if(!isfinite(value)){fail(error,size,"nonfinite still pixels");ok=0;break;}
+            canvas[i]=fminf(1,fmaxf(0,value));
+        }
+    }
+    if(ok)ok=h3_gpu_get_stats(v->gpu,&out->gpu_stats) && decode_progress_finish(&work,error,size);
+    if(ok){out->rgb=canvas;out->width=width;out->height=height;out->frames=1;}
+    else {h3_gpu_cancel(v->gpu);free(canvas);h3_video_frames_free(out);}
+    return ok;
 }

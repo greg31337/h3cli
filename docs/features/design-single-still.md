@@ -1,5 +1,9 @@
 # Single-still H3 support
 
+This design records the retired dedicated-image-VAE implementation. The
+[stock-video-VAE contract](single-still-generation-contract.md) supersedes its
+decoder, model-selection and saved-latent rules as of 2026-11-21.
+
 Status: implemented and locally qualified on Metal (2026-09-22), with
 T=1 generation. Implementation baseline: `31d8ee834197b19b4f2ac1d4dc9f8d3174ce3a7c`.
 See [usage](single-still.md), [results and limits](single-still-results.md), and
@@ -267,7 +271,7 @@ loading costs.
 
 Gate result: **go for integration**. Two pinned independent H3
 still implementations corroborate T=1 with two auxiliary audio ticks sampled
-and discarded. The frozen [generation contract](single-still-generation-contract.md)
+and discarded. The frozen [generation contract](single-still-generation-contract-v1.md)
 keeps h3cli noise/schedules and original dense BF16 execution. Bounded prompt,
 seed-repeat and image-reference tests passed. Full-model cross-implementation
 velocity parity and broad/50-step quality are not claimed. The requirements

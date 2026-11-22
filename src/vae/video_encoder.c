@@ -1,5 +1,4 @@
 #include "src/memory.h"
-#include "src/vae/image_vae.h"
 #include "src/vae/video_encoder.h"
 
 #include "src/weights/weights.h"
@@ -72,7 +71,6 @@ typedef struct {
 typedef struct {
     h3_gpu *gpu;
     h3_weight_store *store;
-    int image_weights;
     h3_video_encoder_progress progress;
     void *progress_opaque;
     int completed_tiles, total_tiles;
@@ -143,9 +141,7 @@ static void cleanup(encoder_context *encoder) {
 static h3_gpu_tensor *load_f32(encoder_context *encoder, const char *name,
                                int ndim, const uint64_t *shape, char *error,
                                size_t error_size) {
-    return encoder->image_weights ?
-        h3_weight_load_f16_f32(encoder->store, encoder->gpu, name, ndim, shape, error, error_size) :
-        h3_weight_load_f32(encoder->store, encoder->gpu, name, ndim, shape, error, error_size);
+    return h3_weight_load_f32(encoder->store, encoder->gpu, name, ndim, shape, error, error_size);
 }
 
 static h3_gpu_tensor *f1(encoder_context *encoder, const char *name,
@@ -1097,46 +1093,5 @@ int h3_ref2va_video_vae_encode(const char *weights, const char *shader,
     if (ok) { output->time = moments.time; output->height = moments.height; output->width = moments.width; }
     h3_video_moments_free(&moments); cleanup(&encoder);
     if (!ok) h3_video_latent_free(output);
-    return ok;
-}
-
-int h3_image_vae_encode(const char *path,const char *shader,const float *pixels,
-    int height,int width,h3_video_encoder_progress progress,void *opaque,
-    h3_video_latent *out,char *error,size_t size) {
-    if (error && size)
-        *error = 0;
-    if (out)
-        memset(out, 0, sizeof(*out));
-    if(!path || !shader || !pixels || !out || height%16 || width%16 ||
-        !h3_still_geometry(height/16,width/16,error,size))return 0;
-    for(size_t i=0;i<(size_t)height*width*3;i++)if(!isfinite(pixels[i]) || pixels[i]<0 || pixels[i]>1) {
-        fail(error,size,"image encoder pixels must be finite in [0,1]");return 0;
-    }
-    h3_image_vae_info info;
-    if(!h3_image_vae_inspect(path,&info,error,size) ||
-        !h3_memory_checkpoint(progress && progress(0,0,opaque),"image VAE encoder",error,size))return 0;
-    encoder_context encoder={.image_weights=1,.progress=progress,.progress_opaque=opaque};
-    memcpy(encoder.latent_mean,info.mean,sizeof(info.mean));
-    memcpy(encoder.latent_std,info.deviation,sizeof(info.deviation));
-    encoder.store=h3_weight_store_open_file(path,error,size);
-    if(encoder.store)encoder.gpu=h3_gpu_create(shader,error,size);
-    h3_video_moments moments={0};
-    int ok=encoder.gpu && load_weights(&encoder,error,size) &&
-        encode_spatial_moments(&encoder,pixels,1,height,width,progress,opaque,&moments,error,size);
-    if(ok) {
-        size_t area=(size_t)moments.height*moments.width;
-        out->values=malloc(24*area*sizeof(float));
-        ok=out->values && moments.time==1;
-        if(!ok)fail(error,size,"cannot retain image posterior mean");
-        for(int c=0;ok && c<24;c++)for(size_t i=0;i<area;i++) {
-            float n=(moments.values[c*area+i]-info.mean[c])/info.deviation[c];
-            if(!isfinite(n)){ok=0;fail(error,size,"nonfinite image posterior");break;}
-            out->values[c*area+i]=n;
-        }
-        if(ok){out->time=1;out->height=moments.height;out->width=moments.width;h3_gpu_get_stats(encoder.gpu,&out->gpu_stats);}
-    }
-    h3_video_moments_free(&moments);cleanup(&encoder);
-    if (!ok)
-        h3_video_latent_free(out);
     return ok;
 }

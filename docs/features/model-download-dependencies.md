@@ -2,15 +2,15 @@
 
 The [catalog](../../src/models/catalog.json) is the authoritative file-level
 manifest: exact source URL, immutable revision, byte size and full SHA-256 for
-119 files. The resolver is [resolve.c](../../src/models/resolve.c).
+118 files. The resolver is [resolve.c](../../src/models/resolve.c).
 No repository Python files or alternative Diffusers layouts are downloaded.
 
 | Effective operation | Required main files | Auxiliary files |
 | --- | --- | --- |
 | Text, first/last anchors | 57 FL2VA files | None |
 | Any image, audio or video reference | 57 Ref2VA files | None |
-| Still generation | Selected mode's 57 files | Image VAE |
-| Still latent decode | None | Image VAE |
+| Still generation | Selected mode's 53 files, excluding audio VAE | None |
+| Still latent decode | Saved mode's three video-VAE/configuration files | None |
 | AV decode, full or preview | Eight identity files listed below, in saved mode | Preview VAE only with effective preview |
 | Hard continuation / bridge | Selected generation mode's 57 files | Effective decoder |
 | Sampler resume | Saved mode's 57 files | Current permitted preview override |
@@ -35,15 +35,18 @@ The eight AV decode identity files are `transformer/config.json`,
 The current compatibility signature includes both full VAEs even for preview
 decode; retaining these dependencies preserves saved-state checks.
 
-Generation startup inventories the selected text encoder, transformer and both
-VAEs. Resume/upscale reuse saved conditioning but keep this inventory and the
+Video generation startup inventories the selected text encoder, transformer and
+both VAEs. Still generation omits the audio VAE. Still decode needs only
+`video_vae/config.json`, `video_vae/source/config.json` and
+`video_vae/source/model.safetensors` in the saved FL2VA or Ref2VA mode.
+Resume/upscale reuse saved conditioning but keep the video inventory and the
 existing recursive model identity. An identity-only AV decode installation is
 not selected as a generation checkpoint: it has no tokenizer. This prevents
 an earlier FL2VA decode from shadowing a later complete Ref2VA installation.
 
 Each main mode is 144,051,030,183 / 144,051,030,171 bytes including notices.
-All groups total **294,023,151,343 logical bytes**. Content deduplication reduces
-an empty installation to **216,229,637,924 unique transfer bytes**. CoW saves
+All groups total **288,815,342,559 logical bytes**. Content deduplication reduces
+an empty installation to **211,021,829,140 unique transfer bytes**. CoW saves
 space when supported; capacity checks allow ordinary copy fallback on each
 filesystem. Partial-file blocks already stored are deducted from the remaining
 space requirement. Runtime quantization caches and outputs require extra space.
@@ -174,5 +177,4 @@ entries are prefetch notices/index, outside runtime identity scans.
 | `Ref2VA/video_vae/source/model.safetensors` | references | 10415548320 |
 | `modular_model_index.json` | base,references | 2935 |
 | `preview-vae/taeh3.safetensors` | preview | 22709752 |
-| `image-vae/minimax_h3_t1_image_vae_step1597.safetensors` | image-vae | 5207808784 |
 | `latent-upscale/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors` | upscale | 690592992 |

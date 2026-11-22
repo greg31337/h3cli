@@ -7,7 +7,7 @@ import re
 from urllib.parse import urlsplit
 from pathlib import Path
 
-GROUPS = {'base': 1, 'references': 2, 'preview': 4, 'image-vae': 8, 'upscale': 16}
+GROUPS = {'base': 1, 'references': 2, 'preview': 4, 'upscale': 16}
 
 
 def render(source):

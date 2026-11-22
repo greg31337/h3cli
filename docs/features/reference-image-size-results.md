@@ -1,5 +1,11 @@
 # Reference-image sizing validation
 
+The still rows and reproduction commands below describe the dedicated-image-VAE
+implementation at the time of this campaign. The sizing policy remains current;
+the [stock-VAE replacement qualification](empty-still-results.md) covers current
+still generation and all three reference-size modes. Its runners replace the
+historical `reference_image_matrix.py` still commands that use `--image-vae`.
+
 Status: **complete: 24/24 tasks, 12/12 functional outputs and 204/204 existing
 golden outputs pass**. Tasks are tracked in
 [the archived checklist](reference-image-size-tasks.md); behavior is specified in [the design](design-reference-image-size.md).

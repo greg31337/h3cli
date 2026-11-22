@@ -108,40 +108,35 @@ done:h3_tiny_vae_free(tiny);h3_video_vae_decoder_free(full);h3_audio_waveform_fr
 #include "src/vae/image_vae.h"
 #include "src/media/ffmpeg.h"
 
-h3_result *h3_decode_still_values(const h3_still_latent *input,const char *image_vae,
+h3_result *h3_decode_still_values(const h3_still_latent *input,const char *vae_directory,
     const h3_decode_options *options,char *error,size_t size) {
     char local[512];if(!error || !size){error=local;size=sizeof(local);}*error=0;
-    if(!input || !input->values || !image_vae || !options || options->preview_vae ||
+    if(!input || !input->values || !vae_directory || !options || options->preview_vae ||
         options->preview_vae_model) {
-        snprintf(error,size,"direct still decode requires a latent and explicit image VAE, without video/preview options");return NULL;
+        snprintf(error,size,"still decode requires a latent and stock video VAE directory, without preview options");return NULL;
     }
     const char *output=options->output_path;size_t length=output?strlen(output):0;
     if(output && (length<4 || strcmp(output+length-4,".png"))) {
         snprintf(error,size,"still output must use .png");return NULL;
     }
-    if(same_file(output,image_vae)) {
-        snprintf(error,size,"still output must not overwrite its latent or image VAE");return NULL;
-    }
-    h3_still_latent z=*input;h3_image_vae_decoder *decoder=NULL;h3_video_frames rgb={0};
-    h3_result *result=NULL;uint8_t *pixels=NULL;decode_progress p={options,"image VAE load",0};
+    if(!h3_still_protect_vae(vae_directory,output,NULL,error,size))return NULL;
+    h3_still_latent z=*input;h3_video_vae_decoder *decoder=NULL;h3_video_frames rgb={0};
+    h3_result *result=NULL;uint8_t *pixels=NULL;decode_progress p={options,"stock still VAE load",0};
     double start=h3_av_now();
 
     if(!h3_still_geometry(z.height,z.width,error,size))goto done;
-    h3_image_vae_info identity;
-    if(!h3_memory_checkpoint(progress(0,36,&p),"image VAE inspect",error,size) ||
-        !h3_image_vae_inspect(image_vae,&identity,error,size))goto done;
-    if(memcmp(z.compatibility_sha256,identity.compatibility_sha256,65)) {
-        snprintf(error,size,"still latent encoder/whitening compatibility differs from image VAE");goto done;
+    char compatibility[65];
+    if(!h3_memory_checkpoint(progress(0,36,&p),"stock still VAE inspect",error,size) ||
+        !h3_still_vae_compatibility(vae_directory,compatibility,error,size))goto done;
+    if(memcmp(z.compatibility_sha256,compatibility,65)) {
+        snprintf(error,size,"still latent normalization/recipe compatibility differs from stock video VAE");goto done;
     }
-    decoder=h3_image_vae_load(image_vae,"src/metal/shaders.metal",z.height,z.width,progress,&p,error,size);
+    decoder=h3_video_vae_still_load(vae_directory,"src/metal/shaders.metal",z.height,z.width,progress,&p,error,size);
     if(!decoder)goto done;
-    if(strcmp(z.compatibility_sha256,h3_image_vae_info_get(decoder)->compatibility_sha256)) {
-        snprintf(error,size,"still latent encoder/whitening compatibility differs from image VAE");goto done;
-    }
-    double loaded=h3_av_now();p.phase="image VAE decode";
-    if(!h3_image_vae_decode(decoder,z.values,progress,&p,&rgb,error,size))goto done;
+    double loaded=h3_av_now();p.phase="stock still VAE decode";
+    if(!h3_video_vae_still_decode(decoder,z.values,progress,&p,&rgb,error,size))goto done;
     double decoded=h3_av_now();
-    h3_image_vae_free(decoder);decoder=NULL;
+    h3_video_vae_decoder_free(decoder);decoder=NULL;
     size_t count=(size_t)rgb.width*rgb.height*3;pixels=malloc(count);
     result=calloc(1,sizeof(*result));
     if(!pixels || !result){snprintf(error,size,"cannot allocate still delivery");goto failure;}
@@ -167,12 +162,12 @@ h3_result *h3_decode_still_values(const h3_still_latent *input,const char *image
     }
     goto done;
 failure:h3_result_free(result);result=NULL;
-done:free(pixels);h3_image_vae_free(decoder);h3_video_frames_free(&rgb);return result;
+done:free(pixels);h3_video_vae_decoder_free(decoder);h3_video_frames_free(&rgb);return result;
 }
 
-h3_result *h3_decode_still_latent(const char *path,const char *image_vae,
+h3_result *h3_decode_still_latent(const char *path,const char *model_dir,
     const h3_decode_options *options,char *error,size_t size) {
-    if(!options || same_file(options->output_path,path)) {
+    if(!options || !model_dir || !*model_dir || same_file(options->output_path,path)) {
         if (error && size)
             snprintf(error, size, "still output must not overwrite its latent");
         return NULL;
@@ -180,6 +175,11 @@ h3_result *h3_decode_still_latent(const char *path,const char *image_vae,
     h3_still_latent *z=calloc(1,sizeof(*z));
     if(!z){if(error && size)snprintf(error,size,"cannot allocate still latent");return NULL;}
     if(!h3_still_latent_load(path,z,error,size)){free(z);return NULL;}
-    h3_result *r=h3_decode_still_values(z,image_vae,options,error,size);
+    char *vae_directory=NULL;
+    if(asprintf(&vae_directory,"%s/%s/video_vae/source",model_dir,z->reference_model?"Ref2VA":"FL2VA")<0) {
+        h3_still_latent_free(z);free(z);return NULL;
+    }
+    h3_result *r=h3_decode_still_values(z,vae_directory,options,error,size);
+    free(vae_directory);
     if(r)r->still_latent=z;else {h3_still_latent_free(z);free(z);}return r;
 }

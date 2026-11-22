@@ -40,7 +40,7 @@ class Build(unittest.TestCase):
  def test_failed_download_identifies_url_and_destination(self):
   with tempfile.TemporaryDirectory() as tmp:
    p=Path(tmp)/'download';url='https://example.invalid/missing.deb'
-   error=urllib.error.HTTPError(url,404,'Not Found',{},None)
+   error=urllib.error.HTTPError(url,404,'Not Found',{},io.BytesIO())
    self.addCleanup(error.close)
    with patch.object(environment.urllib.request,'urlopen',side_effect=error):
     with self.assertRaises(OSError) as raised:environment.fetch(url,p,'0'*64)
@@ -57,7 +57,7 @@ class Build(unittest.TestCase):
    self.assertFalse(p.exists());self.assertFalse(p.with_name('download.partial').exists())
  def test_wheel_metadata_failure_identifies_pin_and_url(self):
   url='https://pypi.org/pypi/missing/1.0/json'
-  error=urllib.error.HTTPError(url,404,'Not Found',{},None)
+  error=urllib.error.HTTPError(url,404,'Not Found',{},io.BytesIO())
   self.addCleanup(error.close)
   with tempfile.TemporaryDirectory() as tmp,patch.object(build,'wheels',return_value=[('missing','1.0','0'*64)]),patch.object(build.urllib.request,'urlopen',side_effect=error):
    with self.assertRaises(OSError) as raised:build.fetch(Path(tmp),False)

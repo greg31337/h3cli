@@ -1,4 +1,5 @@
 #include "src/models/models.h"
+#include "src/vae/image_vae.h"
 #include "src/media/delivery.h"
 #include "src/sampling/sampler_state.h"
 #include <errno.h>
@@ -17,7 +18,7 @@ static char *join(const char *root, const char *leaf) {
     return path;
 }
 void h3_models_paths_free(h3_model_paths *p) {
-    free(p->root); free(p->main); free(p->preview); free(p->image); free(p->upscale);
+    free(p->root); free(p->main); free(p->preview); free(p->upscale);
     memset(p, 0, sizeof(*p));
 }
 static char *resolve_path(const h3_request *r, const char *key, const char *root,
@@ -30,6 +31,7 @@ static char *resolve_path(const h3_request *r, const char *key, const char *root
 }
 int h3_models_paths(const h3_request *r, h3_model_paths *p, char *error, size_t size) {
     memset(p, 0, sizeof(*p));
+    if(h3_request_get(r,"image-vae")){snprintf(error,size,"--image-vae is retired; select --model-dir for the stock video VAE");return 0;}
     const char *root = value(r, "models-path");
     p->root = h3_models_absolute(root ? root : "models", error, size);
     if (!p->root) goto failed;
@@ -44,16 +46,15 @@ int h3_models_paths(const h3_request *r, h3_model_paths *p, char *error, size_t 
     }
     p->main = resolve_path(r, "model-dir", p->root, main_leaf, error, size);
     p->preview = resolve_path(r, "preview-vae-model", p->root, "preview-vae/taeh3.safetensors", error, size);
-    p->image = resolve_path(r, "image-vae", p->root, "image-vae/minimax_h3_t1_image_vae_step1597.safetensors", error, size);
     p->upscale = resolve_path(r, "upscale-model", p->root, "latent-upscale/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors", error, size);
-    if (p->main && p->preview && p->image && p->upscale) return 1;
+    if (p->main && p->preview && p->upscale) return 1;
 failed:
     if (!*error) snprintf(error, size, "cannot resolve model paths");
     h3_models_paths_free(p); return 0;
 }
 int h3_models_groups(const char *text, unsigned *groups, char *error, size_t size) {
     const char *names[] = {"base", "references", "preview", "image-vae", "upscale", "all"};
-    const unsigned bits[] = {1, 2, 4, 8, 16, 31};
+    const unsigned bits[] = {1, 2, 4, 0, 16, 23};
     *groups = 0;
     if (!text || !*text) goto bad;
     const char *start = text;
@@ -69,7 +70,7 @@ int h3_models_groups(const char *text, unsigned *groups, char *error, size_t siz
         start = end+1;
     } while (*start);
 bad:
-    snprintf(error, size, "model groups must be base,references,preview,image-vae,upscale or all");
+    snprintf(error, size, "model groups must be base,references,preview,upscale or all; image-vae is retired");
     return 0;
 }
 static int preview_enabled(const h3_request *r) {
@@ -114,7 +115,7 @@ int h3_models_resolve(const h3_request *r, h3_model_plan *p, char *error, size_t
     p->offline = h3_models_offline() || h3_request_get(r, "offline") != NULL;
     const char *op = h3_request_operation(r), *prefetch = value(r, "download-models");
     unsigned groups = 0;
-    int decode = !strcmp(op, "decode_av"), ref = 0, up = 0;
+    int decode = !strcmp(op, "decode_av"), decode_still = !strcmp(op,"decode_still"), still = !strcmp(op,"still"), ref = 0, up = 0;
     p->inspect = !strcmp(op, "info") || !strcmp(op, "help") || !strcmp(op, "inspect_upscale");
     int list = h3_request_get(r, "list-models") != NULL;
     if (prefetch || list) {
@@ -140,8 +141,12 @@ int h3_models_resolve(const h3_request *r, h3_model_plan *p, char *error, size_t
             if (!h3_sampler_model_requirements(state, source, &ref, &up, error, size)) goto failed;
         }
         if (decode && !presentation_mode(value(r, "decode-av-state"), &ref, error, size)) goto failed;
-        if (strcmp(op, "decode_still")) groups |= ref ? H3_MODEL_REFERENCES : H3_MODEL_BASE;
-        if (!strcmp(op, "still") || !strcmp(op, "decode_still")) groups |= H3_MODEL_IMAGE;
+        if(decode_still) {
+            h3_still_latent latent={0};
+            if(!h3_still_latent_load(value(r,"decode-still-latent"),&latent,error,size))goto failed;
+            ref=latent.reference_model;h3_still_latent_free(&latent);
+        }
+        groups |= ref ? H3_MODEL_REFERENCES : H3_MODEL_BASE;
         if (!strcmp(op, "upscale")) groups |= H3_MODEL_UPSCALE;
         if (preview_enabled(r)) groups |= H3_MODEL_PREVIEW;
     }
@@ -152,8 +157,9 @@ int h3_models_resolve(const h3_request *r, h3_model_plan *p, char *error, size_t
         if (!(a->groups & groups)) continue;
         if (!prefetch && !list && (a->groups & 3u) &&
             (!strchr(a->path, '/') || (decode && !decode_dependency(a->path)))) continue;
+        if(!prefetch && !list && decode_still && !strstr(a->path,"/video_vae/"))continue;
+        if(!prefetch && !list && still && strstr(a->path,"/audio_vae/"))continue;
         const char *aux = a->groups == H3_MODEL_PREVIEW ? p->paths.preview :
-            a->groups == H3_MODEL_IMAGE ? p->paths.image :
             a->groups == H3_MODEL_UPSCALE ? p->paths.upscale : NULL;
         char *dest = aux ? strdup(aux) : join(p->paths.main, a->path);
         if (!dest) goto failed;
@@ -171,10 +177,10 @@ void h3_models_plan_free(h3_model_plan *p) {
 int h3_models_apply_paths(h3_request *r, const h3_model_plan *p, char *error, size_t size) {
     unsigned groups = 0;
     for (size_t i = 0; i < p->count; i++) groups |= p->items[i].artifact->groups;
-    const char *names[] = {"model-dir", "preview-vae-model", "image-vae", "upscale-model"};
-    const char *paths[] = {p->paths.main, p->paths.preview, p->paths.image, p->paths.upscale};
-    const unsigned masks[] = {3, 4, 8, 16};
-    for (size_t i = 0; i < 4; i++) {
+    const char *names[] = {"model-dir", "preview-vae-model", "upscale-model"};
+    const char *paths[] = {p->paths.main, p->paths.preview, p->paths.upscale};
+    const unsigned masks[] = {3, 4, 16};
+    for (size_t i = 0; i < 3; i++) {
         if (h3_request_get(r, names[i]) || (groups & masks[i]) || (!i && p->inspect)) {
             h3_request_remove(r, names[i]);
             if (!h3_request_add(r, names[i], paths[i], NULL, H3_SOURCE_MANAGED, error, size)) return 0;

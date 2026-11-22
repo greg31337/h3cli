@@ -1,0 +1,64 @@
+{
+  "revision": "5df2ce62f1408572c18a12a3aefee326cd2305a5",
+  "files": [
+    {
+      "path": "comfy/ldm/minimax/vae.py",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/5df2ce62f1408572c18a12a3aefee326cd2305a5/comfy/ldm/minimax/vae.py",
+      "sha256": "fd32db0e1fd277fac561c6232323afc53957ed6eb48cc50eca18730a0a6bb0d1"
+    },
+    {
+      "path": "comfy/sample.py",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/5df2ce62f1408572c18a12a3aefee326cd2305a5/comfy/sample.py",
+      "sha256": "d274ed5b6abf83707b52b87d25d1716f072d5444954cf23ac0ed31a3b803ee1c"
+    },
+    {
+      "path": "comfy/latent_formats.py",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/5df2ce62f1408572c18a12a3aefee326cd2305a5/comfy/latent_formats.py",
+      "sha256": "e4784eacfc243e1b820861aeecfd9eab573bdbf67eb83c804cdd425bf048b91f"
+    },
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/5df2ce62f1408572c18a12a3aefee326cd2305a5/LICENSE",
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    }
+  ],
+  "video_latent_time": 1,
+  "audio_ticks": 2,
+  "decoder_temporal_copies": 5,
+  "raw_frame_index": 3,
+  "tile_pixels": 256,
+  "overlap_pixels": 64,
+  "gates": {
+    "rgb_mae_max": 0.01,
+    "rgb_psnr_min_db": 35.0
+  },
+  "models": [
+    {
+      "variant": "FL2VA",
+      "normalization_sha256": "3edd2cdd1ebc823c868be55ef917e1b3b8a398fde4d3150dae44a3bf05d9f627",
+      "weights_sha256": "5f0c2e161d895a9fee7645ca32d4a7e3a22b90cacfcbeba62ec999cdbbefe0d3",
+      "revision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+      "path": "FL2VA/video_vae/source/model.safetensors"
+    },
+    {
+      "variant": "Ref2VA",
+      "normalization_sha256": "3edd2cdd1ebc823c868be55ef917e1b3b8a398fde4d3150dae44a3bf05d9f627",
+      "weights_sha256": "5f0c2e161d895a9fee7645ca32d4a7e3a22b90cacfcbeba62ec999cdbbefe0d3",
+      "revision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+      "path": "Ref2VA/video_vae/source/model.safetensors"
+    }
+  ],
+  "rope": {
+    "axes": [
+      "time",
+      "height",
+      "width"
+    ],
+    "normalized_centers": true,
+    "theta": 100,
+    "dimensions_per_axis": 8,
+    "head_dimension": 64,
+    "registers": 4,
+    "zero_suffix": 1
+  }
+}

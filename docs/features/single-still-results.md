@@ -4,7 +4,7 @@ Local M4 Max / 128 GiB, 2026-09-22. Implementation baseline:
 `31d8ee834197b19b4f2ac1d4dc9f8d3174ce3a7c`, plus the single-still changes.
 Codec qualification passed before the generation integration gate opened.
 See [usage](single-still.md), [provenance](single-still-sources.md), and the
-[sampling contract](single-still-generation-contract.md).
+[sampling contract](single-still-generation-contract-v1.md).
 
 - [Codec comparison HTML](../outputs/single-still/review.html)
 - [Generation examples HTML](../outputs/single-still/generation.html)

@@ -145,7 +145,7 @@ UPSCALE_SOURCES := src/upscale/upscale.metal src/upscale/upscale_metal.inc src/u
 SOURCE_FILES := $(sort $(filter-out src/metal/native_attention.inc,$(shell find src -type f)))
 SOURCE_CODE := $(filter %.c %.m %.h %.cu %.cuh %.cpp %.metal %.inc %.def,$(SOURCE_FILES))
 SOURCE_HEADERS := $(filter %.h %.cuh,$(SOURCE_CODE))
-H3_BUILD_HASH := $(shell (cat $(LIB_C) $(LIB_M) $(LIB_CUDA) $(LIB_CXX) $(wildcard third_party/vpipe-ane/*.h) $(SOURCE_HEADERS) $(SAGE_SOURCES) $(SGLANG_FLASH_SOURCES) $(METAL_ATTN_SOURCES) $(UPSCALE_SOURCES) src/metal/shaders.metal src/metal/q8_host.inc src/vae/image_vae_schema.inc; echo '$(CPPFLAGS) $(CFLAGS) $(OBJCFLAGS) $(NVCCFLAGS) $(CUDA_GENCODE) $(SAGE_NVCCFLAGS) $(SAGE2_NVCCFLAGS) $(SAGE3_NVCCFLAGS) $(SGLANG_FLASH_FLAGS)') 2>/dev/null | $(SHA256) | cut -d' ' -f1)
+H3_BUILD_HASH := $(shell (cat $(LIB_C) $(LIB_M) $(LIB_CUDA) $(LIB_CXX) $(wildcard third_party/vpipe-ane/*.h) $(SOURCE_HEADERS) $(SAGE_SOURCES) $(SGLANG_FLASH_SOURCES) $(METAL_ATTN_SOURCES) $(UPSCALE_SOURCES) src/metal/shaders.metal src/metal/q8_host.inc; echo '$(CPPFLAGS) $(CFLAGS) $(OBJCFLAGS) $(NVCCFLAGS) $(CUDA_GENCODE) $(SAGE_NVCCFLAGS) $(SAGE2_NVCCFLAGS) $(SAGE3_NVCCFLAGS) $(SGLANG_FLASH_FLAGS)') 2>/dev/null | $(SHA256) | cut -d' ' -f1)
 H3_GIT_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
 H3_PORTABLE_BUILD_HASH := $(shell cat $(SOURCE_CODE) $(sort $(wildcard third_party/vpipe-ane/*.cpp third_party/vpipe-ane/*.h)) $(METAL_ATTN_SOURCES) $(UPSCALE_SOURCES) 2>/dev/null | $(SHA256) | cut -d' ' -f1)
 src/sampling/sampler_state.o: override CFLAGS += -DH3_GIT_COMMIT='"$(H3_GIT_COMMIT)"' -DH3_BUILD_ID='"$(H3_BUILD_HASH)"' -DH3_PORTABLE_BUILD_ID='"$(H3_PORTABLE_BUILD_HASH)"'
@@ -867,7 +867,7 @@ bin/still_generate: tests/still_generate.o bin/libh3.a | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 clean-still:
-	rm -f bin/still_probe bin/still_generate bin/still_tests bin/still_controls bin/still_layout_fixture bin/still_lifecycle
+	rm -f bin/still_probe bin/still_generate bin/still_tests bin/still_controls bin/still_layout_fixture bin/still_lifecycle bin/still_context
 .PHONY: clean-still
 clean: clean-still
 
@@ -1050,3 +1050,7 @@ ifeq ($(PLATFORM),Darwin)
 test-macos-package:
 	python3 tests/test_macos_bundle.py
 endif
+
+# Stock still context recovery with provisioned real models.
+bin/still_context: tests/still_context.o bin/libh3.a | bin
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)

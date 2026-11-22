@@ -51,7 +51,6 @@ def main():
     p.add_argument('--source', type=Path, required=True)
     p.add_argument('--model', type=Path, required=True)
     p.add_argument('--preview-model', type=Path, required=True)
-    p.add_argument('--image-vae', type=Path, required=True)
     p.add_argument('--upscale-model', type=Path, required=True)
     p.add_argument('--lora-cache', type=Path, required=True)
     p.add_argument('--out', type=Path, required=True)
@@ -246,8 +245,8 @@ def main():
     compare('upscale source vs completed sampler control',av('source-text'),av('source-sampler'),latent=True)
     run('R14-sampler-import',['--upscale-state',state('up-text'),'--upscale-import-sampler','--upscale-model',a.upscale_model,'--upscale-refine-steps','0'],operation=True,shape=(640,512,22))
     still=out/'still.safetensors'
-    original=run('R15-still',['--still','--image-vae',a.image_vae,'--save-still-latent',still],still=True,shape=(512,512,1))
-    decoded=run('R15-still-decode',['--decode-still-latent',still,'--image-vae',a.image_vae],operation=True,still=True,shape=(512,512,1))
+    original=run('R15-still',['--still','--save-still-latent',still],still=True,shape=(512,512,1))
+    decoded=run('R15-still-decode',['--decode-still-latent',still],operation=True,still=True,shape=(512,512,1))
     compare('still decode',original,decoded)
     run('R15-lora',['--lora',lora,'--lora-cache',a.lora_cache])
     for reuse in (2,3): run('R16-reuse-'+str(reuse),['--reuse',str(reuse),'--save-sampler-state',state('reuse-'+str(reuse))])

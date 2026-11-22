@@ -116,7 +116,7 @@ h3_weight_store *h3_weight_store_open(const char *directory,
         const h3_st_header *h = &store->headers[i];
         for (size_t m = 0; m < h->metadata_count; m++) {
             if (!strcmp(h->metadata_keys[m], "h3_t1_direct")) {
-                fail(error, error_size, "image-only VAE requires explicit --image-vae; cannot use it as video weights");
+                fail(error, error_size, "retired image-only VAE cannot be used as stock video weights; select --model-dir");
                 h3_weight_store_free(store); return NULL;
             }
         }

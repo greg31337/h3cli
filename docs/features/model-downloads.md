@@ -17,7 +17,7 @@ requests; build/setup commands do not download models.
 ./bin/h3cli --models-path /fast/models --list-models
 ```
 
-Groups are `base`, `references`, `preview`, `image-vae`, `upscale`, and `all`.
+Groups are `base`, `references`, `preview`, `upscale`, and `all`.
 `base` supplies FL2VA; `references` supplies Ref2VA, including all supported
 image/audio/video reference types. Auxiliary groups provision only that
 component. Prefetch and list cannot be combined with generation flags.
@@ -34,7 +34,7 @@ to the directory where h3cli was launched. There is no search in another root.
 | --- | --- | --- |
 | Main H3 | `MiniMaxH3/` | `-d/--model-dir` |
 | Tiny preview decoder | `preview-vae/taeh3.safetensors` | `--preview-vae-model` |
-| Still-image VAE | `image-vae/minimax_h3_t1_image_vae_step1597.safetensors` | `--image-vae` |
+| Still decoder | selected main model’s `FL2VA/video_vae` or `Ref2VA/video_vae` | `-d/--model-dir` |
 | BF16 latent upscaler | `latent-upscale/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors` | `--upscale-model` |
 
 When `MiniMaxH3` is absent, an existing `MiniMax-H3` entry in the selected root
@@ -129,9 +129,14 @@ byte for byte; the additional main LICENSE is included by prefetch. Model
 licensing is separate from h3cli code: see the pinned
 [MiniMax model license](https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/42ed227ee7df40d41602854ae760620d6eb651fe/LICENSE),
 [TAEH3 MIT notice](../../third_party/taeh3/LICENSE),
-[image-VAE provenance](single-still-sources.md), and
+[historical image-VAE provenance](single-still-sources.md), and
 [upscaler model card](https://huggingface.co/LBH-123-AI/Minimax_h3_latent_Upscaler/blob/3f941d5d182014dd5c0a5e16330420ee2d4aa0c6/README.md).
 The image-VAE publisher supplies no license field in the pinned repository
 metadata; this implementation makes no additional licensing claim for it.
 The upscaler's model card declares Apache-2.0. No upstream executable model code
 is downloaded or executed.
+
+Still generation uses the stock video VAE and omits audio-VAE downloads.
+`--decode-still-latent` reads schema-2 model metadata and resolves only the three
+selected video-VAE/configuration files. `--image-vae` and the `image-vae` group
+are retired; use the main model directory. Schema-1 stills must be regenerated.

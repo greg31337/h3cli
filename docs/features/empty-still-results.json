@@ -1,0 +1,3897 @@
+{
+  "status": "complete",
+  "date": "2026-11-21",
+  "tasks_complete": 20,
+  "baseline_commit": "21506b37d1772cf73fbcfa169e15773f9f0f9eec",
+  "production_source_sha256": "c875242e0177a5d5f751bc657f22d81e55523d0e445815069052f5ec3244dc80",
+  "qualification_source_sha256": "7d8bc444805cd0b2fbb6afb990f5f0d5e484e7d9a456deb1ef75524e34d920c0",
+  "qualification_source_identity_method": "tests/cuda_reference_regression.py source_files/fingerprint; includes current implementation and test tooling. Final Mac source, Linux source and both package source snapshots matched.",
+  "production_source_identity_method": "SHA-256 of compact sorted JSON mapping Makefile, scripts/embed_model_catalog.py and src files with .c/.h/.m/.mm/.cu/.cuh/.metal/.json/.inc suffixes to SHA-256; generated native_attention.inc excluded. Both package source snapshots matched this production file set.",
+  "frozen_contract_sha256": "d14eab881f13e5c1446d8d79490417ceb9c0a714b946ea1947ae861d125848bb",
+  "hardware": {
+    "macos": {
+      "device": "Apple M4 Max",
+      "unified_memory_bytes": 137438953472,
+      "os": "macOS 27.2.1"
+    },
+    "cuda": {
+      "device": "NVIDIA RTX PRO 5000 72GB Blackwell",
+      "os": "Ubuntu 24.04.5",
+      "driver": "595.99.02",
+      "cuda": "13.0"
+    }
+  },
+  "scope": {
+    "native_generation": "14 functional cases per backend, plus two 50-step 8 MP quality cases on CUDA; all 50 DiT blocks are active for every case.",
+    "timing": "seconds includes the generation process and excludes subsequent codec-only verification; wall_seconds is the C harness timer. CUDA profile walls are cumulative per context. Memory samples are observed peaks, not minimum hardware requirements.",
+    "identities": "Native campaigns were staged during implementation and record binary identities at campaign completion. Final source and packaged regressions qualify the integrated production code. Model identities are catalog pins; the qualification does not hash installed model weight payloads.",
+    "limits": "Direct 8,425,472-pixel landscape and portrait generation is tested on both devices. The 16,777,216-pixel policy boundary has host admission coverage only. Metal 50-step quality and still acceleration/LoRA policies are not qualified here.",
+    "sampling": "Existing h3cli Euler/shifted-flow sampler, not ComfyUI er_sde/simple trajectory equivalence."
+  },
+  "verification": {
+    "still_host_checks_per_backend": 87,
+    "still_gpu_checks_per_backend": 7994,
+    "host_suites": "make test-current-host and make test-still-sanitize passed; both full host suites rerun after minimal-model startup correction.",
+    "metal": [
+      "independent F32 reference: four fixtures, including three-way overlap",
+      "ASan/UBSan host and GPU guards",
+      "video/still/video reuse and cancellation recovery",
+      "memory denial and retry",
+      "decoder allocation plateau",
+      "encoder failure preserves existing PNG",
+      "real HTTP still result",
+      "source and standalone offline generation from 53-file models without audio/image VAEs",
+      "offline standalone base/reference VAE-only decode",
+      "standalone 8 MP PNG byte identity"
+    ],
+    "cuda": [
+      "independent F32 reference: three fixtures",
+      "ASan/UBSan host and compute-sanitizer GPU guards",
+      "video/still/video reuse and cancellation recovery",
+      "memory denial and retry",
+      "decoder allocation plateau",
+      "encoder failure preserves existing PNG",
+      "real HTTP still result",
+      "final immutable 204-output native and standalone regressions",
+      "current-feature and packaged render suites",
+      "source and standalone offline generation from 53-file models without audio/image VAEs",
+      "offline standalone base/reference VAE-only decode and reference generation",
+      "standalone 8 MP PNG byte identity"
+    ],
+    "linux_launcher_host": {
+      "passed": 15,
+      "skipped": 1,
+      "skip_reason": "No /dev/shm noexec mount; that mount-specific test is unverified, not counted as a pass."
+    },
+    "lora_clone_coverage": "Host filesystem-dependent clone coverage is supplemented by the mandatory current CUDA suite on XFS; skipped clone tests are rejected by that runner."
+  },
+  "semantic_review": [
+    {
+      "kind": "text",
+      "width": 3872,
+      "height": 2176,
+      "steps": 50,
+      "seed": 42,
+      "png_sha256": "ff8608a0a98e68210208619a145942e46a1f1586cee02924bf2061c10c3e4178",
+      "observations": [
+        "Recognizable glossy red ceramic teapot on a pale wooden tabletop, with soft studio lighting.",
+        "Coherent lid, handle, spout and reflections; no visible regular tile grid in the reviewed image.",
+        "Composition places the teapot to the right with substantial empty background; fine tabletop detail remains soft."
+      ],
+      "scope": "One prompt and seed. This visual review is separate from decoder accuracy, determinism and lifecycle checks, and does not establish general image quality."
+    },
+    {
+      "kind": "ref",
+      "width": 3872,
+      "height": 2176,
+      "steps": 50,
+      "seed": 42,
+      "png_sha256": "50096c19e515ff5b2bf8c26f969803c39d99362c4581dac01d64dfed466e13ff",
+      "observations": [
+        "The image depicts a person wearing a bright blue padded jacket, standing among sunlit garden plants, matching the requested clothing and setting.",
+        "Brown hair and a blue hair ribbon are visible. The raised hand is partly obscured by leaves, so detailed hand anatomy is not assessed.",
+        "No regular tile grid is visible in the reviewed 1800-pixel preview; this visual check is separate from full-resolution pixel comparisons."
+      ],
+      "scope": "One reference, prompt and seed. Identity fidelity is not established by this visual review; numerical decoder accuracy, repeatability and resource behavior are assessed separately."
+    }
+  ],
+  "macos": {
+    "backend": "macos",
+    "source_fingerprint_at_collection": "7d8bc444805cd0b2fbb6afb990f5f0d5e484e7d9a456deb1ef75524e34d920c0",
+    "campaigns": {
+      "functional": {
+        "passed": true,
+        "cases": [
+          {
+            "name": "text-640",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-functional/text-640",
+              "640",
+              "480",
+              "2",
+              "match",
+              "A polished red ceramic teapot on a pale wooden table, a single still photograph, soft studio lighting."
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 28.812035875,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 28.56194,
+            "peak_footprint": 38976188352,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "7cdb05a6d61b8ba2066a790e43e182bf6646e9290fc1860f43261c3dea8431e0",
+            "png_sha256": "b2e67bbf591f92c608b696687f095bc9e0de55b09b5910074c606017688ee7d5",
+            "latent_sha256": "2a3076b340ac825662bb36bf84e7828756acd043bf7ea0897c8adebc0abb4f4b",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-functional/text-640/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-functional/text-640/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 38976188352,
+                  "resident_bytes": 37521833984,
+                  "metal_allocated_bytes": 39930314752,
+                  "tensor_live_bytes": 38608452904
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 38976188352,
+                  "resident_bytes": 37422743552,
+                  "metal_allocated_bytes": 39930314752,
+                  "tensor_live_bytes": 38608452904
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 28717191928,
+                  "resident_bytes": 27169406976,
+                  "metal_allocated_bytes": 1288388608,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 1.108636
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 1.007976
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.556225,
+                "decode_seconds": 5.492411,
+                "png_delivery_seconds": 0.259697
+              }
+            }
+          },
+          {
+            "name": "text-640-repeat",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-functional/text-640-repeat",
+              "640",
+              "480",
+              "2",
+              "match",
+              "A polished red ceramic teapot on a pale wooden table, a single still photograph, soft studio lighting."
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 28.739957333000007,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 28.671913,
+            "peak_footprint": 38978318344,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "7cdb05a6d61b8ba2066a790e43e182bf6646e9290fc1860f43261c3dea8431e0",
+            "png_sha256": "b2e67bbf591f92c608b696687f095bc9e0de55b09b5910074c606017688ee7d5",
+            "latent_sha256": "2a3076b340ac825662bb36bf84e7828756acd043bf7ea0897c8adebc0abb4f4b",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-functional/text-640-repeat/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-functional/text-640-repeat/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 38978318344,
+                  "resident_bytes": 37672058880,
+                  "metal_allocated_bytes": 39930314752,
+                  "tensor_live_bytes": 38608452904
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 38978318344,
+                  "resident_bytes": 37536661504,
+                  "metal_allocated_bytes": 39930314752,
+                  "tensor_live_bytes": 38608452904
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 29386249504,
+                  "resident_bytes": 27976974336,
+                  "metal_allocated_bytes": 1288388608,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 1.112456
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 1.005157
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.55836,
+                "decode_seconds": 5.556941,
+                "png_delivery_seconds": 0.243476
+              }
+            }
+          },
+          {
+            "name": "text-1344",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-functional/text-1344",
+              "1344",
+              "768",
+              "2",
+              "match",
+              "A polished red ceramic teapot on a pale wooden table, a single still photograph, soft studio lighting."
+            ],
+            "width": 1344,
+            "height": 768,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 44.12896941700001,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 44.087896,
+            "peak_footprint": 39232548776,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 1008,
+            "trajectory_sha256": "2d0d0af0b87ab90809ffcf6198451fe9b2eb2fd17ffda3b1a4f9ae88eec87ecc",
+            "png_sha256": "bbd21df4336c1f063ee2bc795a5d612731ea49a9b2fecef5a9fbb6032acc7c59",
+            "latent_sha256": "b07df56c41f9469edbe08024f3e8c77c95189f54fb6b5c84d13e933a47da13f0",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-functional/text-1344/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-functional/text-1344/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 39233695656,
+                  "resident_bytes": 37664800768,
+                  "metal_allocated_bytes": 40198832128,
+                  "tensor_live_bytes": 38692747384
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 39232548776,
+                  "resident_bytes": 37474058240,
+                  "metal_allocated_bytes": 40198832128,
+                  "tensor_live_bytes": 38692747384
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 7836735632,
+                  "resident_bytes": 6329024512,
+                  "metal_allocated_bytes": 1401634816,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 3.021877
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 2.989517
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.537523,
+                "decode_seconds": 16.870792,
+                "png_delivery_seconds": 0.419941
+              }
+            }
+          },
+          {
+            "name": "ref-640-match",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-functional/ref-640-match",
+              "640",
+              "480",
+              "2",
+              "match",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg",
+              "tests/fixtures/cuda-reference/first.png"
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 44.37847925,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 44.289543,
+            "peak_footprint": 39382020152,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "df153136b4e29cdb5b3c8197aa1fc9911d0325467538a580d74adf4e135ac169",
+            "png_sha256": "b6106d49637b59aa72349c3ce7887e6b4eee127e9fa66f9d7526ece32b17e7aa",
+            "latent_sha256": "7695d9912f1759da321e5f1344f6a511a4d0e0d0e899db1abbe95a5044a1df9c",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-functional/ref-640-match/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-functional/ref-640-match/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 39472214072,
+                  "resident_bytes": 37153570816,
+                  "metal_allocated_bytes": 40415903744,
+                  "tensor_live_bytes": 38769199616
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 39382020152,
+                  "resident_bytes": 36973379584,
+                  "metal_allocated_bytes": 40415903744,
+                  "tensor_live_bytes": 38769199616
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 3748793632,
+                  "resident_bytes": 3081633792,
+                  "metal_allocated_bytes": 1482113024,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 4.516526
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 4.498398
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.683691,
+                "decode_seconds": 5.511051,
+                "png_delivery_seconds": 0.199217
+              }
+            }
+          },
+          {
+            "name": "ref-640-high",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-functional/ref-640-high",
+              "640",
+              "480",
+              "2",
+              "high",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg",
+              "tests/fixtures/cuda-reference/first.png"
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "high",
+            "seconds": 329.029144833,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 328.95565,
+            "peak_footprint": 42848940304,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "5d660ba1cd588eb4bc1b9babddb00e34e4dbcbab62f35545ba1454dbc0e3c4ba",
+            "png_sha256": "62b0e96922a6908d0a0d54217506b41b611886bb214c7260b9369aec2767198f",
+            "latent_sha256": "9535c2d909b65d7ce0f276450ea63b33a72c6c02f8ccab397c87bae9345aa940",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-functional/ref-640-high/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-functional/ref-640-high/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 43477807376,
+                  "resident_bytes": 37328191488,
+                  "metal_allocated_bytes": 44732563456,
+                  "tensor_live_bytes": 40144577312
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 42848940304,
+                  "resident_bytes": 36536942592,
+                  "metal_allocated_bytes": 43117756416,
+                  "tensor_live_bytes": 40144577312
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 2728608920,
+                  "resident_bytes": 246513664,
+                  "metal_allocated_bytes": 1616330752,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 51.687403
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 51.375554
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.535164,
+                "decode_seconds": 5.495509,
+                "png_delivery_seconds": 0.231827
+              }
+            }
+          },
+          {
+            "name": "ref-640-max",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-functional/ref-640-max",
+              "640",
+              "480",
+              "2",
+              "max",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg",
+              "tests/fixtures/cuda-reference/first.png"
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "max",
+            "seconds": 581.4672037920001,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 581.393134,
+            "peak_footprint": 46004875776,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "01eb9a1a90a2b540431ae9f15c0dead5d8efe111a4629beae4ceab762a94dbc7",
+            "png_sha256": "6cb8696ed37c21133756d7cb352b6666352cb5336cdc41e31bc613056788cb72",
+            "latent_sha256": "0b8b75883b332bed0f742519cdb26d35edf47beee7c4f57d1ad759e8efcfe11f",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-functional/ref-640-max/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-functional/ref-640-max/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 47321231872,
+                  "resident_bytes": 37551063040,
+                  "metal_allocated_bytes": 48419061760,
+                  "tensor_live_bytes": 41319503136
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 46004875776,
+                  "resident_bytes": 35994140672,
+                  "metal_allocated_bytes": 46057668608,
+                  "tensor_live_bytes": 41319503136
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 3543499760,
+                  "resident_bytes": 96206848,
+                  "metal_allocated_bytes": 2362916864,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 115.414743
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 115.434626
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.533119,
+                "decode_seconds": 5.508686,
+                "png_delivery_seconds": 0.2406
+              }
+            }
+          },
+          {
+            "name": "ref-640-repeat",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-functional/ref-640-repeat",
+              "640",
+              "480",
+              "2",
+              "match",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg",
+              "tests/fixtures/cuda-reference/first.png"
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 41.173040291999996,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 41.088821,
+            "peak_footprint": 39381397608,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "df153136b4e29cdb5b3c8197aa1fc9911d0325467538a580d74adf4e135ac169",
+            "png_sha256": "b6106d49637b59aa72349c3ce7887e6b4eee127e9fa66f9d7526ece32b17e7aa",
+            "latent_sha256": "7695d9912f1759da321e5f1344f6a511a4d0e0d0e899db1abbe95a5044a1df9c",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-functional/ref-640-repeat/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-functional/ref-640-repeat/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 39471788136,
+                  "resident_bytes": 37932302336,
+                  "metal_allocated_bytes": 40415903744,
+                  "tensor_live_bytes": 38769199616
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 39381397608,
+                  "resident_bytes": 37702811648,
+                  "metal_allocated_bytes": 40415903744,
+                  "tensor_live_bytes": 38769199616
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 4429844296,
+                  "resident_bytes": 3012263936,
+                  "metal_allocated_bytes": 1482113024,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 4.518238
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 4.495781
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.533841,
+                "decode_seconds": 5.496279,
+                "png_delivery_seconds": 0.206789
+              }
+            }
+          },
+          {
+            "name": "ref-640-reversed",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-functional/ref-640-reversed",
+              "640",
+              "480",
+              "2",
+              "match",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/first.png",
+              "tests/fixtures/cuda-reference/portrait.jpg"
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 41.03349591699998,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 40.950251,
+            "peak_footprint": 39378939864,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "03e49d056733d1cae16efc4e03faab68ef52757c02c1694136c15cb28064b31e",
+            "png_sha256": "2c6176576fa54783f3ab5617e7b3c6a94ddd2e140f065d15df3f43cda03953c2",
+            "latent_sha256": "2c6164a7080e7690bf42edf2013ad3a750ef1234d2ab2e6a986b41fb632cca9a",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-functional/ref-640-reversed/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-functional/ref-640-reversed/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 39469330392,
+                  "resident_bytes": 37489278976,
+                  "metal_allocated_bytes": 40415903744,
+                  "tensor_live_bytes": 38769199616
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 39378939864,
+                  "resident_bytes": 37292916736,
+                  "metal_allocated_bytes": 40415903744,
+                  "tensor_live_bytes": 38769199616
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 3012381456,
+                  "resident_bytes": 2556739584,
+                  "metal_allocated_bytes": 1482113024,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 4.510185
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 4.501397
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.530108,
+                "decode_seconds": 5.501329,
+                "png_delivery_seconds": 0.209292
+              }
+            }
+          },
+          {
+            "name": "ref-1344",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-functional/ref-1344",
+              "1344",
+              "768",
+              "2",
+              "high",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg",
+              "tests/fixtures/cuda-reference/first.png"
+            ],
+            "width": 1344,
+            "height": 768,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "high",
+            "seconds": 354.2566005000001,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 354.210764,
+            "peak_footprint": 43004440896,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 1008,
+            "trajectory_sha256": "c97d9a5f5880cb0ae8e5473bcfb2a83866dbe6bf065dd084c8388b092764e317",
+            "png_sha256": "96bb4eb973007f95704ed076839c8bed8ab9801699aec23fea3aac02a7dff58a",
+            "latent_sha256": "0af6d26e82d428c4fe7924a6a36664c564b98fc5702a036b86291dd44b3be0d9",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-functional/ref-1344/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-functional/ref-1344/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 43634291008,
+                  "resident_bytes": 37567938560,
+                  "metal_allocated_bytes": 44996919296,
+                  "tensor_live_bytes": 40228874624
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 43004129600,
+                  "resident_bytes": 36320034816,
+                  "metal_allocated_bytes": 43327586304,
+                  "tensor_live_bytes": 40228874624
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 2835137688,
+                  "resident_bytes": 247414784,
+                  "metal_allocated_bytes": 1670856704,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 56.007812
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 61.042737
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.561812,
+                "decode_seconds": 17.353499,
+                "png_delivery_seconds": 0.444396
+              }
+            }
+          }
+        ],
+        "binary_sha256": "1a5776ac4581d6de71f89cabd44ff9f54efcbe5148410e11f44948a677a3f67d",
+        "probe_sha256": "41fea63643e5197d28c0ec91729952ca3794f56e29ac0b35b3bdda6715966a4d",
+        "expected_cases": 9,
+        "complete": true
+      },
+      "high": {
+        "passed": true,
+        "cases": [
+          {
+            "name": "text-2144",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-high/text-2144",
+              "2144",
+              "1216",
+              "2",
+              "match",
+              "A polished red ceramic teapot on a pale wooden table, a single still photograph, soft studio lighting."
+            ],
+            "width": 2144,
+            "height": 1216,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 78.17417316699999,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 77.982432,
+            "peak_footprint": 39603613680,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 2546,
+            "trajectory_sha256": "f6fac66b16e53a967f3a9bfff0186471c20871a7a9642e3240ba769f8db47445",
+            "png_sha256": "0c0c8f4a860ece6e02a656ce3468b78af242757de226f96e30886d7aba0fcfdb",
+            "latent_sha256": "1909f1d180b85b9148b1cd1c9f95eb654133c763bd00695ca64c17ce6214fa25",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-high/text-2144/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-high/text-2144/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 39756443632,
+                  "resident_bytes": 37691326464,
+                  "metal_allocated_bytes": 40779694080,
+                  "tensor_live_bytes": 38875861664
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 39603613680,
+                  "resident_bytes": 37290344448,
+                  "metal_allocated_bytes": 40779694080,
+                  "tensor_live_bytes": 38875861664
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 2925119984,
+                  "resident_bytes": 2188738560,
+                  "metal_allocated_bytes": 1644904448,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 7.983
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 7.971005
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.539661,
+                "decode_seconds": 40.4404,
+                "png_delivery_seconds": 0.798998
+              }
+            }
+          },
+          {
+            "name": "ref-2144",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-high/ref-2144",
+              "2144",
+              "1216",
+              "2",
+              "high",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg"
+            ],
+            "width": 2144,
+            "height": 1216,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "high",
+            "seconds": 182.09520354199998,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 182.047017,
+            "peak_footprint": 41557586048,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 2546,
+            "trajectory_sha256": "e191a0a13cece3224e21fc880ab2dd9bb378b4107842fa0b17a447ad42c3003d",
+            "png_sha256": "f3d3f3cb450310373ba1ae797fbc28fdf4823645364db74d08ba809d52b050dd",
+            "latent_sha256": "c0cac3d2631fbe577706ba6ec6a5cfa3c4ee696af39eac75adc1aa8a1844b1b7",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-high/ref-2144/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-high/ref-2144/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 42108088448,
+                  "resident_bytes": 37614272512,
+                  "metal_allocated_bytes": 43184095232,
+                  "tensor_live_bytes": 39648847216
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 41557586048,
+                  "resident_bytes": 36794269696,
+                  "metal_allocated_bytes": 43184095232,
+                  "tensor_live_bytes": 39648847216
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 2575549952,
+                  "resident_bytes": 767901696,
+                  "metal_allocated_bytes": 2614575104,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 34.508182
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 34.363382
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.534228,
+                "decode_seconds": 40.377886,
+                "png_delivery_seconds": 0.924975
+              }
+            }
+          },
+          {
+            "name": "text-8mp",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-high/text-8mp",
+              "3872",
+              "2176",
+              "2",
+              "match",
+              "A polished red ceramic teapot on a pale wooden table, a single still photograph, soft studio lighting."
+            ],
+            "width": 3872,
+            "height": 2176,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 222.07809904200002,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 222.027267,
+            "peak_footprint": 41173364744,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 8228,
+            "trajectory_sha256": "9029d3c3a479b16532794b9ae0dfafd85433d297d0a453554120a711743ab81b",
+            "png_sha256": "b3a7c40db8f9459e59dca47dd7bfc1c5d67799589fcf624e8193190f6dc32151",
+            "latent_sha256": "0b0dc27b794f39f7fe0b9d627da1c4b3402ea559f6ed2fe05cabbcbec66f5a73",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-high/text-8mp/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-high/text-8mp/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 41657544712,
+                  "resident_bytes": 37766873088,
+                  "metal_allocated_bytes": 42919821312,
+                  "tensor_live_bytes": 39552360584
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 41173364744,
+                  "resident_bytes": 37184733184,
+                  "metal_allocated_bytes": 42919821312,
+                  "tensor_live_bytes": 39552360584
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 2486093240,
+                  "resident_bytes": 652541952,
+                  "metal_allocated_bytes": 2538291200,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 31.925103
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 31.821917
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.537661,
+                "decode_seconds": 132.732077,
+                "png_delivery_seconds": 2.476022
+              }
+            }
+          },
+          {
+            "name": "ref-8mp",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-high/ref-8mp",
+              "3872",
+              "2176",
+              "2",
+              "high",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg"
+            ],
+            "width": 3872,
+            "height": 2176,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "high",
+            "seconds": 329.8675314579999,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 329.822115,
+            "peak_footprint": 43101384832,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 8228,
+            "trajectory_sha256": "f838c8936d04b25ee7d14ebdade1baa8ec4195e0868d944aebe40337c874f118",
+            "png_sha256": "2a1b8752451d6d9e0b6df67f6a5b7c762cbe870dcb772bb8e42272ec82896252",
+            "latent_sha256": "7c429a1c7512baf9343f4eacbe9469a8528e8cd4f9b3f6beb0f1ae740e374e92",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-high/ref-8mp/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-high/ref-8mp/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 43940507776,
+                  "resident_bytes": 37699534848,
+                  "metal_allocated_bytes": 45324238848,
+                  "tensor_live_bytes": 40325368864
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 43100450944,
+                  "resident_bytes": 36650434560,
+                  "metal_allocated_bytes": 43571019776,
+                  "tensor_live_bytes": 40325368864
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 3609052744,
+                  "resident_bytes": 741605376,
+                  "metal_allocated_bytes": 1754742784,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 62.431167
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 62.152372
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.529552,
+                "decode_seconds": 132.181915,
+                "png_delivery_seconds": 2.512936
+              }
+            }
+          },
+          {
+            "name": "portrait-8mp",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/macos-high/portrait-8mp",
+              "2176",
+              "3872",
+              "2",
+              "high",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg"
+            ],
+            "width": 2176,
+            "height": 3872,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "high",
+            "seconds": 326.84322625000004,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 326.798062,
+            "peak_footprint": 43137642672,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 8228,
+            "trajectory_sha256": "51ebde0c3797609a1ac0bff4abea91cba49734b2657d998c1f2ac09389194bb4",
+            "png_sha256": "17c5a836fb9f3648030d7858c1e4d4d4d7ba47330666032477ad1bdaa2ed573c",
+            "latent_sha256": "acf4df6e4209bb5f6372d009bd4b0a0eeefc9992f2134b426bb07575e91b4e6b",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/macos-high/portrait-8mp/latent.safetensors",
+              "-o",
+              "outputs/empty-still/macos-high/portrait-8mp/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 43975438512,
+                  "resident_bytes": 37505695744,
+                  "metal_allocated_bytes": 45324238848,
+                  "tensor_live_bytes": 40325368864
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 43137642672,
+                  "resident_bytes": 36569890816,
+                  "metal_allocated_bytes": 43571019776,
+                  "tensor_live_bytes": 40325368864
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 3574744600,
+                  "resident_bytes": 775487488,
+                  "metal_allocated_bytes": 1754742784,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [],
+              "denoising_steps": [
+                {
+                  "step": 1,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 61.921887
+                },
+                {
+                  "step": 2,
+                  "total": 2,
+                  "evaluated": true,
+                  "wall_seconds": 61.847232
+                }
+              ],
+              "still_delivery": {
+                "cold_load_seconds": 1.533228,
+                "decode_seconds": 132.149675,
+                "png_delivery_seconds": 2.304636
+              }
+            }
+          }
+        ],
+        "binary_sha256": "7c153adf0f1bef6924b251e4d3f9bd8e8ec68d3472cb2f891ff0872c44f0dfb3",
+        "probe_sha256": "816e13db9b85a55ec00de91acece022c563e0cb0698185f9c2e2b6260549d47f",
+        "expected_cases": 5,
+        "complete": true
+      }
+    },
+    "oracles": {
+      "256x256": {
+        "passed": true,
+        "mae": 3.503760029541225e-07,
+        "psnr_db": 126.07572898281803,
+        "max_error": 5.27501106262207e-06,
+        "seconds": 1.992927,
+        "device": "mps",
+        "torch": "2.8.0",
+        "shape": [
+          256,
+          256,
+          3
+        ],
+        "source_sha256": "fd32db0e1fd277fac561c6232323afc53957ed6eb48cc50eca18730a0a6bb0d1",
+        "latent_sha256": "d2925d3e184f2930780e4388bc20c06c77a1ce6e6c1a76e5c080583d5a68c7f0",
+        "candidate_sha256": "b0a33dda4f9e5d56f60367559385ed661a204f6e7dfaffd37e04a8c8a811aa9b",
+        "script_sha256": "5943cb80b5a9827248d5bf9cfb0e774a6c1b6d39d3188bf8d4b46052fbd038f4",
+        "contract_sha256": "d14eab881f13e5c1446d8d79490417ceb9c0a714b946ea1947ae861d125848bb"
+      },
+      "320x288": {
+        "passed": true,
+        "mae": 2.601152425830412e-07,
+        "psnr_db": 128.34703179607888,
+        "max_error": 4.649162292480469e-06,
+        "seconds": 4.2279895419999995,
+        "device": "mps",
+        "torch": "2.8.0",
+        "shape": [
+          288,
+          320,
+          3
+        ],
+        "source_sha256": "fd32db0e1fd277fac561c6232323afc53957ed6eb48cc50eca18730a0a6bb0d1",
+        "latent_sha256": "9ee8dda0edc09b1dc137392601e8c938a579cc8750b457324efc747caab1a833",
+        "candidate_sha256": "3c91378ac703f1d0de9ada9ed752f1b23b7b83c85a653101223d9f2449bd38df",
+        "script_sha256": "5943cb80b5a9827248d5bf9cfb0e774a6c1b6d39d3188bf8d4b46052fbd038f4",
+        "contract_sha256": "d14eab881f13e5c1446d8d79490417ceb9c0a714b946ea1947ae861d125848bb"
+      },
+      "288x320": {
+        "passed": true,
+        "mae": 2.6244434640889494e-07,
+        "psnr_db": 128.38224592526205,
+        "max_error": 6.496906280517578e-06,
+        "seconds": 4.369042374999999,
+        "device": "mps",
+        "torch": "2.8.0",
+        "shape": [
+          320,
+          288,
+          3
+        ],
+        "source_sha256": "fd32db0e1fd277fac561c6232323afc53957ed6eb48cc50eca18730a0a6bb0d1",
+        "latent_sha256": "f609bcf68927e6f378b4ae025129fba315f87e58191d9452f8bf178dc1104e79",
+        "candidate_sha256": "9c91c092a9365a33f4fb91428c3f6f9e08e176a01c0f9beb2d76564424fc958f",
+        "script_sha256": "5943cb80b5a9827248d5bf9cfb0e774a6c1b6d39d3188bf8d4b46052fbd038f4",
+        "contract_sha256": "d14eab881f13e5c1446d8d79490417ceb9c0a714b946ea1947ae861d125848bb"
+      },
+      "480x480": {
+        "passed": true,
+        "mae": 2.686316496217192e-07,
+        "psnr_db": 128.19443838132975,
+        "max_error": 4.172325134277344e-06,
+        "seconds": 8.046344874999999,
+        "device": "mps",
+        "torch": "2.8.0",
+        "shape": [
+          480,
+          480,
+          3
+        ],
+        "source_sha256": "fd32db0e1fd277fac561c6232323afc53957ed6eb48cc50eca18730a0a6bb0d1",
+        "latent_sha256": "7d2d87a565450a000494c8467ad17c68bf54a266660eeb0c4d3273861d1caa19",
+        "candidate_sha256": "63f80af16b6bde1c4cd4115193e4bc99e071967097145514d2cf33220bca7baf",
+        "script_sha256": "5943cb80b5a9827248d5bf9cfb0e774a6c1b6d39d3188bf8d4b46052fbd038f4",
+        "contract_sha256": "d14eab881f13e5c1446d8d79490417ceb9c0a714b946ea1947ae861d125848bb"
+      }
+    },
+    "regressions": {},
+    "normalization_negative_control": {
+      "mae": 0.15278616547584534,
+      "psnr_db": 13.693544665298866,
+      "rejected_by_frozen_gates": true
+    },
+    "codec_memory_measurement": {
+      "width": 3872,
+      "height": 2176,
+      "peak_process_footprint_bytes": 10302480160,
+      "method": "macOS footprint: kernel process lifetime peak during codec-only decode"
+    },
+    "package": {
+      "schema": 1,
+      "os": "macOS-27.2.1-arm64-arm-64bit",
+      "signing": "ad-hoc; unnotarized development build",
+      "artifacts": {
+        "h3cli-macos-arm64": {
+          "sha256": "61fc6a51b16f2c854b46c6eb0d947d9e7f16d947fd9ad4083668846c8dc93d6b",
+          "size": 23303488
+        },
+        "h3cli-macos-arm64-sources.tar.gz": {
+          "sha256": "ca7c60617c11756abc541e6e18e426b89917f88ec02d249ba81c5ca5c9278d07",
+          "size": 27138578
+        },
+        "h3cli-macos-arm64.dmg": {
+          "sha256": "bdfbf52c80106e0911b311be82133d269407b387a82ac4845096d66b07a86478",
+          "size": 23557243
+        },
+        "libh3.a": {
+          "sha256": "18b256b1fc7524142174a992c9077806f229648188e6fb770e4e303705676e40",
+          "size": 1997720
+        }
+      },
+      "source_sha256": "89504867dd9699c6b5eb92af516d912b0d1fa11ba75b35b37d7c0853182be14c",
+      "toolchain": {
+        "clang": "Apple clang version 21.0.0 (clang-2100.4.1.1)",
+        "sdk_version": "27.2"
+      }
+    },
+    "minimal_models": {
+      "source": {
+        "passed": true,
+        "binary_sha256": "dfc8e10cb45e82c88d2cf37b6b11959fc140dcaf207fa200c9833384fc99712b",
+        "model_files_per_variant": 53,
+        "codec_files_per_variant": 3,
+        "checks": [
+          {
+            "name": "FL2VA-generate",
+            "returncode": 0,
+            "seconds": 23.981128625,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-decode",
+            "returncode": 0,
+            "seconds": 1.7683755420000011,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-video-missing-audio",
+            "returncode": 1,
+            "seconds": 0.005138458000001123,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-partial-audio-info",
+            "returncode": 0,
+            "seconds": 0.03802295899999919,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-missing-vae-config",
+            "returncode": 1,
+            "seconds": 0.004448125000003245,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-generate",
+            "returncode": 0,
+            "seconds": 25.552592208000004,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-decode",
+            "returncode": 0,
+            "seconds": 1.712565749999996,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-video-missing-audio",
+            "returncode": 1,
+            "seconds": 0.004937124999997877,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-partial-audio-info",
+            "returncode": 0,
+            "seconds": 0.04416037500000414,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-missing-vae-config",
+            "returncode": 1,
+            "seconds": 0.005840667000001076,
+            "passed": true
+          }
+        ]
+      },
+      "standalone": {
+        "passed": true,
+        "binary_sha256": "61fc6a51b16f2c854b46c6eb0d947d9e7f16d947fd9ad4083668846c8dc93d6b",
+        "model_files_per_variant": 53,
+        "codec_files_per_variant": 3,
+        "checks": [
+          {
+            "name": "FL2VA-generate",
+            "returncode": 0,
+            "seconds": 26.112907625000002,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-decode",
+            "returncode": 0,
+            "seconds": 1.742875625,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-video-missing-audio",
+            "returncode": 1,
+            "seconds": 0.01252745899999752,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-partial-audio-info",
+            "returncode": 0,
+            "seconds": 0.044213625000001144,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-missing-vae-config",
+            "returncode": 1,
+            "seconds": 0.010666458000002876,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-generate",
+            "returncode": 0,
+            "seconds": 25.771137292000002,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-decode",
+            "returncode": 0,
+            "seconds": 1.7433087080000007,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-video-missing-audio",
+            "returncode": 1,
+            "seconds": 0.01263179200000053,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-partial-audio-info",
+            "returncode": 0,
+            "seconds": 0.04385070799999369,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-missing-vae-config",
+            "returncode": 1,
+            "seconds": 0.010828790999994453,
+            "passed": true
+          }
+        ]
+      }
+    }
+  },
+  "cuda": {
+    "backend": "cuda",
+    "source_fingerprint_at_collection": "7d8bc444805cd0b2fbb6afb990f5f0d5e484e7d9a456deb1ef75524e34d920c0",
+    "campaigns": {
+      "functional": {
+        "passed": true,
+        "cases": [
+          {
+            "name": "text-640",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-functional/text-640",
+              "640",
+              "480",
+              "2",
+              "match",
+              "A polished red ceramic teapot on a pale wooden table, a single still photograph, soft studio lighting."
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 99.9542081411928,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 99.276669,
+            "peak_footprint": 928935936,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "422bfb91d199bc5e3a50f178dec8c97dc38684ef8e19ba64b92a65e38b35aa7f",
+            "png_sha256": "456ac963397586fb94a26367217e99ba7a5e3a4b18bb270684be3825e3a48970",
+            "latent_sha256": "b7b9e12f1cbbbeb8961910a8db6a7b616df8dc8a02d0b43c73e73a55ee228eed",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-functional/text-640/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-functional/text-640/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 772034560,
+                  "resident_bytes": 772034560,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38608452904
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 772046848,
+                  "resident_bytes": 772046848,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38608452904
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 738492416,
+                  "resident_bytes": 738492416,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 35.502,
+                  "peak_device_gib": 2.728
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 48.379,
+                  "peak_device_gib": 35.957
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 49.095,
+                  "peak_device_gib": 35.983
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 49.205,
+                  "peak_device_gib": 35.983
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 13.851,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 7.332241,
+                "decode_seconds": 6.48831,
+                "png_delivery_seconds": 0.16707
+              }
+            }
+          },
+          {
+            "name": "text-640-repeat",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-functional/text-640-repeat",
+              "640",
+              "480",
+              "2",
+              "match",
+              "A polished red ceramic teapot on a pale wooden table, a single still photograph, soft studio lighting."
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 78.74685193412006,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 78.278137,
+            "peak_footprint": 928956416,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "422bfb91d199bc5e3a50f178dec8c97dc38684ef8e19ba64b92a65e38b35aa7f",
+            "png_sha256": "456ac963397586fb94a26367217e99ba7a5e3a4b18bb270684be3825e3a48970",
+            "latent_sha256": "b7b9e12f1cbbbeb8961910a8db6a7b616df8dc8a02d0b43c73e73a55ee228eed",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-functional/text-640-repeat/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-functional/text-640-repeat/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 772059136,
+                  "resident_bytes": 772059136,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38608452904
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 772071424,
+                  "resident_bytes": 772071424,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38608452904
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 738516992,
+                  "resident_bytes": 738516992,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 31.05,
+                  "peak_device_gib": 2.728
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 33.88,
+                  "peak_device_gib": 35.957
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 34.533,
+                  "peak_device_gib": 35.983
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 34.644,
+                  "peak_device_gib": 35.983
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 11.926,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 5.378882,
+                "decode_seconds": 6.514794,
+                "png_delivery_seconds": 0.148393
+              }
+            }
+          },
+          {
+            "name": "text-1344",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-functional/text-1344",
+              "1344",
+              "768",
+              "2",
+              "match",
+              "A polished red ceramic teapot on a pale wooden table, a single still photograph, soft studio lighting."
+            ],
+            "width": 1344,
+            "height": 768,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 70.53114733891562,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 70.135214,
+            "peak_footprint": 898113536,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 1008,
+            "trajectory_sha256": "c8e568cb64906f706c9a2f966f847290696be3894ce6012967ede1415324fb19",
+            "png_sha256": "689010f0cd4a93c954b7eca307eaefda927a5fb308bbc7818faa4652cd9afb23",
+            "latent_sha256": "785bf0df29797dcb71d36b962d0fbc99dc56751eee8b26c62dc84ad60821f836",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-functional/text-1344/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-functional/text-1344/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 732438528,
+                  "resident_bytes": 732438528,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38692747384
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 732450816,
+                  "resident_bytes": 732450816,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38692747384
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 698896384,
+                  "resident_bytes": 698896384,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 24.749,
+                  "peak_device_gib": 2.728
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 20.453,
+                  "peak_device_gib": 36.035
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 21.566,
+                  "peak_device_gib": 36.118
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 21.675,
+                  "peak_device_gib": 36.118
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 22.866,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 2.4981,
+                "decode_seconds": 20.336736,
+                "png_delivery_seconds": 0.404667
+              }
+            }
+          },
+          {
+            "name": "ref-640-match",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-functional/ref-640-match",
+              "640",
+              "480",
+              "2",
+              "match",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg",
+              "tests/fixtures/cuda-reference/first.png"
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 63.365328105632216,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 62.959022,
+            "peak_footprint": 930856960,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "088bbba1bb874c5dd808bc1d9428159a88db3d1be02a508110aa187ee8d330a8",
+            "png_sha256": "1167151f1c14673dea5672d70c947dcafc77e1678e81de55bd227ad145e3d4f0",
+            "latent_sha256": "027e4d00ec92895052c3724c01399d27b10b9a0fc03cf803c4f89695c12cc574",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-functional/ref-640-match/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-functional/ref-640-match/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 907317248,
+                  "resident_bytes": 907317248,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38769199616
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 907317248,
+                  "resident_bytes": 907317248,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38769199616
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 873762816,
+                  "resident_bytes": 873762816,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "CUDA context / complete",
+                  "cumulative_wall_seconds": 0.023,
+                  "peak_device_gib": 0.0
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 1.217,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 0.804,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 0.932,
+                  "peak_device_gib": 0.148
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 0.555,
+                  "peak_device_gib": 0.148
+                },
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 20.494,
+                  "peak_device_gib": 2.85
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 25.44,
+                  "peak_device_gib": 36.107
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 26.907,
+                  "peak_device_gib": 36.23
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 27.016,
+                  "peak_device_gib": 36.23
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 11.114,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 4.561733,
+                "decode_seconds": 6.521451,
+                "png_delivery_seconds": 0.106387
+              }
+            }
+          },
+          {
+            "name": "ref-640-high",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-functional/ref-640-high",
+              "640",
+              "480",
+              "2",
+              "high",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg",
+              "tests/fixtures/cuda-reference/first.png"
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "high",
+            "seconds": 154.12169492896646,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 153.73073,
+            "peak_footprint": 1123418112,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "61b1c2bcdf3b9cb69b809cb18f442f9c0aeb8b9bb0a71ae7caa75634c1e2d904",
+            "png_sha256": "1ef8d519e2d2ceee0e3b0747428d6d62ae65e062c1636ee06da0e937472a15b6",
+            "latent_sha256": "02c70bdc511ac091db1171c056196a66146e580040a344c2efe96a643e50cb2c",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-functional/ref-640-high/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-functional/ref-640-high/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 911581184,
+                  "resident_bytes": 911581184,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 40144577312
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 911581184,
+                  "resident_bytes": 911581184,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 40144577312
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 878026752,
+                  "resident_bytes": 878026752,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "CUDA context / complete",
+                  "cumulative_wall_seconds": 0.024,
+                  "peak_device_gib": 0.0
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 6.281,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 6.128,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 20.391,
+                  "peak_device_gib": 0.742
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 20.438,
+                  "peak_device_gib": 0.742
+                },
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 25.154,
+                  "peak_device_gib": 3.942
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 24.843,
+                  "peak_device_gib": 37.388
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 64.256,
+                  "peak_device_gib": 38.399
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 64.369,
+                  "peak_device_gib": 38.399
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 9.668,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 2.681757,
+                "decode_seconds": 6.89798,
+                "png_delivery_seconds": 0.206068
+              }
+            }
+          },
+          {
+            "name": "ref-640-max",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-functional/ref-640-max",
+              "640",
+              "480",
+              "2",
+              "max",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg",
+              "tests/fixtures/cuda-reference/first.png"
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "max",
+            "seconds": 366.90653839800507,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 366.499894,
+            "peak_footprint": 1325613056,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "0f5d72b18bc515a8a94b6536795f48daf04e44db40c962f7a15d0206ad38242f",
+            "png_sha256": "3018629ec4cc88ab487976682f18855d9bc6c808f845b77b9ca5ca8faa322dfa",
+            "latent_sha256": "aad4d0834095c2935972fdcb9dfc8c3000084142febea7330bce2d951d160a0d",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-functional/ref-640-max/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-functional/ref-640-max/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 913608704,
+                  "resident_bytes": 913608704,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 41319503136
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 913608704,
+                  "resident_bytes": 913608704,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 41319503136
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 880054272,
+                  "resident_bytes": 880054272,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "CUDA context / complete",
+                  "cumulative_wall_seconds": 0.03,
+                  "peak_device_gib": 0.0
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 11.132,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 10.778,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 65.157,
+                  "peak_device_gib": 1.25
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 65.335,
+                  "peak_device_gib": 1.25
+                },
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 71.827,
+                  "peak_device_gib": 4.875
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 18.327,
+                  "peak_device_gib": 38.482
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 130.439,
+                  "peak_device_gib": 40.252
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 130.555,
+                  "peak_device_gib": 40.252
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 9.972,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 3.103872,
+                "decode_seconds": 6.837274,
+                "png_delivery_seconds": 0.147754
+              }
+            }
+          },
+          {
+            "name": "ref-640-repeat",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-functional/ref-640-repeat",
+              "640",
+              "480",
+              "2",
+              "match",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg",
+              "tests/fixtures/cuda-reference/first.png"
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 42.542674615979195,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 42.123091,
+            "peak_footprint": 931069952,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "088bbba1bb874c5dd808bc1d9428159a88db3d1be02a508110aa187ee8d330a8",
+            "png_sha256": "1167151f1c14673dea5672d70c947dcafc77e1678e81de55bd227ad145e3d4f0",
+            "latent_sha256": "027e4d00ec92895052c3724c01399d27b10b9a0fc03cf803c4f89695c12cc574",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-functional/ref-640-repeat/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-functional/ref-640-repeat/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 907407360,
+                  "resident_bytes": 907407360,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38769199616
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 907407360,
+                  "resident_bytes": 907407360,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38769199616
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 873852928,
+                  "resident_bytes": 873852928,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "CUDA context / complete",
+                  "cumulative_wall_seconds": 0.023,
+                  "peak_device_gib": 0.0
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 0.964,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 0.807,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 0.729,
+                  "peak_device_gib": 0.148
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 0.554,
+                  "peak_device_gib": 0.148
+                },
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 12.432,
+                  "peak_device_gib": 2.85
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 15.168,
+                  "peak_device_gib": 36.107
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 16.664,
+                  "peak_device_gib": 36.23
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 16.773,
+                  "peak_device_gib": 36.23
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 9.04,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 2.37507,
+                "decode_seconds": 6.634118,
+                "png_delivery_seconds": 0.118847
+              }
+            }
+          },
+          {
+            "name": "ref-640-reversed",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-functional/ref-640-reversed",
+              "640",
+              "480",
+              "2",
+              "match",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/first.png",
+              "tests/fixtures/cuda-reference/portrait.jpg"
+            ],
+            "width": 640,
+            "height": 480,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 42.58428549300879,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 42.159442,
+            "peak_footprint": 931110912,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 300,
+            "trajectory_sha256": "a0d400c80a7ecd803296d19e6fc9d0db8894954733e6ffa9ca13d6c9b4cde5bd",
+            "png_sha256": "bc9d6f4b1ae08379b4d266a88975bfda4e20fd505090cc2b22a1ef88a3390469",
+            "latent_sha256": "7ca663bcf1b2011e64779e2996dac8a297706e2422c626dfe7506894936e160d",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-functional/ref-640-reversed/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-functional/ref-640-reversed/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 907452416,
+                  "resident_bytes": 907452416,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38769199616
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 907452416,
+                  "resident_bytes": 907452416,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38769199616
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 873897984,
+                  "resident_bytes": 873897984,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "CUDA context / complete",
+                  "cumulative_wall_seconds": 0.02,
+                  "peak_device_gib": 0.0
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 0.941,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 0.804,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 0.738,
+                  "peak_device_gib": 0.148
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 0.555,
+                  "peak_device_gib": 0.148
+                },
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 12.534,
+                  "peak_device_gib": 2.85
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 15.184,
+                  "peak_device_gib": 36.107
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 16.668,
+                  "peak_device_gib": 36.23
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 16.778,
+                  "peak_device_gib": 36.23
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 9.025,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 2.408312,
+                "decode_seconds": 6.586322,
+                "png_delivery_seconds": 0.117911
+              }
+            }
+          },
+          {
+            "name": "ref-1344",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-functional/ref-1344",
+              "1344",
+              "768",
+              "2",
+              "high",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg",
+              "tests/fixtures/cuda-reference/first.png"
+            ],
+            "width": 1344,
+            "height": 768,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "high",
+            "seconds": 164.04198585404083,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 163.63134,
+            "peak_footprint": 1123536896,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 1008,
+            "trajectory_sha256": "d0cd581819d7d8186552d909833d9e549e28d94ab76d1b6a4b3e6986c4d99478",
+            "png_sha256": "9f5463daacd615bbe276ae1ebf2c9f9026ecb1409cd4bf68918697c9842086b2",
+            "latent_sha256": "ff64b37d5ccb47433bda897fe78db4d6d71320abed49dd161ab5439c27573634",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-functional/ref-1344/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-functional/ref-1344/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 901902336,
+                  "resident_bytes": 901902336,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 40228874624
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 901902336,
+                  "resident_bytes": 901902336,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 40228874624
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 868347904,
+                  "resident_bytes": 868347904,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "CUDA context / complete",
+                  "cumulative_wall_seconds": 0.022,
+                  "peak_device_gib": 0.0
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 6.303,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 6.162,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 20.756,
+                  "peak_device_gib": 0.742
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 20.741,
+                  "peak_device_gib": 0.742
+                },
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 24.51,
+                  "peak_device_gib": 3.942
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 15.588,
+                  "peak_device_gib": 37.466
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 59.784,
+                  "peak_device_gib": 38.535
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 59.898,
+                  "peak_device_gib": 38.535
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 23.656,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 2.443499,
+                "decode_seconds": 21.181671,
+                "png_delivery_seconds": 0.480392
+              }
+            }
+          }
+        ],
+        "binary_sha256": "5dc02d573224f99a6977c4d512a6dc21ac9ba6f9aef7a46e65af4a570e6a4001",
+        "probe_sha256": "aac259f33a4d3f879162773dbff4c15ba46bf1371ffe1309b83d3822be3e2f42",
+        "expected_cases": 9,
+        "complete": true
+      },
+      "high-v2": {
+        "passed": true,
+        "cases": [
+          {
+            "name": "text-2144",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-high-v2/text-2144",
+              "2144",
+              "1216",
+              "2",
+              "match",
+              "A polished red ceramic teapot on a pale wooden table, a single still photograph, soft studio lighting."
+            ],
+            "width": 2144,
+            "height": 1216,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 96.99169675121084,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 96.537075,
+            "peak_footprint": 918364160,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 2546,
+            "trajectory_sha256": "f369ef949c77e8f669bafa62f6c90eb8673b0963a03d48194b07e80050dc3990",
+            "png_sha256": "d0007601a881870eaab967f29888837dc6daf2486742dac96991bafbf466044d",
+            "latent_sha256": "6c9bf514d1d82baa54e1ba07d01c4ca445c6778ff10650dcbdfa3e9a8787ff2e",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-high-v2/text-2144/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-high-v2/text-2144/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 710774784,
+                  "resident_bytes": 710774784,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38875861664
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 710774784,
+                  "resident_bytes": 710774784,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 38875861664
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 677220352,
+                  "resident_bytes": 677220352,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 20.937,
+                  "peak_device_gib": 2.728
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 19.603,
+                  "peak_device_gib": 36.206
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 22.62,
+                  "peak_device_gib": 36.412
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 22.73,
+                  "peak_device_gib": 36.412
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 51.594,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 3.006039,
+                "decode_seconds": 48.555834,
+                "png_delivery_seconds": 0.810575
+              }
+            }
+          },
+          {
+            "name": "ref-2144",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-high-v2/ref-2144",
+              "2144",
+              "1216",
+              "2",
+              "high",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg"
+            ],
+            "width": 2144,
+            "height": 1216,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "high",
+            "seconds": 173.85699864989147,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 173.299268,
+            "peak_footprint": 993226752,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 2546,
+            "trajectory_sha256": "a473df619ae37a347a772a541fe911e4bc1cffd18add3586282ad1e50764854f",
+            "png_sha256": "72019fb3f7ca35650868ba6e1389270bd8d4fb6d24188cf21c54d042689b6c47",
+            "latent_sha256": "444a79c66d1e4a99c5c2f1c3b26bbc67c16ffcbc3c39d6a594c8864889f1e0bd",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-high-v2/ref-2144/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-high-v2/ref-2144/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 901468160,
+                  "resident_bytes": 901468160,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 39648847216
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 901468160,
+                  "resident_bytes": 901468160,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 39648847216
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 867913728,
+                  "resident_bytes": 867913728,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "CUDA context / complete",
+                  "cumulative_wall_seconds": 0.026,
+                  "peak_device_gib": 0.0
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 6.757,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 21.381,
+                  "peak_device_gib": 0.742
+                },
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 32.5,
+                  "peak_device_gib": 3.336
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 35.338,
+                  "peak_device_gib": 36.926
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 55.39,
+                  "peak_device_gib": 37.625
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 55.503,
+                  "peak_device_gib": 37.625
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 55.303,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 5.939857,
+                "decode_seconds": 49.330429,
+                "png_delivery_seconds": 1.016686
+              }
+            }
+          },
+          {
+            "name": "text-8mp",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-high-v2/text-8mp",
+              "3872",
+              "2176",
+              "2",
+              "match",
+              "A polished red ceramic teapot on a pale wooden table, a single still photograph, soft studio lighting."
+            ],
+            "width": 3872,
+            "height": 2176,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 258.55470959469676,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 258.131883,
+            "peak_footprint": 992940032,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 8228,
+            "trajectory_sha256": "f81fae28e77de1934c805ae95da4bbf8aa30595728a34e5ba8800ce0a3c2b175",
+            "png_sha256": "ba51ade810279d4252310ccb42ca0394b68e5195ed7fb26d92edb01c61de01fd",
+            "latent_sha256": "37109300e5ff5a69bde5e0542ea60c8f3ec1dfd4c1f7101be1303ff3e3e22cc9",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-high-v2/text-8mp/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-high-v2/text-8mp/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 717463552,
+                  "resident_bytes": 717463552,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 39552360584
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 717463552,
+                  "resident_bytes": 717463552,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 39552360584
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 683909120,
+                  "resident_bytes": 683909120,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 27.244,
+                  "peak_device_gib": 2.728
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 37.316,
+                  "peak_device_gib": 36.836
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 55.683,
+                  "peak_device_gib": 37.497
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 55.798,
+                  "peak_device_gib": 37.497
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 171.965,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 5.302308,
+                "decode_seconds": 166.63091,
+                "png_delivery_seconds": 2.512269
+              }
+            }
+          },
+          {
+            "name": "ref-8mp",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-high-v2/ref-8mp",
+              "3872",
+              "2176",
+              "2",
+              "high",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg"
+            ],
+            "width": 3872,
+            "height": 2176,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "high",
+            "seconds": 316.8564660558477,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 316.421251,
+            "peak_footprint": 1004220416,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 8228,
+            "trajectory_sha256": "2e8ba4f96e258b8e81e971449c61fbfa016cecd63d9f660d8f1de3a7f6a1bd9c",
+            "png_sha256": "0c225bdaf34870823a73e02ef4d7e147072ffa40be97fcbad7dddd40e2b91a6d",
+            "latent_sha256": "1c599779c896b7349bc4bb019116c9fa9a71ce4710e045fd180ecc78557b85ac",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-high-v2/ref-8mp/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-high-v2/ref-8mp/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 902639616,
+                  "resident_bytes": 902639616,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 40325368864
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 902639616,
+                  "resident_bytes": 902639616,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 40325368864
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 869085184,
+                  "resident_bytes": 869085184,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "CUDA context / complete",
+                  "cumulative_wall_seconds": 0.021,
+                  "peak_device_gib": 0.0
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 6.744,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 21.401,
+                  "peak_device_gib": 0.742
+                },
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 28.278,
+                  "peak_device_gib": 3.336
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 33.846,
+                  "peak_device_gib": 37.556
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 83.783,
+                  "peak_device_gib": 38.71
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 83.9,
+                  "peak_device_gib": 38.71
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 172.157,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 4.695614,
+                "decode_seconds": 167.429182,
+                "png_delivery_seconds": 3.10611
+              }
+            }
+          },
+          {
+            "name": "portrait-8mp",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-high-v2/portrait-8mp",
+              "2176",
+              "3872",
+              "2",
+              "high",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg"
+            ],
+            "width": 2176,
+            "height": 3872,
+            "steps": 2,
+            "seed": 42,
+            "reference_size": "high",
+            "seconds": 306.6269416376017,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 306.189863,
+            "peak_footprint": 1004568576,
+            "callbacks": 1,
+            "latent_callbacks": 3,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 8228,
+            "trajectory_sha256": "cda59733c11b7f31c84c902927f3fdb08de91385ab6348c55882010d285f525c",
+            "png_sha256": "399478907fe7a6f770dbac9d3a14fc5236d671f59a5e979a3d06342d02d0cbaf",
+            "latent_sha256": "cd76398d1c16a5803eec2da5ac2e257a36045fde7fe710b011f401f810cff94f",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-high-v2/portrait-8mp/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-high-v2/portrait-8mp/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 902987776,
+                  "resident_bytes": 902987776,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 40325368864
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 902987776,
+                  "resident_bytes": 902987776,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 40325368864
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 869433344,
+                  "resident_bytes": 869433344,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "CUDA context / complete",
+                  "cumulative_wall_seconds": 0.029,
+                  "peak_device_gib": 0.0
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 6.819,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 21.391,
+                  "peak_device_gib": 0.742
+                },
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 26.68,
+                  "peak_device_gib": 3.336
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 27.083,
+                  "peak_device_gib": 37.556
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 77.193,
+                  "peak_device_gib": 38.71
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 77.308,
+                  "peak_device_gib": 38.71
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 170.266,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 2.5883,
+                "decode_seconds": 167.646914,
+                "png_delivery_seconds": 2.74651
+              }
+            }
+          }
+        ],
+        "binary_sha256": "069bc1f5b8a93e2fe0592614408442d5a00f6129d1a87c757fc8f1b952d791f6",
+        "probe_sha256": "b3280f7f25ace552258b4482da4b7888de2116deeb60b954135b6750a92965f4",
+        "expected_cases": 5,
+        "complete": true
+      },
+      "quality": {
+        "passed": true,
+        "cases": [
+          {
+            "name": "quality-text-8mp",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-quality/quality-text-8mp",
+              "3872",
+              "2176",
+              "50",
+              "match",
+              "A polished red ceramic teapot on a pale wooden table, a single still photograph, soft studio lighting."
+            ],
+            "width": 3872,
+            "height": 2176,
+            "steps": 50,
+            "seed": 42,
+            "reference_size": "match",
+            "seconds": 712.6555609670468,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 712.231967,
+            "peak_footprint": 993087488,
+            "callbacks": 1,
+            "latent_callbacks": 51,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 8228,
+            "trajectory_sha256": "72295f4ebd460831622f5eabc67b8e43fdfff0872efec196086a7533d2383b91",
+            "png_sha256": "ff8608a0a98e68210208619a145942e46a1f1586cee02924bf2061c10c3e4178",
+            "latent_sha256": "865195f44aeec7e56f7e954eaded2b6eabe913f73a0de7395b5e63bfeac9365a",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-quality/quality-text-8mp/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-quality/quality-text-8mp/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 853929984,
+                  "resident_bytes": 853929984,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 40486562888
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 853929984,
+                  "resident_bytes": 853929984,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 40486562888
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 820375552,
+                  "resident_bytes": 820375552,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 23.749,
+                  "peak_device_gib": 2.728
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 29.818,
+                  "peak_device_gib": 37.706
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 512.245,
+                  "peak_device_gib": 38.367
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 512.364,
+                  "peak_device_gib": 38.367
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 173.38,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 5.673343,
+                "decode_seconds": 167.67514,
+                "png_delivery_seconds": 2.265728
+              }
+            }
+          },
+          {
+            "name": "quality-ref-8mp",
+            "command": [
+              "bin/still_generate",
+              "models/MiniMax-H3",
+              "outputs/empty-still/cuda-quality/quality-ref-8mp",
+              "3872",
+              "2176",
+              "50",
+              "high",
+              "A photograph of the person in image 1, wearing a blue jacket, standing in a sunlit garden.",
+              "tests/fixtures/cuda-reference/portrait.jpg"
+            ],
+            "width": 3872,
+            "height": 2176,
+            "steps": 50,
+            "seed": 42,
+            "reference_size": "high",
+            "seconds": 1553.0699514760636,
+            "returncode": 0,
+            "passed": true,
+            "wall_seconds": 1552.651859,
+            "peak_footprint": 1004982272,
+            "callbacks": 1,
+            "latent_callbacks": 51,
+            "video_T": 1,
+            "auxiliary_audio_T": 2,
+            "target_rows": 8228,
+            "trajectory_sha256": "979c711d474adbafa1884c9b5794801843482e984de0282b4d39dc3beb14267b",
+            "png_sha256": "50096c19e515ff5b2bf8c26f969803c39d99362c4581dac01d64dfed466e13ff",
+            "latent_sha256": "270463aa76061a738ddafb25819108118b9c223c9ae4b88627ee5d62b1c33f2a",
+            "decode_command": [
+              "bin/h3cli",
+              "-d",
+              "models/MiniMax-H3",
+              "--offline",
+              "--decode-still-latent",
+              "outputs/empty-still/cuda-quality/quality-ref-8mp/latent.safetensors",
+              "-o",
+              "outputs/empty-still/cuda-quality/quality-ref-8mp/decoded.png"
+            ],
+            "profile": {
+              "memory_samples": {
+                "DiT block": {
+                  "footprint_bytes": 903839744,
+                  "resident_bytes": 903839744,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 41260752544
+                },
+                "DiT teardown begin": {
+                  "footprint_bytes": 903839744,
+                  "resident_bytes": 903839744,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 41260752544
+                },
+                "DiT teardown end": {
+                  "footprint_bytes": 870285312,
+                  "resident_bytes": 870285312,
+                  "metal_allocated_bytes": 0,
+                  "tensor_live_bytes": 0
+                }
+              },
+              "cuda_profiles": [
+                {
+                  "phase": "CUDA context / complete",
+                  "cumulative_wall_seconds": 0.024,
+                  "peak_device_gib": 0.0
+                },
+                {
+                  "phase": "video VAE encoder / complete",
+                  "cumulative_wall_seconds": 6.788,
+                  "peak_device_gib": 1.05
+                },
+                {
+                  "phase": "Qwen vision encoder / complete",
+                  "cumulative_wall_seconds": 21.509,
+                  "peak_device_gib": 0.742
+                },
+                {
+                  "phase": "Qwen text encoder / complete",
+                  "cumulative_wall_seconds": 27.555,
+                  "peak_device_gib": 3.336
+                },
+                {
+                  "phase": "H3 DiT / load",
+                  "cumulative_wall_seconds": 36.479,
+                  "peak_device_gib": 38.427
+                },
+                {
+                  "phase": "H3 DiT / GPU Euler denoise",
+                  "cumulative_wall_seconds": 1322.991,
+                  "peak_device_gib": 39.581
+                },
+                {
+                  "phase": "H3 DiT / complete",
+                  "cumulative_wall_seconds": 1323.112,
+                  "peak_device_gib": 39.581
+                },
+                {
+                  "phase": "stock still VAE F32 repeat5 frame3 / complete",
+                  "cumulative_wall_seconds": 170.218,
+                  "peak_device_gib": 9.269
+                }
+              ],
+              "denoising_steps": [],
+              "still_delivery": {
+                "cold_load_seconds": 2.257933,
+                "decode_seconds": 167.928344,
+                "png_delivery_seconds": 2.639464
+              }
+            }
+          }
+        ],
+        "binary_sha256": "069bc1f5b8a93e2fe0592614408442d5a00f6129d1a87c757fc8f1b952d791f6",
+        "probe_sha256": "b3280f7f25ace552258b4482da4b7888de2116deeb60b954135b6750a92965f4",
+        "expected_cases": 2,
+        "complete": true
+      }
+    },
+    "oracles": {
+      "256x256": {
+        "passed": true,
+        "mae": 3.9256004432293895e-07,
+        "psnr_db": 125.14629366657006,
+        "max_error": 4.6193599700927734e-06,
+        "seconds": 58.27261873567477,
+        "device": "cuda",
+        "torch": "2.10.0+cu128",
+        "shape": [
+          256,
+          256,
+          3
+        ],
+        "source_sha256": "fd32db0e1fd277fac561c6232323afc53957ed6eb48cc50eca18730a0a6bb0d1",
+        "latent_sha256": "d2925d3e184f2930780e4388bc20c06c77a1ce6e6c1a76e5c080583d5a68c7f0",
+        "candidate_sha256": "fb56bbb7570839ea3af180ccb211e40a7667fae13ceba4f4dc3efeb212f36b48",
+        "script_sha256": "5943cb80b5a9827248d5bf9cfb0e774a6c1b6d39d3188bf8d4b46052fbd038f4",
+        "contract_sha256": "d14eab881f13e5c1446d8d79490417ceb9c0a714b946ea1947ae861d125848bb"
+      },
+      "320x288": {
+        "passed": true,
+        "mae": 2.9754112431503554e-07,
+        "psnr_db": 127.16165269420989,
+        "max_error": 5.3942203521728516e-06,
+        "seconds": 28.643156134989113,
+        "device": "cuda",
+        "torch": "2.10.0+cu128",
+        "shape": [
+          288,
+          320,
+          3
+        ],
+        "source_sha256": "fd32db0e1fd277fac561c6232323afc53957ed6eb48cc50eca18730a0a6bb0d1",
+        "latent_sha256": "9ee8dda0edc09b1dc137392601e8c938a579cc8750b457324efc747caab1a833",
+        "candidate_sha256": "8fddc99b3ac916ca845f081b9aa65cfd7fe6d0fd3127b3e5f7cf0050e9aaa709",
+        "script_sha256": "5943cb80b5a9827248d5bf9cfb0e774a6c1b6d39d3188bf8d4b46052fbd038f4",
+        "contract_sha256": "d14eab881f13e5c1446d8d79490417ceb9c0a714b946ea1947ae861d125848bb"
+      },
+      "288x320": {
+        "passed": true,
+        "mae": 3.0137215853082363e-07,
+        "psnr_db": 127.08985047252804,
+        "max_error": 4.649162292480469e-06,
+        "seconds": 24.177971184253693,
+        "device": "cuda",
+        "torch": "2.10.0+cu128",
+        "shape": [
+          320,
+          288,
+          3
+        ],
+        "source_sha256": "fd32db0e1fd277fac561c6232323afc53957ed6eb48cc50eca18730a0a6bb0d1",
+        "latent_sha256": "f609bcf68927e6f378b4ae025129fba315f87e58191d9452f8bf178dc1104e79",
+        "candidate_sha256": "23ae170348b6ff20f881aada67441daaed2e0c17f99e4132db8239068bae1ccf",
+        "script_sha256": "5943cb80b5a9827248d5bf9cfb0e774a6c1b6d39d3188bf8d4b46052fbd038f4",
+        "contract_sha256": "d14eab881f13e5c1446d8d79490417ceb9c0a714b946ea1947ae861d125848bb"
+      }
+    },
+    "regressions": {
+      "regression-001": {
+        "passed": true,
+        "source_sha256": "8675a7479b05b9ecdf633e40c09347c7bcc3bae9a42ab4c10b39ec762213eec8",
+        "golden_manifest_sha256": "fa6f86cfa9db94b98d599d9044fd22a4a6605191cb48e0b2ca34dd7e022aafe3",
+        "seconds": 140.90653419308364,
+        "total_with_build_seconds": 238.2987115108408,
+        "binary_sha256": {
+          "bin/h3cli": "dadb8aa774bdc8444d84ff51b6467e68c2a7bd74d2dd04a9200165d51a8141c0",
+          "bin/cuda_reference_probe": "31ea0e98657cebfb9d0dd4d246706d6391a1b62d52ecf6ba08d1938048f2e88c",
+          "bin/cuda_sglang_patch_test": "d4da3b1ba35de2e64878bc757a18b3d018485912f4dd23d88b06072b16e4883a",
+          "bin/cuda_sglang_media_input": "91138a0671b0bedc824d52f3977ce0073c83cf8dfd708dc2b0a2eebf4faac01f",
+          "bin/cuda_sglang_vision": "f3593987dfd6836eef8ffd8b70431f37b90d6d811f7ca407931de1575f6f53bd",
+          "bin/cuda_sglang_encoder": "6542f93455f806b12c300776ef1687bc6489fa41b66ae44df57ae41f6221f63d",
+          "bin/cuda_sglang_soundtrack_input": "8b8a1076e27c68286c36c109ab3b997496997ace86a93ee61cc4bcf4cce136e6",
+          "bin/cuda_sglang_audio_encode": "6ae40e4abe2029db435a5b803f289a4e0b2dfdf2886e13597a2ec888a051b601",
+          "bin/cuda_sglang_vae": "c1a231692296b79f524307c301c27ba519c333db36e70782ebafde76efac62f0",
+          "bin/cuda_sglang_audio": "e7d637b7919157d6a2b270dd0e4baa6e9fd1efc51dd513ac26fcc13cef1dbc4a"
+        },
+        "outputs_compared": 204
+      },
+      "regression-final": {
+        "passed": true,
+        "source_sha256": "4a364cf5bbd2cf80de6e73baac76f19fa8ad48bb4e6eec050589da29e811a506",
+        "golden_manifest_sha256": "fa6f86cfa9db94b98d599d9044fd22a4a6605191cb48e0b2ca34dd7e022aafe3",
+        "seconds": 128.33670260338113,
+        "total_with_build_seconds": 222.9787734807469,
+        "binary_sha256": {
+          "bin/h3cli": "a789eebfedc250626bfa468a20828f011ab880f77aad52abc1383620d0e28fcf",
+          "bin/cuda_reference_probe": "fe48f8a92eae6550d61c04e5470e2ce06a127fa420163db66a9a9e05e479d69b",
+          "bin/cuda_sglang_patch_test": "48357f7b267f0bb1b21c6adfbc42eb0d8009ba38bbd77e070d13b5a1a6b1db3d",
+          "bin/cuda_sglang_media_input": "c3a0c816c6da6bd6a47cf3779ac55f6eb76307a51aa2347097f1cd7458f23095",
+          "bin/cuda_sglang_vision": "742fa6992e0dc02bd900c6c5c23388c8b7fe43e29b7e7c0d9cd2a7e4c6a3d68f",
+          "bin/cuda_sglang_encoder": "33dc8e4e13491ac5175c418233719315f7c12aca66f8b0060f39d6e6d74d24c2",
+          "bin/cuda_sglang_soundtrack_input": "565044558db50fc9801253087d9f8c23309654f4fd01ffb5e0cd2f7cec955407",
+          "bin/cuda_sglang_audio_encode": "126bb131cdf54a87a6ab45fd0abc3203c1567aeab403176c328fbba9605b30e9",
+          "bin/cuda_sglang_vae": "f8dc93cbd564ae49d44b19f77a2fe711597c6d4e92199958c711fbf1c0701646",
+          "bin/cuda_sglang_audio": "eeef8ac1b447e497458aecb2a66113581752477ec67f23dea24a16be6d0f7a13"
+        },
+        "outputs_compared": 204
+      },
+      "regression-accepted": {
+        "passed": true,
+        "source_sha256": "7d8bc444805cd0b2fbb6afb990f5f0d5e484e7d9a456deb1ef75524e34d920c0",
+        "golden_manifest_sha256": "fa6f86cfa9db94b98d599d9044fd22a4a6605191cb48e0b2ca34dd7e022aafe3",
+        "seconds": 97.89899484207854,
+        "total_with_build_seconds": 207.2733725789003,
+        "binary_sha256": {
+          "bin/h3cli": "1fbab4a0752897d77db9ddb7b945f384f0bc53d986799e3ac2a56586bee5787f",
+          "bin/cuda_reference_probe": "3b70c9119e0ea737859d047eaae52f5ab1a74030c150844f0899248464056a7e",
+          "bin/cuda_sglang_patch_test": "4fae53825e59e94590940d8dbc7d39dea25285bcd4fa483f09ba554fb0a23c84",
+          "bin/cuda_sglang_media_input": "e67ce037e2f5d30f6f3b5e86c94117742ecbb2bab806e29375ac687834fe487a",
+          "bin/cuda_sglang_vision": "c51bd361ff4364271dcfd79b8466874abab87f9edb67c6802791b9965239fdd8",
+          "bin/cuda_sglang_encoder": "bc7927e9789c4435f305644c50ee8a00c37d07d653453380902d97e33d7bc8bf",
+          "bin/cuda_sglang_soundtrack_input": "8d60d8dc5679ba399522c26b52d5ad571e093cbbebd072d341087861915fc454",
+          "bin/cuda_sglang_audio_encode": "8e430ecf60d988379fc4ade5b94d93dea8b13a24f3d642415fe84c96f871616f",
+          "bin/cuda_sglang_vae": "cf3244c36612ce6a0af2a7c6d10154fd1c35b5ff832cee71675a5dfe9ed60ae8",
+          "bin/cuda_sglang_audio": "f4c2d9b6beddaeb073a10c377dec6b68325fbf3f992eba3f3a5da37400c83d5c"
+        },
+        "outputs_compared": 204
+      },
+      "standalone": {
+        "passed": true,
+        "source_sha256": "7d8bc444805cd0b2fbb6afb990f5f0d5e484e7d9a456deb1ef75524e34d920c0",
+        "golden_manifest_sha256": "fa6f86cfa9db94b98d599d9044fd22a4a6605191cb48e0b2ca34dd7e022aafe3",
+        "seconds": 122.25091105699539,
+        "binary_sha256": {
+          "bin/h3cli": "135407cc74a59cd169ed57ebb068d5fcb4e02a4e49ab8443cdd755f80fb03924",
+          "bin/cuda_reference_probe": "324220b255da533e081146197943520b877dcf2be1b29e947e79663f20deb216",
+          "bin/cuda_sglang_patch_test": "49e7997b289c30e67ffe8f189ca6e7eeffe97d9e6d414934aed273b73deefb6d",
+          "bin/cuda_sglang_media_input": "129cda1e7424bdd56c46ea8edae76822af39265709ce057831365c8150c40bbd",
+          "bin/cuda_sglang_vision": "b372725168fd1eb04d1867ee253251a673ffbcce74ac4f69d53256ab5a4f843a",
+          "bin/cuda_sglang_encoder": "1af36b62c08603da8f7009a59c0b45b828af8fcf70cd214186550047b742e7d6",
+          "bin/cuda_sglang_soundtrack_input": "b5206e4e9a7c86d1c18c133405df694225c92763886f163c8e7e59035df63516",
+          "bin/cuda_sglang_audio_encode": "488c18dabecce0281980c5e4a8c4d3e7bd90e2c1bc7a9d4827e8b25b54255471",
+          "bin/cuda_sglang_vae": "a33a287e05ec484f2577d66401fc82b66f16c3ea7aaa651ec288ea34f4181727",
+          "bin/cuda_sglang_audio": "925a69722f050f8c982d7afa20315c4ec3ad9ab7e0dba2070ec06a616cba6516"
+        },
+        "outputs_compared": 204
+      }
+    },
+    "package": {
+      "schema": 1,
+      "source_sha256": "7d8bc444805cd0b2fbb6afb990f5f0d5e484e7d9a456deb1ef75524e34d920c0",
+      "snapshot_sha256": "7e7335f02f46039ddb7a713650b2e3053d19df887fb6ee116a05aa4a1dc1b358",
+      "compiled_features": {
+        "cudnn": true,
+        "sage": true,
+        "sglang": true,
+        "sol": true,
+        "subblock": true
+      },
+      "artifacts": {
+        "h3cli-linux-x86_64": {
+          "sha256": "135407cc74a59cd169ed57ebb068d5fcb4e02a4e49ab8443cdd755f80fb03924",
+          "size": 1309541766
+        }
+      },
+      "toolchain": {
+        "compiler": "gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0",
+        "nvcc": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Wed_Aug_20_01:58:59_PM_PDT_2025\nCuda compilation tools, release 13.0, V13.0.88\nBuild cuda_13.0.r13.0/compiler.36424714_0",
+        "linker": "GNU ld (GNU Binutils for Ubuntu) 2.38"
+      },
+      "features": {
+        "passed": true,
+        "binary_sha256": "135407cc74a59cd169ed57ebb068d5fcb4e02a4e49ab8443cdd755f80fb03924",
+        "checks": [
+          {
+            "name": "text-full",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 40.454414379782975
+          },
+          {
+            "name": "preview",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 29.771085670683533
+          },
+          {
+            "name": "first-last",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 37.299177564214915
+          },
+          {
+            "name": "references",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 101.37595284869894
+          },
+          {
+            "name": "still",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 47.783915605861694
+          },
+          {
+            "name": "still-decode",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 4.5295318509452045
+          },
+          {
+            "name": "av-decode",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 5.58343034889549
+          },
+          {
+            "name": "av-preview-decode",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 2.120985551737249
+          },
+          {
+            "name": "conditioning",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 23.036648210138083
+          },
+          {
+            "name": "minimal-av-decode",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 5.533379676751792
+          },
+          {
+            "name": "continue-hard",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 41.463336003012955
+          },
+          {
+            "name": "continue-bridge",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 32.57602306175977
+          },
+          {
+            "name": "sampler-uninterrupted",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 31.525340145919472
+          },
+          {
+            "name": "sampler-pause",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 29.020609345752746
+          },
+          {
+            "name": "sampler-resume",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 14.314967865124345
+          },
+          {
+            "name": "upscale",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 27.904589768033475
+          },
+          {
+            "name": "upscale-pause",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 20.93499175598845
+          },
+          {
+            "name": "upscale-resume",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 19.579864003695548
+          },
+          {
+            "name": "server-cli-equivalent",
+            "passed": true,
+            "returncode": 0,
+            "wall_seconds": 30.882418259046972
+          }
+        ],
+        "comparisons": {
+          "still-roundtrip": true,
+          "av-roundtrip": true,
+          "minimal-av-roundtrip": true,
+          "sampler-roundtrip": true,
+          "upscale-roundtrip": true,
+          "server-cold-offline": true,
+          "server-cli": true
+        },
+        "server_passed": true
+      },
+      "current": {
+        "complete": true,
+        "passed": true,
+        "binary_sha256": "135407cc74a59cd169ed57ebb068d5fcb4e02a4e49ab8443cdd755f80fb03924",
+        "checks": [
+          {
+            "name": "cow-lora-runtime",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 4.62732281954959
+          },
+          {
+            "name": "bridge-cli",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 5.331825839355588
+          },
+          {
+            "name": "feature-integration",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 1034.9229052513838
+          },
+          {
+            "name": "option-matrix",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 1.4728028778918087
+          },
+          {
+            "name": "attention-failures",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 0.7175274253822863
+          },
+          {
+            "name": "sol-context",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 0.7182332202792168
+          },
+          {
+            "name": "subblock-context",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 1.720235866960138
+          },
+          {
+            "name": "conditioning-context",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 91.605098081287
+          },
+          {
+            "name": "subblock-conditioning-context",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 161.07886783406138
+          },
+          {
+            "name": "residency-context",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 594.2245899159461
+          },
+          {
+            "name": "full-vae-gpu",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 0.47458045091480017
+          },
+          {
+            "name": "still-gpu",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 0.4165289970114827
+          },
+          {
+            "name": "patch-operators",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 13.306861168239266
+          },
+          {
+            "name": "cuda-memory",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 142.62403595913202
+          },
+          {
+            "name": "current-state-crop",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 0.16579471714794636
+          },
+          {
+            "name": "vae-lifetime",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 6.1369404857978225
+          },
+          {
+            "name": "decode-failure-recovery",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 12.259294665884227
+          },
+          {
+            "name": "policy-context",
+            "passed": true,
+            "returncode": 0,
+            "seconds": 0.7173971151933074
+          }
+        ]
+      },
+      "offline_acceptance_passed": true
+    },
+    "minimal_models": {
+      "source": {
+        "passed": true,
+        "binary_sha256": "2aa9bfd86c690cb94911082e4a9d7aebbcd8acae58a6d5f7e1f1b5fb8e6b0473",
+        "model_files_per_variant": 53,
+        "codec_files_per_variant": 3,
+        "checks": [
+          {
+            "name": "FL2VA-generate",
+            "returncode": 0,
+            "seconds": 55.05659641325474,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-decode",
+            "returncode": 0,
+            "seconds": 3.797508061863482,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-video-missing-audio",
+            "returncode": 1,
+            "seconds": 0.12379226321354508,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-partial-audio-info",
+            "returncode": 0,
+            "seconds": 0.3872637990862131,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-missing-vae-config",
+            "returncode": 1,
+            "seconds": 0.11381929414346814,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-generate",
+            "returncode": 0,
+            "seconds": 64.18472515186295,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-decode",
+            "returncode": 0,
+            "seconds": 3.944305378012359,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-video-missing-audio",
+            "returncode": 1,
+            "seconds": 0.1233602287247777,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-partial-audio-info",
+            "returncode": 0,
+            "seconds": 0.35170472832396626,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-missing-vae-config",
+            "returncode": 1,
+            "seconds": 0.12042041588574648,
+            "passed": true
+          }
+        ]
+      },
+      "standalone": {
+        "passed": true,
+        "binary_sha256": "135407cc74a59cd169ed57ebb068d5fcb4e02a4e49ab8443cdd755f80fb03924",
+        "model_files_per_variant": 53,
+        "codec_files_per_variant": 3,
+        "checks": [
+          {
+            "name": "FL2VA-generate",
+            "returncode": 0,
+            "seconds": 49.49606531113386,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-decode",
+            "returncode": 0,
+            "seconds": 3.9157923976890743,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-video-missing-audio",
+            "returncode": 1,
+            "seconds": 0.1470071729272604,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-partial-audio-info",
+            "returncode": 0,
+            "seconds": 0.37556916289031506,
+            "passed": true
+          },
+          {
+            "name": "FL2VA-missing-vae-config",
+            "returncode": 1,
+            "seconds": 0.1484659919515252,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-generate",
+            "returncode": 0,
+            "seconds": 66.89501789258793,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-decode",
+            "returncode": 0,
+            "seconds": 3.540672146715224,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-video-missing-audio",
+            "returncode": 1,
+            "seconds": 0.1462329998612404,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-partial-audio-info",
+            "returncode": 0,
+            "seconds": 0.36602693889290094,
+            "passed": true
+          },
+          {
+            "name": "Ref2VA-missing-vae-config",
+            "returncode": 1,
+            "seconds": 0.14552955329418182,
+            "passed": true
+          }
+        ]
+      }
+    }
+  }
+}

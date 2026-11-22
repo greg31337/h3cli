@@ -188,18 +188,20 @@ class Native(unittest.TestCase):
   for q in ('lossless','extra-high','high','preview','fast-preview'):
    p=self.plan('-p','x','--quality',q);self.assertEqual(any('taeh3' in a['path'] for a in p),q in ('preview','fast-preview'))
    p=self.plan('-p','x','--quality',q,'--no-preview-vae');self.assertFalse(any('taeh3' in a['path'] for a in p))
-  for flag,group in (('preview-vae-model','preview'),('image-vae','image-vae'),('upscale-model','upscale')):
+  for flag,group in (('preview-vae-model','preview'),('upscale-model','upscale')):
    for order in (['--'+flag,str(self.root/'explicit'),'--download-models',group],['--download-models',group,'--'+flag,str(self.root/'explicit')]):
     p=self.plan(*order);self.assertEqual(len(p),1);self.assertEqual(p[0]['destination'],str((self.root/'explicit').resolve()))
    p=self.plan('--download-models',group);self.assertIn('/shared root/',p[0]['destination'])
-  p=self.plan('--download-models','all','-d',str(self.root/'custom'));self.assertEqual(len(p),119)
+  p=self.plan('--download-models','all','-d',str(self.root/'custom'));self.assertEqual(len(p),118)
   self.assertTrue(any('/shared root/preview-vae/' in a['destination'] for a in p))
   self.plan('--download-models','',good=False);self.plan('--download-models','base,',good=False);self.plan('--download-models','base','-p','x',good=False)
   self.assertEqual(self.plan('--info'),[]);self.assertEqual(self.plan('--help'),[])
   self.plan('--resume-sampler-state',str(self.root/'missing'),good=False)
   for opt in ('continue-from','load-conditioning'):
    self.assertTrue(self.plan('-p','x','--'+opt,'state'))
-  self.assertTrue(any('image_vae' in a['path'] for a in self.plan('--still','-p','x')))
+  self.assertFalse(any('image_vae' in a['path'] or '/audio_vae/' in a['path'] for a in self.plan('--still','-p','x')))
+  self.plan('--download-models','image-vae',good=False)
+  self.plan('--image-vae','retired',good=False)
   self.assertFalse(any('taeh3' in a['path'] for a in self.plan('-p','x','--show')))
  def test_root_selection(self):
   root=self.root/'shared root';root.mkdir();old=root/'MiniMax-H3';old.mkdir()
@@ -219,7 +221,14 @@ class Native(unittest.TestCase):
    state.with_name(state.name+'.presentation').write_text('H3-PRESENTATION 9\nstate '+'0'*64+'\nvariant '+str(ref)+'\n')
    p=self.plan('--decode-av-state',str(state));self.assertEqual(len(p),8);self.assertTrue(all(i['path'].startswith('Ref2VA/' if ref else 'FL2VA/') for i in p))
    self.assertEqual(len(self.plan('--decode-av-state',str(state),'--preview-vae')),9)
-  self.assertEqual(len(self.plan('--decode-still-latent','latent')),1)
+  from still_host import sparse_checkpoint
+  from test_still_metadata import BASE
+  latent=self.root/'still.safetensors'
+  for variant in ('FL2VA','Ref2VA'):
+   header=copy.deepcopy(BASE);header['__metadata__']['h3_model_variant']=variant;sparse_checkpoint(latent,header)
+   plan=self.plan('--decode-still-latent',str(latent));self.assertEqual(len(plan),3)
+   self.assertTrue(all(item['path'].startswith(variant+'/video_vae/') for item in plan))
+  self.plan('--decode-still-latent','missing',good=False)
   self.assertEqual(len(self.plan('-p','x','--state-only','--save-av-state','out')),57)
   self.assertEqual(len(self.plan('-p','x','--first-frame','first','--last-frame','last')),57)
  def test_catalog_validation(self):

@@ -149,3 +149,19 @@ slower than the recorded benchmarks.
 Firm lower-memory requirements still need qualification on physical 12/16 GB
 CUDA GPUs with constrained host RAM and a 32 GB Mac using SSD streaming.
 Allocation-limit tests on larger machines do not establish those guarantees.
+
+## Stock-VAE still images
+
+Still geometry has a separate limit: 16,777,216 pixels, at most 8192 per side,
+and multiples of 32. A 3872×2176 target denoises 8,228 visual rows plus text,
+reference and four audio rows. Reference `high`/`max` preprocessing can cost
+more than increasing the output canvas; it does not shrink to the target.
+
+The stock still decoder uses F32 weights and a fixed five-token 256/64 tile
+profile, about 9.27 GiB of tracked device allocations, plus one output canvas
+and delivery buffers. It releases the completed DiT before loading the decoder.
+The existing 110 GB process guard and device weight/memory planners remain
+active. See the [replacement qualification record](features/empty-still-results.md)
+for measured Apple M4 Max 128 GiB and RTX PRO 5000 72 GB timings, phase memory,
+and the resolutions actually tested. The geometry limit is not a promise that
+every admitted request fits every machine.

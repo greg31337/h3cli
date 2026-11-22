@@ -1,5 +1,6 @@
 #include "src/memory.h"
 #include "src/media/ffmpeg.h"
+#include "src/vae/image_vae.h"
 #include "src/sglang/sglang.h"
 
 #include <errno.h>
@@ -758,7 +759,8 @@ int h3_ffmpeg_write_av_rgb24_f32(const char *path, const uint8_t *frames,
 int h3_ffmpeg_write_png(const char *path,const uint8_t *rgb,int width,int height,
     char *error,size_t size) {
     if(!path || !*path || !rgb || width<1 || height<1 ||
-        (uint64_t)(unsigned)width*(unsigned)height>UINT64_C(1032192)) {
+        width>H3_STILL_MAX_DIMENSION || height>H3_STILL_MAX_DIMENSION ||
+        (uint64_t)(unsigned)width*(unsigned)height>H3_STILL_MAX_PIXELS) {
         fail(error,size,"invalid still PNG arguments");return 0;
     }
     if(!make_parents(path,error,size))return 0;

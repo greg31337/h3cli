@@ -31,7 +31,7 @@ class CLI(unittest.TestCase):
                 (['-d', missing, '--info'], missing),
                 (['-d', missing, '--resume-sampler-state', missing], 'h3sample: cannot open state'),
                 (['-d', missing, '--decode-av-state', missing], 'cannot open h3av state'),
-                (['--decode-still-latent', missing, '--image-vae', missing], missing),
+                (['--decode-still-latent', missing], missing),
             ]
             for args, diagnostic in operations:
                 with self.subTest(args=args):

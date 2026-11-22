@@ -55,7 +55,7 @@ DMG, and use Terminal. Nothing modifies PATH, shell profiles or model locations.
 ```
 
 `--models-path` defaults to `models/` in the current working directory;
-`MiniMaxH3` (with existing `MiniMax-H3` fallback), preview VAE, image VAE and
+`MiniMaxH3` (with existing `MiniMax-H3` fallback), preview VAE and
 upscaler lookup retain their existing rules. `-d` and explicit auxiliary paths
 retain precedence. Missing catalog models download automatically; `--offline`
 or `H3_OFFLINE=1` prohibits this. Existing tokens, proxy and CA controls work.

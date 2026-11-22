@@ -1,39 +1,59 @@
 #!/usr/bin/env python3
-"""Sparse adversarial artifacts test parsing without reading model payloads."""
-import copy,json,subprocess,tempfile,unittest
-from still_host import HEADER, sparse_checkpoint
+"""Adversarial schema-2 still artifacts and retired-checkpoint role checks."""
+import copy
+import json
+import struct
+import subprocess
+import tempfile
+import unittest
 from pathlib import Path
-BASE=json.loads(HEADER.read_text())
+from still_host import HEADER, sparse_checkpoint
+
+BASE = {'__metadata__': {'h3_still_schema':'2','h3_latent_space':'h3-normalized-v1',
+        'h3_vae_compatibility':'a'*64,'h3_decoder_recipe':'stock-video-repeat5-frame3-f32-v1','h3_model_variant':'FL2VA'},
+        'latent':{'dtype':'F32','shape':[1,24,1,2,4],'data_offsets':[0,24*2*4*4]}}
 class Metadata(unittest.TestCase):
- def check(self,h,valid=False,truncate=False):
-  with tempfile.TemporaryDirectory(prefix='h3-still-metadata-') as d:
-   p=Path(d)/'image.safetensors';sparse_checkpoint(p,h,truncate)
-   r=subprocess.run(['./bin/still_probe','validate',str(p)],capture_output=True,text=True)
-   self.assertEqual(r.returncode==0,valid,r.stderr)
- def test_valid(self):self.check(BASE,True)
- def test_truncated(self):self.check(BASE,truncate=True)
- def test_missing(self):
-  for k in ['h3_t1_direct','h3_t1_format','h3_t1_output_slice','minimax_h3_video_vae']:
-   h=copy.deepcopy(BASE);del h['__metadata__'][k];self.check(h)
- def test_whitening(self):
-  for key,index,value in [('latents_mean',0,'NaN'),('latents_std',0,0),('latents_std',2,-1),('latents_std',0,1e300)]:
-   h=copy.deepcopy(BASE);c=json.loads(h['__metadata__']['minimax_h3_video_vae']);c[key][index]=value;h['__metadata__']['minimax_h3_video_vae']=json.dumps(c);self.check(h)
- def test_architecture(self):
-  for k,v in [('causal_encoder',False),('use_3d_conv',False),('vae_ratio',32),('pixel_norm_type','none'),('embed_dim',25),('zq_ch_encoder',48),('padding_mode_t','replicate')]:
-   h=copy.deepcopy(BASE);c=json.loads(h['__metadata__']['minimax_h3_video_vae']);c['source_config'][k]=v;h['__metadata__']['minimax_h3_video_vae']=json.dumps(c);self.check(h)
- def test_shape(self):
-  h=copy.deepcopy(BASE);h['decoder.proj_out.weight']['shape'][0]=2**63;self.check(h)
- def test_role(self):
-  with tempfile.TemporaryDirectory(prefix='h3-still-role-') as d:
-   p=Path(d)/'image.safetensors';sparse_checkpoint(p,BASE)
-   r=subprocess.run(['./bin/still_probe','store',d],capture_output=True,text=True);self.assertNotEqual(r.returncode,0);self.assertIn('image-only',r.stderr)
- def test_coexisting_and_duplicates(self):
-  original={'weight':{'dtype':'F32','shape':[1],'data_offsets':[0,4]}}
-  with tempfile.TemporaryDirectory(prefix='h3-still-role-') as d:
-   p=Path(d);sparse_checkpoint(p/'a.safetensors',original)
-   r=subprocess.run(['./bin/still_probe','store',d],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stderr)
-   sparse_checkpoint(p/'b.safetensors',original)
-   r=subprocess.run(['./bin/still_probe','store',d],capture_output=True,text=True);self.assertNotEqual(r.returncode,0);self.assertIn('duplicate',r.stderr)
-   (p/'b.safetensors').unlink();sparse_checkpoint(p/'b.safetensors',BASE)
-   r=subprocess.run(['./bin/still_probe','store',d],capture_output=True,text=True);self.assertNotEqual(r.returncode,0);self.assertIn('image-only',r.stderr)
+    def check(self, header, valid=False, truncate=False):
+        with tempfile.TemporaryDirectory(prefix='h3-still-metadata-') as directory:
+            path=Path(directory)/'latent.safetensors'
+            sparse_checkpoint(path,header,truncate)
+            result=subprocess.run(['./bin/still_probe','validate',str(path)],capture_output=True,text=True)
+            self.assertEqual(result.returncode==0,valid,result.stderr)
+    def test_valid(self):
+        for variant in ('FL2VA','Ref2VA'):
+            header=copy.deepcopy(BASE);header['__metadata__']['h3_model_variant']=variant;self.check(header,True)
+    def test_missing(self):
+        for key in BASE['__metadata__']:
+            header=copy.deepcopy(BASE);del header['__metadata__'][key];self.check(header)
+    def test_metadata(self):
+        for key,value in (('h3_still_schema','1'),('h3_decoder_recipe','direct-t1'),('h3_model_variant','other'),('h3_latent_space','raw'),('h3_vae_compatibility','g'*64)):
+            header=copy.deepcopy(BASE);header['__metadata__'][key]=value;self.check(header)
+    def test_shapes_and_dtype(self):
+        for index,value in ((0,2),(1,23),(2,5),(3,3),(4,2**63)):
+            header=copy.deepcopy(BASE);header['latent']['shape'][index]=value;self.check(header)
+        header=copy.deepcopy(BASE);header['latent']['dtype']='F16';self.check(header)
+        self.check(BASE,truncate=True)
+    def test_nonfinite(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'nan.safetensors';sparse_checkpoint(path,BASE)
+            with path.open('r+b') as file:
+                length=struct.unpack('<Q',file.read(8))[0];file.seek(8+length);file.write(struct.pack('<f',float('nan')))
+            self.assertNotEqual(subprocess.run(['./bin/still_probe','validate',str(path)],capture_output=True).returncode,0)
+    def test_normalization_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config=Path(directory)/'FL2VA/video_vae/config.json';config.parent.mkdir(parents=True)
+            (config.parent/'source').mkdir()
+            def inspect(mean, std):
+                config.write_text(json.dumps(dict(latents_mean=mean,latents_std=std)))
+                return subprocess.run(['./bin/still_probe','inspect',directory],capture_output=True,text=True)
+            a=inspect([0]*24,[1]*24);b=inspect([.01]*24,[1]*24)
+            self.assertEqual(a.returncode,0,a.stderr);self.assertEqual(b.returncode,0,b.stderr)
+            self.assertNotEqual(a.stdout,b.stdout)
+            self.assertNotEqual(inspect([0]*23,[1]*24).returncode,0)
+            self.assertNotEqual(inspect([0]*24,[0]*24).returncode,0)
+    def test_retired_weight_role(self):
+        with tempfile.TemporaryDirectory() as directory:
+            sparse_checkpoint(Path(directory)/'old.safetensors',json.loads(HEADER.read_text()))
+            result=subprocess.run(['./bin/still_probe','store',directory],capture_output=True,text=True)
+            self.assertNotEqual(result.returncode,0);self.assertIn('image-only',result.stderr)
 if __name__=='__main__':unittest.main()

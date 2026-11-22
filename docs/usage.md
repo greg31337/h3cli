@@ -580,3 +580,14 @@ Reference flags may be repeated and their command-line order is preserved.
 Standalone audio must accompany an image or video reference. Audio references
 must be 2–15 seconds; at most three audio inputs are accepted and their total
 decoded duration is capped at 15 seconds.
+
+## Single still images
+
+Use `--still --width 3872 --height 2176 --steps 50` for a native 8 MP image.
+The stock H3 video VAE decodes five copies of the sampled T=1 latent and selects
+raw frame 3; no dedicated image checkpoint is needed. Limits are 16,777,216
+pixels, 8192 per side, and multiples of 32. The existing Euler sampler remains.
+Save with `--save-still-latent FILE` and decode with
+`--decode-still-latent FILE -d MODEL_DIR -o image.png`. Schema 1 and `--image-vae`
+are retired. See the [still guide](features/single-still.md) for API migration,
+references, exclusions and measured hardware limits.

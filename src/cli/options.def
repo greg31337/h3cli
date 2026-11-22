@@ -40,7 +40,7 @@ H3_OPTION("lora-memory-mib", OPT_LORA_MEMORY, 1, U64, NONE, 0, "lora-memory-mib"
 H3_OPTION("preview-vae", OPT_PREVIEW_VAE, 0, BOOL, NONE, 0, "preview", 0, 1.7976931348623157e308, NULL, "false", "all", "generation")
 H3_OPTION("preview-vae-model", OPT_PREVIEW_VAE_MODEL, 1, STRING, MODEL, 0, "preview-vae-model", 0, 1.7976931348623157e308, NULL, "models/preview-vae/taeh3.safetensors", "all", "all")
 H3_OPTION("decode-still-latent", OPT_DECODE_STILL, 1, STRING, STATE, 0, "decode-still-latent", 0, 1.7976931348623157e308, NULL, NULL, "all", "generation")
-H3_OPTION("image-vae", OPT_IMAGE_VAE, 1, STRING, MODEL, 0, "image-vae", 0, 1.7976931348623157e308, NULL, "models/image-vae/minimax_h3_t1_image_vae_step1597.safetensors", "all", "all")
+H3_OPTION("image-vae", OPT_IMAGE_VAE, 1, STRING, MODEL, 0, "image-vae", 0, 1.7976931348623157e308, NULL, NULL, "all", "all")
 H3_OPTION("still", OPT_STILL, 0, BOOL, NONE, 0, "still", 0, 1.7976931348623157e308, NULL, "false", "all", "generation")
 H3_OPTION("save-still-latent", OPT_SAVE_STILL, 1, STRING, OUTPUT, 0, "save-still-latent", 0, 1.7976931348623157e308, NULL, NULL, "all", "all")
 H3_OPTION("decode-av-state", OPT_DECODE_AV_STATE, 1, STRING, STATE, 0, "decode-av-state", 0, 1.7976931348623157e308, NULL, NULL, "all", "generation")
