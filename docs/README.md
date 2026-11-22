@@ -56,8 +56,14 @@ that path with your downloaded executable when using a release package.
 
 ## Development and releases
 
-- [Current implementation tasks](todo.md): replace still generation's dedicated
-  image VAE with the stock video VAE and support native 8 MP output.
+- [Current implementation tasks](todo.md): CUDA rendering to 1920×1088 and
+  learned 2× upscaling to 3840×2176, with short tests on the 72 GB card,
+  continuation tests capped at 1344×768, maximum-resolution upscale tests at
+  22/39 frames, and
+  [memory estimates](cuda/large-canvas-memory-estimates.md).
+- [Completed empty-latent still milestone](empty-still-todo.md): stock video
+  VAE decoding and native 8 MP output, with
+  [acceptance evidence](features/empty-still-results.md).
 - [Completed rendering milestone](render-integration-todo.md): built-in text-script rendering,
   script-wide merging and structured prompt inheritance, with
   [acceptance evidence](features/render-integration-results.md).

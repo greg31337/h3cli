@@ -1,278 +1,435 @@
-# Replace `--still` with empty-latent generation and stock video VAE decoding
+# CUDA rendering to 1920×1088 and learned 2× upscaling to 3840×2176
 
-Status: **complete — 20/20 tasks complete**.
-Updated 2026-11-21.
+Status: **planned — 0/24 tasks complete**.
+Updated **2026-11-22**.
 
-Replace the current dedicated-image-VAE implementation of `--still` with the
-single-image technique supported by ComfyUI's standard `Empty Latent Image`
-and `VAE Decode` nodes. Generate directly at the requested resolution,
-including **3872×2176 (8,425,472 pixels)**, using the existing H3 FL2VA/Ref2VA
-weights and stock video VAE. Keep one PNG as the public result.
+Extend ordinary CUDA video generation, including `--render`, to
+**1920×1088 (2,088,960 pixels)**. Extend the current learned spatial 2×
+upscaler to accept that source and deliver **3840×2176 (8,355,840 pixels)**,
+including its existing K=0/2/3/4 refinement choices. New larger-canvas
+capabilities are **CUDA-only**. Development video tests must be **at most
+three seconds**, including sources, references, decode-only runs and final
+concatenated script output. Required CUDA acceptance must fit the existing
+**RTX PRO 5000 72 GB**: use **22 frames by default**, and **39 frames only
+after memory preflight**. Reserve 56 frames for the minimum valid native
+continuation/bridge case described below; do not use it for upscale acceptance.
 
-The completed **8/8 integrated text-script rendering milestone** is
-[archived intact](render-integration-todo.md), with its
-[acceptance evidence](features/render-integration-results.md). The original
-[still implementation tasks](features/single-still-tasks.md),
-[sampling contract](features/single-still-generation-contract-v1.md) and
-[results](features/single-still-results.md) remain historical evidence for the
-implementation being replaced. The [replacement acceptance record](features/empty-still-results.md)
-tracks current verification and resource measurements.
+**Continuation/bridge runtime tests are capped at 1344×768.** This covers
+their source, sampled/context and delivered canvases, including saved-state
+replay and decode-only tests. Allow the portrait transpose with the same
+bounds: long axis ≤1344, short axis ≤768, area ≤1,032,192 pixels. Larger
+continuation paths receive host-only shape/index/state/allocation checks;
+their end-to-end behavior remains **unverified**.
 
-## Implementation baseline and replacement scope
+**Upscaling must be tested to the maximum 3840×2176 output**, or its transpose,
+from native 1920×1088 sources: use **22 frames**, or **39 after preflight**.
+This includes K=0/2/3/4, saved-state replay and full decoding. The continuation
+resolution cap does not apply to these upscale jobs. Direct native 1920×1088
+rendering also remains in the runtime matrix.
 
-The previous implementation already sampled a single video latent frame and two auxiliary
-audio positions in [engine.c](../src/engine.c), using
-`h3_still_layout_build` in [host.c](../src/host.c). Reuse this foundation.
-The principal changes are decoder selection, high-resolution admission,
-resource handling and the associated CLI/model/artifact contracts.
+The completed **20/20 empty-latent still milestone** is
+[archived byte-for-byte](empty-still-todo.md), with its
+[acceptance report](features/empty-still-results.md). Existing
+[upscale tasks](experiments/latent-upscale-tasks.md),
+[results](experiments/latent-upscale-results.md) and
+[format contract](features/upscale-source-format.md) remain the baseline.
+This document plans implementation; it does not claim new runtime support.
 
-| Area | Previous behavior | Replacement requirement |
-| --- | --- | --- |
-| Denoising target | Video `[1,24,1,H/16,W/16]`, audio `[1,32,2,2]` | Retain these shapes and generate at the final canvas |
-| Final decoder | Dedicated `minimax_h3_t1_image_vae_step1597.safetensors`, direct T=1 decode | Stock video VAE, five copies of the generated latent, raw decoded frame index 3 |
-| Output dimensions | Shared 768×1344 / 1,032,192-pixel limit | Separate checked still limits admitting at least 3872×2176 and its transpose |
-| Model dependency | Automatic image-VAE download and `--image-vae` selection | Use the normal model directory and stock video VAE; retire the dedicated checkpoint requirement |
-| Saved still | Schema 1 with dedicated image-encoder/whitening digest | Explicit stock-VAE compatibility and decoder recipe, with a documented old-artifact policy |
+## Scope and acceptance contract
 
-The ordinary video decoder is not a drop-in T=1 API: its public temporal
-paths expect `T=5*k+2`, normally at least seven tokens. The dedicated image path
-uses different weights and T=1 positions. Neither assumption establishes the
-required five-token stock-VAE decode; implement and validate that case explicitly
-in [video_vae.c](../src/vae/video_vae.c).
+- Native generation uses the requested canvas directly. CUDA accepts the new
+  area ceiling with a maximum 1920-pixel axis for the extended profile,
+  including portrait transpose. Preserve already valid legacy canvases.
+  Dimensions stay positive multiples of 32; existing 24 FPS and frame-grid
+  rules remain. Native generation above this ceiling is outside this milestone.
+- The existing pinned learned network doubles both source axes, with output
+  area at most 8,355,840 pixels and axes at most 3840, including portrait.
+  Time and source audio are unchanged. Support K=0 and existing K=2/3/4
+  refinement, seeded noise, save/resume and full VAE delivery. This does not
+  introduce temporal upscaling, a replacement network or pixel-only enlargement.
+- New source and target profiles must be explicit and checked before expensive
+  allocation. Keep legacy profile/artifact meanings stable; do not globally
+  raise `H3_MAX_PIXELS` or reuse the existing upscale-only policy as an ordinary
+  generation shortcut. Extended ordinary generation needs its own policy.
+- Metal retains its current native/still/upscale capabilities. Reject only the
+  new CUDA-only capabilities on Metal, before model loading or large allocation,
+  including when reached through saved states, decode-only or server requests.
+  Do not disable the already supported Metal 2× upscaler.
+- Cover prompt-only and existing supported conditioning, native continuation
+  and bridge/script behavior. Extend previews for native 1920×1088. Upscaling
+  retains its current full-VAE requirement and existing unsupported-option
+  checks; this milestone does not promise new LoRA, quantization, cache or
+  attention-mode combinations merely because a larger canvas is accepted.
+- Preserve the current learned arithmetic, full temporal/spatial normalization,
+  global attention, source conditioning ownership and audio preservation.
+  Safe row batching may bound independent work; splitting the model into
+  independently normalized/attended temporal or spatial tiles is not equivalent.
+- Support long-duration geometry and safe admission through the existing
+  362-frame ceiling. A valid shape still requires sufficient memory. Do not
+  silently resize, drop references/refinement, lower depth or shorten duration.
 
-## Source evidence and execution contract
+## Memory planning: 5, 10 and 15 seconds
 
-[ComfyUI PR #15677](https://github.com/Comfy-Org/ComfyUI/pull/15677), merged
-2026-08-17, adds model-specific adaptation of an empty image latent into H3
-video/audio streams. Its
-[change at `d937b223d58ebe1c30156d725b6b15761208607c`](https://github.com/Comfy-Org/ComfyUI/pull/15677/commits/d937b223d58ebe1c30156d725b6b15761208607c)
-and [sampling preparation](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/sample.py)
-explain why the generic four-channel image node can be used. Native h3cli can
-construct the final H3 shapes directly; it needs no ComfyUI node runtime or
-intermediate four-channel allocation.
+The [memory estimate and derivation](cuda/large-canvas-memory-estimates.md)
+contains tensor counts, measured baselines, empirical extrapolations, host RAM,
+decoder storage and current indexing barriers. Values below are conservative
+**capacity budgets in GiB**, including planner reserve; they are **not measured
+new peaks**. Assume dense BF16, all 50 blocks, 512 text rows, no references,
+streamed full-VAE delivery and no approximation caches.
 
-The [stock H3 VAE source](https://github.com/Comfy-Org/ComfyUI/blob/master/comfy/ldm/minimax/vae.py),
-inspected on 2026-11-21, unwhitens the latent, repeats a T=1 input over its
-five-token chunk, selects raw pixel frame 3, and finalizes pixels. This is the
-stock-video branch; dedicated image VAEs have separate handling. Pin the exact
-source revision and reference fixtures in ELS001 before implementation.
+| Requested duration | Aligned frames / actual duration | Native 1920×1088: resident / streamed | 2× upscale K=0, later job only | 2× upscale K=2/3/4: resident / streamed |
+| --- | --- | ---: | ---: | ---: |
+| 5 s | 124 / 5.167 s | 72 / 34 GiB | 8 GiB | 156 / 118 GiB |
+| 10 s | 243 / 10.125 s | 99 / 60 GiB | 13 GiB | 262 / 224 GiB |
+| 15 s | 362 / 15.083 s | 125 / 87 GiB | 18 GiB | 368 / 330 GiB |
 
-The replacement contract is:
+K=0 omits transformer refinement. An end-to-end source→K=0 workflow requires
+the larger of the source-generation and later-job peaks. Partial residency lies
+between the two weight modes. The 5–15 second refined upscale budgets exceed
+the current 72 GB test GPU even with fully streamed weights; source-duration
+and memory admission must remain separate from geometric support.
 
-- Batch size one, target video T=1 and auxiliary audio T=2. An empty latent
-  specifies target geometry; generation still starts from seeded noise and
-  samples both streams. Discard generated audio without loading an audio VAE.
-- Denoise only the single target latent. Temporal replication happens during
-  final decoding, after sampling. Save the original normalized T=1 latent.
-- Decode with the ordinary H3 video weights and their normalization. Unwhiten
-  exactly once, preserve all five temporal positions in VAE attention, and
-  return zero-based raw frame 3 as the sole output image. Preserve spatial
-  tiling, blending, pixel normalization and clipping from the pinned reference.
-- Keep prompt-only FL2VA and ordered image-reference Ref2VA, including the
-  existing `--ref-image-size match|high|max` behavior. Target canvas dimensions
-  and reference preprocessing remain separate settings.
-- Preserve h3cli's existing Euler/shifted-flow sampler and seeded-noise contract
-  for this replacement. The supplied
-  [Fizgig example workflow](https://github.com/shootthesound/ComfyUI-Fizgig-H3-Still/blob/main/example_workflows/h3_still_text_to_image-8MP-NoTurboVersion.json)
-  uses `er_sde` and `simple`; adopting the latent/decode technique does not
-  reproduce that trajectory. Record this difference in qualification results.
-- Keep PNG delivery, final display/callbacks, progress, cancellation and
-  save/re-decode support. Ordinary video, continuation and upscaling retain
-  their existing geometry, sampling, decoder and saved-state contracts.
+Plan approximately 24–32 GiB host RAM without the streamed-weight cache,
+64 GiB for cached native generation and 80–96 GiB for cached refined upscaling,
+under the documented working-memory/headroom assumptions. These are planning
+envelopes for all three durations, contingent on bounded frame delivery.
+Actual conditioning and retained caches require additional accounting.
 
-This milestone uses the existing video-model checkpoints. A separate H3 Image
-model, a new upscaler, new samplers and broader acceleration support are outside
-this replacement. Retain unsupported-option checks unless a task explicitly
-qualifies a combination. Higher resolution alone does not establish prompt
-quality or identity fidelity.
+## Acceptance on the existing 72 GB CUDA card
 
-Expected target geometry (reference and text tokens are additional):
+A read-only capacity check on **2026-11-22** reported **73,415 MiB total
+(71.69 GiB)** and **72,787 MiB free (71.08 GiB)** on the RTX PRO 5000 72 GB.
+Host RAM was approximately 187.5 GiB total / 182.2 GiB available. These are
+planning snapshots, not reservations; recheck actual free GPU/host memory
+before every job. No new high-resolution render has been measured yet.
 
-| Output canvas | Video latent `[B,C,T,h,w]` | DiT target visual rows after 2×2 patching |
-| --- | --- | --- |
-| 640×480 | `[1,24,1,30,40]` | 300 |
-| 1344×768 | `[1,24,1,48,84]` | 1,008 |
-| 2144×1216 | `[1,24,1,76,134]` | 2,546 |
-| 3872×2176 | `[1,24,1,136,242]` | 8,228 |
+Use this bounded matrix; budgets use the assumptions/formula above and round
+up to whole GiB, including reserve. Portrait equivalents use the same budgets.
 
-All cases retain audio `[1,32,2,2]`: 128 scalar values / four packed audio rows.
-The DiT row count is not a VAE tile-token count or a memory estimate.
+| Workload | Required default | Optional extended case | Placement | Estimated VRAM capacity |
+| --- | --- | --- | --- | --- |
+| Native 1920×1088 | 22 frames / 0.917 s | 39 frames / 1.625 s | Auto; explicitly stream if needed for the test budget | Resident 49 / 53 GiB; streamed 11 / 15 GiB |
+| Learned 2×, 1920×1088 → 3840×2176, K=0 | 22 frames | 39 frames | No refinement transformer | About 8 GiB for either later job; source generation is separate |
+| Learned 2×, 1920×1088 → 3840×2176, K=2/3/4 | 22 frames | 39 frames | Explicit fully streamed BF16 weights for the baseline | 27 / 42 GiB; resident comparison 65 / 80 GiB |
+| Continuation/bridge at at most 1344×768 | 39-frame source; 56-frame target with 39 preserved | None | Auto or explicit streaming after preflight | Target 50 GiB resident / 12 GiB streamed, before added references |
 
-## M0 — Freeze the replacement contract
+Set **`H3_CUDA_WEIGHT_MODE=stream`** for the required maximum-canvas refinement
+baseline, including resume subprocesses. Resident refinement at this canvas
+is outside the 60 GiB development budget even at 22 frames; do not force it.
+An optional auto-placement comparison must independently fit the test budget.
+K=0 and every positive refinement mode remain separate required cases;
+selecting K=0 is not a substitute for testing K=2/3/4.
 
-- [x] ELS001 Pin the upstream empty-latent conversion and stock-video still
-  decode sources, model configuration, tensor layouts, whitening, RoPE and
-  tile profile. Record revision/source identities and the independent reference
-  command. Capture deterministic normalized-latent fixtures and decoded pixels;
-  choose numerical tolerances before comparing native results. Treat the supplied
-  matching-images report as motivation, not an acceptance oracle.
-- [x] ELS002 Specify the CLI/API and artifact migration before changing them:
-  `--still` selects the stock video VAE, `--decode-still-latent` resolves that VAE
-  without a denoiser, and retired `--image-vae` usage receives migration guidance.
-  Define a still-specific maximum area and dimension bounds that admit the full
-  8,425,472-pixel target and its transpose. Define the schema-1 compatibility
-  policy and a distinct decoder recipe identity; do not silently reinterpret an
-  old checkpoint path or claim identical images from the two decoders.
+Development preflight must project **at most 60 GiB required device capacity**
+for every phase, including its reserve, and independently pass actual-free-
+memory and host-memory guards. Include actual reference/text rows, retained
+contexts, VAE workspaces and encoder buffers. The 60 GiB ceiling is a test
+budget, not a new production geometry or memory limit. Keep the existing
+device reserve of `max(1 GiB, total/10)`; do not subtract it twice when comparing
+the capacity table. Run GPU jobs **serially**, release completed phase/context
+resources, and measure whole-device usage alongside tracked tensor allocations.
 
-Exit: reproducible decode reference, explicit public behavior and migration
-rules. M1 and M2 implement this contract before M3 switches the default.
+If a proposed 39-frame case misses preflight, select a **22-frame source and
+target before generation** and record that choice. Plan reference-heavy and
+quality cases at 22 frames from the start, with bounded fixture sizes/counts
+and separate small tests for larger reference combinations. Do not silently
+shorten an executing request, trim a longer source afterward, remove requested
+references, skip refinement or reduce model depth. If a required 22-frame case
+still cannot fit, fix allocation lifetimes/placement on this card; an OOM or a
+request for a larger GPU does not complete the task. The 5/10/15-second cases
+and continuation above 1344×768 remain host-only estimates or metadata checks
+and never become runtime acceptance prerequisites. Maximum-resolution upscale
+acceptance is required at 22 frames, with 39-frame extensions after admission.
 
-## M1 — Native single-frame targets at high resolution
+## Development test limit and regression exception
 
-- [x] ELS003 Reuse and make explicit the existing T=1/audio-T=2 target construction
-  in [engine.c](../src/engine.c) and [host.c](../src/host.c). Verify seeded video
-  and audio noise, packed segments, task IDs, reference slots and positional
-  coordinates. No video frame alignment or decoder repetition may expand the
-  denoising target. Assert the table's shapes and target-row counts.
-- [x] ELS004 Introduce one checked still-geometry policy and use it for CLI/API
-  admission, generation, latent save/load and codec-only decode. Remove the
-  still path's accidental dependence on `H3_MAX_PIXELS` and
-  `h3_geometry_valid` in [engine.c](../src/engine.c) and
-  [image_vae.c](../src/vae/image_vae.c). Audit downstream helpers for residual
-  limits or automatic shrinking. Keep multiples-of-32 alignment and positive
-  dimensions; use checked multiplication. Preserve video, reference-image and
-  upscale limits rather than increasing a shared global cap.
-- [x] ELS005 Audit high-resolution allocation/index arithmetic through text and
-  image conditioning, DiT packing/RoPE/attention, sampler buffers, VAE tiles and
-  final RGB/PNG delivery on Metal and CUDA. Account for text/reference tokens,
-  both audio/video streams and live weights/scratch. Fail with an actionable
-  memory error before oversized allocation; preserve the process memory guard.
-  No silent resize, reduced layer count, reference dropping or preview fallback.
+**No development test may generate, upscale, decode or assemble a video longer
+than three seconds.** This applies to both new tests and invoked existing
+suites, including hidden defaults and intermediate/source/reference clips.
+Use **22 frames by default and 39 only after preflight**. The sole 56-frame
+real-model exception is native continuation/bridge: the existing contract needs
+at least 39 context frames and a target strictly longer than its context.
+A 39-frame source plus a 56-frame continuation retaining 39 frames delivers
+56 total frames / 2.333 seconds. A 22- or 39-frame continuation target cannot
+exercise that contract. Keep this exception at **at most 1344×768** and within
+the same 60 GiB development budget; do not upscale its output in this campaign.
 
-Exit: host validation admits the target canvases with exact shapes, rejects
-invalid/overflowing dimensions, and leaves ordinary video admission unchanged.
+A 72-frame or `--seconds 3` request rounds to 73/24 = 3.042 seconds and is
+forbidden. Check aligned frames and actual output duration before launching
+work. Limit final concatenated script output to 72 delivered frames; two
+independent 22-frame segments are a suitable short merging case. No ordinary
+generation/upscale test should default to 56 frames or a longer clip.
 
-## M2 — Stock video VAE still decoding
+The 5/10/15-second cases are **arithmetic, metadata-only and allocation-plan
+checks**, without generation, full-duration GPU tensors or video decoding.
+They remain unverified for end-to-end quality, speed and measured peak memory.
+Use small tensors and logical offsets to exercise large-index boundaries.
 
-- [x] ELS006 Add an explicit still entry point in
-  [video_vae.h](../src/vae/video_vae.h) and
-  [video_vae.c](../src/vae/video_vae.c). Consume normalized channel-major T=1,
-  construct five temporal copies, and execute the stock decoder with the correct
-  five-token positions, register/suffix layout and output projection. Audit
-  fixed-seven assumptions and backend kernels. Extract raw frame index 3 before
-  ordinary video trimming; padding to seven tokens or decoding T=1 directly is
-  not a substitute for the independently checked five-token computation.
-- [x] ELS007 Implement spatially tiled still decoding with bounded scratch and
-  exactly one assembled image. Keep the reference tile-overlap/blending and
-  pixel-finalization order; avoid retaining a full-resolution multi-frame RGB
-  movie. Replication may be materialized per tile if mathematically equivalent.
-  Preserve all temporal attention inputs while reducing delivery storage.
-  Validate partial edge tiles, seam intersections and portrait geometry.
-- [x] ELS008 Route final generation and codec-only delivery through this decoder
-  in [engine.c](../src/engine.c) and [media/decode.c](../src/media/decode.c).
-  Release completed denoiser resources before decode as needed; isolate decoder
-  cache identities by weights, recipe, temporal geometry, precision and tiles.
-  Keep exactly one final frame callback (index 0/count 1), PNG publication,
-  result ownership, progress accounting and cancellation cleanup.
+[CONTRIBUTING.md](../CONTRIBUTING.md) normally requires the immutable
+204-output CUDA regression after each coherent code change. That gate includes
+a **124-frame / 5.167-second** render. The user's explicit three-second cap
+takes precedence for this milestone: **do not run that gate**, alter its input
+length, replace hashes, or report a shortened substitute as the same pass.
+Record the full gate as **not run — user duration limit**, retain all golden
+files, and run separate compatible short regression checks. Audit other suite
+defaults before invoking them. This is a disclosed validation gap, not a claim
+of full regression qualification and not a reason to stop the authorized work.
 
-Exit: identical input latents pass the independent stock-VAE decode comparison
-on Metal and CUDA, without altering normal video chunk decoding.
+CUDA runtime tests use the already authorized remote CUDA test machine through
+a locally configured SSH alias such as `cuda-test`; keep private connection
+details out of committed files. Local macOS work is for document/host checks,
+build checks and short legacy/rejection checks, not new high-resolution Metal
+qualification. No long render is required to complete this planned milestone.
 
-## M3 — Model selection, saved latents and retirement
+## M0 — Freeze policy, resource accounting and bounded tests
 
-- [x] ELS009 Update [model resolution](../src/models/resolve.c), catalog/group
-  handling and CLI defaults so still generation no longer requires or downloads
-  the dedicated image VAE. Resolve the stock VAE for the selected FL2VA/Ref2VA
-  model. Codec-only decode must resolve only its VAE/configuration dependencies,
-  with no tokenizer, DiT or audio decoder. Cover explicit paths, default model
-  roots, offline operation, missing files and packaged model discovery.
-- [x] ELS010 Implement the saved-latent contract from ELS002 in
-  [image_vae.c](../src/vae/image_vae.c) or a dedicated still-artifact module.
-  Save finite normalized F32 `[1,24,1,h,w]`, normalization compatibility and
-  decoder recipe metadata. The current digest includes dedicated F16 encoder
-  tensors; matching whitening alone cannot validate that digest against stock
-  weights. Version metadata where semantics change. Test the documented
-  schema-1 migration or clear rejection, including codec-only re-decode, rather
-  than retaining an implicit dependency on the retired checkpoint.
-- [x] ELS011 Update [CLI parsing/help](../src/h3cli.c),
-  [option descriptors](../src/cli/options.def), [public API](../src/h3.h),
-  shared request validation and server job/model planning for the new selection
-  rules. Preserve `--frames 1`, PNG defaults and existing unsupported-mode
-  diagnostics. Define the public API transition for `image_vae` and the decode
-  function's model argument. Keep `--render` a video-script operation. Verify
-  HTTP still jobs report one image with no AV/audio state.
-- [x] ELS012 Remove the replaced dedicated-image decoder path, mandatory
-  capability checks, automatic image-VAE selection and dead implementation/test
-  branches after the stock path passes. Audit low-level codec consumers before
-  deleting shared utilities. Preserve historical task/results/provenance records
-  and user model files. Default still execution must have one documented decoder
-  path and no silent fallback to the previous implementation.
+- [ ] CLC001 Freeze the backend/geometry/feature matrix above against the
+  current source and model identities. Define distinct extended-generation
+  and extended-upscale profile identities, old-reader behavior and backend
+  rejection rules. Specify transpose/area/axis boundaries, native and learned
+  output provenance, public entry points and which existing optional modes
+  remain supported or explicitly rejected. Record immutable baseline artifacts.
+- [ ] CLC002 Implement a shared checked resource estimator for actual video,
+  audio, text/reference rows, weights/residency, DiT intermediates, learned
+  network buffers, sampler/state copies and decoder delivery. Return separate
+  host/device estimates by phase. Reproduce the 5/10/15-second calculations
+  without allocations or model work; expose actionable preflight diagnostics.
+  Reproduce the 22/39-frame matrix for the actual 72 GB device, including
+  streamed refinement at 3840×2176 and the 56-frame continuation exception at
+  no more than 1344×768. Reconcile with short phase measurements; enforce
+  the 60 GiB development capacity budget.
+- [ ] CLC003 Add a development-runner duration guard before launches. Validate
+  effective aligned frames, generated context, reference/source media and final
+  script duration; default to 22, admit 39 only after memory checks and allow
+  56 only for the named continuation/bridge test at no more than 1344×768.
+  Enforce the continuation resolution cap on source, latent/context and final
+  canvases, including subprocesses, resume and decode-only. Admit upscale
+  sources to 1920×1088 and outputs to 3840×2176, including transpose, only at
+  22 or 39 frames and after capacity/index checks; distinguish the job kinds.
+  Recheck free GPU/host memory, carry streaming policy into resume workers
+  and serialize GPU tests.
+  Reject defaults that exceed the cap, including `--seconds 3`.
+  Inventory applicable test commands and classify long suites as not runnable
+  under this request. Preserve the immutable regression and explicitly record
+  its duration-limit exception; do not edit global policy to hide the gap.
 
-Exit: prompt-only and reference stills, saved latents, CLI/API/server operations
-and codec-only decode all work without the dedicated image checkpoint installed.
+Exit: a precise CUDA-only contract, reproducible estimates and a test runner
+that cannot accidentally launch long video jobs.
 
-## M4 — Verification and qualification
+## M1 — Shared geometry and artifact contracts
 
-- [x] ELS013 Extend the existing [still host tests](../tests/test_still.c),
-  [CLI tests](../tests/test_still_cli.py),
-  [layout tests](../tests/test_still_layout.py) and model-resolution tests.
-  Cover all geometry rows and their transposes, accepted/rejected policy
-  boundaries, malformed/nonfinite/truncated artifacts, schema migration,
-  explicit flag conflicts and reference sizing. Confirm oversized ordinary
-  video requests still fail and invalid input fails before downloads/GPU work.
-- [x] ELS014 Add an independent stock-VAE fixture runner using ELS001's pinned
-  source and compatible weights. Compare unwhitening, five-token RoPE/attention,
-  selected raw frame, tile blending and final pixels at small sizes and across
-  tile boundaries. Exercise Metal and CUDA with guard/sanitizer coverage. Require
-  the predeclared numerical thresholds; old dedicated-VAE output and comparisons
-  of the native implementation against itself are not reference evidence.
-- [x] ELS015 Run end-to-end prompt-only and ordered image-reference renders on
-  both backends at 640×480 and 1344×768. Verify finite trajectories, exact seed
-  repeatability within the same execution policy, saved T=1 latent re-decode,
-  reference ordering and all three reference-size modes. Check final PNG size,
-  one callback/result frame and zero audio decode/output. Record semantic quality
-  separately from numerical and lifecycle correctness.
-- [x] ELS016 Qualify direct 2144×1216 and 3872×2176 generation on capable hardware,
-  including prompt-only, reference-conditioned and portrait cases. Begin with
-  bounded 2–6-evaluation functional probes, then record representative 50-step
-  prompt/reference quality runs at the 8 MP target. Retain commands, seed,
-  shapes, PNG dimensions, device/build identity, timings and peak memory by
-  phase. Demonstrate 8,228 denoised target visual rows, with no lower-resolution
-  render or post-generation upscale. Record each backend's tested limits;
-  unavailable hardware or OOM is not a passing 8 MP result.
-- [x] ELS017 Exercise resource lifetime and failure recovery: repeated stills,
-  video→still→video in a reused context, cancellation during loading/sampling/
-  tiles/delivery, allocation failures, encoder failures and existing output
-  destinations. Confirm no leaks/stale decoder state, no partial PNG publication,
-  no unintended audio/model loads and successful reuse after supported failures.
-- [x] ELS018 Run applicable `make test-still-host`, `make test-current-host`,
-  backend tests and current-feature integration. Follow
-  [CONTRIBUTING.md](../CONTRIBUTING.md): after every coherent implementation
-  change, run the complete immutable **204-output CUDA reference regression**.
-  Do not weaken it or regenerate golden hashes. Include ordinary video decoding,
-  continuation, reference conditioning and upscale coverage; record missing
-  prerequisites as unverified, never as passes.
+- [ ] CLC004 Add checked, backend-aware geometry policies and centralize their
+  selection for generation, source capture, upscaling and decode. Audit
+  [host geometry](../src/host.c), [engine validation](../src/engine.c),
+  [AV state shapes](../src/sampling/av_state.c) and every hardcoded/shared cap.
+  Keep still geometry, legacy reference preprocessing and legacy Metal limits
+  intact. Reject unsupported backends before large allocations or downloads.
+- [ ] CLC005 Route CLI, public API, HTTP/server planning and
+  [script planning](../src/cli/render_plan.c) through the policy. Replace the
+  renderer's hardcoded `768*1344` check; carry backend/profile, output canvas
+  and internal render canvas consistently through dry runs and segment commands.
+  Keep `--ref-image-size match|high|max` distinct from output sizing and verify
+  inheritance/overrides reach the pipeline. Match help and validation errors.
+- [ ] CLC006 Extend AV, sampler, upscale-source and presentation serializers
+  with explicit profile/backend semantics. Audit all readers, continuation
+  compatibility, codec-only delivery and resume before geometry-dependent
+  allocation. Preserve old supported artifacts and fail clearly for unknown
+  profiles or new CUDA artifacts on Metal. Round-trip exact shape, provenance,
+  decoder recipe, source audio and refinement state; reject forged profiles.
 
-Exit: codec and generation evidence are complete, high-resolution generation is
-measured, and the unchanged video regression contract passes.
+Exit: all front doors agree on allowed dimensions and backend, and saved state
+cannot bypass the policy or silently change a legacy artifact's meaning.
 
-## M5 — Documentation and packaged acceptance
+## M2 — CUDA index safety and memory admission
 
-- [x] ELS019 Update the project README, [still guide](features/single-still.md),
-  [sampling contract](features/single-still-generation-contract.md), usage,
-  model-download guide, API examples and hardware requirements. Describe the
-  stock-VAE dependency, high-resolution limits, `--image-vae`/artifact migration,
-  decode-only command and measured memory. Include native 8 MP examples and
-  the sampler difference from ComfyUI. Retain earlier results as dated evidence
-  and publish a distinct replacement acceptance record with source provenance.
-- [x] ELS020 Validate source builds and standalone macOS/Linux packages, including
-  offline still generation, saved-latent decode, model selection and bundled PNG
-  encoding with no image-VAE checkpoint. Reconcile every task against retained
-  evidence, document backend/resource limits, validate documentation links and
-  update completion status only after all required work passes.
+- [ ] CLC007 Audit DiT/GPU allocation products, element counts, byte offsets,
+  launch grids and signed/unsigned narrowing end to end. Use the actual
+  `INNER=7168` QKV width, correcting the upscale planner's `5376*3` proxy.
+  Native 15-second and all requested 4K refinement QKV volumes exceed U32
+  element indexing. Implement checked wide indexing or bounded equivalent
+  operations, including FC1/SwiGLU, projection/scatter, normalization, RoPE,
+  attention layouts, sampling and serialization. Fail before unsupported calls.
+- [ ] CLC008 Bound independent linear/MLP/projection workspace where needed
+  for large counts, without changing reductions, precision or global attention.
+  Audit cuBLAS/attention interface limits and every intermediate, including
+  large byte offsets for tensors whose element count still fits U32. Test
+  overflow and boundary dispatch using small windows/logical indices; do not
+  allocate a long-video GPU tensor to test arithmetic.
+- [ ] CLC009 Extend sequence/conditioning preparation and CUDA attention to
+  accept the new profiles. Count all text, anchor, reference and audio rows in
+  admission; preserve temporal positions and normalization across the full
+  sequence. Validate actual reference-encoder limits independently. Establish
+  explicit unsupported-mode errors where the existing mode is unqualified;
+  never use truncation or implicit token/reference reduction to fit.
+- [ ] CLC010 Integrate CLC002 with automatic/resident/streamed weight planning,
+  host cache admission and the process guard. Account for overlapping resources
+  in reused contexts, checkpoint export and preview/decode transitions. Bound
+  transfer/decoder lifetimes and retries. Report required versus available
+  memory and phase on failure. Retain headroom; reduce conservative reserves
+  only after demonstrated allocation-lifetime evidence, with no OOM-driven
+  precision or geometry fallback. Required 22-frame native 1920×1088 and
+  K=0/2/3/4 upscale-to-3840×2176 acceptance must succeed on the existing 72 GB
+  device; use explicit streaming as the refined-upscale baseline and keep
+  39-frame extensions conditional. Keep larger continuation and 5/10/15-second
+  admission checks host-only. Larger hardware is not a completion requirement.
 
-Completion requires the stock-video-VAE path to replace the current `--still`
-implementation, genuine 8 MP denoising/delivery to be demonstrated, and saved
-latent/model selection behavior to be explicit and tested. Codec-only success,
-a high-resolution dry run or resizing a small generated image does not complete
-this milestone.
+Exit: all long-duration shapes can be evaluated safely by host planning; a
+resource rejection is distinct from integer overflow or unsupported geometry.
 
-## Completion evidence
+## M3 — Native rendering and the existing learned upscaler
 
-All 20 tasks are reconciled in the [acceptance report](features/empty-still-results.md#task-reconciliation)
-and [machine-readable record](features/empty-still-results.json). Metal and CUDA
-passed direct 8 MP text/reference/portrait generation; CUDA also completed both
-50-step quality runs. Final source and standalone CUDA builds each match all
-204 immutable golden outputs. Both standalone packages pass offline generation
-without audio/image VAEs and exact codec-only PNG replay. Tested resource limits
-and the optional unverified Linux noexec-mount case are recorded explicitly.
+- [ ] CLC011 Enable full native 1920×1088 and transposed CUDA generation through
+  direct CLI/API/server and `--render`. Preserve seeded sampling, audio,
+  first/last anchors and ordered supported references. Extend ordinary hard
+  continuation and bridge geometry/buffer checks, including the fixed
+  `H3_MAX_PIXELS` scratch assumptions in [bridge.c](../src/sampling/bridge.c).
+  Verify independent-segment rendering/merging at the new canvas. Execute
+  continuation/bridge/context merging only at or below 1344×768; verify its
+  larger profiles through host-only checks and disclose the runtime gap.
+- [ ] CLC012 Extend native preview/full-VAE handling to the new generation
+  limit, including [tiny VAE admission](../src/vae/tiny_vae.c), memory reserve,
+  callbacks and decode-only. Keep the selected decoder explicit. Cover spatial
+  tile edges, portrait output, preview cancellation and exact dimensions;
+  unsupported combinations must fail before sampling rather than at delivery.
+- [ ] CLC013 Extend clean upscale-source capture to native 1920×1088. Update
+  source/profile validation and ownership so source bundles retain complete
+  raw conditions, audio and metadata at the new size. Preserve current capture
+  restrictions, atomic saving, input/output collision checks and portability
+  without reopening deleted original reference media.
+- [ ] CLC014 Extend [upscale planning](../src/upscale/upscale_plan.c), learned
+  network and explicit bilinear comparison bounds from 128-latent axes to
+  at most 240 per latent axis and 32,640 latent pixels, admitting the 240×136
+  target, its transpose and other valid source aspect ratios. Audit CUDA products,
+  normalization, resize and convolution packing; preserve the pinned network,
+  full-context statistics and exact spatial 2× behavior. Keep Metal's existing
+  execution bounds. Do not introduce independent normalization of chunks.
+- [ ] CLC015 Retarget bundled image/keyframe/video conditions consistently to
+  the enlarged canvas, including the separate latent-axis checks in the
+  retarget path. Preserve `match|high|max` semantics, original source sizes,
+  ordering, temporal phase and once-only augmentation; high/max references
+  must not acquire an unintended extra scale. Include their rows and network
+  lifetimes in the resource estimator. Preserve source audio bytes exactly.
+- [ ] CLC016 Extend K=0 and dense K=2/3/4 execution, sigma/noise initialization,
+  state-only delivery, stop/cancel/recover and exact same-backend resume to the
+  enlarged target. Keep transfer separate from refinement admission; K=0 must
+  not load the transformer or sample noise. Preserve parent/artifact hashes,
+  audio identity and output provenance. A low-memory device must never silently
+  replace requested refinement with K=0.
+- [ ] CLC017 Implement and qualify full video-VAE/FFmpeg delivery at 3840×2176
+  and transpose using 22 frames, or 39 after admission.
+  Fix the CUDA stitcher's more-than-16-tiles rejection for the 20-tile axis
+  using a valid bounded fallback or qualified larger device plan. Preserve
+  blend order and temporal overlaps; stream chunks instead of retaining the
+  whole movie. Check codec dimensions, audio sync, exact frame count, output
+  publication, progress and cancellation at the maximum upscale canvas.
+  Include full saved-upscale decode-only replay under the same frame/memory
+  guards. Upscale continues to require full VAE. Keep longer duration
+  tile/shape/index/allocation checks host-only.
+
+Exit: short native renders and source→learned-2×→full-video delivery work on
+CUDA at both maximum generation/upscale canvases, with old Metal behavior
+preserved. Larger continuation has host coverage and a disclosed runtime gap.
+
+## M4 — Verification within the three-second ceiling
+
+- [ ] CLC018 Extend host/CLI/state tests for both profiles, transposes, area/axis
+  boundaries, malformed/truncated/nonfinite artifacts, profile forgery and
+  backend rejection. Test all 5/10/15-second row/byte estimates, U32/signed/size
+  boundaries and impossible admissions using arithmetic/metadata only. Verify
+  the three-second runner rejects 73/90/124/243/362-frame real-model jobs and
+  overlong merged output, rejects 56-frame upscale/default jobs, and allows
+  the named 56-frame continuation at ≤1344×768 only after capacity admission.
+  Test rejection of continuation above 1344×768, including resuming a larger
+  state and codec-only attempts. Ensure the guard permits maximum-resolution
+  22/39-frame upscaling and rejects longer or over-budget upscale jobs, including
+  output-only geometry overflow. Test the 60 GiB budget and 39→22 selection
+  without launching oversized jobs. No high-duration GPU work is hidden in
+  fixture setup.
+- [ ] CLC019 Run 22-frame CUDA native cases at small and maximum canvases;
+  add 39-frame coverage only after memory admission. Cover
+  text, ordered references and all image-size modes, anchors, same-seed repeat,
+  save/re-decode, sampler resume, preview/full output, API/server and scripts.
+  Use a 39-frame source and 56-frame continuation for a bounded continuation/
+  bridge/merge case at no more than 1344×768, admitted under the named exception.
+  Larger script cases must use independent segments, not continuation.
+  Plan heavy-reference and full-depth quality runs at 22 frames; select
+  streaming before launch where needed. Retain dimensions, token counts,
+  audio/frame metadata, phase memory and timings. Record visual observations
+  separately from numerical/lifecycle checks.
+- [ ] CLC020 Extend independent pinned-network operator/transfer comparisons
+  for the new spatial bounds, rectangular/portrait edges and full-context
+  normalization, using T=7 by default, at most T=12 after admission, and small
+  adversarial fixtures. Include actual maximum-canvas transfer evidence;
+  keep higher temporal/index-boundary checks host-only. Run reference and
+  native GPU computations serially with the same memory ceiling; avoid oracle
+  allocations that defeat the short test plan. Freeze tolerances before
+  comparison. Verify the implementation against the existing
+  independent reference, including normalized input/output, interpolation and
+  retargeted conditions. Native self-comparison alone is not acceptance evidence.
+- [ ] CLC021 Run bounded 1920×1088→3840×2176 cases and transpose with
+  K=0/2/3/4, full VAE delivery, reference retargeting, saved-source relocation,
+  and exact pause/resume at each refinement boundary. Verify finite pixels,
+  source audio/PCM identity, target dimensions and actual duration. Require
+  22-frame success for every K mode at the maximum landscape/portrait target
+  on the 72 GB card, using explicit streamed BF16 for K>0, including resume.
+  Add a 39-frame cross-chunk case only if the measured/estimated phase budget
+  fits; otherwise run that case at 22 frames and retain separate short decoder
+  boundary checks. Apply the same 22/39-frame and memory guards to K=0,
+  API/operator forwards, resumed refinement and decode-only work. No 56-frame
+  upscale case is required or allowed here. Keep all production layers and
+  requested refinement; distinguish resource
+  rejection from an accepted render. Never run the old 90-frame campaign.
+- [ ] CLC022 Exercise memory denial, allocation/encoder failure, cancellation
+  and repeated/reused contexts across native→upscale→native jobs. Use bounded
+  CUDA sanitizer probes for new index/launch paths and small-window overflow
+  tests. Check cleanup, allocation plateaus, original output preservation,
+  valid checkpoint recovery and guard headroom. Calibrate CLC002's separate
+  phase estimates against short-run device/RSS measurements and record gaps.
+  Use 22-frame lifecycle jobs: native up to 1920×1088, upscale output up to
+  3840×2176. Admit maximum-canvas sanitizer work separately; use smaller
+  operator fixtures if instrumentation exceeds the budget, while retaining
+  ordinary full-canvas evidence. Do not run GPU jobs concurrently or overlap
+  unnecessary decoder/DiT/reference processes. Record
+  actual total/free VRAM, placement and peak usage for this physical device.
+
+Exit: actual CUDA evidence covers native 1920×1088 and every K mode at
+3840×2176 on the existing 72 GB card within the frame and memory budgets.
+Long-video and continuation above 1344×768 shape/index/resource checks pass
+as host checks; their quality, speed and peak memory remain unmeasured.
+
+## M5 — Short regression, packages and documentation
+
+- [ ] CLC023 Run applicable host/operator checks and a separately named CUDA
+  short regression suite covering ordinary video, still, continuation,
+  references, decoding and legacy upscaling. Audit and bound every invoked
+  runner first. Build/test the Linux standalone package with offline short
+  native/upscale/decode/resume paths on the same 72 GB card, using 22-frame
+  sources and explicit streamed refinement at 3840×2176. Keep continuation
+  at or below 1344×768. Check local macOS build/host compatibility
+  and rejection of new profiles without qualifying new Metal canvases. Preserve
+  all 204 golden hashes and record the full immutable gate as not run because
+  its 124-frame render conflicts with the user's cap; never label this a full
+  release-regression pass.
+- [ ] CLC024 Update README/usage, CLI/API/server/script guides, hardware and
+  state/upscale contracts with CUDA-only ceilings, exact 2× behavior and current
+  option restrictions. Recompute the linked memory tables from final code and
+  record measured 22/39-frame peaks for the 72 GB card beside long estimated
+  values, explicitly identifying any unrun optional 39-frame case and the
+  56-frame continuation at ≤1344×768. Disclose that larger continuation and
+  5/10/15-second videos were not executed. Require separate measured evidence
+  for maximum-canvas K=0 and K>0 upscale/full delivery. Include K=0 versus
+  refinement and source-generation cost. Publish source/build/device identities,
+  bounded commands, visual observations and a task-by-task acceptance record.
+  Validate links, archive integrity and private-data hygiene. Mark completion
+  only with passing short evidence and all duration/resource/regression gaps
+  explicitly disclosed; do not require a forbidden long run for closeout.
+
+Completion means CUDA-native generation to 1920×1088 and the current learned
+2× upscaler to 3840×2176 are implemented with safe indexing, honest memory
+admission and compatible state/delivery behavior. All development video evidence
+must fit the existing 72 GB card and respect the frame/memory budgets and
+three-second ceiling. Continuation execution is limited to 1344×768; larger
+continuation is host-validated only and must not be advertised as fully
+qualified. Upscaling must pass at 3840×2176 with 22-frame inputs and admitted
+39-frame extensions. The 5/10/15-second estimates and deferred immutable
+regression remain labeled as such in the final report.
