@@ -2,7 +2,8 @@
 
 Baseline frozen on 2026-11-22 at source revision
 `2b78e5944d7d7903983710d981c29d7401da81a6`. Implementation and acceptance are
-tracked in [the checklist](../todo.md). The learned network retains
+tracked in [the archived checklist](../large-canvas-todo.md).
+The learned network retains
 [its pinned artifact, source and numerical tolerances](../../tests/upscale/contract.json).
 No model weight, normalization constant, attention reduction or golden output
 is replaced by this extension.

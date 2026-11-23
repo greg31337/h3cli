@@ -56,12 +56,14 @@ that path with your downloaded executable when using a release package.
 
 ## Development and releases
 
-- [Current implementation tasks](todo.md): CUDA rendering to 1920×1088 and
-  learned 2× upscaling to 3840×2176, with short tests on the 72 GB card,
-  continuation tests capped at 1344×768, maximum-resolution upscale tests at
-  22/39 frames, and
-  [memory estimates](cuda/large-canvas-memory-estimates.md) and
-  [backend/profile contract](cuda/large-canvas-contract.md), with
+- [Current implementation tasks](todo.md): extend CUDA rendering through 736
+  frames; Metal retains its 362-frame limit. Runtime tests remain restricted to
+  256×256 and under 20 seconds, with host-only maximum-duration checks and no
+  motion or scene-consistency acceptance gates.
+- [Completed CUDA large-canvas milestone](large-canvas-todo.md): native rendering
+  to 1920×1088 and learned 2× upscaling to 3840×2176, with
+  [memory estimates](cuda/large-canvas-memory-estimates.md),
+  [backend/profile contract](cuda/large-canvas-contract.md), and
   [acceptance evidence](cuda/large-canvas-results.md).
 - [Completed empty-latent still milestone](empty-still-todo.md): stock video
   VAE decoding and native 8 MP output, with

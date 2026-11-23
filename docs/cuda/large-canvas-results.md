@@ -2,8 +2,9 @@
 
 Date: **2026-11-22**. **All 24 tasks are complete under the bounded acceptance
 contract.** Validation gaps and test corrections are disclosed below. See the
-[implementation contract](large-canvas-contract.md), [task list](../todo.md)
-and [memory derivation](large-canvas-memory-estimates.md).
+[implementation contract](large-canvas-contract.md),
+[archived task list](../large-canvas-todo.md) and
+[memory derivation](large-canvas-memory-estimates.md).
 The [per-case measurements](large-canvas-metrics.json) contain 116 passing
 guarded case records and three separately identified failed attempts that were
 corrected and rerun, plus the subsequent **204/204 immutable regression pass**.

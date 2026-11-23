@@ -1,8 +1,9 @@
 # CUDA large-canvas memory estimates
 
 Planning date: **2026-11-22**. Implementation is tracked in
-[the current checklist](../todo.md). The tables below are **estimates, not
-guarantees of admission**. See the separate [short-run measurements](large-canvas-results.md)
+[the archived checklist](../large-canvas-todo.md). The tables below are
+**estimates, not guarantees of admission**. See the separate
+[short-run measurements](large-canvas-results.md)
 for actual 22/39-frame evidence. No 5-, 10- or 15-second real-model videos were run
 at the new maximum canvases. The separately authorized 204-output regression
 passes with its original 640×480 / 124-frame case. Large-canvas development

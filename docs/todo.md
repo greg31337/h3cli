@@ -1,449 +1,312 @@
-# CUDA rendering to 1920×1088 and learned 2× upscaling to 3840×2176
+# CUDA rendering through 736 frames
 
-Status: **complete — 24/24 tasks complete**.
+Status: **planned — 0/24 tasks complete**.
+Created **2026-11-23**.
 
-[Acceptance evidence and validation limits](cuda/large-canvas-results.md).
-Updated **2026-11-22**.
+Extend native **CUDA** video generation from the current 362-frame ceiling to
+**736 aligned frames at 24 FPS (30.667 seconds)**. Metal retains its existing
+**362-frame ceiling**. Cover the CLI, public API,
+HTTP service and `--render`, including first/last-frame conditioning,
+supported references, continuation, saved states and delivery. Preserve the
+existing backend-specific canvas limits and model arithmetic. A valid duration
+still needs to pass sequence, allocation and available-memory checks.
 
-Extend ordinary CUDA video generation, including `--render`, to
-**1920×1088 (2,088,960 pixels)**. Extend the current learned spatial 2×
-upscaler to accept that source and deliver **3840×2176 (8,355,840 pixels)**,
-including its existing K=0/2/3/4 refinement choices. New larger-canvas
-capabilities are **CUDA-only**. Development video tests must be **at most
-three seconds**, including sources, references, decode-only runs and final
-concatenated script output. Required CUDA acceptance must fit the existing
-**RTX PRO 5000 72 GB**: use **22 frames by default**, and **39 frames only
-after memory preflight**. Reserve 56 frames for the minimum valid native
-continuation/bridge case described below; do not use it for upscale acceptance.
+The completed **24/24 CUDA large-canvas milestone** is
+[archived byte-for-byte](large-canvas-todo.md), SHA-256
+`bf366b522ba261e92adac1a9b2c7acba57c1f3b2b539498be51fa05613f539a3`.
+Its [acceptance report](cuda/large-canvas-results.md) and
+[memory estimates](cuda/large-canvas-memory-estimates.md) remain historical
+evidence. The [empty-latent still milestone](empty-still-todo.md) is unchanged.
 
-**Continuation/bridge runtime tests are capped at 1344×768.** This covers
-their source, sampled/context and delivered canvases, including saved-state
-replay and decode-only tests. Allow the portrait transpose with the same
-bounds: long axis ≤1344, short axis ≤768, area ≤1,032,192 pixels. Larger
-continuation paths receive host-only shape/index/state/allocation checks;
-their end-to-end behavior remains **unverified**.
+## Scope and production contract
 
-**Upscaling must be tested to the maximum 3840×2176 output**, or its transpose,
-from native 1920×1088 sources: use **22 frames**, or **39 after preflight**.
-This includes K=0/2/3/4, saved-state replay and full decoding. The continuation
-resolution cap does not apply to these upscale jobs. Direct native 1920×1088
-rendering also remains in the runtime matrix.
+- Keep the existing upward alignment to `5 + 17*n` and the 24 FPS timebase.
+  Ordinary video keeps its existing minimum of 22 aligned frames. Accept a
+  request only when its aligned result is at most **736 on CUDA or 362 on
+  Metal**; reject overflow and out-of-range requests before model work. Do not
+  clamp or truncate requests.
+- Derive backend-specific limits centrally: CUDA's 736 output frames correspond
+  to **217 video latent steps** and **1,227 audio latent steps**; Metal keeps
+  362/107/603. Preserve valid existing 22–362-frame behavior, still-image
+  behavior, seeds, schedules and numerical recipes.
+- The extended duration is **CUDA-only**, including generation, continuation,
+  resume, full/preview decode, source capture and learned upscaling. Metal must
+  reject effective durations above 362 before model loading or large allocation,
+  including requests reached through saved states, scripts and HTTP. Read-only
+  metadata inspection may describe a CUDA long state without executing it.
+  Existing backend-specific canvas limits remain unchanged. Qualify CUDA's
+  dense BF16/default-attention path first; audit optional modes and explicitly
+  reject unqualified new-duration combinations instead of silently changing
+  requested precision, depth, attention or caching.
+- Cover prompt-only FL2VA, first/last anchors and supported Ref2VA inputs.
+  Frame anchors remain incompatible with full references and continuation.
+  Preserve `--render` global references, segment-local additions, comma lists,
+  `#ref-image-size` inheritance and seed-set behavior.
+- Keep reference-input duration limits separate from output duration. Existing
+  2–15-second reference-media rules and pinned SGLang reference behavior are
+  not expanded by this work. Helpers receiving the longer *target* frame count
+  must still accept it while enforcing the independent input-media cap.
+- Keep CUDA source capture and the existing learned K=0/2/3/4 upscaler temporally
+  compatible where their existing shape, sequence and memory guards allow it.
+  Metal's source/upscale/decode paths retain the 362-frame limit, including K=0.
+  The shared upscale planner currently checks sequence length even for K=0.
+  Do not promise every canvas/duration/refinement combination or raise kernel
+  ceilings as a side effect of extending the frame ceiling.
+- Preserve full-context attention and normalization. No temporal tiling of
+  denoising, independently generated windows, temporal interpolation, frame
+  duplication, silent reference removal or model replacement.
+- **Motion quality and scene consistency are excluded from acceptance.** Do
+  not add visual-review gates, aesthetic rankings, subject/motion consistency
+  scores or long-range narrative checks. Validate execution, numerical
+  correctness, state integrity, media dimensions/timing and resource behavior.
 
-The completed **20/20 empty-latent still milestone** is
-[archived byte-for-byte](empty-still-todo.md), with its
-[acceptance report](features/empty-still-results.md). Existing
-[upscale tasks](experiments/latent-upscale-tasks.md),
-[results](experiments/latent-upscale-results.md) and
-[format contract](features/upscale-source-format.md) remain the baseline.
-Implementation and bounded CUDA acceptance are complete. The linked acceptance
-record identifies the unrun long-video cases, measurement limits and the earlier
-synthetic-fixture duration violation. The subsequently requested full immutable
-regression passes **204/204** on 2026-11-22.
+## Development test limits
 
-## Scope and acceptance contract
+The user's new limits supersede the archived three-second/max-canvas test
+matrix **for this milestone only**:
 
-- Native generation uses the requested canvas directly. CUDA accepts the new
-  area ceiling with a maximum 1920-pixel axis for the extended profile,
-  including portrait transpose. Preserve already valid legacy canvases.
-  Dimensions stay positive multiples of 32; existing 24 FPS and frame-grid
-  rules remain. Native generation above this ceiling is outside this milestone.
-- The existing pinned learned network doubles both source axes, with output
-  area at most 8,355,840 pixels and axes at most 3840, including portrait.
-  Time and source audio are unchanged. Support K=0 and existing K=2/3/4
-  refinement, seeded noise, save/resume and full VAE delivery. This does not
-  introduce temporal upscaling, a replacement network or pixel-only enlargement.
-- New source and target profiles must be explicit and checked before expensive
-  allocation. Keep legacy profile/artifact meanings stable; do not globally
-  raise `H3_MAX_PIXELS` or reuse the existing upscale-only policy as an ordinary
-  generation shortcut. Extended ordinary generation needs its own policy.
-- Metal retains its current native/still/upscale capabilities. Reject only the
-  new CUDA-only capabilities on Metal, before model loading or large allocation,
-  including when reached through saved states, decode-only or server requests.
-  Do not disable the already supported Metal 2× upscaler.
-- Cover prompt-only and existing supported conditioning, native continuation
-  and bridge/script behavior. Extend previews for native 1920×1088. Upscaling
-  retains its current full-VAE requirement and existing unsupported-option
-  checks; this milestone does not promise new LoRA, quantization, cache or
-  attention-mode combinations merely because a larger canvas is accepted.
-- Preserve the current learned arithmetic, full temporal/spatial normalization,
-  global attention, source conditioning ownership and audio preservation.
-  Safe row batching may bound independent work; splitting the model into
-  independently normalized/attended temporal or spatial tiles is not equivalent.
-- Support long-duration geometry and safe admission through the existing
-  362-frame ceiling. A valid shape still requires sufficient memory. Do not
-  silently resize, drop references/refinement, lower depth or shorten duration.
+1. All runtime video canvases must be **256×256**: generated clips, continuation
+   sources/targets, saved-state replay, preview/full decode, server/script jobs,
+   synthetic video fixtures and final merged files. Use 256×256 image fixtures
+   for references and first/last anchors too. Do not invoke suites with larger
+   hidden media defaults. Normal internal encoder preprocessing is unchanged.
+2. Treat **20 seconds as a hard upper bound** for every video artifact, including
+   sources, references, intermediate output and final concatenated videos.
+   The main CUDA extended-duration case is **464 frames / 19.333 seconds**.
+   `--seconds 20` requests 480 frames and aligns to **481 / 20.042 seconds**;
+   it is a host-only planning case, not an authorized runtime test. Use explicit
+   `--frames 464` for the representative near-20-second render. Shorter cases
+   are allowed for regression, failure handling and integration checks.
+3. **719/736 frames, all larger canvases, and above-limit boundary cases are
+   host-only**: arithmetic, logical indexing, allocation plans and bounded
+   metadata checks. Do not render/decode these cases or allocate their complete
+   temporal GPU/CPU movie tensors. Do not generate a longer clip and trim it.
+4. No learned 2× upscale runtime jobs in this campaign: a 256×256 source would
+   produce 512×512, and a 128×128 source would also violate the specified
+   runtime canvas. Cover extended upscaling through host planning, bounded
+   metadata/index tests and existing numerical contracts. Report the missing
+   long-upscale runtime validation explicitly.
+5. Run real-model jobs serially, using all 50 model blocks, **two denoising
+   evaluations by default**, and no more than the existing six-evaluation
+   development ceiling. Keep the existing native memory headroom and test
+   capacity guards; do not weaken them to admit a job.
+6. Use local macOS for host/build work, short legacy Metal compatibility and
+   early rejection checks; no Metal job may execute above 362 frames. Use the
+   already authorized remote 72 GB CUDA machine for extended-duration execution.
+   Use a configured alias such as `cuda-test` in committed examples; keep private SSH details
+   and raw machine logs in ignored outputs.
 
-## Memory planning: 5, 10 and 15 seconds
+For CUDA continuation/bridge, a **447-frame source**, **464-frame target** and
+**447-frame preserved context** exercise context beyond the old limit while
+delivering 17 new frames. The merged source plus suffix is exactly 464 frames,
+so all artifacts remain below 20 seconds. Smaller continuation fixtures may
+also be used. Never merge two full 464-frame clips during development.
 
-The [memory estimate and derivation](cuda/large-canvas-memory-estimates.md)
-contains tensor counts, measured baselines, empirical extrapolations, host RAM,
-decoder storage and current indexing barriers. Values below are conservative
-**capacity budgets in GiB**, including planner reserve; they are **not measured
-new peaks**. Assume dense BF16, all 50 blocks, 512 text rows, no references,
-streamed full-VAE delivery and no approximation caches.
+[CONTRIBUTING.md](../CONTRIBUTING.md) normally requires the immutable
+204-output CUDA regression after coherent code changes. Its fixed **640×480**
+render conflicts with the user's current **256×256-only** test instruction.
+Defer that unchanged gate under this instruction; do not resize its fixtures,
+edit golden hashes, add skips or describe host checks as a numerical gate pass.
+The historical 204/204 result does not qualify the new code. The prior explicit
+request to run that gate authorized the completed run, not a new exception to
+this milestone's testing restriction. Record this regression gap at closeout.
+Documentation-only changes require document/link checks, not model execution.
 
-| Requested duration | Aligned frames / actual duration | Native 1920×1088: resident / streamed | 2× upscale K=0, later job only | 2× upscale K=2/3/4: resident / streamed |
-| --- | --- | ---: | ---: | ---: |
-| 5 s | 124 / 5.167 s | 72 / 34 GiB | 8 GiB | 156 / 118 GiB |
-| 10 s | 243 / 10.125 s | 99 / 60 GiB | 13 GiB | 262 / 224 GiB |
-| 15 s | 362 / 15.083 s | 125 / 87 GiB | 18 GiB | 368 / 330 GiB |
+## CUDA host planning baseline
 
-K=0 omits transformer refinement. An end-to-end source→K=0 workflow requires
-the larger of the source-generation and later-job peaks. Partial residency lies
-between the two weight modes. The 5–15 second refined upscale budgets exceed
-the current 72 GB test GPU even with fully streamed weights; source-duration
-and memory admission must remain separate from geometric support.
+These are extrapolated **capacity budgets**, not measured minimums or promises
+that the current binary accepts these durations. Reuse the checked planner
+formula with dense BF16, all 50 blocks, 512 text rows, no extra reference rows,
+2 GiB for other live allocations and 10% capacity headroom. Actual conditioning,
+live contexts and free device/host memory must be included before admission.
 
-Plan approximately 24–32 GiB host RAM without the streamed-weight cache,
-64 GiB for cached native generation and 80–96 GiB for cached refined upscaling,
-under the documented working-memory/headroom assumptions. These are planning
-envelopes for all three durations, contingent on bounded frame delivery.
-Actual conditioning and retained caches require additional accounting.
+| Canvas | Aligned frames / duration | Video T / audio T | Resident / fully streamed VRAM capacity | Runtime test policy |
+| --- | --- | --- | ---: | --- |
+| 256×256 | 464 / 19.333 s | 137 / 773 | 48 / 9 GiB | Required representative case |
+| 256×256 | 481 / 20.042 s | 142 / 802 | 48 / 10 GiB | Host-only: exceeds test duration |
+| 256×256 | 736 / 30.667 s | 217 / 1,227 | 50 / 12 GiB | Host-only |
+| 1344×768 | 719 / 29.958 s | 212 / 1,198 | 124 / 86 GiB | Host-only |
+| 1344×768 | 736 / 30.667 s | 217 / 1,227 | 126 / 88 GiB | Host-only |
+| 1920×1088 | 736 / 30.667 s | 217 / 1,227 | 209 / 171 GiB | Host-only |
 
-## Acceptance on the existing 72 GB CUDA card
+Use `H3_CUDA_WEIGHT_MODE=stream` for bounded CUDA baseline jobs. Retain the
+60 GiB development capacity ceiling, actual-free-memory admission and
+`max(1 GiB, device_total/10)` device reserve; account for headroom once.
+Plan about 64 GiB system RAM when retaining the existing streamed-weight cache,
+subject to actual host admission and bounded decoder delivery.
 
-A read-only capacity check on **2026-11-22** reported **73,415 MiB total
-(71.69 GiB)** and **72,787 MiB free (71.08 GiB)** on the RTX PRO 5000 72 GB.
-Host RAM was approximately 187.5 GiB total / 182.2 GiB available. These are
-planning snapshots, not reservations; recheck actual free GPU/host memory
-before every job. Measured short native/upscale results are recorded in the
-[acceptance report](cuda/large-canvas-results.md); the table below remains a
-conservative planning budget.
+At 736 frames, 1920×1088 has 442,680 video rows and 445,646 total rows under
+the table's text/audio assumptions, below the current CUDA one-million-row
+ceiling. Its 3840×2176 upscale has **1,770,720 video rows alone** and exceeds
+that ceiling regardless of VRAM. Preserve such rejections, including shared
+upscale-plan guards; frame support is not an unlimited sequence-length claim.
 
-Use this bounded matrix; budgets use the assumptions/formula above and round
-up to whole GiB, including reserve. Portrait equivalents use the same budgets.
+## M0 — Freeze temporal policy and bounded development
 
-| Workload | Required default | Optional extended case | Placement | Estimated VRAM capacity |
-| --- | --- | --- | --- | --- |
-| Native 1920×1088 | 22 frames / 0.917 s | 39 frames / 1.625 s | Auto; explicitly stream if needed for the test budget | Resident 49 / 53 GiB; streamed 11 / 15 GiB |
-| Learned 2×, 1920×1088 → 3840×2176, K=0 | 22 frames | 39 frames | No refinement transformer | About 8 GiB for either later job; source generation is separate |
-| Learned 2×, 1920×1088 → 3840×2176, K=2/3/4 | 22 frames | 39 frames | Explicit fully streamed BF16 weights for the baseline | 27 / 42 GiB; resident comparison 65 / 80 GiB |
-| Continuation/bridge at at most 1344×768 | 39-frame source; 56-frame target with 39 preserved | None | Auto or explicit streaming after preflight | Target 50 GiB resident / 12 GiB streamed, before added references |
+- [ ] LVD001 Inventory every output-frame, latent-time, context and media-input
+  limit, including literals 362/107/604/15 and indirect helper callers. Freeze
+  the backend/feature support matrix, baseline identities and legacy behavior.
+  Distinguish output-duration limits from intentional reference-media limits;
+  record the excluded quality criteria and runtime-validation gaps above.
+- [ ] LVD002 Introduce shared backend-aware temporal limits and conversions in
+  the host/geometry policy. Derive CUDA's 736/217/1,227 while retaining Metal's
+  362/107/603 and backend-appropriate legal continuation contexts;
+  validate seconds conversion, upward alignment, signed/unsigned casts and
+  overflow. Keep still-image and existing short-video shapes unchanged.
+- [ ] LVD003 Extend phase-specific host/device estimates to the new ceiling,
+  using actual text, references, anchors and audio. Reproduce the table above
+  without allocating long-video tensors; retain backend sequence/index bounds,
+  capacity reserves, streamed placement and actionable rejection diagnostics.
+- [ ] LVD004 Add a dedicated guarded test entry point and bounded host target.
+  Check effective source/target/delivery canvases, aligned duration, reference
+  media, resume/decode inputs, child workers and every merged output before
+  launch. Reject 481/719/736-frame runtime jobs, all non-256×256 video canvases
+  and Metal execution above 362 frames. Allow early rejection tests without
+  model work. Audit inherited suite defaults and enforce the evaluation limit.
 
-Set **`H3_CUDA_WEIGHT_MODE=stream`** for the required maximum-canvas refinement
-baseline, including resume subprocesses. Resident refinement at this canvas
-is outside the 60 GiB development budget even at 22 frames; do not force it.
-An optional auto-placement comparison must independently fit the test budget.
-K=0 and every positive refinement mode remain separate required cases;
-selecting K=0 is not a substitute for testing K=2/3/4.
+Exit: the shared policy and test runner separate CUDA production support
+through 736 frames, Metal's 362-frame ceiling and the 256×256/under-20-second
+development envelope.
 
-Development preflight must project **at most 60 GiB required device capacity**
-for every phase, including its reserve, and independently pass actual-free-
-memory and host-memory guards. Include actual reference/text rows, retained
-contexts, VAE workspaces and encoder buffers. The 60 GiB ceiling is a test
-budget, not a new production geometry or memory limit. Keep the existing
-device reserve of `max(1 GiB, total/10)`; do not subtract it twice when comparing
-the capacity table. Run GPU jobs **serially**, release completed phase/context
-resources, and measure whole-device usage alongside tracked tensor allocations.
+## M1 — Generation, conditioning and public entry points
 
-If a proposed 39-frame case misses preflight, select a **22-frame source and
-target before generation** and record that choice. Plan reference-heavy and
-quality cases at 22 frames from the start, with bounded fixture sizes/counts
-and separate small tests for larger reference combinations. Do not silently
-shorten an executing request, trim a longer source afterward, remove requested
-references, skip refinement or reduce model depth. If a required 22-frame case
-still cannot fit, fix allocation lifetimes/placement on this card; an OOM or a
-request for a larger GPU does not complete the task. The 5/10/15-second cases
-and continuation above 1344×768 remain host-only estimates or metadata checks
-and never become runtime acceptance prerequisites. Maximum-resolution upscale
-acceptance is required at 22 frames, with 39-frame extensions after admission.
+- [ ] LVD005 Update native validation in [engine](../src/engine.c) and
+  [script planning](../src/cli/render_plan.c) to use the shared policy.
+  Support CLI/API `frames` and `seconds` through each backend's aligned ceiling,
+  preserving defaults, option precedence and script inheritance. Reject invalid
+  durations before model loading or creating outputs, with consistent diagnostics.
+- [ ] LVD006 Update explicit native HTTP requests and the
+  [SGLang-compatible target-duration adapter](../src/server/sglang.c).
+  Extend its 15-second *output* ceiling consistently with native
+  alignment on CUDA, while retaining Metal's existing ceiling and the
+  reference-media/minimum-duration contracts. Validate explicit versus derived
+  duration, resolved execution backend and contradictory request fields.
+- [ ] LVD007 Audit [conditioning/layout](../src/host.c), positional encodings,
+  first/last-frame indices and audio/video row offsets through 736 frames.
+  Ensure helpers such as [soundtrack preparation](../src/sglang/sglang_media.c)
+  accept long target requests without expanding/truncating the input-media
+  contract accidentally. Preserve reference order, image-size policy and seeds.
+- [ ] LVD008 Audit CUDA allocation products, kernel launch dimensions, GEMM
+  shapes, packed audio rows, attention sequence bounds and independent MLP
+  slabs at the new maximum. Use checked arithmetic and bounded logical-index
+  probes. Preserve existing global attention and numeric order; retain explicit
+  failure when sufficient VRAM cannot overcome an existing kernel limit.
+- [ ] LVD009 Preserve Metal's 362-frame policy across generation, continuation,
+  saved-state resume, full/preview decode and K=0/2/3/4 upscaling. Audit shared
+  helper callers so raising CUDA limits cannot enable long Metal execution.
+  Reject effective durations above 362 before model loading or large allocation,
+  independently of canvas or available memory; retain legacy Metal behavior.
 
-## Development test limit and regression exception
+Exit: supported entry points share one backend-aware duration policy and preserve
+all conditioning semantics, with separate resource/backend admission.
 
-**No development test may generate, upscale, decode or assemble a video longer
-than three seconds.** This applies to both new tests and invoked existing
-suites, including hidden defaults and intermediate/source/reference clips.
-Use **22 frames by default and 39 only after preflight**. The sole 56-frame
-real-model exception is native continuation/bridge: the existing contract needs
-at least 39 context frames and a target strictly longer than its context.
-A 39-frame source plus a 56-frame continuation retaining 39 frames delivers
-56 total frames / 2.333 seconds. A 22- or 39-frame continuation target cannot
-exercise that contract. Keep this exception at **at most 1344×768** and within
-the same 60 GiB development budget; do not upscale its output in this campaign.
+## M2 — State, delivery and connected workflows
 
-A 72-frame or `--seconds 3` request rounds to 73/24 = 3.042 seconds and is
-forbidden. Check aligned frames and actual output duration before launching
-work. Limit final concatenated script output to 72 delivered frames; two
-independent 22-frame segments are a suitable short merging case. No ordinary
-generation/upscale test should default to 56 frames or a longer clip.
+- [ ] LVD010 Extend AV-state and presentation shape validation to the shared
+  ceiling. Audit element counts, file-length bounds, trim offsets and timestamps.
+  Preserve legacy format/identity rules; ensure old readers safely reject new
+  long states and malformed files before large allocation. Add a required
+  format field/version only if the existing metadata cannot express the policy.
+  Identify extended CUDA durations independently of canvas profile and reject
+  their execution on Metal, even when their canvas is valid there.
+- [ ] LVD011 Extend sampler checkpoints, clean source bundles and their
+  inspectors to represent longer temporal shapes safely. Preserve ownership of
+  references/audio, RNG state and exact same-build pause/resume behavior. Audit
+  container limits and any serialized fixed-size temporal structures without
+  weakening provenance or existing build/runtime compatibility checks.
+- [ ] LVD012 Extend CUDA [full VAE streaming decode](../src/vae/video_vae.c)
+  beyond its `T<=107` guard using the backend-aware limit; Metal retains that
+  guard. Preserve 22-frame chunk decoding, five-frame overlaps, chunk order and
+  bounded stitching/delivery memory.
+  Validate final-chunk counts, cancellation, failure cleanup and decode-only
+  paths; never retain the whole RGB movie to implement the longer duration.
+- [ ] LVD013 Validate CUDA generated audio decoding through 1,227 latent steps:
+  checked buffer/sample counts, audio/video timestamps and complete delivery.
+  Keep the 15-second reference-audio encoder limit independent. Verify no
+  target-duration truncation, integer overflow or stale audio after context reuse.
+- [ ] LVD014 Extend CUDA preview decoding and shared frame-count helpers, including
+  [h3_tiny_vae_frames](../src/vae/tiny_vae.c), which also gates ordinary full-VAE
+  delivery. Cover selected-frame bounds, tails and saved-state preview/decode.
+  Enforce Metal's existing temporal ceiling at execution boundaries. Preserve
+  the existing prohibition on preview-VAE upscale delivery.
+- [ ] LVD015 Extend CUDA hard continuation and bridge temporal plans/masks,
+  including [fixed bridge arrays](../src/sampling/bridge.h), validation and serialization.
+  Derive the largest legal preserved context (**702 frames** at this ceiling)
+  and require a longer target. Metal retains its existing target/context bounds.
+  Preserve exact prefix bytes, audio alignment and suffix trimming. Keep
+  first/last-anchor and upscale-continuation exclusions.
+- [ ] LVD016 Extend the CUDA learned upscaler's temporal guards and
+  source/condition planning where existing sequence/memory limits admit the result; keep Metal's
+  362-frame source/target ceiling, including no-refinement jobs.
+  Preserve K=0/2/3/4 schedules, full-context normalization, clean audio and raw
+  condition retargeting. Cover the new limits with host-only plans/index tests;
+  explicitly retain rejections such as 736 frames at a 3840×2176 target. Do not
+  run a 2× video job or claim long-upscale runtime qualification in this campaign.
 
-The 5/10/15-second cases are **arithmetic, metadata-only and allocation-plan
-checks**, without generation, full-duration GPU tensors or video decoding.
-They remain unverified for end-to-end quality, speed and measured peak memory.
-Use small tensors and logical offsets to exercise large-index boundaries.
+Exit: longer CUDA native jobs retain functional save/resume, decode and
+continuation paths; connected upscale paths have explicit, checked compatibility limits.
 
-[CONTRIBUTING.md](../CONTRIBUTING.md) requires the immutable 204-output CUDA
-regression after each coherent code change. Its **124-frame / 5.167-second**
-render was initially deferred under the user's three-second cap. The user
-subsequently explicitly requested the full gate, authorizing that unchanged
-case. It passes **204/204** on 2026-11-22 against the final standalone binary.
-See the [follow-up evidence](cuda/large-canvas-results.md#full-immutable-regression-follow-up).
-No inputs, durations or golden hashes were altered. This authorization applies
-to the immutable gate; the bounded large-canvas matrix retains its duration and
-continuation limits. Audit other suite defaults before invoking them.
+## M3 — Bounded tests and acceptance
 
-Execution deviation: early broad host-suite runs inadvertently created long
-synthetic FFmpeg clips and merges, violating this cap. Those runs are excluded
-from bounded acceptance. The dedicated `test-large-canvas-host` target excludes
-the two long-media runners; subsequent real-model jobs use the short guard.
-See the [acceptance record](cuda/large-canvas-results.md) for retained failures,
-corrections and measurement limits.
+- [ ] LVD017 Add host tests for old and new boundaries, including 362/363,
+  464/480/481, 719/720/736/737, huge integers and nonfinite seconds. Check
+  temporal alignment, audio counts, anchor positions, 702-frame contexts,
+  state metadata and resource/index rejection at supported maximum canvases.
+  Test CUDA acceptance versus Metal rejection of aligned results above 362,
+  including indirect saved-state and shared-upscaler entry points.
+  Use small allocations/logical extents for cases outside the runtime envelope.
+  Test the runner itself against forbidden dimensions, durations and merges.
+- [ ] LVD018 Run guarded CUDA native cases at **256×256 / 464 frames** for
+  prompt-only generation, both first/last anchors and supported references.
+  Use short 256×256 reference videos and bounded audio fixtures under their
+  existing input limits. Verify output dimensions, frame count, finite values,
+  timestamps and audio duration; record per-phase time, whole-device/tracked
+  peaks and host RSS. Do not assess motion or scene consistency.
+- [ ] LVD019 On CUDA at 256×256 within 464 frames, exercise pause/resume,
+  cancellation recovery, full/preview decode-only and reused API contexts. Compare seeded
+  latent/audio results and replay outputs under the existing numerical
+  contracts. Test allocator/encoder failure cleanup and repeated context use
+  without increasing duration or resolution to induce failures.
+- [ ] LVD020 Exercise real CUDA `--render` workers and HTTP generation with an
+  extended-duration 256×256 case. Verify effective commands and preserve global
+  versus local references, comma lists, image-size inheritance and seed offsets.
+  Use shorter separate fixtures for independent-shot merging/seed sets; ensure
+  every final file stays below 20 seconds and no subprocess bypasses the guard.
+- [ ] LVD021 Run CUDA hard and bridge continuation at 256×256 with the
+  **447-frame source → 464-frame target / 447-frame context** case. Check exact
+  protected prefix, 17 delivered new frames, audio trimming, saved-state replay
+  and a 464-frame final merge. Exercise the 702/736 boundary through host-only
+  planning and mask/index checks, never a long render or full movie allocation.
+- [ ] LVD022 Build on local macOS, run the bounded host suite, and verify
+  256×256 / 22- or 39-frame legacy Metal rendering and saved-state/preview
+  behavior. Verify early rejection above 362 frames across CLI/API/script/HTTP,
+  resume, full/preview decode and upscale paths without loading models or
+  allocating long tensors. Preserve existing Metal canvas rejection too.
+- [ ] LVD023 Run compatible regression checks through the guarded entry point;
+  build final macOS/Linux artifacts and verify offline 256×256 rendering and
+  saved-state delivery within each backend's limits: CUDA extended-duration
+  checks, Metal short compatibility and long-request rejection. Keep all 204
+  golden hashes unchanged. Record the immutable CUDA gate as **deferred: fixed 640×480
+  conflicts with user test limits**, and exclude noncompliant legacy suites
+  rather than invoking their hidden defaults. Capture final artifact identities.
+- [ ] LVD024 Update CLI help, README/usage, sequence rendering, HTTP, state,
+  continuation and upscale documentation with the CUDA-only duration extension
+  and Metal's unchanged 362-frame ceiling. Publish an acceptance report
+  separating measured CUDA 256×256/464-frame behavior, Metal compatibility/rejection,
+  host-only 736-frame and larger-canvas checks, deferred upscale execution and
+  the deferred immutable gate. Include resource estimates/measurements and
+  retained failures, validate links/archive hashes, and mark completion only
+  when all required bounded checks pass. No quality/consistency review is needed.
 
-CUDA runtime tests use the already authorized remote CUDA test machine through
-a locally configured SSH alias such as `cuda-test`; keep private connection
-details out of committed files. Local macOS work is for document/host checks,
-build checks and short legacy/rejection checks, not new high-resolution Metal
-qualification. No long render is required to complete this planned milestone.
+## Completion criteria
 
-## M0 — Freeze policy, resource accounting and bounded tests
-
-- [x] CLC001 Freeze the backend/geometry/feature matrix above against the
-  current source and model identities. Define distinct extended-generation
-  and extended-upscale profile identities, old-reader behavior and backend
-  rejection rules. Specify transpose/area/axis boundaries, native and learned
-  output provenance, public entry points and which existing optional modes
-  remain supported or explicitly rejected. Record immutable baseline artifacts.
-- [x] CLC002 Implement a shared checked resource estimator for actual video,
-  audio, text/reference rows, weights/residency, DiT intermediates, learned
-  network buffers, sampler/state copies and decoder delivery. Return separate
-  host/device estimates by phase. Reproduce the 5/10/15-second calculations
-  without allocations or model work; expose actionable preflight diagnostics.
-  Reproduce the 22/39-frame matrix for the actual 72 GB device, including
-  streamed refinement at 3840×2176 and the 56-frame continuation exception at
-  no more than 1344×768. Reconcile with short phase measurements; enforce
-  the 60 GiB development capacity budget.
-- [x] CLC003 Add a development-runner duration guard before launches. Validate
-  effective aligned frames, generated context, reference/source media and final
-  script duration; default to 22, admit 39 only after memory checks and allow
-  56 only for the named continuation/bridge test at no more than 1344×768.
-  Enforce the continuation resolution cap on source, latent/context and final
-  canvases, including subprocesses, resume and decode-only. Admit upscale
-  sources to 1920×1088 and outputs to 3840×2176, including transpose, only at
-  22 or 39 frames and after capacity/index checks; distinguish the job kinds.
-  Recheck free GPU/host memory, carry streaming policy into resume workers
-  and serialize GPU tests.
-  Reject defaults that exceed the cap, including `--seconds 3`.
-  Inventory applicable test commands and classify long suites as not runnable
-  under this request. Preserve the immutable regression and explicitly record
-  its duration-limit exception; do not edit global policy to hide the gap.
-
-Exit: a precise CUDA-only contract, reproducible estimates and a test runner
-that cannot accidentally launch long video jobs.
-
-## M1 — Shared geometry and artifact contracts
-
-- [x] CLC004 Add checked, backend-aware geometry policies and centralize their
-  selection for generation, source capture, upscaling and decode. Audit
-  [host geometry](../src/host.c), [engine validation](../src/engine.c),
-  [AV state shapes](../src/sampling/av_state.c) and every hardcoded/shared cap.
-  Keep still geometry, legacy reference preprocessing and legacy Metal limits
-  intact. Reject unsupported backends before large allocations or downloads.
-- [x] CLC005 Route CLI, public API, HTTP/server planning and
-  [script planning](../src/cli/render_plan.c) through the policy. Replace the
-  renderer's hardcoded `768*1344` check; carry backend/profile, output canvas
-  and internal render canvas consistently through dry runs and segment commands.
-  Keep `--ref-image-size match|high|max` distinct from output sizing and verify
-  inheritance/overrides reach the pipeline. Match help and validation errors.
-- [x] CLC006 Extend AV, sampler, upscale-source and presentation serializers
-  with explicit profile/backend semantics. Audit all readers, continuation
-  compatibility, codec-only delivery and resume before geometry-dependent
-  allocation. Preserve old supported artifacts and fail clearly for unknown
-  profiles or new CUDA artifacts on Metal. Round-trip exact shape, provenance,
-  decoder recipe, source audio and refinement state; reject forged profiles.
-
-Exit: all front doors agree on allowed dimensions and backend, and saved state
-cannot bypass the policy or silently change a legacy artifact's meaning.
-
-## M2 — CUDA index safety and memory admission
-
-- [x] CLC007 Audit DiT/GPU allocation products, element counts, byte offsets,
-  launch grids and signed/unsigned narrowing end to end. Use the actual
-  `INNER=7168` QKV width, correcting the upscale planner's `5376*3` proxy.
-  Native 15-second and all requested 4K refinement QKV volumes exceed U32
-  element indexing. Implement checked wide indexing or bounded equivalent
-  operations, including FC1/SwiGLU, projection/scatter, normalization, RoPE,
-  attention layouts, sampling and serialization. Fail before unsupported calls.
-- [x] CLC008 Bound independent linear/MLP/projection workspace where needed
-  for large counts, without changing reductions, precision or global attention.
-  Audit cuBLAS/attention interface limits and every intermediate, including
-  large byte offsets for tensors whose element count still fits U32. Test
-  overflow and boundary dispatch using small windows/logical indices; do not
-  allocate a long-video GPU tensor to test arithmetic.
-- [x] CLC009 Extend sequence/conditioning preparation and CUDA attention to
-  accept the new profiles. Count all text, anchor, reference and audio rows in
-  admission; preserve temporal positions and normalization across the full
-  sequence. Validate actual reference-encoder limits independently. Establish
-  explicit unsupported-mode errors where the existing mode is unqualified;
-  never use truncation or implicit token/reference reduction to fit.
-- [x] CLC010 Integrate CLC002 with automatic/resident/streamed weight planning,
-  host cache admission and the process guard. Account for overlapping resources
-  in reused contexts, checkpoint export and preview/decode transitions. Bound
-  transfer/decoder lifetimes and retries. Report required versus available
-  memory and phase on failure. Retain headroom; reduce conservative reserves
-  only after demonstrated allocation-lifetime evidence, with no OOM-driven
-  precision or geometry fallback. Required 22-frame native 1920×1088 and
-  K=0/2/3/4 upscale-to-3840×2176 acceptance must succeed on the existing 72 GB
-  device; use explicit streaming as the refined-upscale baseline and keep
-  39-frame extensions conditional. Keep larger continuation and 5/10/15-second
-  admission checks host-only. Larger hardware is not a completion requirement.
-
-Exit: all long-duration shapes can be evaluated safely by host planning; a
-resource rejection is distinct from integer overflow or unsupported geometry.
-
-## M3 — Native rendering and the existing learned upscaler
-
-- [x] CLC011 Enable full native 1920×1088 and transposed CUDA generation through
-  direct CLI/API/server and `--render`. Preserve seeded sampling, audio,
-  first/last anchors and ordered supported references. Extend ordinary hard
-  continuation and bridge geometry/buffer checks, including the fixed
-  `H3_MAX_PIXELS` scratch assumptions in [bridge.c](../src/sampling/bridge.c).
-  Verify independent-segment rendering/merging at the new canvas. Execute
-  continuation/bridge/context merging only at or below 1344×768; verify its
-  larger profiles through host-only checks and disclose the runtime gap.
-- [x] CLC012 Extend native preview/full-VAE handling to the new generation
-  limit, including [tiny VAE admission](../src/vae/tiny_vae.c), memory reserve,
-  callbacks and decode-only. Keep the selected decoder explicit. Cover spatial
-  tile edges, portrait output, preview cancellation and exact dimensions;
-  unsupported combinations must fail before sampling rather than at delivery.
-- [x] CLC013 Extend clean upscale-source capture to native 1920×1088. Update
-  source/profile validation and ownership so source bundles retain complete
-  raw conditions, audio and metadata at the new size. Preserve current capture
-  restrictions, atomic saving, input/output collision checks and portability
-  without reopening deleted original reference media.
-- [x] CLC014 Extend [upscale planning](../src/upscale/upscale_plan.c), learned
-  network and explicit bilinear comparison bounds from 128-latent axes to
-  at most 240 per latent axis and 32,640 latent pixels, admitting the 240×136
-  target, its transpose and other valid source aspect ratios. Audit CUDA products,
-  normalization, resize and convolution packing; preserve the pinned network,
-  full-context statistics and exact spatial 2× behavior. Keep Metal's existing
-  execution bounds. Do not introduce independent normalization of chunks.
-- [x] CLC015 Retarget bundled image/keyframe/video conditions consistently to
-  the enlarged canvas, including the separate latent-axis checks in the
-  retarget path. Preserve `match|high|max` semantics, original source sizes,
-  ordering, temporal phase and once-only augmentation; high/max references
-  must not acquire an unintended extra scale. Include their rows and network
-  lifetimes in the resource estimator. Preserve source audio bytes exactly.
-- [x] CLC016 Extend K=0 and dense K=2/3/4 execution, sigma/noise initialization,
-  state-only delivery, stop/cancel/recover and exact same-backend resume to the
-  enlarged target. Keep transfer separate from refinement admission; K=0 must
-  not load the transformer or sample noise. Preserve parent/artifact hashes,
-  audio identity and output provenance. A low-memory device must never silently
-  replace requested refinement with K=0.
-- [x] CLC017 Implement and qualify full video-VAE/FFmpeg delivery at 3840×2176
-  and transpose using 22 frames, or 39 after admission.
-  Fix the CUDA stitcher's more-than-16-tiles rejection for the 20-tile axis
-  using a valid bounded fallback or qualified larger device plan. Preserve
-  blend order and temporal overlaps; stream chunks instead of retaining the
-  whole movie. Check codec dimensions, audio sync, exact frame count, output
-  publication, progress and cancellation at the maximum upscale canvas.
-  Include full saved-upscale decode-only replay under the same frame/memory
-  guards. Upscale continues to require full VAE. Keep longer duration
-  tile/shape/index/allocation checks host-only.
-
-Exit: short native renders and source→learned-2×→full-video delivery work on
-CUDA at both maximum generation/upscale canvases, with old Metal behavior
-preserved. Larger continuation has host coverage and a disclosed runtime gap.
-
-## M4 — Verification within the three-second ceiling
-
-- [x] CLC018 Extend host/CLI/state tests for both profiles, transposes, area/axis
-  boundaries, malformed/truncated/nonfinite artifacts, profile forgery and
-  backend rejection. Test all 5/10/15-second row/byte estimates, U32/signed/size
-  boundaries and impossible admissions using arithmetic/metadata only. Verify
-  the three-second runner rejects 73/90/124/243/362-frame real-model jobs and
-  overlong merged output, rejects 56-frame upscale/default jobs, and allows
-  the named 56-frame continuation at ≤1344×768 only after capacity admission.
-  Test rejection of continuation above 1344×768, including resuming a larger
-  state and codec-only attempts. Ensure the guard permits maximum-resolution
-  22/39-frame upscaling and rejects longer or over-budget upscale jobs, including
-  output-only geometry overflow. Test the 60 GiB budget and 39→22 selection
-  without launching oversized jobs. No high-duration GPU work is hidden in
-  fixture setup.
-- [x] CLC019 Run 22-frame CUDA native cases at small and maximum canvases;
-  add 39-frame coverage only after memory admission. Cover
-  text, ordered references and all image-size modes, anchors, same-seed repeat,
-  save/re-decode, sampler resume, preview/full output, API/server and scripts.
-  Use a 39-frame source and 56-frame continuation for a bounded continuation/
-  bridge/merge case at no more than 1344×768, admitted under the named exception.
-  Larger script cases must use independent segments, not continuation.
-  Plan heavy-reference and full-depth quality runs at 22 frames; select
-  streaming before launch where needed. Retain dimensions, token counts,
-  audio/frame metadata, phase memory and timings. Record visual observations
-  separately from numerical/lifecycle checks.
-- [x] CLC020 Extend independent pinned-network operator/transfer comparisons
-  for the new spatial bounds, rectangular/portrait edges and full-context
-  normalization, using T=7 by default, at most T=12 after admission, and small
-  adversarial fixtures. Include actual maximum-canvas transfer evidence;
-  keep higher temporal/index-boundary checks host-only. Run reference and
-  native GPU computations serially with the same memory ceiling; avoid oracle
-  allocations that defeat the short test plan. Freeze tolerances before
-  comparison. Verify the implementation against the existing
-  independent reference, including normalized input/output, interpolation and
-  retargeted conditions. Native self-comparison alone is not acceptance evidence.
-- [x] CLC021 Run bounded 1920×1088→3840×2176 cases and transpose with
-  K=0/2/3/4, full VAE delivery, reference retargeting, saved-source relocation,
-  and exact pause/resume at each refinement boundary. Verify finite pixels,
-  source audio/PCM identity, target dimensions and actual duration. Require
-  22-frame success for every K mode at the maximum landscape/portrait target
-  on the 72 GB card, using explicit streamed BF16 for K>0, including resume.
-  Add a 39-frame cross-chunk case only if the measured/estimated phase budget
-  fits; otherwise run that case at 22 frames and retain separate short decoder
-  boundary checks. Apply the same 22/39-frame and memory guards to K=0,
-  API/operator forwards, resumed refinement and decode-only work. No 56-frame
-  upscale case is required or allowed here. Keep all production layers and
-  requested refinement; distinguish resource
-  rejection from an accepted render. Never run the old 90-frame campaign.
-- [x] CLC022 Exercise memory denial, allocation/encoder failure, cancellation
-  and repeated/reused contexts across native→upscale→native jobs. Use bounded
-  CUDA sanitizer probes for new index/launch paths and small-window overflow
-  tests. Check cleanup, allocation plateaus, original output preservation,
-  valid checkpoint recovery and guard headroom. Calibrate CLC002's separate
-  phase estimates against short-run device/RSS measurements and record gaps.
-  Use 22-frame lifecycle jobs: native up to 1920×1088, upscale output up to
-  3840×2176. Admit maximum-canvas sanitizer work separately; use smaller
-  operator fixtures if instrumentation exceeds the budget, while retaining
-  ordinary full-canvas evidence. Do not run GPU jobs concurrently or overlap
-  unnecessary decoder/DiT/reference processes. Record
-  actual total/free VRAM, placement and peak usage for this physical device.
-
-Exit: actual CUDA evidence covers native 1920×1088 and every K mode at
-3840×2176 on the existing 72 GB card within the frame and memory budgets.
-Long-video and continuation above 1344×768 shape/index/resource checks pass
-as host checks; their quality, speed and peak memory remain unmeasured.
-
-## M5 — Short regression, packages and documentation
-
-- [x] CLC023 Run applicable host/operator checks and a separately named CUDA
-  short regression suite covering ordinary video, still, continuation,
-  references, decoding and legacy upscaling. Audit and bound every invoked
-  runner first. Build/test the Linux standalone package with offline short
-  native/upscale/decode/resume paths on the same 72 GB card, using 22-frame
-  sources and explicit streamed refinement at 3840×2176. Keep continuation
-  at or below 1344×768. Check local macOS build/host compatibility
-  and rejection of new profiles without qualifying new Metal canvases. Preserve
-  all 204 golden hashes. Record the initial duration-limit deferral separately
-  from the subsequent explicitly authorized **204/204** immutable regression
-  pass; never label a shortened substitute as that gate.
-- [x] CLC024 Update README/usage, CLI/API/server/script guides, hardware and
-  state/upscale contracts with CUDA-only ceilings, exact 2× behavior and current
-  option restrictions. Recompute the linked memory tables from final code and
-  record measured 22/39-frame peaks for the 72 GB card beside long estimated
-  values, explicitly identifying any unrun optional 39-frame case and the
-  56-frame continuation at ≤1344×768. Disclose that larger continuation and
-  5/10/15-second videos at the new maximum canvases were not executed. Require separate measured evidence
-  for maximum-canvas K=0 and K>0 upscale/full delivery. Include K=0 versus
-  refinement and source-generation cost. Publish source/build/device identities,
-  bounded commands, visual observations and a task-by-task acceptance record.
-  Validate links, archive integrity and private-data hygiene. Mark completion
-  only with passing short evidence and all duration/resource/regression gaps
-  explicitly disclosed; do not require a forbidden long run for closeout.
-
-Completion means CUDA-native generation to 1920×1088 and the current learned
-2× upscaler to 3840×2176 are implemented with safe indexing, honest memory
-admission and compatible state/delivery behavior. All development video evidence
-must fit the existing 72 GB card and respect the frame/memory budgets and
-three-second ceiling. Continuation execution is limited to 1344×768; larger
-continuation is host-validated only and must not be advertised as fully
-qualified. Upscaling must pass at 3840×2176 with 22-frame inputs and admitted
-39-frame extensions. The 5/10/15-second estimates remain labeled as estimates;
-the separately authorized immutable regression is recorded as **204/204 passed**.
+The implementation accepts supported native CUDA requests through 736 aligned
+frames. Metal retains its 362-frame ceiling, including saved-state execution
+and upscaling. Unsupported Metal durations fail before model loading or large
+allocation; invalid or unaffordable requests fail before unsafe work.
+All 24 tasks have recorded evidence within the user's testing envelope.
+**No 30-second or high-resolution runtime test is required or authorized by
+this plan.** CUDA end-to-end evidence reaches 464 frames at 256×256; 736-frame
+execution, larger-canvas long execution, long upscale execution and the new
+code's immutable 204-output regression remain explicitly unverified under
+these restrictions. Motion and scene consistency are outside the milestone.
