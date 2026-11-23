@@ -29,7 +29,7 @@ typedef struct h3_upscale_source h3_upscale_source;
 typedef struct h3_upscale_plan h3_upscale_plan;
 typedef struct {
     int source_width,source_height,width,height,frames,video_t,audio_t;
-    int geometry_profile; /* 0 ordinary, 1 explicit upscale larger canvas */
+    int geometry_profile; /* 0 legacy, 1 legacy upscale, 2 CUDA native, 3 CUDA upscale */
     size_t video_elements,audio_elements,sequence_rows;
     uint64_t network_reserve_bytes;
 } h3_upscale_plan_info;

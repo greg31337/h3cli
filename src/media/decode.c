@@ -44,6 +44,15 @@ h3_result *h3_decode_av_owned(const char *model_dir,h3_av_state *state,
     const h3_presentation *presentation,const h3_decode_options *requested,char *error,size_t size) {
     char local[512];if(!error||!size){error=local;size=sizeof(local);}*error=0;
     if(!model_dir||!state||!requested){h3_av_state_free(state);snprintf(error,size,"invalid owned AV decode");return NULL;}
+    if(!h3_canvas_backend(state->info.geometry_profile,H3_NATIVE_CUDA)){h3_av_state_free(state);snprintf(error,size,"extended decode geometry requires CUDA");return NULL;}
+    if(state->info.geometry_profile>=2) {
+        h3_canvas_memory estimate;
+        if(!h3_canvas_memory_estimate(state->info.render_width,state->info.render_height,
+            state->info.frames,state->info.geometry_profile,0,0,&estimate)||
+            !h3_memory_check(estimate.decode_host_bytes,"extended full-VAE delivery",error,size)) {
+            h3_av_state_free(state);return NULL;
+        }
+    }
     h3_decode_options resolved=*requested;const h3_decode_options *options=&resolved;
     if(!h3_output_encoding_valid(&options->output_encoding,error,size)){h3_av_state_free(state);return NULL;}
     h3_result *result=NULL;h3_tiny_vae *tiny=NULL;h3_video_vae_decoder *full=NULL;

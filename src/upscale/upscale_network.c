@@ -185,7 +185,7 @@ float *h3_upscale_volume(h3_upscale_model *m,const float *input,int time,int hei
     int th,int tw,h3_progress_callback progress,void *opaque,h3_upscale_trace trace,
     void *trace_opaque,char *e,size_t n) {
     if(!m||!input||time<1||time>107||height<1||width<1||th<height||tw<width||
-       th>128||tw>128||(th==height&&tw==width)) {fail(e,n,"invalid full-context enlargement (T<=107, target <=128x128 latent)");return NULL;}
+       th>H3_UPSCALE_LATENT_AXIS||tw>H3_UPSCALE_LATENT_AXIS||(int64_t)th*tw>32640||(th==height&&tw==width)) {fail(e,n,"invalid full-context enlargement (T<=107, target exceeds backend latent bounds)");return NULL;}
     size_t source_spatial=(size_t)time*height*width,target_spatial=(size_t)time*th*tw;
     uint64_t reserve=(uint64_t)target_spatial*512*2*4+(UINT64_C(1)<<30);
     if(!h3_memory_check(reserve,"latent upscaler forward",e,n))return NULL;

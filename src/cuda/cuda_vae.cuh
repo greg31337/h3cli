@@ -83,8 +83,9 @@ __global__ static void sg_spatial_stitch(float *out,const float *tiles,h3_gpu::s
 }
 int h3_gpu_sglang_stitch_begin(h3_gpu *g,int h,int w,int ny,int nx,const int *ys,const int *xs,int first,int frames) {
     if(!g||!g->sglang_vae||getenv("H3_TEST_SGLANG_CPU_STITCH"))return 0;
-    if(h<16||w<16||h>320||w>320||h%16||w%16||ny<1||nx<1||ny>16||nx>16||
+    if(h<16||w<16||h>320||w>320||h%16||w%16||ny<1||nx<1||
        !ys||!xs||ys[0]||xs[0]||first<0||frames<1||first>22-frames)return -1;
+    if(ny>16||nx>16)return 0; /* Use bounded host stitching for larger canvases. */
     for(int j=1;j<ny;j++)if(ys[j]<=ys[j-1]||ys[j]>ys[j-1]+h)return -1;
     for(int j=1;j<nx;j++)if(xs[j]<=xs[j-1]||xs[j]>xs[j-1]+w)return -1;
     int height=ys[ny-1]+h,width=xs[nx-1]+w;

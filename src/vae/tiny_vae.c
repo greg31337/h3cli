@@ -23,7 +23,7 @@ static int policy(char out[256]) {
 static int fail(char *e,size_t n,const char *s) { if(e&&n)snprintf(e,n,"%s",s);return 0; }
 int h3_tiny_vae_frames(int t) { return t>=7 && t<=107 && t%5==2 ? (t-2)/5*17+5 : 0; }
 uint64_t h3_tiny_vae_memory_reserve(int h,int w,int batch) {
-    if(h<2||w<2||(int64_t)h*w>H3_MAX_PIXELS/256||batch<1||batch>5)return UINT64_MAX;
+    if(h<2||w<2||(int64_t)h*w>(H3_NATIVE_CUDA?H3_CUDA_VIDEO_PIXELS:H3_LEGACY_PIXELS)/256||batch<1||batch>5)return UINT64_MAX;
 #ifdef __APPLE__
     const uint64_t fixed=UINT64_C(128)*1024*1024;
 #else
@@ -92,7 +92,7 @@ int h3_tiny_vae_cache_matches(const h3_tiny_vae *d,const char *digest){
 int h3_tiny_vae_stream(h3_tiny_vae *d,const float *z,int t,int h,int w,int batch,int stop,
  h3_video_batch_callback callback,void *opaque,h3_video_vae_progress progress,void *po,char *error,size_t size){
     int frames=h3_tiny_vae_frames(t);
-    if(!d||!z||!callback||!frames||h<2||w<2||(int64_t)h*w>H3_MAX_PIXELS/256||batch<1||batch>5||stop>=frames||stop< -1)
+    if(!d||!z||!callback||!frames||h<2||w<2||(int64_t)h*w>(H3_NATIVE_CUDA?H3_CUDA_VIDEO_PIXELS:H3_LEGACY_PIXELS)/256||batch<1||batch>5||stop>=frames||stop< -1)
         return fail(error,size,"invalid preview VAE decode geometry/batch");
     size_t hw=(size_t)h*(size_t)w, pixels=hw*256*3;
     for(size_t i=0;i<24*(size_t)t*hw;i++)if(!isfinite(z[i]))return fail(error,size,"non-finite preview VAE input");
@@ -137,7 +137,7 @@ int h3_tiny_vae_decode(h3_tiny_vae *d,const float *z,int t,int h,int w,int selec
     if (!out)
         return fail(error, size, "missing preview VAE output");
     memset(out, 0, sizeof(*out));
-    int frames=h3_tiny_vae_frames(t);if(!frames||h<2||w<2||(int64_t)h*w>H3_MAX_PIXELS/256||selected< -1||selected>=frames)return fail(error,size,"invalid preview geometry");
+    int frames=h3_tiny_vae_frames(t);if(!frames||h<2||w<2||(int64_t)h*w>(H3_NATIVE_CUDA?H3_CUDA_VIDEO_PIXELS:H3_LEGACY_PIXELS)/256||selected< -1||selected>=frames)return fail(error,size,"invalid preview geometry");
     out->frames=selected>=0?1:frames;out->height=h*16;out->width=w*16;
     size_t n=(size_t)out->frames*(size_t)h*(size_t)w*256*3;
     if(!h3_memory_check(n*sizeof(float),"preview VAE output",error,size))return 0;

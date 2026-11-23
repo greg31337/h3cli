@@ -91,6 +91,8 @@ static void usage(const char *program) {
     fputs(
         "      --width N          Output width (default: 864)\n"
         "      --height N         Output height (default: 480)\n"
+        "                        CUDA video: up to 1920x1088 pixels, including transpose\n"
+        "                        Learned 2x CUDA upscale: up to 3840x2176; full VAE only\n"
         "      --render-width N   Lower internal model width (optional)\n"
         "      --render-height N  Lower internal model height (optional)\n"
         "      --frames N         Raw target frames, including continuation context (default: 56)\n"
@@ -1104,17 +1106,23 @@ static int cli_execute(int argc, char **argv) {
         params.continuation = continuation;
         if (!(cli_hooks && cli_hooks->validate_only)) H3_VERBOSE("h3cli: continuation source: %s\n",continue_from);
     }
-    if(cli_hooks&&cli_hooks->validate_only) {
+    {
         int ok=1;
         if(!params.resume_sampler_state&&!info) {
             ok=h3_request_params_valid(&params,NULL,preview_error,sizeof(preview_error))&&
                h3_approximate_params_valid(&params,lora.count!=0,preview_error,sizeof(preview_error));
+            if(ok&&lora.count&&!params.still&&
+               h3_canvas_native_profile(params.width,params.height,H3_NATIVE_CUDA)==H3_GEOMETRY_CUDA_VIDEO) {
+                snprintf(preview_error,sizeof(preview_error),"runtime LoRA is unqualified for extended CUDA canvases");ok=0;
+            }
             if(ok&&!params.still&&h3_align_frame_count(params.frames)<22){
                 snprintf(preview_error,sizeof(preview_error),"generation needs at least 22 frames");ok=0;
             }
             if(!ok)fprintf(stderr,"h3cli: %s\n",preview_error);
         }
-        h3_av_state_free(continuation);return ok?0:2;
+        if(!ok||(cli_hooks&&cli_hooks->validate_only)) {
+            h3_av_state_free(continuation);return ok?0:2;
+        }
     }
     h3_ctx *ctx = h3_load_dir_with_lora(model_dir,&lora);
     if (!ctx) {

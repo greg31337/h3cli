@@ -41,9 +41,7 @@ static int multiply(size_t *n, size_t v) {
 }
 
 int h3_geometry_valid(int width,int height,int profile) {
-    return (profile==0||profile==1)&&width>=32&&height>=32&&!(width%32)&&!(height%32)&&
-        (int64_t)width*height<=(profile?INT64_C(2088960):H3_MAX_PIXELS)&&
-        (!profile||(width<=1920&&height<=1920));
+    return h3_canvas_valid(width,height,profile);
 }
 int h3_av_state_shape_profile(int width,int height,int frames,int profile,h3_av_state_info *info) {
     if (!info || !h3_geometry_valid(width,height,profile) || frames < 5 || frames > 362 ||
@@ -238,8 +236,11 @@ h3_av_state *h3_av_state_load(const char *path, char *error, size_t size) {
     if (!little_endian() || fread(h, 1, sizeof(h), f) != sizeof(h) ||
         memcmp(h, magic, 8) || get(h+8,4)!=3 || get(h+12,4) != HEADER_SIZE ||
         get(h+16,4) != 0x01020304 || get(h+20,4) != 1 || get(h+124,4) != 0 ||
-        get(h+120,4)>1) {
+        get(h+120,4)>3) {
         fail(error, size, "invalid h3av magic, version, geometry profile, endianness or header"); goto done;
+    }
+    if(!h3_canvas_backend((int)get(h+120,4),H3_NATIVE_CUDA)) {
+        fail(error,size,"extended AV geometry requires CUDA"); goto done;
     }
     int v[10];
     for (unsigned i=0; i<10; i++) {
@@ -275,7 +276,7 @@ int h3_av_state_validate_continuation(const h3_av_state *s,
     int width, int height, int frames, int context,
     const uint8_t signature[32], h3_denoise_prefix *prefix, char *error, size_t size) {
     h3_av_state_info target;
-    if (!valid(s) || s->info.geometry_profile!=0 || !h3_av_state_shape(width,height,frames,&target))
+    if (!valid(s) || (s->info.geometry_profile!=0&&s->info.geometry_profile!=2) || !h3_av_state_shape_profile(width,height,frames,s->info.geometry_profile,&target))
         return fail(error,size,"invalid continuation source or target geometry");
     if (!h3_continuation_context(context,prefix)) {
         if (error && size) snprintf(error,size,"continuation context %d must be 39 + 51*k frames",context);
@@ -307,11 +308,12 @@ int h3_av_state_insert_prefix(const h3_av_state *s,
     const h3_av_state_info *target, h3_denoise_prefix p,
     float *video, float *audio, int augment_video) {
     h3_av_state_info checked;
-    if (!target || !h3_av_state_shape(target->render_width,target->render_height,target->frames,&checked) ||
-        target->version!=3 || target->geometry_profile!=0 || target->video_t!=checked.video_t || target->audio_t!=checked.audio_t ||
+    if (!target || !h3_av_state_shape_profile(target->render_width,target->render_height,target->frames,target->geometry_profile,&checked) ||
+        target->version!=3 || (target->geometry_profile!=0&&target->geometry_profile!=2) || target->video_t!=checked.video_t || target->audio_t!=checked.audio_t ||
         target->latent_h!=checked.latent_h || target->latent_w!=checked.latent_w ||
         target->video_elements!=checked.video_elements || target->audio_elements!=checked.audio_elements) return 0;
     if (!valid(s) || !target || !video || !audio || p.video_prefix_t<0 || p.audio_prefix_t<0 ||
+        target->geometry_profile!=s->info.geometry_profile ||
         target->latent_h!=s->info.latent_h || target->latent_w!=s->info.latent_w ||
         p.video_prefix_t>s->info.video_t || p.video_prefix_t>target->video_t ||
         p.audio_prefix_t>s->info.audio_t || p.audio_prefix_t>target->audio_t) return 0;
@@ -339,8 +341,10 @@ int h3_av_state_insert_bridge_video(const h3_av_state *s,
     float initial_sigma, float *video) {
     h3_av_state_info checked;
     if (!valid(s) || !target || !video || !h3_bridge_profile_valid(p) ||
+        (target->geometry_profile!=0&&target->geometry_profile!=2) ||
+        target->geometry_profile!=s->info.geometry_profile ||
         !isfinite(initial_sigma) || initial_sigma < 0 || initial_sigma > 1 ||
-        !h3_av_state_shape(target->render_width, target->render_height, target->frames, &checked) ||
+        !h3_av_state_shape_profile(target->render_width, target->render_height, target->frames, target->geometry_profile, &checked) ||
         target->version != checked.version || target->video_t != checked.video_t ||
         target->audio_t != checked.audio_t || target->latent_h != checked.latent_h ||
         target->latent_w != checked.latent_w || target->video_elements != checked.video_elements ||

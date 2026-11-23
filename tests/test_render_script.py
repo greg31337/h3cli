@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -43,6 +44,21 @@ class RenderScriptTests(unittest.TestCase):
     def command_values(self, row, flag):
         command = row['command']
         return [command[i+1] for i, arg in enumerate(command[:-1]) if arg == '--' + flag]
+
+    def test_cuda_canvas_and_reference_size_inheritance(self):
+        text = '### first\n#size 1920x1088\n#frames 22\nA teapot.\n### second\n#ref-image-size high\nA vase.\n'
+        result = self.invoke(text, '--ref-image-size', 'max')
+        if sys.platform == 'darwin':
+            self.assertNotEqual(result.returncode, 0)
+        else:
+            self.assertEqual(result.returncode, 0, result.stderr)
+            rows = json.loads(result.stdout)['segments']
+            self.assertEqual(self.command_values(rows[0], 'ref-image-size'), ['max'])
+            self.assertEqual(self.command_values(rows[1], 'ref-image-size'), ['high'])
+            self.assertEqual(self.command_values(rows[0], 'width'), ['1920'])
+        rows = self.plan(text.replace('1920x1088', '1344x768'), '--ref-image-size', 'match')['segments']
+        self.assertEqual(self.command_values(rows[0], 'ref-image-size'), ['match'])
+        self.assertEqual(self.command_values(rows[1], 'ref-image-size'), ['high'])
 
     def test_seed_set_expands_sequences_without_accumulating_offsets(self):
         plan = self.plan('''#seed-set 100, 200, 0

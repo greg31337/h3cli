@@ -156,7 +156,7 @@ int h3_bridge_mask_velocity(const h3_bridge_profile *p, int video_t,
     if (!h3_bridge_profile_valid(p) || !video || !audio ||
         video_t < p->prefix.video_prefix_t || video_t > H3_BRIDGE_MAX_VIDEO_T ||
         audio_t < p->prefix.audio_prefix_t || audio_t > H3_BRIDGE_MAX_AUDIO_T ||
-        latent_h < 1 || latent_w < 1 || (int64_t)latent_h * latent_w > H3_MAX_PIXELS / 256) return 0;
+        latent_h < 1 || latent_w < 1 || (int64_t)latent_h * latent_w > H3_CUDA_VIDEO_PIXELS / 256) return 0;
     size_t hw = (size_t)latent_h * (size_t)latent_w;
     for (size_t c = 0; c < 24; c++) for (int t = 0; t < p->prefix.video_prefix_t; t++) {
         float mask = p->class_mask[p->video_classes[t]];
@@ -185,7 +185,7 @@ float h3_flow_mix(float clean, float noise, float sigma) {
 static int step_row(float *sample, const float *velocity, size_t count,
     float sigma, float next, int kind, h3_bridge_step_stats *stats) {
     if (!stats) return h3_euler_velocity_step(sample, velocity, count, sigma, next);
-    float before[H3_MAX_PIXELS / 256];
+    float before[H3_CUDA_VIDEO_PIXELS / 256];
     if (count > sizeof(before) / sizeof(*before)) return 0;
     memcpy(before, sample, count * sizeof(*before));
     if (!h3_euler_velocity_step(sample, velocity, count, sigma, next)) return 0;
@@ -204,7 +204,7 @@ int h3_bridge_euler_step(const h3_bridge_profile *p, int video_t,
     if (!h3_bridge_profile_valid(p) || !video || !audio || !vv || !av ||
         video_t < p->prefix.video_prefix_t || video_t > H3_BRIDGE_MAX_VIDEO_T ||
         audio_t < p->prefix.audio_prefix_t || audio_t > H3_BRIDGE_MAX_AUDIO_T ||
-        latent_h < 1 || latent_w < 1 || (int64_t)latent_h * latent_w > H3_MAX_PIXELS / 256 ||
+        latent_h < 1 || latent_w < 1 || (int64_t)latent_h * latent_w > H3_CUDA_VIDEO_PIXELS / 256 ||
         !isfinite(sv) || !isfinite(nv) || !isfinite(sa) || !isfinite(na) ||
         !(sv > nv) || !(sa > na) || nv < 0 || na < 0 || sv > 1 || sa > 1) return 0;
     size_t hw = (size_t)latent_h * (size_t)latent_w;
@@ -250,7 +250,7 @@ int h3_bridge_check_exact(const h3_bridge_profile *p, int video_t,
     if (!h3_bridge_profile_valid(p) || !video || !audio || !initial_video || !initial_audio ||
         video_t < p->prefix.video_prefix_t || audio_t < p->prefix.audio_prefix_t ||
         video_t > H3_BRIDGE_MAX_VIDEO_T || audio_t > H3_BRIDGE_MAX_AUDIO_T ||
-        latent_h < 1 || latent_w < 1 || (int64_t)latent_h * latent_w > H3_MAX_PIXELS / 256) return 0;
+        latent_h < 1 || latent_w < 1 || (int64_t)latent_h * latent_w > H3_CUDA_VIDEO_PIXELS / 256) return 0;
     size_t hw = (size_t)latent_h * (size_t)latent_w;
     for (size_t c = 0; c < 24; c++) for (int t = 0; t < p->prefix.video_prefix_t; t++) {
         if (p->class_mask[p->video_classes[t]] != 0) continue;

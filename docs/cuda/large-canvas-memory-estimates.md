@@ -1,9 +1,12 @@
 # CUDA large-canvas memory estimates
 
 Planning date: **2026-11-22**. Implementation is tracked in
-[the current checklist](../todo.md). These are **estimates, not new measured
-results or guarantees of admission**. No 5-, 10- or 15-second videos were run
-for this plan. Development must fit the existing 72 GB CUDA card and remain
+[the current checklist](../todo.md). The tables below are **estimates, not
+guarantees of admission**. See the separate [short-run measurements](large-canvas-results.md)
+for actual 22/39-frame evidence. No 5-, 10- or 15-second real-model videos were run
+at the new maximum canvases. The separately authorized 204-output regression
+passes with its original 640×480 / 124-frame case. Large-canvas development
+must fit the existing 72 GB CUDA card and remain
 at most three seconds. Use 22 frames by default, 39 only after preflight.
 Continuation/bridge must not execute above **1344×768**. Upscaling must be
 tested at **3840×2176**, including refinement and decoding, using 22 frames
@@ -71,7 +74,7 @@ was executed for this check.
 The same conservative formula below gives the following rounded capacities
 for allowed test workloads, before extra reference rows. Native includes
 512 text rows and the appropriate audio rows; refinement uses the equivalent
-target geometry. Treat these as planning figures until measured.
+target geometry. These capacity budgets remain distinct from measured peaks.
 
 | Workload | Frames | Video T / target rows | Resident / fully streamed capacity |
 | --- | ---: | --- | ---: |
@@ -90,6 +93,26 @@ maximum-canvas refinement exceeds the 60 GiB development budget at both
 durations, so it is not a required run. Optional auto-placement comparisons
 must independently fit the budget. Lower K reduces runtime but does not
 remove the high-resolution activation requirement; K=0 is a separate path.
+
+The completed short runs provide the following whole-device peaks, sampled
+every 0.5 seconds. They include the device baseline and can miss brief peaks:
+
+| Workload | Frames | Measured whole-device peak |
+| --- | ---: | ---: |
+| Native 1920×1088, six steps | 22 | 5.60 GiB |
+| Native 1920×1088, two steps | 39 | 7.92 GiB |
+| K=0, 2176×3840 full delivery | 22 | 5.42 GiB |
+| K=0, 3840×2176 full delivery | 39 | 5.42 GiB |
+| K=2/3/4, 3840×2176 full delivery | 22 | 15.67–15.71 GiB |
+| K=2/3/4, 2176×3840 full delivery | 22 | 15.67–16.04 GiB |
+| K=2, 3840×2176 full delivery | 39 | 24.71 GiB |
+
+The initial 22-frame landscape K=0 delivery also passes but lacks a sampled
+whole-device peak. Reference-heavy 22-frame K=2 reaches 20.67 GiB. Cached
+native/refined jobs use approximately 37 GiB process RSS; the 39-frame K=0 job
+uses 7.93 GiB. These measurements do not justify lowering the planning reserves.
+The 39-frame portrait and K=3/K=4 extensions remain unrun; all required
+22-frame orientations and refinement levels pass.
 
 Set a **60 GiB required-capacity ceiling for development jobs**, including
 their modeled reserve, and independently enforce the real allocator's free-
@@ -117,9 +140,11 @@ separate upscale ceiling.
 
 The following budgets retain the current conservative weight-admission formula,
 allow 2 GiB for other live device allocations at planning time, and reserve
-10% of device capacity. They assume the indexing and geometry changes in the
-checklist have been implemented. They do not describe workloads supported by
-the current binary. Round upward to whole GiB; do not interpret them as measured
+10% of device capacity. The checked shared estimator is implemented in
+[`src/geometry.h`](../../src/geometry.h); reproduce these values with
+`make test-large-canvas && bin/large_canvas_tests --report`. The extended
+profiles admit these shapes arithmetically, then perform separate memory
+admission. Long-duration execution remains untested. Round upward to whole GiB; do not interpret them as measured
 minimums or as physical GPU recommendations.
 
 | Requested duration | Native generation: resident / fully streamed | 2× upscale K=0, later job only | 2× upscale K=2/3/4: resident / fully streamed |
@@ -184,9 +209,9 @@ fully_streamed_peak ≈ resident_peak - 35.888672 + 1.435547
 
 These lower numbers **exclude extra capacity headroom**. They extrapolate two
 older measurements with one prompt/seed; text/audio differences, allocator
-behavior, kernel dispatch and future row batching are not modeled. In
+behavior, kernel dispatch and row-batching boundaries are not modeled. In
 particular, streaming subtraction is a hypothesis supported by the weight
-sizes, not a new streamed measurement at these canvases. Use the conservative
+sizes, not a new long-duration streamed measurement. Use the conservative
 capacity table for initial admission planning. Neither table qualifies long
 videos under the three-second test restriction.
 
@@ -246,34 +271,36 @@ VRAM; see [hardware accounting](../hardware-requirements.md). Do not route
 normal high-resolution CLI delivery through a whole-movie allocation, or add
 cached source-generation weights to a supposedly independent K=0 process.
 
-## Correctness barriers before memory admission
+## Checked geometry, indexing and delivery
 
-These estimates do not make a currently rejected shape safe:
+The [implemented contract](large-canvas-contract.md) separates arithmetic
+validity from memory admission:
 
-- The current upscale source axes are capped at 960 pixels and its output
-  profile at 1920 per axis / 2,088,960 pixels. The learned network and bilinear
-  helper cap target latent axes at 128; the new target needs **240×136**.
-- The existing upscale sequence guard divides `UINT32_MAX` by `5376*3`,
-  although QKV width is actually **7168*3**. Audit real kernel widths, casts,
-  signed limits, byte offsets and allocation products rather than reusing it.
+- CUDA source axes extend to 1920 and learned output axes to 3840, admitting
+  **240×136** latent output and transpose. Metal retains its existing bounds.
+- The old `5376*3` QKV proxy is removed. The actual width is **7168*3**;
+  dense CUDA uses wide QKV addresses and checked launch limits. MLP FC1/SwiGLU
+  work exceeding U32 elements uses independent row slabs with complete K
+  dimensions. Global attention and full-context normalization are preserved.
 - With the table's audio/text allowance, native QKV element counts are
   **1,643,034,624 / 3,186,935,808 / 4,730,836,992**. The 15-second case exceeds
   UINT32_MAX. Upscaled counts are **6,512,400,384 / 12,662,458,368 /
   18,812,516,352**: all three exceed it. FC1 outputs and other intermediates
-  need separate checks; even a native 10-second case is close to a U32 FC1
-  limit before references. Safe wide indexing or equivalent bounded row work
-  is required, with global attention and reduction semantics preserved.
-- CUDA's fast VAE stitcher currently treats more than 16 tiles on either axis
-  as invalid before reaching its host fallback. The 20-tile output axis needs
-  a correct bounded fallback or an explicitly qualified larger stitch plan.
+  receive separate checks; even a native 10-second case is close to U32 FC1
+  elements before references. These long boundaries are tested with host
+  arithmetic and logical offsets, without long-video GPU allocations.
+- CUDA's fast VAE stitcher selects its bounded host fallback for more than
+  16 tiles per axis, before accessing fixed device arrays. The conservative
+  shared host estimate is 3.644 GiB for native and 8.253 GiB for upscaled
+  delivery, including tiles, chunk/overlap, conversion and encoder allowance.
 - Existing reference encoders and optional modes have independent limits.
   Admit them from their actual rows and live allocations; do not infer support
   from target pixels alone.
 
-Recalculate these tables from the implemented planner and calibrate with the
-allowed 22/39-frame CUDA matrix and the ≤1344×768 continuation exception.
-Measure maximum-resolution upscale transfer/refinement/decode with 22 frames,
-and 39 only after preflight. Validate longer shapes/counts without running
-them. Keep 5/10/15-second entries and continuation above 1344×768 labeled
+These tables were regenerated from the final shared planner and compared with
+the allowed 22/39-frame CUDA measurements and the bounded continuation case.
+Maximum-resolution transfer/refinement/decode passes at 22 frames, with the
+admitted 39-frame extensions identified above. Longer shapes/counts receive
+host-only checks. Keep 5/10/15-second entries and continuation above 1344×768 labeled
 **estimated and not end-to-end tested** until the user changes the corresponding
 restriction.

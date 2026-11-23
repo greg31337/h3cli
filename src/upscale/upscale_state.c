@@ -34,11 +34,16 @@ int h3_upscale_paths_alias(const char *a,const char *b) {
 }
 int h3_upscale_options_valid(const h3_params *p,char *e,size_t n) {
     if(!p)return fail(e,n,"missing options");
-    if(p->geometry_profile && (p->geometry_profile!=1||!h3_geometry_valid(p->width,p->height,1)||
+    if(p->geometry_profile>=2&&(p->denoise_reuse!=1||p->core_reuse!=1||p->dit_layers!=50||
+       p->token_reduction||p->cuda_denoise_quant||p->cuda_attention||p->adaptive_cache||
+       p->backend||p->attention_mode||p->use_int8_row_fc2))
+        return fail(e,n,"extended CUDA canvas requires dense BF16, all 50 blocks and default attention; approximation/quantization modes are unqualified");
+    if((p->geometry_profile==1||p->geometry_profile==3) && (!h3_geometry_valid(p->width,p->height,p->geometry_profile)||
        p->still||p->continuation||p->denoise_reuse!=1||p->core_reuse!=1||p->dit_layers!=50||
        p->token_reduction||p->cuda_denoise_quant||p->cuda_attention||p->adaptive_cache||p->backend||
        p->attention_mode||p->use_int8_row_fc2||p->preview_vae||p->save_upscale_state||(p->render_width&&p->render_width!=p->width)||
        (p->render_height&&p->render_height!=p->height)))return fail(e,n,"invalid larger-canvas dense policy");
+    if(p->geometry_profile<0||p->geometry_profile>3)return fail(e,n,"unknown geometry profile");
     if(p->state_only!=0&&p->state_only!=1)return fail(e,n,"invalid state-only value");
     if(!p->save_upscale_state)return p->state_only&&!p->resume_sampler_state&&!p->geometry_profile?
         fail(e,n,"state-only requires --save-upscale-state or the explicit API geometry profile"):1;
@@ -65,10 +70,14 @@ int h3_upscale_options_valid(const h3_params *p,char *e,size_t n) {
 }
 int h3_upscale_record_valid(const h3_sampler_state *s,char *e,size_t n) {
     const h3_upscale_record *u=&s->upscale;
+    if(s->params.geometry_profile==3&&u->stage!=2)return fail(e,n,"4K sampler requires refinement provenance");
+    if(s->params.geometry_profile==2&&u->stage==2)return fail(e,n,"native CUDA profile cannot claim upscale refinement provenance");
+    if(u->stage==1&&s->params.geometry_profile!=0&&s->params.geometry_profile!=2)
+        return fail(e,n,"clean source requires a native geometry profile");
     if(!u->stage)return !memcmp(u,&(h3_upscale_record){0},sizeof(*u))?1:fail(e,n,"metadata without stage");
     int refining=u->stage==2;
     if((u->stage!=1&&!refining)||u->version!=(refining?2u:1u)||u->semantic_policy!=1||u->metadata_identity!=1||
-       !h3_geometry_valid(u->source_width,u->source_height,0)||
+       !h3_geometry_valid(u->source_width,u->source_height,s->params.geometry_profile>=2?2:0)||
        (int64_t)u->source_width*(refining?2:1)!=s->render_width||(int64_t)u->source_height*(refining?2:1)!=s->render_height||
        (!refining&&(s->next_step!=s->total_steps||s->sigmas.video[s->next_step]!=0||s->sigmas.audio[s->next_step]!=0))||
        s->continuation||s->params.denoise_reuse!=1||s->params.core_reuse!=1||s->params.dit_layers!=50||

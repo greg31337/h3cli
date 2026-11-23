@@ -58,12 +58,17 @@ atomic replacement leaves the previous complete file intact.
 
 
 All AV states use schema 3 of the 160-byte AV header. Offset 120 contains
-U32 geometry profile (0 ordinary, 1 upscale); offset 124 remains zero. Profile 1 permits 2,088,960 pixels,
+U32 geometry profile (0 legacy ordinary, 1 legacy upscale, 2 CUDA ordinary,
+3 CUDA extended upscale); offset 124 remains zero. Profile 1 permits 2,088,960 pixels,
 32-pixel alignment and at most 1,920 pixels on either axis. Samplers carry a
-required section 46 with I32 profile 1, parsed before geometry-dependent
-allocations. Ordinary generation and continuation retain profile 0.
+required section 46 with the nonzero I32 profile, parsed before geometry-dependent
+allocations. Profile 2 has the same geometric ceiling as 1 but identifies native
+CUDA generation and clean sources. Profile 3 permits 8,355,840 pixels and axes
+up to 3840, and requires upscale provenance. Metal rejects profiles 2/3 before
+allocation. Ordinary legacy generation retains profile 0. See the
+[extended geometry contract](../cuda/large-canvas-contract.md).
 
-Presentation v8 records `upscale_profile GEOMETRY METADATA_IDENTITY`, followed
+Presentation v9 records `upscale_profile GEOMETRY METADATA_IDENTITY`, followed
 by `upscale RECIPE STEPS SIGMA PARENT_SHA256 ARTIFACT_SHA256`. Recipe zero and
 `none` identities identify source capture or the direct validation baseline.
 Completed recipe 1 identifies learned transfer; recipe 2 is the explicit

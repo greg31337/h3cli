@@ -387,7 +387,10 @@ exposed because validation lost subject fidelity.
 ### 5. Pick resolution and duration
 
 Width and height must each be multiples of 32, at least 32, and their product
-must not exceed `768 * 1344` pixels. Those are mechanical limits, not a promise
+must not exceed `768 * 1344` pixels on Metal. CUDA also accepts up to
+`1920 * 1088` pixels with each axis at most 1920, including portrait transpose.
+The extended CUDA canvas uses dense BF16, all 50 blocks and default attention;
+approximation, quantization and runtime LoRA are unqualified. Those are mechanical limits, not a promise
 that every tiny canvas has good model quality. H3-Base is a 768p model.
 
 | Canvas | Current guidance |
@@ -395,6 +398,7 @@ that every tiny canvas has good model quality. H3-Base is a 768p model.
 | `512x512` | Safest development size; repeatedly validated with multiple prompts. |
 | `768x768` | Validated close-quality square output; substantially more expensive. |
 | `1344x768`, `768x1344` | Released 768p-class landscape/portrait limit. |
+| `1920x1088`, `1088x1920` | Extended CUDA native canvas; requires memory admission. |
 | `1024x768`, `768x1024` | Valid 4:3 and 3:4 768p-class canvases. |
 | `384x384` internal to `512x512` | Validated fast-quality scaling point. |
 | `320x320` internal to `512x512` | Validated aggressive scaling point. |

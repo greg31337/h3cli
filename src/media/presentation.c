@@ -26,7 +26,7 @@ static int hex64(const char *s) {
 int h3_presentation_validate(const h3_presentation *p,const h3_av_state_info *i,char *error,size_t size) {
     if(!p||!i||p->version!=H3_PRESENTATION_VERSION||i->version!=3||p->av_metadata_identity!=1||
        (p->ref2va!=0&&p->ref2va!=1)||p->geometry_profile!=i->geometry_profile||
-       (p->geometry_profile!=0&&p->geometry_profile!=1)||
+       !h3_canvas_delivery_valid(p->width,p->height,p->geometry_profile)||
        p->cuda_denoise_quant<0||p->cuda_denoise_quant>2||
        (p->cuda_denoise_quant&&(p->quant_version!=h3_quant_execution_recipe(p->cuda_denoise_quant,p->adaptive_cache,p->cuda_attention)||!hex64(p->quant_model_sha256)))||
        (!p->cuda_denoise_quant&&(p->quant_version||p->quant_model_sha256[0]||p->quant_model_metadata))||
@@ -57,10 +57,12 @@ int h3_presentation_validate(const h3_presentation *p,const h3_av_state_info *i,
          !isfinite(p->upscale_sigma)||(p->upscale_steps?(p->upscale_sigma<=0||p->upscale_sigma>.5f):p->upscale_sigma!=0)||
          !hex64(p->upscale_parent_sha256)||!hex64(p->upscale_artifact_sha256)))||
        (!p->upscale_recipe&&(p->upscale_steps||p->upscale_sigma!=0||p->upscale_parent_sha256[0]||p->upscale_artifact_sha256[0]))||
-       (p->geometry_profile&&(p->width>1920||p->height>1920))||
+       (p->geometry_profile>=2&&p->codec_version!=2)||
+       (p->geometry_profile==3&&!p->upscale_recipe)||
+       (p->geometry_profile==2&&p->upscale_recipe)||
        p->render_width!=i->render_width||p->render_height!=i->render_height||
        p->width<32||p->height<32||p->width%2||p->height%2||
-       (int64_t)p->width*p->height>(p->geometry_profile?INT64_C(2088960):H3_MAX_PIXELS)||p->width<p->render_width||p->height<p->render_height||
+       p->width<p->render_width||p->height<p->render_height||
        (int64_t)p->width*p->render_height!=(int64_t)p->height*p->render_width||
        p->trim_frames<0||p->trim_frames>=i->frames||p->trim_samples<0||p->trim_samples>=i->audio_t*800||
        (p->trim_frames&&(p->trim_frames<39||(p->trim_frames-39)%51))||

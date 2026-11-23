@@ -10,6 +10,15 @@ analysis and existing measurements. Building release packages has separate
 [build requirements](build/source-build.md). GB denotes decimal storage sizes
 or advertised hardware capacities; GiB denotes binary memory measurements.
 
+CUDA native generation supports the extended 1920×1088 canvas and the learned
+2× upscaler supports 3840×2176, including portrait. The
+[large-canvas estimates](cuda/large-canvas-memory-estimates.md) separate native
+generation, K=0 transfer/decode and K=2/3/4 refinement. The 72 GB development
+matrix uses 22 frames, optional admitted 39-frame cases, streamed refinement
+and a 60 GiB capacity budget. The 5/10/15-second values are host-only estimates;
+geometric validity does not guarantee sufficient memory. Metal limits remain
+unchanged; see the [backend/profile contract](cuda/large-canvas-contract.md).
+
 ## Choosing a starting configuration
 
 | Configuration | RAM or unified memory | Dedicated VRAM | Evidence and limits |

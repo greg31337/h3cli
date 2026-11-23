@@ -18,12 +18,13 @@ static int cancel(const char *phase,int completed,int total,void *opaque) {
     (void)phase;(void)total;return completed>=*(int *)opaque;
 }
 int main(int argc,char **argv) {
-    if(argc!=4){fprintf(stderr,"usage: upscale_network WEIGHTS FIXTURES NEW_OUTPUT_DIRECTORY\n");return 2;}
+    if(argc!=4&&!(argc==5&&!strcmp(argv[4],"--short"))){fprintf(stderr,"usage: upscale_network WEIGHTS FIXTURES NEW_OUTPUT_DIRECTORY [--short]\n");return 2;}
     char error[1024]={0};if(mkdir(argv[3],0700)){perror("output directory must be new");return 2;}
     h3_upscale_model *m=h3_upscale_model_load(argv[1],error,sizeof(error));
     if(!m){fprintf(stderr,"%s\n",error);return 1;}
     const char *names[]={"constant","channel-ramp","impulse-edge","random","real"};
     int times[]={1,2,27,27,27},heights[]={2,3,3,3,3},widths[]={3,4,4,4,4};
+    if(argc==5)for(int i=0;i<5;i++)if(times[i]>7)times[i]=7;
     int ok=1;
     for(int i=0;i<5&&ok;i++) {
         char path[4096],out[4096];snprintf(path,sizeof(path),"%s/%s/input.f32",argv[2],names[i]);

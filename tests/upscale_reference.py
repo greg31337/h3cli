@@ -28,6 +28,7 @@ def main():
     p.add_argument('--upstream', type=Path, required=True)
     p.add_argument('--av', type=Path, required=True)
     p.add_argument('--out', type=Path, required=True)
+    p.add_argument('--short', action='store_true', help='T<=7 operator fixtures for the bounded large-canvas campaign; frozen tolerances unchanged')
     a = p.parse_args()
     contract = json.loads((Path(__file__).parent / 'upscale/contract.json').read_text())
     assert sha(a.weights) == contract['artifact_sha256'], 'unqualified weights'
@@ -51,7 +52,7 @@ def main():
     result = dict(contract_sha256=sha(Path(__file__).parent / 'upscale/contract.json'),
                   torch=torch.__version__, cuda=torch.version.cuda,
                   cudnn=torch.backends.cudnn.version(), artifact_sha256=sha(a.weights),
-                  av_sha256=sha(a.av), cases=[], files={})
+                  av_sha256=sha(a.av), short=a.short, cases=[], files={})
 
     def save(name, x):
         data = x.detach().float().cpu().contiguous().numpy().astype('<f4')
@@ -64,6 +65,8 @@ def main():
         header = f.read(160)
         assert header[:8] == b'H3AV\r\n\x1a\n' and struct.unpack_from('<I', header, 8)[0] == 3
         width, height, frames, t, h, w, at = struct.unpack_from('<7I', header, 24)
+        if a.short:
+            assert frames in (22,39) and t in (7,12), 'short source required'
         vb, ab = struct.unpack_from('<2Q', header, 72)
         assert vb == 24*t*h*w*4 and ab == 64*at*4
         payload = f.read()
@@ -80,7 +83,9 @@ def main():
     save('domain/video-decoder-input', real*std+mean)
     cases = {}
     for c in contract['fixture_cases']:
-        shape = c['shape']; name = c['id']
+        shape = list(c['shape']); name = c['id']
+        if a.short:
+            shape[2] = min(shape[2],7)
         x = torch.zeros(shape)
         if name == 'constant': x.fill_(0.25)
         elif name == 'channel-ramp': x += torch.linspace(-2, 2, 24).reshape(1, 24, 1, 1, 1)

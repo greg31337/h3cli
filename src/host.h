@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "src/geometry.h"
 
 #define H3_CANVAS_MULTIPLE 32
 #define H3_MAX_PIXELS (768 * 1344)

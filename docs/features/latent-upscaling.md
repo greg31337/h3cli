@@ -50,10 +50,20 @@ is not claimed.
 Fresh upscaling restores prompt, geometry and conditions from the source.
 Quantization, reuse/adaptive cache, SubBlock, LoRA/Turbo, continuation/bridge,
 token reduction and preview VAEs are excluded from the supported dense BF16
-scope. Targets are exact 2× canvases with 32-pixel alignment, at most 1,920
-pixels on either axis and 2,088,960 pixels total; 960×544 becomes **1920×1088**.
-Ordinary generation limits remain unchanged. Resource admission can still
+scope. Targets double both aligned source axes. Metal retains its ceiling of
+1,920 pixels per axis and 2,088,960 total pixels; 960×544 becomes **1920×1088**.
+CUDA accepts sources through **1920×1088** and outputs through **3840×2176**,
+including transpose (8,355,840 pixels, at most 3840 per axis).
+CUDA ordinary generation also accepts the new source canvas. Resource admission can still
 reject a valid canvas that does not fit available memory.
+
+For a short maximum-canvas job on the 72 GB test GPU, use `--frames 22` during
+source generation and `H3_CUDA_WEIGHT_MODE=stream` during refinement and resume.
+`--upscale-refine-steps 0` skips the transformer and its noise initialization;
+it still runs the learned spatial network and full VAE. Source generation is a
+separate cost. See the [canvas contract](../cuda/large-canvas-contract.md) and
+[phase memory estimates](../cuda/large-canvas-memory-estimates.md). Long-video
+estimates do not establish measured long-video support on a 72 GB card.
 
 To pause refinement, add `--stop-after-step 1 --save-sampler-state
 outputs/upscale/refine.h3sample --state-only` to a fresh upscale and omit

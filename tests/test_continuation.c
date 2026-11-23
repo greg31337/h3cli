@@ -328,8 +328,39 @@ static void cache_keys(void) {
     else unsetenv("H3_QWEN_GQA_SCALE_MODE");
 }
 
+static void extended_prefixes(void) {
+    /* Host arrays only: larger continuation is deliberately not a GPU test. */
+    h3_av_state *s=h3_av_state_new_profile(1920,1088,39,2,42,signature);
+    h3_av_state *t=h3_av_state_new_profile(1920,1088,56,2,42,signature);CHECK(s&&t);
+    for(size_t i=0;i<s->info.video_elements;i++)s->video[i]=(float)(i%17)/16;
+    for(size_t i=0;i<s->info.audio_elements;i++)s->audio[i]=.25f;
+    memset(t->video,0,t->info.video_elements*4);memset(t->audio,0,t->info.audio_elements*4);
+    h3_denoise_prefix prefix;
+    CHECK(h3_av_state_validate_continuation(s,1920,1088,56,39,signature,&prefix,error,sizeof(error)));
+    CHECK(h3_av_state_insert_prefix(s,&t->info,prefix,t->video,t->audio,0));
+    size_t hw=68u*120;
+    for(size_t c=0;c<24;c++)CHECK(!memcmp(t->video+c*17*hw,s->video+c*12*hw,12*hw*4));
+    h3_bridge_profile bridge;
+    CHECK(h3_bridge_profile_build(39,1,.5f,H3_BRIDGE_STEPPED,&bridge,NULL,0,error,sizeof(error)));
+    CHECK(h3_av_state_insert_bridge(s,&t->info,&bridge,1,1,t->video,t->audio));
+    t->info.geometry_profile=1;
+    CHECK(!h3_av_state_insert_prefix(s,&t->info,prefix,t->video,t->audio,0));
+    CHECK(!h3_av_state_insert_bridge(s,&t->info,&bridge,1,1,t->video,t->audio));
+    h3_av_state_free(t);h3_av_state_free(s);
+    /* Explicit CUDA profile on a small canvas must not be silently replayed
+     * as legacy profile 0, even though both permit these dimensions. */
+    s=h3_av_state_new_profile(128,64,39,2,42,signature);CHECK(s);
+    h3_params params=H3_PARAMS_DEFAULT;params.width=128;params.height=64;params.frames=56;
+    params.continuation=s;
+    h3_device_info device={0};snprintf(device.backend,sizeof(device.backend),"cuda");
+    CHECK(!h3_request_params_valid(&params,&device,error,sizeof(error))&&strstr(error,"matching native geometry"));
+    params.geometry_profile=2;
+    CHECK(h3_request_params_valid(&params,&device,error,sizeof(error)));
+    h3_av_state_free(s);
+}
+
 int main(int argc,char **argv) {
     if (argc==2 && !strcmp(argv[1],"--oracle")) { row_maps(1); return 0; }
-    timing(); state_io(); prefixes(); row_maps(0); validation(); cache_keys();
+    timing(); state_io(); prefixes(); row_maps(0); validation(); cache_keys();extended_prefixes();
     printf("ok: %d continuation checks\n",checks); return 0;
 }

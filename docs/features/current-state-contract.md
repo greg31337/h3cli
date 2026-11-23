@@ -18,6 +18,13 @@ versus upscaled geometry remain explicit active profiles, not backward format
 versions. CUDA video chooses SGLang arithmetic internally; saved execution
 identity checks detect mismatches but cannot select an older renderer.
 
+The [extended CUDA canvas contract](../cuda/large-canvas-contract.md) adds
+profile 2 for native video through 1920×1088 and profile 3 for learned 2×
+output through 3840×2176, including transposes. Legacy profiles 0/1 retain
+their meanings. Required sampler/source section 46 records the new identities;
+old readers reject them. Metal rejects profiles 2/3 before tensor allocation.
+Profile 3 requires upscale provenance; profile 2 cannot masquerade as refinement.
+
 Require matching current files for decode, continuation, bridge, conditioning
 reuse, checkpoint resume, and upscale. Retain bounds, finite-value, checksum,
 canonical encoding, model/device/build provenance, and output-collision checks.

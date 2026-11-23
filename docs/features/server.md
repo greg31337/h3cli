@@ -6,6 +6,15 @@ process handles the durable SQLite queue, uploads, status, events and downloads.
 There is no Python inference service and no persistent GPU model residency.
 The ordinary CLI and `bin/libh3.a` remain available.
 
+Native HTTP jobs with explicit `--width 1920 --height 1088` use the same
+CUDA-only canvas validation as the CLI and C API. Metal rejects the extended
+canvas. The SGLang compatibility `target.short_edge` adapter retains its pinned
+legacy sizing rules; use explicit native dimensions for the new ceiling.
+For the C API, leave `h3_params.geometry_profile` at its default zero and set
+`width`/`height`; ordinary CUDA generation selects the native extended profile
+automatically. Learned upscale outputs use `h3_upscale`, not a manually selected
+ordinary-generation profile. See the [geometry contract](../cuda/large-canvas-contract.md).
+
 This is a compatible **subset** of SGLang's diffusion video API, pinned to
 [`7ee7bef79decaf78f7669994f74e6f75c7784c14`](https://github.com/sgl-project/sglang/tree/7ee7bef79decaf78f7669994f74e6f75c7784c14).
 It implements H3 tasks and the queued video lifecycle, not chat, arbitrary

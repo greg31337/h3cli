@@ -60,7 +60,9 @@ that path with your downloaded executable when using a release package.
   learned 2× upscaling to 3840×2176, with short tests on the 72 GB card,
   continuation tests capped at 1344×768, maximum-resolution upscale tests at
   22/39 frames, and
-  [memory estimates](cuda/large-canvas-memory-estimates.md).
+  [memory estimates](cuda/large-canvas-memory-estimates.md) and
+  [backend/profile contract](cuda/large-canvas-contract.md), with
+  [acceptance evidence](cuda/large-canvas-results.md).
 - [Completed empty-latent still milestone](empty-still-todo.md): stock video
   VAE decoding and native 8 MP output, with
   [acceptance evidence](features/empty-still-results.md).

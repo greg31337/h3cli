@@ -209,7 +209,7 @@ static void section(buffer *b,unsigned id,unsigned format_version,h3_sampler_sta
         u32(b,&s->resume_count); u32(b,&s->resume_step); u32(b,&s->resume_format); bytes(b,s->resume_hash,32); break;
     case 32:
         u32(b,&s->refvideo_pipeline); break;
-    case 46:i32(b,&s->params.geometry_profile);if(s->params.geometry_profile!=1)b->ok=0;break;
+    case 46:i32(b,&s->params.geometry_profile);if(s->params.geometry_profile<1||s->params.geometry_profile>3)b->ok=0;break;
     case 45: {
         h3_upscale_record *u=&s->upscale;
         u32(b,&u->version);u32(b,&u->stage);u32(b,&u->semantic_policy);u32(b,&u->metadata_identity);
@@ -445,7 +445,8 @@ static h3_sampler_state *load_state(const char *path,int source,uint64_t budget,
     if(entries[46]) {
         const uint8_t *e=entries[46];
         buffer b={(uint8_t *)data+get(e+24,8),(size_t)get(e+32,8),0,0,1,1,0};section(&b,46,1,s);
-        if(source||get(e+8,4)!=REQUIRED||!b.ok||b.offset!=b.length) {
+        if((source&&s->params.geometry_profile!=H3_GEOMETRY_CUDA_VIDEO)||
+           get(e+8,4)!=REQUIRED||!b.ok||b.offset!=b.length) {
             fail(error,size,"invalid required geometry profile");goto invalid;
         }
     }
@@ -457,7 +458,7 @@ static h3_sampler_state *load_state(const char *path,int source,uint64_t budget,
            s->upscale.semantic_policy!=1||s->upscale.metadata_identity!=1) {
             fail(error,size,"invalid clean source record");goto invalid;
         }
-        if(source)for(unsigned id=17;id<=SECTIONS;id++)if(entries[id]&&id!=23&&id!=24&&id!=32&&id!=39&&id!=44&&id!=45) {
+        if(source)for(unsigned id=17;id<=SECTIONS;id++)if(entries[id]&&id!=23&&id!=24&&id!=32&&id!=39&&id!=44&&id!=45&&id!=46) {
             fail(error,size,"disposable or unsupported source section");goto invalid;
         }
     }
@@ -508,6 +509,9 @@ static h3_sampler_state *load_state(const char *path,int source,uint64_t budget,
                 (unsigned long long)s->params.adaptive_cache_max_bytes,plan.persistent_bytes,s->full_sequence);
         }
         if(id==1) {
+            if(!h3_canvas_backend(s->params.geometry_profile,H3_NATIVE_CUDA)) {
+                fail(error,size,"extended sampler geometry requires CUDA");goto invalid;
+            }
             if(source && (s->next_step!=s->total_steps||s->text.tokens>65536||
                 s->condition_video_elements>(UINT64_C(1)<<28)||
                 s->condition_audio_elements>(UINT64_C(1)<<28)-s->condition_video_elements)) {

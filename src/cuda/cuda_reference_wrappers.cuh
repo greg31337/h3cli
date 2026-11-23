@@ -641,6 +641,7 @@ int h3_gpu_gate_bf16(h3_gpu *opaque, h3_gpu_tensor *output,
                      const h3_gpu_tensor *row_map, uint32_t rows,
                      uint32_t width, uint32_t slots, uint32_t gate_slot) {
     h3_gpu *gpu = opaque;
+    if(!h3_canvas_sequence_valid(rows,1)||!width||width>INT32_MAX)return h3_gpu_set_error(gpu,"gate exceeds checked CUDA launch bounds");
     size_t count = (size_t)rows * width;
     if (!h3_gpu_require_bf16(gpu, residual, count, "gate residual") ||
         !h3_gpu_require_bf16(gpu, branch, count, "gate branch") ||
@@ -664,6 +665,7 @@ int h3_gpu_swiglu_bf16(h3_gpu *opaque, h3_gpu_tensor *output,
                        const h3_gpu_tensor *fused, uint32_t rows,
                        uint32_t width) {
     h3_gpu *gpu = opaque;
+    if(!h3_canvas_sequence_valid(rows,1)||!width||width>INT32_MAX)return h3_gpu_set_error(gpu,"SwiGLU exceeds checked CUDA launch bounds");
     if (!h3_gpu_require_bf16(gpu, fused, (size_t)rows * width * 2,
                               "SwiGLU input") ||
         !h3_gpu_require_bf16(gpu, output, (size_t)rows * width,

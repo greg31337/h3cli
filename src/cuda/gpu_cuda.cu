@@ -1,4 +1,5 @@
 #include "src/log.h"
+#include "src/geometry.h"
 #include "src/sglang/sglang.h"
 /* Linux single-device BF16 backend. Shared C owns model and sampler policy. */
 #include "src/gpu.h"
@@ -930,7 +931,7 @@ static int gemm(h3_gpu*g,h3_gpu_tensor*out,size_t out_offset,const h3_gpu_tensor
         return quant_gemm(g,out,in,w,rows,k,n);
     }
     size_t size=item_size(dtype);
-    if(!launch_ready(g)||!rows||!k||!n||!in||!out||in->dtype!=dtype||out->dtype!=dtype||!w||w->dtype!=dtype||in_offset>in->elements||(size_t)rows*k>in->elements-in_offset||out_offset>out->elements||(size_t)rows*n>out->elements-out_offset||w->elements<(size_t)n*k||(b&&(b->dtype!=dtype||b->elements<n)))return h3_gpu_set_error(g,"linear %ux%ux%u: invalid tensor shape/type",rows,n,k);
+    if(!launch_ready(g)||!rows||!k||!n||rows>INT32_MAX||k>INT32_MAX||n>INT32_MAX||!in||!out||in->dtype!=dtype||out->dtype!=dtype||!w||w->dtype!=dtype||in_offset>in->elements||(size_t)rows*k>in->elements-in_offset||out_offset>out->elements||(size_t)rows*n>out->elements-out_offset||w->elements<(size_t)n*k||(b&&(b->dtype!=dtype||b->elements<n)))return h3_gpu_set_error(g,"linear %ux%ux%u: invalid tensor shape/type",rows,n,k);
     void *x=tensor_pointer(in,in_offset*size),*weight=tensor_pointer(w),*y=tensor_pointer(out,out_offset*size),*bias=tensor_pointer(b);
     linear_args args={rows,k,n,b?1u:0u};
     profile_scope timing(g,g->convolution_gemm?-1:0);
@@ -1106,8 +1107,18 @@ int h3_gpu_patch_linear_bf16_map(h3_gpu*g,h3_gpu_tensor*o,const h3_gpu_tensor*i,
     g->stats.linear_dispatches++;return launch_status(g,"mapped patch linear");
 }
 int h3_gpu_mlp_bf16(h3_gpu*g,h3_gpu_tensor*out,const h3_gpu_tensor*in,const h3_gpu_tensor*w1,const h3_gpu_tensor*w2,uint32_t rows,uint32_t width,uint32_t hidden,uint32_t output_dim){
-    auto*fused=h3_gpu_tensor_new_bf16(g,(size_t)rows*hidden*2);auto*activated=h3_gpu_tensor_new_bf16(g,(size_t)rows*hidden);
-    int ok=fused&&activated&&h3_gpu_linear_bf16(g,fused,in,w1,nullptr,rows,width,hidden*2)&&h3_gpu_swiglu_bf16(g,activated,fused,rows,hidden)&&h3_gpu_linear_bf16(g,out,activated,w2,nullptr,rows,hidden,output_dim);
+    if(!h3_canvas_sequence_valid(rows,1)||!hidden||hidden>INT32_MAX/2||!width||!output_dim||
+       !h3_gpu_require_bf16(g,in,(size_t)rows*width,"MLP input")||
+       !h3_gpu_require_bf16(g,out,(size_t)rows*output_dim,"MLP output"))return 0;
+    uint32_t slab=h3_canvas_mlp_rows(rows,hidden);
+    auto*fused=h3_gpu_tensor_new_bf16(g,(size_t)slab*hidden*2);auto*activated=h3_gpu_tensor_new_bf16(g,(size_t)slab*hidden);
+    int ok=fused&&activated;
+    for(uint32_t row=0;ok&&row<rows;row+=slab) {
+        uint32_t count=rows-row<slab?rows-row:slab;
+        ok=gemm(g,fused,0,in,(size_t)row*width,w1,nullptr,count,width,hidden*2,H3_GPU_BF16)&&
+            h3_gpu_swiglu_bf16(g,activated,fused,count,hidden)&&
+            gemm(g,out,(size_t)row*output_dim,activated,0,w2,nullptr,count,hidden,output_dim,H3_GPU_BF16);
+    }
     h3_gpu_tensor_free(fused);h3_gpu_tensor_free(activated);return ok;
 }
 int h3_gpu_adaln_bf16(h3_gpu*g,h3_gpu_tensor*o,const h3_gpu_tensor*i,const h3_gpu_tensor*w,const h3_gpu_tensor*m,const h3_gpu_tensor*r,uint32_t rows,uint32_t width,uint32_t slots,uint32_t shift,uint32_t scale,float eps){return h3_gpu_adaln_bf16_offset(g,o,i,0,w,m,r,rows,width,slots,shift,scale,eps);}
@@ -1119,6 +1130,9 @@ int h3_gpu_gate_adaln_bf16(h3_gpu*g,h3_gpu_tensor*res,h3_gpu_tensor*out,const h3
     return h3_gpu_gate_bf16(g,res,old,branch,gate,map,rows,width,slots,gate_slot)&&h3_gpu_adaln_bf16(g,out,res,norm,mod,map,rows,width,slots,shift,scale,eps);
 }
 static int qkv_rope(h3_gpu*g,h3_gpu_tensor*q,h3_gpu_tensor*k,h3_gpu_tensor*v,const h3_gpu_tensor*input,const h3_gpu_tensor*qw,const h3_gpu_tensor*kw,const h3_gpu_tensor*c,const h3_gpu_tensor*s,uint32_t seq,uint32_t heads,uint32_t dim,uint32_t half,float eps,bool grouped){
+    if(!g||!h3_canvas_sequence_valid(seq,1)||(uint64_t)seq*heads>UINT32_MAX||
+       (!(g->sglang_reference&&dim==128)&&seq>262140))
+        return h3_gpu_set_error(g,"QKV exceeds checked CUDA launch bounds");
     size_t count=(size_t)seq*heads*dim;
     if(!launch_ready(g)||!seq||!heads||!dim||half*2>dim||!h3_gpu_require_bf16(g,input,count*3,"QKV")||!h3_gpu_require_bf16(g,q,count,"Q")||!h3_gpu_require_bf16(g,k,count,"K")||!h3_gpu_require_bf16(g,v,count,"V")||!h3_gpu_require_bf16(g,qw,dim,"Q norm")||!h3_gpu_require_bf16(g,kw,dim,"K norm")||!h3_gpu_require_bf16(g,c,(size_t)seq*half,"RoPE cos")||!h3_gpu_require_bf16(g,s,(size_t)seq*half,"RoPE sin"))return 0;
     qkv_args a={seq,heads,dim,half,grouped?1u:0u,eps};

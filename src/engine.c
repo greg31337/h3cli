@@ -673,9 +673,16 @@ int h3_request_params_valid(const h3_params *params, const h3_device_info *devic
         snprintf(error,error_size, "width and height must be multiples of 32 and at least 32");
         return 0;
     }
-    if (!params->still && !h3_geometry_valid(params->width,params->height,params->geometry_profile)) {
-        snprintf(error,error_size, "canvas exceeds the released 768*1344 pixel limit");
+    int geometry=params->geometry_profile;
+    int cuda=device?strcmp(device->backend,"cuda")==0:H3_NATIVE_CUDA;
+    if(!geometry&&!params->still)geometry=h3_canvas_native_profile(params->width,params->height,cuda);
+    if (!params->still && (!h3_geometry_valid(params->width,params->height,geometry)||!h3_canvas_backend(geometry,cuda))) {
+        snprintf(error,error_size, "canvas exceeds backend geometry limits (Metal native 768*1344; CUDA native 1920*1088)");
         return 0;
+    }
+    if(geometry>=2) {
+        h3_params policy=*params;policy.geometry_profile=geometry;
+        if(!h3_upscale_options_valid(&policy,error,error_size))return 0;
     }
     char tile_error[512];
     if (!h3_video_vae_tile_pixels(params->height, params->width,
@@ -779,6 +786,9 @@ int h3_request_params_valid(const h3_params *params, const h3_device_info *devic
         snprintf(error,error_size,"bridge continuation requires a continuation state"); return 0;
     }
     if (params->continuation) {
+        if(params->continuation->info.geometry_profile!=geometry) {
+            snprintf(error,error_size,"continuation requires matching native geometry profiles");return 0;
+        }
         if (params->first_frame || params->last_frame) {
             snprintf(error,error_size,"continuation cannot be combined with first/last-frame anchors"); return 0;
         }
@@ -2153,6 +2163,21 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     if(!h3_approximate_layout_valid(params,has_continuation,context_frames,&layout,detail,sizeof(detail))) {
         h3_set_error(ctx,"%s",detail);goto cleanup;
     }
+    if(params->geometry_profile>=2) {
+        h3_canvas_memory estimate;
+        if(!h3_canvas_memory_estimate(render_width,render_height,temporal.frame_count,
+            params->geometry_profile,text.tokens,layout.img_cond_rows+layout.audio_cond_rows,&estimate)||
+            !h3_canvas_sequence_valid(layout.seq_len,1)) {
+            h3_set_error(ctx,"extended canvas exceeds checked CUDA sequence/allocation bounds");goto cleanup;
+        }
+        if(!h3_memory_check(estimate.sampler_host_bytes,"extended sampler/state copies",detail,sizeof(detail))) {
+            h3_set_error(ctx,"%s",detail);goto cleanup;
+        }
+        H3_VERBOSE("h3cli: extended canvas resources: rows=%zu DiT_future=%llu stream_weights=%llu sampler_host=%llu decode_host=%llu decode_device=%llu\n",
+            layout.seq_len,(unsigned long long)h3_canvas_dit_future(layout.seq_len),
+            (unsigned long long)estimate.stream_core_bytes,(unsigned long long)estimate.sampler_host_bytes,
+            (unsigned long long)estimate.decode_host_bytes,(unsigned long long)estimate.decode_device_bytes);
+    }
     h3_adaptive_plan adaptive_plan;
     if(!h3_adaptive_plan_recipe(params->adaptive_cache,delivery.adaptive_version,layout.seq_len,5376,params->adaptive_cache_max_bytes,
         &adaptive_plan,detail,sizeof(detail))) {h3_set_error(ctx,"%s",detail);goto cleanup;}
@@ -2418,7 +2443,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     if (params->continuation) {
         double copy_start = h3_av_now();
         h3_av_state_info target;
-        if (!h3_av_state_shape(render_width,render_height,temporal.frame_count,&target) ||
+        if (!h3_av_state_shape_profile(render_width,render_height,temporal.frame_count,params->geometry_profile,&target) ||
             !(bridge_mode ? h3_av_state_insert_bridge(params->continuation,&target,&bridge,
                 sigmas.video[0],sigmas.audio[0],video,audio) :
                 h3_av_state_insert_prefix(params->continuation,&target,prefix,video,audio,1))) {
@@ -2547,6 +2572,14 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
         goto cleanup;
     }
     if (progress.cancelled) goto cleanup;
+    if(params->geometry_profile>=2) {
+        h3_canvas_memory estimate;
+        if(!h3_canvas_memory_estimate(render_width,render_height,temporal.frame_count,
+            params->geometry_profile,0,0,&estimate)||
+           !h3_memory_check(estimate.decode_host_bytes,"extended video delivery",detail,sizeof(detail))) {
+            h3_set_error(ctx,"%s",detail);goto cleanup;
+        }
+    }
     if (!paused) {
     if (h3_progress_emit(&progress, "audio VAE", 0, 7)) goto cleanup;
     captured = calloc(1,sizeof(*captured));
@@ -2797,6 +2830,9 @@ static h3_result *h3_generate_request(h3_ctx *ctx,const char *prompt,const h3_pa
     if (!params->resume_sampler_state) return h3_generate_state(ctx,prompt,params,NULL);
     h3_sampler_state *state=h3_sampler_state_load_with_budget(params->resume_sampler_state,params->adaptive_cache_max_bytes,params->adaptive_cache_max_bytes_set||params->adaptive_cache_max_bytes,ctx->error,sizeof(ctx->error));
     if (!state) return NULL;
+    if(state->params.geometry_profile>=2&&ctx->lora) {
+        h3_set_error(ctx,"runtime LoRA is unqualified for extended CUDA canvases");h3_sampler_state_free(state);return NULL;
+    }
     if(params->state_only&&state->upscale.stage!=2) {h3_set_error(ctx,"state-only resume requires an upscale refinement checkpoint");h3_sampler_state_free(state);return NULL;}
     if(state->upscale.stage==2&&(params->preview_vae||params->preview_denoise||params->preview_on_stop||ctx->lora)) {
         h3_set_error(ctx,"refinement resume requires dense full-VAE delivery without LoRA or previews");h3_sampler_state_free(state);return NULL;
@@ -2897,6 +2933,13 @@ static h3_result *h3_generate_request(h3_ctx *ctx,const char *prompt,const h3_pa
 
 h3_result *h3_generate(h3_ctx *ctx,const char *prompt,const h3_params *params) {
     if (!ctx || !params) return NULL;
+    h3_params geometry_params=*params;
+    if(!params->still&&!params->geometry_profile&&!params->resume_sampler_state)
+        geometry_params.geometry_profile=h3_canvas_native_profile(params->width,params->height,!strcmp(ctx->device.backend,"cuda"));
+    params=&geometry_params;
+    if(params->geometry_profile==3&&!params->resume_sampler_state) {h3_set_error(ctx,"4K profile is reserved for saved-source upscaling");return NULL;}
+    if(params->geometry_profile>=2&&ctx->lora) {h3_set_error(ctx,"runtime LoRA is unqualified for extended CUDA canvases");return NULL;}
+    if(!h3_canvas_backend(params->geometry_profile,!strcmp(ctx->device.backend,"cuda"))) {h3_set_error(ctx,"canvas requires CUDA or exceeds native geometry limits");return NULL;}
     if(!h3_upscale_options_valid(params,ctx->error,sizeof(ctx->error)))return NULL;
     if(params->save_upscale_state&&ctx->lora) {h3_set_error(ctx,"upscale source capture does not support LoRA");return NULL;}
     if(!h3_output_encoding_valid(&params->output_encoding,ctx->error,sizeof(ctx->error)))return NULL;

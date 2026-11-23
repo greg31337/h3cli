@@ -14,12 +14,13 @@ h3_upscale_plan *h3_upscale_plan_create(const h3_upscale_source *source,char *e,
     if(!source||!source->state||source->state->upscale.stage!=1||
        !h3_sampler_state_validate(source->state,e,n))return NULL;
     const h3_sampler_state *s=source->state;
-    if(s->render_width>960||s->render_height>960) {fail(e,n,"2x target exceeds the 1920-axis profile");return NULL;}
+    int axis=H3_NATIVE_CUDA?1920:960;
+    if(s->render_width>axis||s->render_height>axis) {fail(e,n,"2x target exceeds this backend canvas limit");return NULL;}
     int width=s->render_width*2,height=s->render_height*2;
-    int profile=(int64_t)width*height>H3_MAX_PIXELS;
+    int profile=h3_geometry_valid(width,height,0)?0:h3_geometry_valid(width,height,1)?1:3;
     h3_av_state_info shape;
     if(!h3_av_state_shape_profile(width,height,s->aligned_frames,profile,&shape)) {
-        fail(e,n,"2x target exceeds the 2,088,960-pixel profile");return NULL;
+        fail(e,n,"2x target exceeds the backend upscale profile");return NULL;
     }
     h3_upscale_plan *p=calloc(1,sizeof(*p));if(!p){fail(e,n,"out of memory");return NULL;}
     p->info=(h3_upscale_plan_info){.source_width=s->render_width,.source_height=s->render_height,
@@ -37,7 +38,7 @@ h3_upscale_plan *h3_upscale_plan_create(const h3_upscale_source *source,char *e,
             int w,h;
             if(!h3_reference_image_canvas(s->upscale.original_width[i],s->upscale.original_height[i],width,height,0,&w,&h))goto invalid;
             if(w/16<r.latent_w||h/16<r.latent_h||
-               ((w/16!=r.latent_w||h/16!=r.latent_h)&&(w/16>128||h/16>128)))goto invalid;
+               ((w/16!=r.latent_w||h/16!=r.latent_h)&&(w/16>H3_UPSCALE_LATENT_AXIS||h/16>H3_UPSCALE_LATENT_AXIS)))goto invalid;
             r.latent_w=w/16;r.latent_h=h/16;
         }
         p->references[i]=r;
@@ -51,14 +52,14 @@ h3_upscale_plan *h3_upscale_plan_create(const h3_upscale_source *source,char *e,
         .references=p->references,.reference_count=p->reference_count,.keyframes=p->keyframes,.keyframe_count=p->keyframe_count};
     if(!h3_layout_build(&spec,&layout,e,n)){free(p);return NULL;}
     p->info.sequence_rows=layout.seq_len;
-    int valid=layout.seq_len<=UINT32_MAX/(5376u*3u)&&layout.img_cond_rows*96==p->video_condition_elements&&
+    int valid=h3_canvas_sequence_valid(layout.seq_len,H3_NATIVE_CUDA)&&layout.img_cond_rows*96==p->video_condition_elements&&
         layout.audio_cond_rows*32==p->audio_condition_elements;
     h3_layout_free(&layout);if(!valid)goto invalid;
     return p;
-invalid:fail(e,n,"unsupported reference retarget canvas, count or 32-bit DiT index range");free(p);return NULL;
+invalid:fail(e,n,"unsupported reference retarget canvas, count or DiT launch range");free(p);return NULL;
 }
 float *h3_upscale_bilinear(const float *input,int t,int h,int w,int th,int tw,char *e,size_t n) {
-    if(!input||t<1||t>107||h<1||w<1||th<h||tw<w||th>128||tw>128) {fail(e,n,"invalid bilinear comparison volume");return NULL;}
+    if(!input||t<1||t>107||h<1||w<1||th<h||tw<w||th>H3_UPSCALE_LATENT_AXIS||tw>H3_UPSCALE_LATENT_AXIS||(int64_t)th*tw>32640) {fail(e,n,"invalid bilinear comparison volume");return NULL;}
     size_t spatial=(size_t)t*h*w,target=(size_t)t*th*tw;float *out=malloc(target*24*4);
     if(!out){fail(e,n,"bilinear allocation failed");return NULL;}
     for(size_t i=0;i<spatial*24;i++)if(!isfinite(input[i])){free(out);fail(e,n,"nonfinite bilinear input");return NULL;}

@@ -5,6 +5,14 @@ The native CLI handles the script, saves each segment, and merges the rendered
 segments in script order. Standalone macOS and Linux packages include the media
 tools; no Python interpreter is needed.
 
+On CUDA, `#size 1920x1088` and its portrait transpose use the extended native
+canvas policy. Metal retains its previous ceiling. `--ref-image-size` is
+inherited by segments and can be overridden with `#ref-image-size`; it sizes
+reference images independently of `#size`. The
+[extended canvas contract](../cuda/large-canvas-contract.md) requires dense BF16
+and memory admission. Independent segments are qualified at the new canvas;
+continuation/bridge above 1344×768 or transpose has host checks only.
+
 ```sh
 ./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3 --dry-run
 ./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3

@@ -121,6 +121,13 @@ count, so a four-second request produces about 4.46 seconds. You can use
 [resolution and duration](docs/usage.md#5-pick-resolution-and-duration) for
 landscape, portrait, and longer clips.
 
+CUDA native video and `--render` accept up to **1920×1088**, including portrait
+transpose. The existing learned 2× upscaler accepts that source and delivers
+**3840×2176** with K=0/2/3/4 and full VAE. These extended canvases require dense
+BF16 and memory admission; Metal retains its existing limits. See
+[latent upscaling](docs/features/latent-upscaling.md) and the
+[canvas/memory contract](docs/cuda/large-canvas-contract.md).
+
 ## Choose your quality
 
 | `--quality` | Intended use | Steps |

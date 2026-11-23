@@ -1,3 +1,4 @@
+#include "src/geometry.h"
 #include "src/cli/render.h"
 #include <ctype.h>
 #include <errno.h>
@@ -461,8 +462,7 @@ static int validate(h3_render_plan *p, char *error, size_t size) {
         if (s->skipped) continue;
         if (!s->prompt || !*s->prompt) FAIL("empty prompt after inheritance");
         s->width = integer(s, "width"); s->height = integer(s, "height");
-        if (s->width < 32 || s->height < 32 || s->width % 32 || s->height % 32 ||
-            (int64_t)s->width * s->height > 768*1344) FAIL("size must use multiples of 32 within the native pixel limit");
+        if (h3_canvas_native_profile(s->width,s->height,H3_NATIVE_CUDA)<0) FAIL("size must use multiples of 32 within the native pixel limit");
         int rw = integer(s, "render-width"), rh = integer(s, "render-height");
         if ((rw || rh) && (rw < 32 || rh < 32 || rw % 32 || rh % 32 || rw > s->width || rh > s->height ||
             (int64_t)rw * s->height != (int64_t)rh * s->width)) FAIL("internal render size must fit and match the output aspect ratio");

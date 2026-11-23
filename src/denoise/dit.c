@@ -1,4 +1,5 @@
 #include "src/log.h"
+#include "src/geometry.h"
 #include "src/sglang/sglang.h"
 #include "src/denoise/attention.h"
 #include "src/denoise/adaptive_cache.h"
@@ -377,7 +378,11 @@ oom:
 static int validate_layout(h3_dit *dit, const h3_text_embedding *text,
                            char *error, size_t error_size) {
     const h3_layout *layout = &dit->layout;
-    if (!text || !text->values || text->width != TEXT_DIM || !text->tokens ||
+    if(!h3_canvas_sequence_valid(layout->seq_len,H3_NATIVE_CUDA&&dit->sglang_reference)) {
+        fail(error,error_size,"DiT sequence %zu exceeds checked launch/index bounds (extended sequences require dense CUDA arithmetic)",layout->seq_len);
+        return 0;
+    }
+    if (!text || !text->values || text->width != TEXT_DIM || !h3_canvas_text_rows_valid(text->tokens) ||
         layout->signature[0] != (int)text->tokens ||
         !layout->segments || layout->segment_count < 3 ||
         layout->segments[0].kind != H3_SEG_TEXT ||
@@ -385,7 +390,7 @@ static int validate_layout(h3_dit *dit, const h3_text_embedding *text,
         layout->signature[1] < 1 || layout->signature[2] < 2 ||
         layout->signature[3] < 2 || layout->signature[4] < 1 ||
         layout->signature[2] % 2 || layout->signature[3] % 2 ||
-        layout->seq_len > UINT32_MAX || text->tokens > UINT32_MAX ||
+        !h3_canvas_sequence_valid(layout->seq_len,H3_NATIVE_CUDA&&dit->sglang_reference) || text->tokens > UINT32_MAX ||
         layout->img_cond_rows > UINT32_MAX ||
         layout->prefix.video_prefix_t < 0 ||
         layout->prefix.video_prefix_t >= layout->signature[1] ||
@@ -2049,7 +2054,7 @@ static h3_dit *load_dit(const char *weight_directory,
     if(!dit->cuda_quant) {
         uint64_t mask=0;for(unsigned i=0;i<H3_DIT_BLOCKS;i++)if(dit->block_active[i])mask|=UINT64_C(1)<<i;
         uint64_t block_bytes=2*(4*(uint64_t)INNER*HIDDEN+3*(uint64_t)FFN*HIDDEN);
-        uint64_t future=(uint64_t)dit->sequence*2*(12*(uint64_t)HIDDEN+8*(uint64_t)INNER+4*(uint64_t)FFN)+(UINT64_C(1)<<30);
+        uint64_t future=h3_canvas_dit_future(dit->sequence);
         if(!h3_gpu_plan_bf16_weights(dit->gpu,mask,block_bytes,future,ssd_streaming,retry_cap,&dit->weight_plan)) {
             fail(error,error_size,"%s",h3_gpu_error(dit->gpu));goto failed;
         }

@@ -134,6 +134,27 @@ test-render-script: bin/h3cli
 test-render-media: bin/render_driver
 	python3 tests/render_script_media.py
 test-current-host: test-render-script test-render-media
+
+.PHONY: test-large-canvas
+test-large-canvas: bin/large_canvas_tests
+	./bin/large_canvas_tests
+	python3 tests/test_large_canvas_guard.py
+
+bin/large_canvas_tests: tests/test_large_canvas.c src/geometry.h | bin
+	$(CC) $(CFLAGS) -I. $< -o $@
+
+test-current-host: test-large-canvas
+
+# This campaign must not invoke test-current-host: test-render-media creates
+# long synthetic clips even though it does not use a model or GPU.
+.PHONY: test-large-canvas-host
+test-large-canvas-host: test-large-canvas test-render-script test-sampler bin/refvideo_tests bin/refvideo_layout_tests bin/continuation_tests bin/bridge_tests test-reference-image test-upscale-state test-cuda-reference-policy test-weight-residency test-adaptive-policy test-still-host test-full-vae test-attention-host test-cuda-sol-host test-lora-runtime test-setup test-server-contract test-server-dependency test-linux-build-host bin/conditioning_tests
+	./bin/refvideo_tests
+	./bin/refvideo_layout_tests
+	./bin/conditioning_tests
+	python3 tests/test_conditioning_file.py
+	./bin/continuation_tests
+	./bin/bridge_tests
 src/models/catalog.inc: src/models/catalog.json scripts/embed_model_catalog.py
 	python3 scripts/embed_model_catalog.py
 src/models/catalog.o: src/models/catalog.inc
@@ -450,6 +471,15 @@ bin/continuation_generate: tests/continuation_generate.o $(LIB_OBJ) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 bin/upscale_lifecycle: tests/upscale_lifecycle.o $(LIB_OBJ) | bin
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+bin/large_canvas_api: tests/large_canvas_api.o $(LIB_OBJ) | bin
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+bin/large_canvas_recovery: tests/large_canvas_recovery.o $(LIB_OBJ) | bin
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+bin/large_canvas_conditions: tests/large_canvas_conditions.o $(LIB_OBJ) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 bin/upscale_probe: tests/upscale_probe.o $(LIB_OBJ) | bin

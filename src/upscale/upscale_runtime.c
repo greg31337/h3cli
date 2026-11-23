@@ -33,6 +33,7 @@ h3_result *h3_upscale_execute(h3_ctx *ctx,const h3_upscale_source *source,const 
     if(!ctx||!h3_upscale_request_valid(o,ctx->error,sizeof(ctx->error))||!source_paths(ctx,source,o)||!source_compatible(ctx,source))return NULL;
     if(!p||!transfer||!transfer->video||memcmp(p->source_identity,source->state->loaded_hash,32)||
        memcmp(transfer->parent_hash,p->source_identity,32)) {h3_set_error(ctx,"upscale plan/transfer parent mismatch");return NULL;}
+    if(!h3_canvas_backend(p->info.geometry_profile,!strcmp(ctx->device.backend,"cuda"))) {h3_set_error(ctx,"extended upscaling requires CUDA");return NULL;}
     h3_cache_clear(ctx);ctx->dit_sampler_key_ready=0;
     if(!o->refine_steps) {
         h3_av_state *av=h3_av_state_new_profile(p->info.width,p->info.height,p->info.frames,p->info.geometry_profile,
@@ -76,6 +77,7 @@ h3_result *h3_upscale(h3_ctx *ctx,const h3_upscale_source *source,const h3_upsca
     if(!ctx||!h3_upscale_request_valid(o,ctx->error,sizeof(ctx->error))||!source_paths(ctx,source,o)||!source_compatible(ctx,source))return NULL;
     if(!o->model_path){h3_set_error(ctx,"fresh learned upscaling requires --upscale-model");return NULL;}
     h3_upscale_plan *p=h3_upscale_plan_create(source,ctx->error,sizeof(ctx->error));if(!p)return NULL;
+    if(!h3_canvas_backend(p->info.geometry_profile,!strcmp(ctx->device.backend,"cuda"))) {h3_set_error(ctx,"extended upscaling requires CUDA");h3_upscale_plan_free(p);return NULL;}
     h3_cache_clear(ctx);ctx->dit_sampler_key_ready=0;
     h3_upscale_transfer *t=h3_upscale_transfer_create(source,p,o->model_path,1,o->delivery.on_progress,
         o->delivery.callback_opaque,ctx->error,sizeof(ctx->error));

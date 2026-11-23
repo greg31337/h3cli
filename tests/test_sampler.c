@@ -374,7 +374,7 @@ static void upscale_geometry(const char *directory,const char *path) {
     CHECK(!h3_av_state_shape_profile(1952,1056,90,1,&info));
     CHECK(!h3_av_state_shape_profile(1920,1120,90,1,&info));
     CHECK(!h3_av_state_shape_profile(1920,1080,90,1,&info));
-    CHECK(!h3_av_state_shape_profile(1920,1088,90,2,&info));
+    CHECK(!h3_av_state_shape_profile(1920,1088,90,4,&info));
     uint8_t signature[32]={1};h3_av_state *av=h3_av_state_new_profile(1920,1088,22,1,42,signature);CHECK(av);
     memset(av->video,0,av->info.video_elements*4);memset(av->audio,0,av->info.audio_elements*4);
     CHECK(h3_av_state_save(av,path,error,sizeof(error)));
@@ -403,6 +403,35 @@ static void upscale_geometry(const char *directory,const char *path) {
     CHECK(plan->info.width==1920&&plan->info.height==1088&&plan->info.geometry_profile==1);
     CHECK(plan->info.sequence_rows==55080+300+3&&plan->info.video_t==27&&plan->info.audio_t==150);
     h3_upscale_plan_free(plan);h3_upscale_source_free(source);h3_sampler_state_free(s);
+    /* Extended native sources carry required section 46, including when moved.
+     * Geometry checks are host-only; no models or long-duration tensors run. */
+    fixture_width=1920;fixture_height=1088;fixture_frames=22;fixture_profile=2;
+    s=fixture(directory,0,0,1);memset(s->text.values,0,s->text.tokens*s->text.width*2);s->next_step=s->total_steps;
+    CHECK(h3_upscale_capture(s,NULL,NULL,&(h3_upscale_record){0},path,error,sizeof(error)));
+    source=h3_upscale_source_load(path,error,sizeof(error));
+#ifdef __APPLE__
+    CHECK(!source&&strstr(error,"requires CUDA"));
+#else
+    CHECK(source&&source->state->params.geometry_profile==2);
+    plan=h3_upscale_plan_create(source,error,sizeof(error));CHECK(plan);
+    CHECK(plan->info.width==3840&&plan->info.height==2176&&plan->info.geometry_profile==3);
+    CHECK(plan->info.video_t==7&&plan->info.sequence_rows==57120+74+3);
+    h3_upscale_plan_free(plan);h3_upscale_source_free(source);
+#endif
+    h3_sampler_state_free(s);
+    for(int profile=2;profile<=3;profile++) {
+        int w=profile==2?1920:3840,h=profile==2?1088:2176;
+        av=h3_av_state_new_profile(w,h,22,profile,42,signature);CHECK(av);
+        memset(av->video,0,av->info.video_elements*4);memset(av->audio,0,av->info.audio_elements*4);
+        CHECK(h3_av_state_save(av,path,error,sizeof(error)));
+        loaded=h3_av_state_load(path,error,sizeof(error));
+#ifdef __APPLE__
+        CHECK(!loaded&&strstr(error,"requires CUDA"));
+#else
+        CHECK(loaded&&loaded->info.geometry_profile==profile);h3_av_state_free(loaded);
+#endif
+        h3_av_state_free(av);
+    }
     fixture_width=64;fixture_height=32;fixture_frames=56;fixture_profile=0;
     float input[24*4];for(int c=0;c<24;c++)for(int i=0;i<4;i++)input[c*4+i]=(float)c;
     float *v=h3_upscale_bilinear(input,1,2,2,4,4,error,sizeof(error));CHECK(v);
@@ -454,6 +483,9 @@ static void upscale_refinement(const char *directory,const char *path,const char
         if(!shared){shared=h3_sampler_state_load(other,error,sizeof(error));CHECK(shared);}
         CHECK(!memcmp(&s->video_rng,&shared->video_rng,sizeof(s->video_rng)));
         CHECK(r->upscale.stage==2&&r->layout.frozen_audio&&r->total_steps==k);
+        int original_profile=r->params.geometry_profile;
+        r->params.geometry_profile=2;CHECK(!h3_sampler_state_validate(r,error,sizeof(error)));
+        r->params.geometry_profile=original_profile;
         CHECK(!memcmp(r->video,s->video,s->video_elements*4)&&!memcmp(r->audio,s->audio,s->audio_elements*4));
         uint8_t key[32],changed[32];CHECK(h3_sampler_prepared_key(r,key));r->upscale.parent_hash[0]^=1;
         CHECK(h3_sampler_prepared_key(r,changed));CHECK(memcmp(key,changed,32));r->upscale.parent_hash[0]^=1;
