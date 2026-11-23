@@ -57,6 +57,8 @@ static void usage(const char *program) {
         "                        #nomerge anywhere disables merges; #continue inherits prompt sections\n"
         "                        Before first segment: #overlay-segment-name, #seed-set N,...,\n"
         "                        #ref ALIAS PATH (use ALIAS in later media references)\n"
+        "                        #ref-* media before first segment apply to every segment; local refs append\n"
+        "                        #ref-image a,b accepts lists; #ref-video-audio v1 a1,v2 a2 accepts pairs\n"
         "      --models-path PATH Shared model root (default: models)\n"
         "      --download-models GROUPS Prefetch base,references,preview,upscale,all\n"
         "      --list-models      Show pinned models and local availability\n"

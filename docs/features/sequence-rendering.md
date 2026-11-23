@@ -62,10 +62,12 @@ rendering, including names differing only by case.
 The real run also checks the destination filesystem's Unicode filename aliases
 before starting workers. Publishing a clip or merge never replaces an existing file.
 
-Ordinary settings persist until changed. References and first/last-frame
-anchors reset in each segment; repeat references on a continued Ref2VA segment
-so its model mode matches the previous segment. `#continue` applies only to its
-own segment and continues the immediately preceding segment. Multiple
+Ordinary settings persist until changed. Reference directives before the first
+segment apply to every segment. References added inside a segment apply only
+to that segment, after the global references; first/last-frame anchors also
+reset in each segment. A continued Ref2VA segment needs global or local
+references so its model mode matches the previous segment. `#continue` applies
+only to its own segment and continues the immediately preceding segment. Multiple
 independent shots and continuation chains can share one script. Media, model
 and other directive paths are resolved beside the script; CLI paths are resolved
 from the current working directory. Quoted paths can contain spaces.
@@ -73,9 +75,12 @@ from the current working directory. Quoted paths can contain spaces.
 `#refimage PATH`, `#refvideo PATH` and `#refaudio PATH` alias their hyphenated
 native names. Other directives use native long option names without `--`.
 `#size WIDTHxHEIGHT` sets both dimensions. `#unset OPTION` restores the native
-default; `#unset size` restores both dimensions. Repeated reference options keep
-their order. A new segment's first `#lora` replaces the inherited adapter list;
-additional `#lora` directives append to that list.
+default; `#unset size` restores both dimensions. `#unset ref-image` (and the other
+reference options) removes that type's global and local references for the
+current segment; the global list returns in the next segment. Repeated reference
+options and comma-separated entries keep their order. A new segment's first
+`#lora` replaces the inherited adapter list; additional `#lora` directives append
+to that list.
 
 Use `##` for comments and `\#` for a literal leading hash in a prompt. Prompts
 can span multiple lines. Directives belong before prompt text, except for the
@@ -94,19 +99,17 @@ segment labels and output destinations.
 #seed-set 100,200,300
 #ref fox "references/fox portrait.png"
 #ref ambience references/forest.wav
+#ref-image fox
+#ref-audio ambience
 
 ### opening
 #frames 56
 #size 256x256
 #seed 42
-#ref-image fox
-#ref-audio ambience
 A fox stands in a snowy forest.
 ### walking
 #continue
 #seed 43
-#ref-image fox
-#ref-audio ambience
 The fox walks toward the camera.
 ```
 
@@ -162,8 +165,7 @@ are errors. Definitions do not activate a reference or change the model mode.
 Use an alias wherever a script directive accepts a media path: `#ref-image`,
 `#ref-video`, `#ref-silent-video`, `#ref-audio`, both paths of `#ref-video-audio`,
 or `#first-frame` and `#last-frame`. The `#refimage`, `#refvideo` and `#refaudio`
-spellings work too. Reference lists still reset at each segment, so repeat
-aliases in continuation segments as needed.
+spellings work too. Define an alias before using it in a reference directive.
 
 An exact alias match takes precedence over a literal filename. Use `./ALIAS`
 to refer to a same-named file directly. Unmatched values remain ordinary paths;
@@ -171,6 +173,48 @@ aliases do not expand inside prompts, model paths or other settings. An alias
 definition's path is literal, not another alias. Unused aliases and aliases used
 only by skipped segments do not require existing files; active references are
 validated before rendering.
+
+### Global references and file lists
+
+Place `#ref-image`, `#ref-audio`, `#ref-video`, `#ref-silent-video` or
+`#ref-video-audio` before the first heading to apply those references to every
+segment, including continuations and each seed-set run. The shorthand spellings
+work here too. A segment starts with the global references in declaration order,
+then appends its own references. Local additions never carry into the next
+segment, including additions in skipped segments. `#first-frame`, `#last-frame`
+and ordinary settings such as `#ref-image-size` remain segment directives.
+
+Each reference directive accepts a comma-separated list of aliases or paths:
+
+```text
+#ref body1 references/body.png
+#ref face1 "references/face portrait.png"
+#ref-image body1, face1, path/file.png
+
+### opening
+#ref-image "references/prop, closeup.png", references/background.png
+A character holds a prop.
+### next
+The character walks away.
+```
+
+Both segments use the three global images; only `opening` uses the two extra
+images. Quote filenames containing spaces, commas or `#`; an unquoted escaped
+comma (`\,`) also denotes a literal comma. Empty entries and trailing commas
+are errors. Lists can be combined with repeated directives, and each item
+resolves independently beside the script or through its alias.
+
+For paired references, each entry contains **VIDEO AUDIO**, for example:
+
+```text
+#ref-video-audio video1.mp4 audio1.wav, "video two.mp4" "audio two.wav"
+```
+
+Global and local references together must satisfy the native limits of nine
+images, three videos and three audio inputs. Standalone reference audio still
+requires an image or video reference. CLI media defaults retain their existing
+first-segment scope; a script reference directive replaces CLI defaults of the
+same type, while local script references append to the global script list.
 
 ## Outputs and merging
 

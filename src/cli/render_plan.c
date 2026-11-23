@@ -125,16 +125,20 @@ static const char *canonical(const char *s) {
     return s;
 }
 /* Shell-style quoting only; no expansion or shell execution. */
-static char **tokens(const char *s, int *count, char *error, size_t size) {
+static char **tokens(const char *s, int *count, const char **arguments, char *error, size_t size) {
     char **v = allocate(1026 * sizeof(*v));
     char *token = allocate(strlen(s) + 1);
     *count = 0;
+    if (arguments) *arguments = NULL;
     while (*s) {
         while (isspace((unsigned char)*s)) s++;
         if (!*s || *s == '#') break;
         size_t n = 0; char quote = 0;
         while (*s && (quote || (!isspace((unsigned char)*s) && *s != '#'))) {
             char c = *s++;
+            /* Keep the raw argument spelling for quote-aware reference lists,
+             * including directives written as #ref-image="a,b.png",c.png. */
+            if (arguments && !*count && !*arguments && c == '=' && !quote) *arguments = s;
             if ((c == '\'' || c == '"') && (!quote || quote == c)) {
                 quote = quote ? 0 : c; continue;
             }
@@ -148,6 +152,7 @@ static char **tokens(const char *s, int *count, char *error, size_t size) {
         }
         if (quote) goto malformed;
         if (*count >= 1024) { snprintf(error, size, "too many directive tokens"); goto fail; }
+        if (arguments && !*count && !*arguments) *arguments = s;
         token[n] = 0; v[(*count)++] = copy(token);
         if (*s == '#') break;
     }
@@ -262,6 +267,42 @@ static const char *reference_path(const h3_render_plan *p, const char *path) {
         if (!strcmp(path, p->references[i].name)) return p->references[i].path;
     return path;
 }
+static int reference_option(const h3_option_descriptor *o) {
+    return o && o->path == H3_PATH_MEDIA && o->repeatable && !strncmp(o->name, "ref-", 4);
+}
+/* Commas separate entries, not quoted/escaped filename characters. Paired
+ * references retain their VIDEO AUDIO arguments within each entry. */
+static int set_references(const h3_render_plan *p, h3_request *settings,
+                          const h3_option_descriptor *o, const char *arguments,
+                          const char *base, unsigned char *touched, char *error, size_t size) {
+    char *list = copy(arguments), *start = list, quote = 0;
+    int ok = 0;
+    for (char *end = list; ; end++) {
+        char c = *end;
+        if (c == '\\' && quote != '\'' && end[1]) { end++; continue; }
+        if ((c == '\'' || c == '"') && (!quote || quote == c)) {
+            quote = quote ? 0 : c; continue;
+        }
+        if (c && (quote || (c != ',' && c != '#'))) continue;
+        *end = 0;
+        int count = 0;
+        char **v = tokens(start, &count, NULL, error, size);
+        if (!v) break;
+        if (count != o->arity) {
+            snprintf(error, size, "#%s expects %d %s per comma-separated entry", o->name,
+                     o->arity, o->arity == 1 ? "path" : "paths (VIDEO AUDIO)");
+            h3_argv_free(v); break;
+        }
+        int added = set_option(settings, o->name, reference_path(p, v[0]),
+                               o->arity == 2 ? reference_path(p, v[1]) : NULL,
+                               base, touched, error, size);
+        h3_argv_free(v);
+        if (!added) break;
+        if (c != ',') { ok = 1; break; }
+        start = end + 1;
+    }
+    free(list); return ok;
+}
 static void finish_prompt(h3_render_plan *p, unsigned seen) {
     h3_render_segment *s = &p->segments[p->count - 1];
     strip(&s->preamble);
@@ -282,6 +323,7 @@ static int parse(h3_render_plan *p, const h3_request *defaults, const char *base
     char *text = copy(p->source_text), *cursor = text;
     if (!strncmp(cursor, "\xef\xbb\xbf", 3)) cursor += 3;
     unsigned char *touched = allocate(h3_cli_option_count);
+    h3_request global_references = {0};
     unsigned seen = 0; int active_heading = -1, prompt_started = 0, number = 0, ok = 0;
     h3_render_segment *s = NULL;
     while (*cursor) {
@@ -317,17 +359,24 @@ static int parse(h3_render_plan *p, const h3_request *defaults, const char *base
             p->count++;
             if (!clone_settings(&s->settings, previous, p->count == 1, error, size)) { free(clean_copy); goto done; }
             memset(touched, 0, h3_cli_option_count);
+            for (size_t i = 0; i < global_references.count; i++) {
+                const h3_option_value *v = &global_references.values[i];
+                if (!set_option(&s->settings, v->option->name, v->value, v->second,
+                                base, touched, error, size)) { free(clean_copy); goto done; }
+            }
             seen = 0; active_heading = -1; prompt_started = 0;
         } else if (!strncmp(clean, "##", 2) || (!*clean && !prompt_started)) {
             /* Comments do not become prompt text. */
         } else if (*clean == '#') {
-            int count = 0; char **v = tokens(clean + 1, &count, error, size);
+            int count = 0; const char *arguments = NULL;
+            char **v = tokens(clean + 1, &count, &arguments, error, size);
             if (!v) { free(clean_copy); goto done; }
             if (!count) { h3_argv_free(v); free(clean_copy); continue; }
             char *equals = strchr(v[0], '=');
             const char *inline_value = NULL;
             if (equals) { *equals = 0; inline_value = equals + 1; }
             const char *name = canonical(v[0]);
+            const h3_option_descriptor *option = h3_option_find(name);
             int arity = count - 1 + (inline_value != NULL);
             const char *first = inline_value ? inline_value : count > 1 ? v[1] : NULL;
             const char *second = inline_value ? (count > 1 ? v[1] : NULL) : (count > 2 ? v[2] : NULL);
@@ -351,6 +400,9 @@ static int parse(h3_render_plan *p, const h3_request *defaults, const char *base
                     }
                     good = seed_set(p, list, error, size); free(list);
                 }
+            } else if (reference_option(option) && (!s || !prompt_started)) {
+                good = set_references(p, s ? &s->settings : &global_references, option,
+                                      arguments, base, touched, error, size);
             } else if (!s) { snprintf(error, size, "start the first video with ### NAME or !### NAME"); good = 0; }
             else if (prompt_started) { snprintf(error, size, "put directives before the prompt; use \\# for a literal hash"); good = 0; }
             else if (!strcmp(name, "continue")) {
@@ -412,6 +464,7 @@ done:
         char *message = copy(error);
         snprintf(error, size, "%s:%d: %s", p->source, number, message); free(message);
     }
+    h3_request_free(&global_references);
     free(touched); free(text); return ok;
 }
 static void free_segment(h3_render_segment *s) {

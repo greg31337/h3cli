@@ -184,6 +184,167 @@ Two.
         self.assertEqual(result.returncode, 2)
         self.assertIn('undefined_alias', result.stderr)
 
+    def test_global_references_append_local_lists_without_carrying_them(self):
+        rows = self.plan('''#ref body one.png
+#ref face "with spaces.png"
+#ref-image body
+#ref-audio sound.wav
+#ref-image face
+### first
+#ref-image two.png, ./one.png
+#ref-video clip.mp4
+First.
+### next
+#continue
+#ref-image two.png
+Next.
+### independent
+Independent.
+''')['segments']
+        expected = [('ref-image', 'one.png'), ('ref-audio', 'sound.wav'),
+                    ('ref-image', 'with spaces.png')]
+        for row, local in zip(rows, [
+                [('ref-image', 'two.png'), ('ref-image', 'one.png'), ('ref-video', 'clip.mp4')],
+                [('ref-image', 'two.png')], []]):
+            command = row['command']
+            refs = [(arg[2:], command[i+1]) for i, arg in enumerate(command)
+                    if arg in ('--ref-image', '--ref-audio', '--ref-video')]
+            self.assertEqual(refs, [(flag, str(self.root/name)) for flag, name in expected + local])
+
+    def test_global_reference_variants_and_paired_lists(self):
+        for directive, flag, arguments, values in (
+                ('refimage', 'ref-image', 'one.png, two.png', ['one.png', 'two.png']),
+                ('refaudio', 'ref-audio', 'voice, sound.wav', ['sound.wav', 'sound.wav']),
+                ('refvideo', 'ref-video', 'movie, clip.mp4', ['clip.mp4', 'clip.mp4']),
+                ('ref-silent-video', 'ref-silent-video', 'movie, clip.mp4', ['clip.mp4', 'clip.mp4']),
+                ('ref-video-audio', 'ref-video-audio', 'movie voice, clip.mp4 sound.wav',
+                 ['clip.mp4', 'clip.mp4'])):
+            with self.subTest(directive=directive):
+                image = '#ref-image one.png\n' if flag == 'ref-audio' else ''
+                rows = self.plan(f'#ref movie clip.mp4\n#ref voice sound.wav\n'
+                                 f'{image}#{directive} {arguments}\n### a\nOne.\n### b\nTwo.')['segments']
+                for row in rows:
+                    self.assertEqual(self.command_values(row, flag), [str(self.root/n) for n in values])
+                    if flag == 'ref-video-audio':
+                        command = row['command']
+                        self.assertEqual([command[i+2] for i, arg in enumerate(command)
+                                          if arg == '--ref-video-audio'], [str(self.root/'sound.wav')]*2)
+
+    def test_segment_reference_lists_all_variants_reset(self):
+        for flag, arguments, names in (
+                ('ref-image', 'one.png,two.png', ['one.png', 'two.png']),
+                ('ref-audio', 'sound.wav , sound.wav', ['sound.wav']*2),
+                ('ref-video', 'clip.mp4,clip.mp4', ['clip.mp4']*2),
+                ('ref-silent-video', 'clip.mp4, clip.mp4', ['clip.mp4']*2),
+                ('ref-video-audio', 'clip.mp4 sound.wav, clip.mp4 sound.wav', ['clip.mp4']*2)):
+            with self.subTest(flag=flag):
+                image = '#ref-image one.png\n' if flag == 'ref-audio' else ''
+                rows = self.plan(f'### first\n{image}#{flag} {arguments}\nOne.\n'
+                                 '### second\nTwo.')['segments']
+                self.assertEqual(self.command_values(rows[0], flag), [str(self.root/n) for n in names])
+                self.assertNotIn('--'+flag, rows[1]['command'])
+
+    def test_reference_lists_preserve_quoted_escaped_paths_and_aliases(self):
+        for name in ('comma,name.png', 'hash#name.png', 'escaped space.png', 'body,face'):
+            (self.root/name).touch()
+        text = r'''#ref "body,face" one.png
+#ref-image="body,face", 'with spaces.png' # commas, in comments are ignored
+### first
+#--ref-image='comma,name.png', hash\#name.png, escaped\ space.png, ./body\,face
+#refimage comma\,name.png
+One.
+### second
+Two.
+'''
+        rows = self.plan(text)['segments']
+        self.assertEqual(self.command_values(rows[0], 'ref-image'), [str(self.root/n) for n in (
+            'one.png', 'with spaces.png', 'comma,name.png', 'hash#name.png',
+            'escaped space.png', 'body,face', 'comma,name.png')])
+        self.assertEqual(self.command_values(rows[1], 'ref-image'),
+                         [str(self.root/n) for n in ('one.png', 'with spaces.png')])
+
+    def test_global_references_unset_is_segment_local(self):
+        rows = self.plan('''#ref-image one.png
+### first
+#unset refimage
+#ref-image two.png
+One.
+### second
+#unset ref-image
+Two.
+### third
+Three.
+''')['segments']
+        self.assertEqual(self.command_values(rows[0], 'ref-image'), [str(self.root/'two.png')])
+        self.assertEqual(self.command_values(rows[1], 'ref-image'), [])
+        self.assertEqual(self.command_values(rows[2], 'ref-image'), [str(self.root/'one.png')])
+
+    def test_global_references_survive_skips_and_seed_expansion(self):
+        rows = self.plan('''#seed-set 0,1
+#ref-image one.png
+!### skipped
+#ref-image missing.png
+Skipped.
+### first
+#ref-image two.png
+One.
+### second
+#continue
+Two.
+''')['segments']
+        for start in (0, 3):
+            self.assertEqual(rows[start]['status'], 'skipped')
+            self.assertEqual(self.command_values(rows[start+1], 'ref-image'),
+                             [str(self.root/n) for n in ('one.png', 'two.png')])
+            self.assertEqual(self.command_values(rows[start+2], 'ref-image'), [str(self.root/'one.png')])
+        result = self.invoke('#ref-image missing.png\n!### skipped\nSkipped.', dry=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(self.out.exists())
+        result = self.invoke('#ref-image missing.png\n!### skipped\n### active\nOne.')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('missing.png', result.stderr)
+
+    def test_global_references_override_cli_defaults_without_inheriting_anchors(self):
+        rows = self.plan('#ref-image one.png\n### a\n#ref-image two.png\nOne.\n### b\nTwo.',
+                         '--ref-image', 'with spaces.png')['segments']
+        self.assertEqual(self.command_values(rows[0], 'ref-image'),
+                         [str(self.root/n) for n in ('one.png', 'two.png')])
+        self.assertEqual(self.command_values(rows[1], 'ref-image'), [str(self.root/'one.png')])
+        rows = self.plan('### a\n#first-frame one.png\n#last-frame two.png\nOne.\n### b\nTwo.')['segments']
+        self.assertNotIn('--first-frame', rows[1]['command'])
+        self.assertNotIn('--last-frame', rows[1]['command'])
+
+    def test_reference_lists_reject_empty_entries_bad_pairs_and_late_directives(self):
+        for directive in ('#ref-image', '#ref-image ,one.png', '#ref-image one.png,',
+                          '#ref-image one.png,,two.png', '#ref-image one.png, # comment',
+                          '#ref-image "",one.png', '#ref-image one.png two.png',
+                          '#ref-video-audio clip.mp4,sound.wav',
+                          '#ref-video-audio clip.mp4 sound.wav, clip.mp4',
+                          '#ref-video-audio clip.mp4 sound.wav, clip.mp4 ""',
+                          '#ref-audio sound.wav,', '#ref-silent-video ,clip.mp4',
+                          '#ref-video "clip.mp4,clip.mp4', '#ref-image one.png\\'):
+            for prelude in (True, False):
+                with self.subTest(directive=directive, prelude=prelude):
+                    text = directive+'\n### a\nOne.' if prelude else '### a\n'+directive+'\nOne.'
+                    result = self.invoke(text, dry=False)
+                    self.assertEqual(result.returncode, 2, result.stderr)
+                    self.assertIn(str(self.source)+':', result.stderr)
+                    self.assertFalse(self.out.exists())
+        result = self.invoke('### a\nOne.\n#ref-image one.png,two.png')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('before the prompt', result.stderr)
+        for directive in ('#ref-image-size high', '#first-frame one.png', '#frames 22'):
+            result = self.invoke(directive+'\n### a\nOne.')
+            self.assertEqual(result.returncode, 2)
+            self.assertIn('first video', result.stderr)
+
+    def test_global_and_local_references_share_native_limits(self):
+        result = self.invoke('#ref-image '+','.join(['one.png']*9)+
+                             '\n### a\nOne.\n### b\n#ref-image two.png\nTwo.', dry=False)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('Ref2VA limits', result.stderr)
+        self.assertFalse(self.out.exists())
+
     def test_seed_set_nomerge_and_all_skipped_remain_noops(self):
         text = '#seed-set 1,2\n#overlay-segment-name\n#ref absent missing.png\n!### a\n#ref-image absent\n#nomerge'
         plan = self.plan(text)
