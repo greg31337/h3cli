@@ -115,7 +115,8 @@ int h3_models_resolve(const h3_request *r, h3_model_plan *p, char *error, size_t
     p->offline = h3_models_offline() || h3_request_get(r, "offline") != NULL;
     const char *op = h3_request_operation(r), *prefetch = value(r, "download-models");
     unsigned groups = 0;
-    int decode = !strcmp(op, "decode_av"), decode_still = !strcmp(op,"decode_still"), still = !strcmp(op,"still"), ref = 0, up = 0;
+    int up_av = !strcmp(op, "upscale_av");
+    int decode = !strcmp(op, "decode_av") || up_av, decode_still = !strcmp(op,"decode_still"), still = !strcmp(op,"still"), ref = 0, up = 0;
     p->inspect = !strcmp(op, "info") || !strcmp(op, "help") || !strcmp(op, "inspect_upscale");
     int list = h3_request_get(r, "list-models") != NULL;
     if (prefetch || list) {
@@ -140,14 +141,14 @@ int h3_models_resolve(const h3_request *r, h3_model_plan *p, char *error, size_t
             const char *state = value(r, !strcmp(op, "resume") ? "resume-sampler-state" : "upscale-state");
             if (!h3_sampler_model_requirements(state, source, &ref, &up, error, size)) goto failed;
         }
-        if (decode && !presentation_mode(value(r, "decode-av-state"), &ref, error, size)) goto failed;
+        if (decode && !presentation_mode(value(r, up_av ? "upscale-av-state" : "decode-av-state"), &ref, error, size)) goto failed;
         if(decode_still) {
             h3_still_latent latent={0};
             if(!h3_still_latent_load(value(r,"decode-still-latent"),&latent,error,size))goto failed;
             ref=latent.reference_model;h3_still_latent_free(&latent);
         }
         groups |= ref ? H3_MODEL_REFERENCES : H3_MODEL_BASE;
-        if (!strcmp(op, "upscale")) groups |= H3_MODEL_UPSCALE;
+        if (!strcmp(op, "upscale") || up_av) groups |= H3_MODEL_UPSCALE;
         if (preview_enabled(r)) groups |= H3_MODEL_PREVIEW;
     }
     p->items = calloc(h3_model_catalog_count, sizeof(*p->items));

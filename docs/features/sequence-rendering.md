@@ -13,6 +13,14 @@ reference images independently of `#size`. The
 and memory admission. Independent segments are qualified at the new canvas;
 continuation/bridge above 1344×768 or transpose has host checks only.
 
+`#frames` and `#seconds` follow the backend duration ceiling: **736 aligned
+frames on CUDA, 362 on Metal**. Preserved continuation context is limited to
+702 frames on CUDA or 345 on Metal and must be shorter than the target. The existing
+upward alignment remains; `#seconds 30` resolves to 736 frames on CUDA.
+Long segments require dense BF16/default attention; see the
+[duration contract](../cuda/long-video-contract.md). Merge lengths remain the
+sum of delivered segments and can exceed one segment’s duration.
+
 ```sh
 ./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3 --dry-run
 ./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3
@@ -35,6 +43,56 @@ It does not load models, start render workers or create output files. Native
 CLI generation options provide initial defaults; script directives override
 those defaults. Direct `--prompt`, `--output`, continuation-state overrides and
 other operation modes cannot be combined with `--render`.
+
+## Upscaling before merging
+
+Put `#upscale 0`, `#upscale 2`, `#upscale 3` or `#upscale 4` **before the first
+segment definition**. The number selects refinement steps; the scale is always
+2× on both axes. The setting applies to every rendered segment and may appear
+only once. For example:
+
+```text
+#upscale 0
+### first
+#size 1344x768
+#frames 39
+#steps 30
+A cat walks along a sunny sidewalk.
+### next
+#continue
+#frames 56
+The cat continues toward a garden gate.
+```
+
+On CUDA this delivers 2688×1536 clips and merges. With any `#continue` present,
+including in skipped definitions, refinement must be **0**; values 2/3/4 fail
+before output creation or generation. Independent segments support all four
+values. Source and doubled target geometry must fit the selected backend;
+Metal sources are limited to 960 pixels per axis for learned upscaling.
+
+Generation stays at `#size`. For zero refinement, the worker upscales each
+complete `.h3av` volume, including continuation context, preserves its audio,
+and applies the saved prefix trim only when delivering the larger video.
+The next continuation always reads the original-resolution state. For nonzero
+refinement, generation captures a private `.h3up` source for the existing
+refinement pipeline. Both paths require the full VAEs, dense BF16/default
+attention, all 50 layers, no reuse or LoRA, and an exact internal render canvas.
+Select `#quality lossless`, or use explicit steps and the ordinary dense defaults.
+
+Overlays are applied after upscaling. Individual clips, chain merges and the
+script-named movie all use the doubled canvas; `#nomerge` still upscales each
+individual clip. `#upscale-model` or CLI `--upscale-model` selects the weights.
+With refinement, `#upscale-noise` and `#upscale-seed` are forwarded only to the
+upscale worker; zero refinement rejects both. `#upscale` manages source capture
+and refinement steps, so separate `#save-upscale-state`, `#save-sampler-state`,
+`#upscale-refine-steps` and sampler-import controls are rejected.
+
+The dry-run JSON includes `command`, `upscale_command`, `source_width` /
+`source_height`, and final `width` / `height`. During execution, `run.json`
+records the upscale stage and its status. Private source clips/states and
+upscaled states remain under `.render/`; an upscale or validation failure
+preserves those files and already completed clips, and prevents merging.
+See [latent upscaling](latent-upscaling.md) for memory limits and model setup.
 
 ## Script format
 

@@ -231,6 +231,18 @@ class Native(unittest.TestCase):
   self.plan('--decode-still-latent','missing',good=False)
   self.assertEqual(len(self.plan('-p','x','--state-only','--save-av-state','out')),57)
   self.assertEqual(len(self.plan('-p','x','--first-frame','first','--last-frame','last')),57)
+ def test_av_upscale_minimal_dependencies(self):
+  state=self.root/'source.h3av';state.write_bytes(b'planner-only fixture')
+  for ref in (0,1):
+   state.with_name(state.name+'.presentation').write_text('H3-PRESENTATION 9\nstate '+'0'*64+'\nvariant '+str(ref)+'\n')
+   plan=self.plan('--upscale-av-state',str(state),'--upscale-refine-steps','0')
+   self.assertEqual(len(plan),9)
+   main=[i for i in plan if i['path'].startswith(('FL2VA/','Ref2VA/'))]
+   self.assertEqual(len(main),8)
+   self.assertTrue(all(i['path'].startswith('Ref2VA/' if ref else 'FL2VA/') for i in main))
+   self.assertFalse(any('text_encoder' in i['path'] or 'transformer/model' in i['path'] for i in plan))
+   self.assertEqual(sum('upscaler' in i['path'] for i in plan),1)
+  self.plan('--upscale-av-state',str(self.root/'missing'),good=False)
  def test_catalog_validation(self):
   spec=importlib.util.spec_from_file_location('model_catalog',ROOT/'scripts/embed_model_catalog.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
   source=ROOT/'src/models/catalog.json';catalog=json.loads(source.read_text())

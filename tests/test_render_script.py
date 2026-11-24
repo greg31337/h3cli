@@ -45,6 +45,121 @@ class RenderScriptTests(unittest.TestCase):
         command = row['command']
         return [command[i+1] for i, arg in enumerate(command[:-1]) if arg == '--' + flag]
 
+    def test_upscale_global_steps_commands_and_delivery_canvas(self):
+        for steps in (0, 2, 3, 4):
+            with self.subTest(steps=steps):
+                plan = self.plan(f'#upscale={steps}\n### shot\n#size 256x256\n#frames 22\nA teapot.',
+                                 '--upscale-model', 'weights.safetensors', '--models-path', 'models',
+                                 '--offline', '--ffmpeg-crf', '16')
+                self.assertTrue(plan['upscale'])
+                self.assertEqual(plan['upscale_refine_steps'], steps)
+                row = plan['segments'][0]
+                self.assertEqual((row['source_width'], row['source_height'], row['width'], row['height']), (256,256,512,512))
+                self.assertEqual(self.command_values(row, 'width'), ['256'])
+                self.assertNotIn('--upscale-model', row['command'])
+                command = row['upscale_command']
+                source_flag = '--upscale-state' if steps else '--upscale-av-state'
+                self.assertEqual(command[command.index('--upscale-refine-steps')+1], str(steps))
+                self.assertEqual(command[command.index(source_flag)+1], str(self.out/'.render'/('0000.h3up' if steps else '0000.h3av')))
+                self.assertEqual(command[command.index('--output')+1], str(self.out/'.render/0000-upscaled.mp4'))
+                self.assertEqual(command[command.index('--save-av-state')+1], str(self.out/'.render/0000-upscaled.h3av'))
+                self.assertIn('--offline', command)
+                self.assertNotIn('--prompt', command)
+                self.assertNotIn('--frames', command)
+                self.assertEqual(command[command.index('--ffmpeg-crf')+1], '16')
+                self.assertEqual(bool(self.command_values(row, 'save-upscale-state')), bool(steps))
+
+    def test_upscale_continuations_keep_original_states_for_each_seed(self):
+        plan = self.plan('''#upscale 0
+#seed-set 1,2
+#ref-image one.png
+### a
+#size 256x256
+#frames 39
+A teapot.
+### b
+#continue
+#frames 56
+#continue-mode bridge
+Continue.
+''')
+        for start in (0, 2):
+            first, second = plan['segments'][start:start+2]
+            self.assertEqual(self.command_values(second, 'continue-from'), self.command_values(first, 'save-av-state'))
+            self.assertEqual(second['delivered'], 17)
+            self.assertEqual(second['width'], 512)
+            self.assertNotIn('--continue-from', second['upscale_command'])
+            self.assertEqual(self.command_values(second, 'ref-image'), [str(self.root/'one.png')])
+        self.assertNotEqual(plan['segments'][0]['upscale_command'], plan['segments'][2]['upscale_command'])
+
+    def test_upscale_nonzero_rejects_any_continuation_before_output(self):
+        for steps in (2,3,4):
+            for heading in ('###', '!###'):
+                for mode in ('hard', 'bridge'):
+                    text = f'#upscale {steps}\n{heading} a\n#size 256x256\n#frames 39\nOne.\n{heading} b\n#continue\n#continue-mode {mode}\n#frames 56\nTwo.'
+                    result = self.invoke(text, dry=False)
+                    self.assertEqual(result.returncode, 2, result.stderr)
+                    self.assertIn('continuations require #upscale 0', result.stderr)
+                    self.assertFalse(self.out.exists())
+
+    def test_upscale_invalid_values_duplicates_and_placement(self):
+        for value in ('', '1', '5', '-1', '+2', '2.0', 'zero', '0 2', '00', '2147483648'):
+            result = self.invoke(f'#upscale {value}\n### a\nA teapot.')
+            self.assertNotEqual(result.returncode, 0, value)
+            self.assertIn('#upscale', result.stderr)
+        for text in ('#upscale 0\n#upscale 2\n### a\nText.',
+                     '### a\n#upscale 0\nText.', '!### a\n#upscale 0\nText.',
+                     '### a\nText.\n#upscale 0'):
+            self.assertNotEqual(self.invoke(text).returncode, 0, text)
+
+    def test_upscale_rejects_incompatible_source_and_managed_options(self):
+        cases = ('#preview-vae', '#quality preview', '#quality high', '#reuse 2', '#core-reuse 4', '#layers 1',
+                 '#render-width 128\n#render-height 128', '#cuda-denoise-quant fp8', '#cuda-attention sol',
+                 '#adaptive-cache conservative', '#metal-attention sol', '#upscale-refine-steps 0', '#save-upscale-state x.h3up',
+                 '#save-sampler-state x.h3sampler', '#upscale-import-sampler', '#upscale-noise .25', '#upscale-seed 7')
+        for directive in cases:
+            result = self.invoke(f'#upscale 0\n### a\n#size 256x256\n#frames 22\n{directive}\nText.')
+            self.assertNotEqual(result.returncode, 0, (directive,result.stderr))
+            self.assertFalse(self.out.exists())
+        self.plan('#upscale 0\n### a\n#size 256x256\n#quality lossless\n#steps 2\nText.')
+        self.plan('#upscale 0\n### a\n#size 256x256\n#quality preview\n#no-preview-vae\n#reuse 1\nText.')
+
+    def test_upscale_refinement_options_and_nomerge(self):
+        plan = self.plan('#upscale 2\n#nomerge\n#overlay-segment-name\n### a\n#size 256x256\n#frames 22\n#upscale-noise .2\n#upscale-seed 7\n#ref-image one.png\nText.\n### b\nText.')
+        self.assertEqual(plan['merged'], [])
+        self.assertTrue(plan['overlay_segment_name'])
+        for row in plan['segments']:
+            self.assertNotIn('--upscale-noise', row['command'])
+            self.assertNotIn('--upscale-seed', row['command'])
+            self.assertIn('--upscale-noise', row['upscale_command'])
+            self.assertNotIn('--ref-image', row['upscale_command'])
+        self.assertEqual(self.command_values(plan['segments'][1], 'ref-image'), [])
+
+    def test_upscale_backend_geometry_and_duration_planning(self):
+        for width,height,frames in ((960,544,22),(1344,768,39),(1920,1088,22),(256,256,736)):
+            result = self.invoke(f'#upscale 0\n### a\n#size {width}x{height}\n#frames {frames}\nText.')
+            allowed = sys.platform != 'darwin' or (width<=960 and height<=960 and frames<=362)
+            self.assertEqual(result.returncode==0, allowed, result.stderr)
+            if allowed:
+                row=json.loads(result.stdout)['segments'][0]
+                self.assertEqual((row['width'],row['height']), (width*2,height*2))
+
+    def test_upscale_all_skipped_is_noop(self):
+        result = self.invoke('#upscale 0\n!### skipped\nText.', dry=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(self.out.exists())
+
+    def test_backend_duration_boundaries(self):
+        for raw,aligned in ((362,362),(363,379),(464,464),(480,481),(719,719),(720,736),(736,736),(737,753),(2147483647,2147483647)):
+            result=self.invoke(f'### shot\n#size 256x256\n#frames {raw}\nA teapot.')
+            limit=362 if sys.platform=='darwin' else 736
+            if aligned>limit:self.assertNotEqual(result.returncode,0)
+            else:
+                self.assertEqual(result.returncode,0,result.stderr)
+                self.assertEqual(json.loads(result.stdout)['segments'][0]['frames'],aligned)
+        for seconds in ('nan','inf','1e99','-1'):
+            self.assertNotEqual(self.invoke(f'#seconds {seconds}\n### shot\nA teapot.').returncode,0)
+
     def test_cuda_canvas_and_reference_size_inheritance(self):
         text = '### first\n#size 1920x1088\n#frames 22\nA teapot.\n### second\n#ref-image-size high\nA vase.\n'
         result = self.invoke(text, '--ref-image-size', 'max')

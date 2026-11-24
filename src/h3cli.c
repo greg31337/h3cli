@@ -75,6 +75,7 @@ static void usage(const char *program) {
         "      --continue-bridge-profile NAME  stepped (default), linear, ease-out\n"
         "      --save-upscale-state PATH  Save portable clean source before decoding\n"
         "      --upscale-state PATH  Start exact 2x spatial upscaling from .h3up\n"
+        "      --upscale-av-state PATH  2x complete .h3av transfer; requires refinement 0\n"
         "      --upscale-model PATH  Pinned BF16 latent upscaler safetensors\n"
         "                            Default: " DEFAULT_UPSCALE_MODEL "\n"
         "      --upscale-refine-steps N  0, 2, 3 or 4 (default: 4)\n"
@@ -97,7 +98,7 @@ static void usage(const char *program) {
         "                        Learned 2x CUDA upscale: up to 3840x2176; full VAE only\n"
         "      --render-width N   Lower internal model width (optional)\n"
         "      --render-height N  Lower internal model height (optional)\n"
-        "      --frames N         Raw target frames, including continuation context (default: 56)\n"
+        "      --frames N         Raw target frames including context (default: 56; CUDA <=736, Metal <=362)\n"
         "      --seconds N        Requested duration at 24 fps (instead of --frames)\n"
         "      --steps N          Denoising passes (default: 20)\n"
         "      --quality LEVEL    lossless, extra-high, high, preview or fast-preview\n"
@@ -398,7 +399,7 @@ static int cli_execute(int argc, char **argv) {
     struct timespec operation_begin;
     clock_gettime(CLOCK_MONOTONIC, &operation_begin);
     int report_wall_time = 0;
-    const char *model_dir = DEFAULT_MODEL_DIR,*upscale_path=NULL,*inspect_upscale=NULL;
+    const char *model_dir = DEFAULT_MODEL_DIR,*upscale_path=NULL,*upscale_av_path=NULL,*inspect_upscale=NULL;
     h3_upscale_options upscale=H3_UPSCALE_OPTIONS_DEFAULT;
     int upscale_given=0,upscale_import=0;
     h3_lora_options lora={0};
@@ -430,7 +431,7 @@ static int cli_execute(int argc, char **argv) {
     while ((option = getopt_long(argc, argv, "d:p:o:h", h3_cli_getopt_options, NULL)) != -1) {
         if(option==OPT_CONTINUE_MODE || option==OPT_BRIDGE_STEPS || option==OPT_BRIDGE_STRENGTH || option==OPT_BRIDGE_PROFILE || option==OPT_KEEP_CONTINUATION_PREFIX)still_conflict_given=1;
         switch (option) {
-            case OPT_UPSCALE_STATE: case OPT_UPSCALE_MODEL: case OPT_UPSCALE_STEPS: case OPT_UPSCALE_NOISE:
+            case OPT_UPSCALE_STATE: case OPT_UPSCALE_AV_STATE: case OPT_UPSCALE_MODEL: case OPT_UPSCALE_STEPS: case OPT_UPSCALE_NOISE:
             case OPT_UPSCALE_SEED: case OPT_UPSCALE_IMPORT: case OPT_UPSCALE_INSPECT: case OPT_STATE_ONLY:
             case OPT_DECODE_STILL: case OPT_IMAGE_VAE: case 'd': case 'o': case 'h': case OPT_STOP_AFTER: case OPT_SAVE_SAMPLER:
             case OPT_RESUME_SAMPLER: case OPT_PREVIEW_STOP: case OPT_FRAMES_DIR:
@@ -651,6 +652,7 @@ static int cli_execute(int argc, char **argv) {
                 params.continuation_context_frames = parse_int(optarg,"continuation context");
                 context_given = 1; break;
             case OPT_UPSCALE_STATE:upscale_path=optarg;break;
+            case OPT_UPSCALE_AV_STATE:upscale_av_path=optarg;break;
             case OPT_UPSCALE_INSPECT:inspect_upscale=optarg;break;
             case OPT_UPSCALE_MODEL:upscale.model_path=optarg;upscale_given=1;break;
             case OPT_UPSCALE_STEPS:upscale.refine_steps=parse_int(optarg,"upscale refinement steps");upscale_given=1;break;
@@ -785,7 +787,7 @@ static int cli_execute(int argc, char **argv) {
         }
     }
     if(quality>=0) {
-        if(params.resume_sampler_state||decode_av_state||decode_still||upscale_path||inspect_upscale||info) {
+        if(params.resume_sampler_state||decode_av_state||decode_still||upscale_path||upscale_av_path||inspect_upscale||info) {
             fprintf(stderr,"h3cli: --quality requires fresh generation (including continuation); resume, decode, upscale and info modes use their own controls\n");return 2;
         }
         int reuse=h3_quality_presets[quality].reuse;
@@ -802,18 +804,21 @@ static int cli_execute(int argc, char **argv) {
             h3_adaptive_name(params.adaptive_cache),h3_attention_name(params.cuda_attention),
             h3_quant_name(params.cuda_denoise_quant),params.preview_vae?"on":"off");
     }
-    if(upscale_path||inspect_upscale) {
+    if(upscale_path||upscale_av_path||inspect_upscale) {
         char error[512]={0};
         if(optind!=argc||generation_given||info||decode_av_state||decode_still||
            params.resume_sampler_state||params.save_upscale_state||params.preview_vae||params.preview_vae_model||
            params.preview_on_stop||params.cuda_denoise_quant_set||params.cuda_denoise_quant_cache||quant_verify_given||params.cuda_attention_set||
            params.adaptive_cache_set||params.adaptive_cache_threshold_set||params.adaptive_cache_max_hits_set||params.adaptive_cache_max_bytes_set||params.subblock_sparsity_set||params.adaptive_cache_warmup_set||params.subblock_warmup_set||
-           lora.count||lora.cache_dir||lora.memory_mib||(upscale_path&&inspect_upscale)||
+           lora.count||lora.cache_dir||lora.memory_mib||((upscale_path!=NULL)+(upscale_av_path!=NULL)+(inspect_upscale!=NULL)>1)||
            (inspect_upscale&&(upscale_given||params.state_only||save_av_state||output_given||params.save_sampler_state||params.stop_after_step>=0))) {
             fprintf(stderr,"h3cli: upscale mode restores prompt/geometry/conditioning; ordinary generation, approximation, resume and decode controls conflict\n");return 2;
         }
-        if(upscale_path&&!upscale.model_path)upscale.model_path=DEFAULT_UPSCALE_MODEL;
-        const char *input=upscale_path?upscale_path:inspect_upscale;
+        if(upscale_av_path&&(upscale.refine_steps||upscale.seed_set||upscale_import)) {
+            fprintf(stderr,"h3cli: --upscale-av-state requires --upscale-refine-steps 0, without sampler import or a seed override\n");return 2;
+        }
+        if((upscale_path||upscale_av_path)&&!upscale.model_path)upscale.model_path=DEFAULT_UPSCALE_MODEL;
+        const char *input=upscale_path?upscale_path:upscale_av_path?upscale_av_path:inspect_upscale;
         upscale.stop_after_step=params.stop_after_step;upscale.save_sampler_state=params.save_sampler_state;upscale.state_only=params.state_only;
         upscale.delivery=(h3_decode_options){.output_path=params.state_only?NULL:output,.output_encoding=params.output_encoding,
             .on_frame=(show||cli.frames_dir)?cli_frame:NULL,.on_progress=cli_progress,.callback_opaque=&cli};
@@ -832,32 +837,43 @@ static int cli_execute(int argc, char **argv) {
             int collision=0;for(size_t i=0;i<5;i++)collision|=h3_upscale_paths_alias(side,paths[i]);free(side);
             if(collision){fprintf(stderr,"h3cli: upscale output aliases AV presentation\n");return 2;}
         }
-        if(cli_hooks&&cli_hooks->validate_only)return 0;
-        h3_upscale_source *source=upscale_import?h3_upscale_source_import_sampler(input,error,sizeof(error)):h3_upscale_source_load(input,error,sizeof(error));
-        if(!source){fprintf(stderr,"h3cli: %s; expected a complete .h3up source (sampler import must be explicit)\n",error);return 1;}
-        h3_upscale_plan *plan=h3_upscale_plan_create(source,error,sizeof(error));
-        if(!plan){fprintf(stderr,"h3cli: %s\n",error);h3_upscale_source_free(source);return 1;}
-        const h3_upscale_plan_info *pi=h3_upscale_plan_get_info(plan);
-        if (inspect_upscale || h3_log_verbose()) fprintf(inspect_upscale?stdout:stderr,"h3cli: upscale source=%dx%d target=%dx%d frames=%d video_T=%d audio_T=%d rows=%zu profile=%d semantic_view=source seed=%" PRIu64 "\n",
-            pi->source_width,pi->source_height,pi->width,pi->height,pi->frames,pi->video_t,pi->audio_t,pi->sequence_rows,pi->geometry_profile,source->state->params.seed);
-        if(inspect_upscale) {
-            printf("source_sha256 ");for(int i=0;i<32;i++)printf("%02x",source->state->loaded_hash[i]);
-            printf("\naudio_sha256 ");for(int i=0;i<32;i++)printf("%02x",source->state->upscale.audio_hash[i]);
-            printf("\nreferences=%zu keyframes=%u source_steps=%d network_reserve_bytes=%" PRIu64 " model_identity=local-metadata\n",
-                source->state->reference_count,source->state->upscale.keyframe_count,source->state->total_steps,pi->network_reserve_bytes);
+        if(upscale_av_path) {
+            char *side=NULL;if(asprintf(&side,"%s.presentation",input)<0)return 1;
+            int collision=0;for(size_t i=1;i<5;i++)collision|=h3_upscale_paths_alias(side,paths[i]);
+            if(save_av_state){char *out_side=NULL;if(asprintf(&out_side,"%s.presentation",save_av_state)<0){free(side);return 1;}
+                collision|=h3_upscale_paths_alias(side,out_side);free(out_side);}
+            free(side);if(collision){fprintf(stderr,"h3cli: upscale output aliases source AV presentation\n");return 2;}
         }
-        h3_upscale_plan_free(plan);
-        if(inspect_upscale){h3_upscale_source_free(source);return 0;}
+        if(cli_hooks&&cli_hooks->validate_only)return 0;
+        h3_upscale_source *source=NULL;
+        if(!upscale_av_path) {
+            source=upscale_import?h3_upscale_source_import_sampler(input,error,sizeof(error)):h3_upscale_source_load(input,error,sizeof(error));
+            if(!source){fprintf(stderr,"h3cli: %s; expected a complete .h3up source (sampler import must be explicit)\n",error);return 1;}
+            h3_upscale_plan *plan=h3_upscale_plan_create(source,error,sizeof(error));
+            if(!plan){fprintf(stderr,"h3cli: %s\n",error);h3_upscale_source_free(source);return 1;}
+            const h3_upscale_plan_info *pi=h3_upscale_plan_get_info(plan);
+            if (inspect_upscale || h3_log_verbose()) fprintf(inspect_upscale?stdout:stderr,"h3cli: upscale source=%dx%d target=%dx%d frames=%d video_T=%d audio_T=%d rows=%zu profile=%d semantic_view=source seed=%" PRIu64 "\n",
+                pi->source_width,pi->source_height,pi->width,pi->height,pi->frames,pi->video_t,pi->audio_t,pi->sequence_rows,pi->geometry_profile,source->state->params.seed);
+            if(inspect_upscale) {
+                printf("source_sha256 ");for(int i=0;i<32;i++)printf("%02x",source->state->loaded_hash[i]);
+                printf("\naudio_sha256 ");for(int i=0;i<32;i++)printf("%02x",source->state->upscale.audio_hash[i]);
+                printf("\nreferences=%zu keyframes=%u source_steps=%d network_reserve_bytes=%" PRIu64 " model_identity=local-metadata\n",
+                    source->state->reference_count,source->state->upscale.keyframe_count,source->state->total_steps,pi->network_reserve_bytes);
+            }
+            h3_upscale_plan_free(plan);
+            if(inspect_upscale){h3_upscale_source_free(source);return 0;}
+        }
         if(cli.frames_dir&&mkdir(cli.frames_dir,0755)&&errno!=EEXIST){perror("frames directory");h3_upscale_source_free(source);return 1;}
         if (profile)
             setenv("H3_PROFILE", "1", 1);
         if (show)
             cli.terminal = h3_terminal_detect();
-        h3_ctx *ctx=h3_load_dir(model_dir);
-        if(!ctx){fprintf(stderr,"h3cli: %s\n",h3_last_error(NULL));h3_upscale_source_free(source);return 1;}
-        h3_result *result=h3_upscale(ctx,source,&upscale);h3_upscale_source_free(source);
+        h3_ctx *ctx=upscale_av_path?NULL:h3_load_dir(model_dir);
+        if(!ctx&&!upscale_av_path){fprintf(stderr,"h3cli: %s\n",h3_last_error(NULL));h3_upscale_source_free(source);return 1;}
+        h3_result *result=upscale_av_path?h3_upscale_av_state(model_dir,input,&upscale,error,sizeof(error)):h3_upscale(ctx,source,&upscale);
+        h3_upscale_source_free(source);
         h3_cli_progress_finish(&cli.progress,stderr);
-        if(!result){fprintf(stderr,"h3cli: %s\n",h3_last_error(ctx));h3_free(ctx);return 1;}
+        if(!result){fprintf(stderr,"h3cli: %s\n",upscale_av_path?error:h3_last_error(ctx));h3_free(ctx);return 1;}
         int ok=!save_av_state||h3_result_save_av_state(result,save_av_state,error,sizeof(error));
         if(!ok)fprintf(stderr,"h3cli: %s\n",error);
         else if(result->status==H3_RESULT_PAUSED)fprintf(stderr,"h3cli: paused upscale at %d/%d transitions\n",result->completed_steps,result->total_steps);
@@ -871,7 +887,7 @@ static int cli_execute(int argc, char **argv) {
         fprintf(stderr,"h3cli: upscale total wall time %.6f s\n",(double)(end.tv_sec-operation_begin.tv_sec)+(double)(end.tv_nsec-operation_begin.tv_nsec)/1e9+model_preparation_seconds);
         return !ok;
     }
-    if(upscale_given||upscale_import) {fprintf(stderr,"h3cli: upscale controls require --upscale-state; resume restores them from its checkpoint\n");return 2;}
+    if(upscale_given||upscale_import) {fprintf(stderr,"h3cli: upscale controls require --upscale-state or --upscale-av-state; resume restores them from its checkpoint\n");return 2;}
     if(params.state_only&&params.resume_sampler_state&&!save_av_state&&params.stop_after_step<0) {
         fprintf(stderr,"h3cli: state-only refinement resume requires --save-av-state or a paused checkpoint\n");return 2;
     }
@@ -1114,7 +1130,7 @@ static int cli_execute(int argc, char **argv) {
             ok=h3_request_params_valid(&params,NULL,preview_error,sizeof(preview_error))&&
                h3_approximate_params_valid(&params,lora.count!=0,preview_error,sizeof(preview_error));
             if(ok&&lora.count&&!params.still&&
-               h3_canvas_native_profile(params.width,params.height,H3_NATIVE_CUDA)==H3_GEOMETRY_CUDA_VIDEO) {
+               (params.frames>H3_LEGACY_MAX_FRAMES||h3_canvas_native_profile(params.width,params.height,H3_NATIVE_CUDA)==H3_GEOMETRY_CUDA_VIDEO)) {
                 snprintf(preview_error,sizeof(preview_error),"runtime LoRA is unqualified for extended CUDA canvases");ok=0;
             }
             if(ok&&!params.still&&h3_align_frame_count(params.frames)<22){
@@ -1296,10 +1312,13 @@ static int local_inputs(const h3_request *request, char *error, size_t size) {
     if(state&&!h3_sampler_file_validate(state->value,0,error,size))return 0;
     state=h3_request_get(request,"upscale-state");
     if(state&&!h3_sampler_file_validate(state->value,!h3_request_get(request,"upscale-import-sampler"),error,size))return 0;
-    state=h3_request_get(request,"decode-av-state");
+    const h3_option_value *up_av=h3_request_get(request,"upscale-av-state");
+    state=up_av?up_av:h3_request_get(request,"decode-av-state");
     if(state){
         h3_av_state *av=h3_av_state_load(state->value,error,size);h3_presentation presentation={0};
         int ok=av&&h3_presentation_load(state->value,av,&presentation,error,size)==1;
+        h3_av_state_info target;
+        if(ok&&up_av)ok=h3_upscale_av_plan(av,&presentation,&target,error,size);
         h3_av_state_free(av);if(!ok)return 0;
     }
     state=h3_request_get(request,"decode-still-latent");

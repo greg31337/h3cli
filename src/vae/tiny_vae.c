@@ -21,7 +21,7 @@ static int policy(char out[256]) {
 #endif
 }
 static int fail(char *e,size_t n,const char *s) { if(e&&n)snprintf(e,n,"%s",s);return 0; }
-int h3_tiny_vae_frames(int t) { return t>=7 && t<=107 && t%5==2 ? (t-2)/5*17+5 : 0; }
+int h3_tiny_vae_frames(int t) { return t>=7 && t<=h3_video_time_limit(H3_NATIVE_CUDA) && t%5==2 ? (t-2)/5*17+5 : 0; }
 uint64_t h3_tiny_vae_memory_reserve(int h,int w,int batch) {
     if(h<2||w<2||(int64_t)h*w>(H3_NATIVE_CUDA?H3_CUDA_VIDEO_PIXELS:H3_LEGACY_PIXELS)/256||batch<1||batch>5)return UINT64_MAX;
 #ifdef __APPLE__

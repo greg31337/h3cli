@@ -44,8 +44,8 @@ h3_result *h3_decode_av_owned(const char *model_dir,h3_av_state *state,
     const h3_presentation *presentation,const h3_decode_options *requested,char *error,size_t size) {
     char local[512];if(!error||!size){error=local;size=sizeof(local);}*error=0;
     if(!model_dir||!state||!requested){h3_av_state_free(state);snprintf(error,size,"invalid owned AV decode");return NULL;}
-    if(!h3_canvas_backend(state->info.geometry_profile,H3_NATIVE_CUDA)){h3_av_state_free(state);snprintf(error,size,"extended decode geometry requires CUDA");return NULL;}
-    if(state->info.geometry_profile>=2) {
+    if(!h3_frames_supported(state->info.frames,H3_NATIVE_CUDA)||!h3_canvas_backend(state->info.geometry_profile,H3_NATIVE_CUDA)){h3_av_state_free(state);snprintf(error,size,"extended decode geometry requires CUDA");return NULL;}
+    if(state->info.geometry_profile>=2||state->info.frames>H3_LEGACY_MAX_FRAMES) {
         h3_canvas_memory estimate;
         if(!h3_canvas_memory_estimate(state->info.render_width,state->info.render_height,
             state->info.frames,state->info.geometry_profile,0,0,&estimate)||
@@ -80,7 +80,7 @@ h3_result *h3_decode_av_owned(const char *model_dir,h3_av_state *state,
             fprintf(stderr,"h3cli: preview decoding outside full-output SGLang parity; saved denoising is unchanged\n");
     }
     h3_sglang_exchange(recipe);
-    if(!h3_tiny_vae_frames(state->info.video_t)){snprintf(error,size,"decode-only requires 22..362 frames (5n+2 latent frames, n >= 1)");goto done;}
+    if(!h3_tiny_vae_frames(state->info.video_t)){snprintf(error,size,"decode-only frame count exceeds backend temporal limits");goto done;}
     for(size_t i=0;i<state->info.video_elements;i++)if(!isfinite(state->video[i])){snprintf(error,size,"non-finite AV video state");goto done;}
     for(size_t i=0;i<state->info.audio_elements;i++)if(!isfinite(state->audio[i])){snprintf(error,size,"non-finite AV audio state");goto done;}
     decode_progress pr={options,"decode compatibility",0};if(progress(0,1,&pr)){snprintf(error,size,"decode-only cancelled");goto done;}

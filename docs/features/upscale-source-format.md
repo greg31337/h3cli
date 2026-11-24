@@ -5,6 +5,11 @@ Native latent upscaling is a regular CUDA/Metal feature. See the
 [accepted comparison](../experiments/latent-upscale-results.md) and
 [completed tasks](../experiments/latent-upscale-tasks.md).
 
+Sources above 362 frames are CUDA-only through 736 frames. Required section
+15 v2 distinguishes these sources without changing envelope schema 2. Metal
+rejects their execution, including no-refinement K=0. The shared target planner
+retains its sequence ceiling; see the [duration contract](../cuda/long-video-contract.md).
+
 Fresh upscale jobs automatically acquire the pinned BF16 network under
 `--models-path ROOT` at
 `ROOT/latent-upscale/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors`.
@@ -68,11 +73,16 @@ up to 3840, and requires upscale provenance. Metal rejects profiles 2/3 before
 allocation. Ordinary legacy generation retains profile 0. See the
 [extended geometry contract](../cuda/large-canvas-contract.md).
 
-Presentation v9 records `upscale_profile GEOMETRY METADATA_IDENTITY`, followed
+Presentation v9 records `geometry GEOMETRY METADATA_IDENTITY`, followed
 by `upscale RECIPE STEPS SIGMA PARENT_SHA256 ARTIFACT_SHA256`. Recipe zero and
 `none` identities identify source capture or the direct validation baseline.
 Completed recipe 1 identifies learned transfer; recipe 2 is the explicit
-bilinear comparison. Metadata identity 1 uses the existing local file-metadata
+bilinear comparison. Recipe 3 identifies zero-refinement learned transfer from
+a native `.h3av`: its parent hash is the canonical AV fingerprint, its steps and
+sigma are zero, and its saved audio/video prefix trim is preserved. Recipes 1/2
+continue to require zero trim and a `.h3up` parent. The learned network and
+artifact are unchanged; older readers reject the new presentation recipe.
+Metadata identity 1 uses the existing local file-metadata
 model contract without scanning H3 weights. Moving a source bundle/reference
 media is supported; moving/changing the model installation changes that local
 identity and is deliberately rejected. Older schemas are unsupported.

@@ -50,8 +50,10 @@ int h3_presentation_validate(const h3_presentation *p,const h3_av_state_info *i,
        (p->cuda_attention!=H3_ATTENTION_SUBBLOCK&&p->subblock_sparsity!=0)||
        (p->adaptive_cache?(p->adaptive_cache_warmup<2||p->adaptive_cache_warmup>16):p->adaptive_cache_warmup!=0)||
        (p->cuda_attention==H3_ATTENTION_SUBBLOCK?(p->subblock_warmup<2||p->subblock_warmup>16):p->subblock_warmup!=0)||
-       (p->upscale_recipe!=0&&p->upscale_recipe!=1&&p->upscale_recipe!=2)||
-       (p->upscale_recipe&&(p->cuda_denoise_quant||p->cuda_attention||p->adaptive_cache||p->trim_frames||p->trim_samples||
+       (p->upscale_recipe<0||p->upscale_recipe>3)||
+       (p->upscale_recipe==3&&p->upscale_steps)||
+       (p->upscale_recipe&&(p->cuda_denoise_quant||p->cuda_attention||p->adaptive_cache||
+         (p->upscale_recipe!=3&&(p->trim_frames||p->trim_samples))||
          p->width!=p->render_width||p->height!=p->render_height||
          (p->upscale_steps!=0&&p->upscale_steps!=2&&p->upscale_steps!=3&&p->upscale_steps!=4)||
          !isfinite(p->upscale_sigma)||(p->upscale_steps?(p->upscale_sigma<=0||p->upscale_sigma>.5f):p->upscale_sigma!=0)||

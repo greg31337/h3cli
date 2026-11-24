@@ -82,20 +82,24 @@ void h3_upscale_presentation(const h3_sampler_state *s,h3_presentation *p) {
 void h3_upscale_transfer_free(h3_upscale_transfer *t) {
     if(t){free(t->video);h3_upscale_conditions_free(&t->conditions);free(t);}
 }
+int h3_upscale_transfer_admit(int profile,uint64_t network_reserve_bytes,char *e,size_t n) {
+    if(profile==H3_GEOMETRY_CUDA_UPSCALE) {
+        h3_device_info device;
+        if(!h3_device_query(&device,e,n))return 0;
+        uint64_t reserve=device.device_memory/10;
+        if(reserve<(UINT64_C(1)<<30))reserve=UINT64_C(1)<<30;
+        if(device.free_device_memory<reserve||network_reserve_bytes>device.free_device_memory-reserve) {
+            if(e&&n)snprintf(e,n,"upscale transfer requires %.3f GiB plus %.3f GiB reserve; %.3f GiB device memory available",
+                (double)network_reserve_bytes/1073741824.,(double)reserve/1073741824.,(double)device.free_device_memory/1073741824.);
+            return 0;
+        }
+    }
+    return 1;
+}
 h3_upscale_transfer *h3_upscale_transfer_create(const h3_upscale_source *source,const h3_upscale_plan *p,
     const char *path,int recipe,h3_progress_callback progress,void *opaque,char *e,size_t n) {
     if(!source||!p||(recipe!=1&&recipe!=2)||(recipe==1&&(!path||!*path))){fail(e,n,"missing learned artifact or invalid transfer recipe");return NULL;}
-    if(p->info.geometry_profile==H3_GEOMETRY_CUDA_UPSCALE) {
-        h3_device_info device;
-        if(!h3_device_query(&device,e,n))return NULL;
-        uint64_t reserve=device.device_memory/10;
-        if(reserve<(UINT64_C(1)<<30))reserve=UINT64_C(1)<<30;
-        if(device.free_device_memory<reserve||p->info.network_reserve_bytes>device.free_device_memory-reserve) {
-            if(e&&n)snprintf(e,n,"upscale transfer requires %.3f GiB plus %.3f GiB reserve; %.3f GiB device memory available",
-                (double)p->info.network_reserve_bytes/1073741824.,(double)reserve/1073741824.,(double)device.free_device_memory/1073741824.);
-            return NULL;
-        }
-    }
+    if(!h3_upscale_transfer_admit(p->info.geometry_profile,p->info.network_reserve_bytes,e,n))return NULL;
     h3_upscale_model *model=NULL;h3_upscale_transfer *t=calloc(1,sizeof(*t));if(!t){fail(e,n,"transfer allocation failed");return NULL;}
     t->recipe=recipe;memcpy(t->parent_hash,source->state->loaded_hash,32);
     double begin=h3_av_now();
@@ -141,7 +145,7 @@ h3_sampler_state *h3_upscale_initialize(const h3_upscale_source *source,const h3
         fail(e,n,"invalid refinement initialization or parent identity");return NULL;
     }
     h3_sigma_schedule sigmas;if(!h3_upscale_schedule(o->refine_steps,o->sigma,&sigmas))return NULL;
-    if(p->info.geometry_profile>=2) {
+    if(p->info.geometry_profile>=2||p->info.frames>H3_LEGACY_MAX_FRAMES) {
         h3_canvas_memory estimate;
         if(!h3_canvas_memory_estimate(p->info.width,p->info.height,p->info.frames,p->info.geometry_profile,
             source->state->text.tokens,t->conditions.layout.img_cond_rows+t->conditions.layout.audio_cond_rows,&estimate)||

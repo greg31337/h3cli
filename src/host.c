@@ -96,15 +96,15 @@ int h3_video_latent_t(int frame_count) {
 }
 
 int h3_video_encoder_latent_t(int frame_count) {
-    return frame_count > 0 ? (frame_count + 3) / 4 : 0;
+    return frame_count > 0 ? (int)(((int64_t)frame_count + 3) / 4) : 0;
 }
 
 h3_temporal_shape h3_temporal(int requested_frames) {
     h3_temporal_shape result;
     result.frame_count = h3_align_frame_count(requested_frames);
     result.video_t = h3_video_latent_t(result.frame_count);
-    result.audio_t = (int)llround((double)result.frame_count *
-                                  H3_AUDIO_LATENT_FPS / H3_FPS);
+    int64_t audio = ((int64_t)result.frame_count * H3_AUDIO_LATENT_FPS + H3_FPS/2) / H3_FPS;
+    result.audio_t = audio <= INT_MAX ? (int)audio : INT_MAX;
     return result;
 }
 

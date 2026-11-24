@@ -76,8 +76,8 @@ char **h3_request_argv(const h3_request *r,int *argc) {
 fail:h3_argv_free(v);return NULL;
 }
 const char *h3_request_operation(const h3_request *r){
-    const char *names[]={"inspect-upscale-state","upscale-state","resume-sampler-state","decode-av-state","decode-still-latent","still","info","help"};
-    const char *ops[]={"inspect_upscale","upscale","resume","decode_av","decode_still","still","info","help"};
+    const char *names[]={"inspect-upscale-state","upscale-state","upscale-av-state","resume-sampler-state","decode-av-state","decode-still-latent","still","info","help"};
+    const char *ops[]={"inspect_upscale","upscale","upscale_av","resume","decode_av","decode_still","still","info","help"};
     for(size_t i=0;i<sizeof(names)/sizeof(names[0]);i++)if(h3_request_get(r,names[i]))return ops[i];
     return "generate";
 }

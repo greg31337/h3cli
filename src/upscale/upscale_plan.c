@@ -1,6 +1,7 @@
 #include "src/upscale/upscale.h"
 #include "src/sampling/sampler_state.h"
 #include "src/sampling/av_state.h"
+#include "src/media/delivery.h"
 #include "src/denoise/dit.h"
 #include <math.h>
 #include <stdio.h>
@@ -8,6 +9,24 @@
 #include <string.h>
 
 static int fail(char *e,size_t n,const char *m) {if(e&&n)snprintf(e,n,"upscale plan: %s",m);return 0;}
+int h3_upscale_av_plan(const h3_av_state *source,const h3_presentation *p,
+    h3_av_state_info *target,char *e,size_t n) {
+    if(!source||!target||!h3_presentation_validate(p,&source->info,e,n))return 0;
+    const h3_av_state_info *s=&source->info;
+    if(!h3_frames_supported(s->frames,H3_NATIVE_CUDA)||p->codec_version!=(H3_NATIVE_CUDA?2:1)||
+       h3_canvas_native_profile(s->render_width,s->render_height,H3_NATIVE_CUDA)!=s->geometry_profile||
+       p->upscale_recipe||p->cuda_denoise_quant||p->cuda_attention||p->adaptive_cache||p->tiny_sha256[0]||
+       p->width!=s->render_width||p->height!=s->render_height)
+        return fail(e,n,"AV transfer requires a native full-VAE dense source on the same backend, without prior upscaling or delivery resizing");
+    int axis=H3_NATIVE_CUDA?1920:960;
+    if(s->render_width>axis||s->render_height>axis)return fail(e,n,"2x target exceeds this backend canvas limit");
+    int w=s->render_width*2,h=s->render_height*2;
+    int profile=h3_geometry_valid(w,h,0)?0:h3_geometry_valid(w,h,1)?1:3;
+    if(!h3_canvas_backend(profile,H3_NATIVE_CUDA)||!h3_av_state_shape_profile(w,h,s->frames,profile,target)||
+       !h3_canvas_sequence_valid(target->video_elements/96+2*(uint64_t)target->audio_t,H3_NATIVE_CUDA))
+        return fail(e,n,"2x target exceeds the backend upscale geometry or sequence limit");
+    return 1;
+}
 const h3_upscale_plan_info *h3_upscale_plan_get_info(const h3_upscale_plan *p) {return p?&p->info:NULL;}
 void h3_upscale_plan_free(h3_upscale_plan *p) {free(p);}
 h3_upscale_plan *h3_upscale_plan_create(const h3_upscale_source *source,char *e,size_t n) {
@@ -59,7 +78,7 @@ h3_upscale_plan *h3_upscale_plan_create(const h3_upscale_source *source,char *e,
 invalid:fail(e,n,"unsupported reference retarget canvas, count or DiT launch range");free(p);return NULL;
 }
 float *h3_upscale_bilinear(const float *input,int t,int h,int w,int th,int tw,char *e,size_t n) {
-    if(!input||t<1||t>107||h<1||w<1||th<h||tw<w||th>H3_UPSCALE_LATENT_AXIS||tw>H3_UPSCALE_LATENT_AXIS||(int64_t)th*tw>32640) {fail(e,n,"invalid bilinear comparison volume");return NULL;}
+    if(!input||t<1||t>h3_video_time_limit(H3_NATIVE_CUDA)||h<1||w<1||th<h||tw<w||th>H3_UPSCALE_LATENT_AXIS||tw>H3_UPSCALE_LATENT_AXIS||(int64_t)th*tw>32640) {fail(e,n,"invalid bilinear comparison volume");return NULL;}
     size_t spatial=(size_t)t*h*w,target=(size_t)t*th*tw;float *out=malloc(target*24*4);
     if(!out){fail(e,n,"bilinear allocation failed");return NULL;}
     for(size_t i=0;i<spatial*24;i++)if(!isfinite(input[i])){free(out);fail(e,n,"nonfinite bilinear input");return NULL;}

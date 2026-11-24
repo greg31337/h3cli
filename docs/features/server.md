@@ -95,8 +95,10 @@ The second request resolves to 256×256, **107 frames**, 24 fps and **two native
 sampler evaluations**. SGLang's `num_inference_steps=N` counts sigma points;
 its mapping is `--steps N-1`. Explicit `--steps` retains native evaluation
 semantics. Target geometry follows the pinned short-edge/area-cap/nearest-32
-rounding policy, including ties to even. Target duration is 4–15 seconds,
-aligned to `17n+5` frames. Smaller native durations use `--frames` or `--seconds`.
+rounding policy, including ties to even. Target duration is 4–736/24 seconds on CUDA and 4–15 seconds on Metal,
+aligned to `17n+5` frames. Native flags use the 736/362-frame backend ceilings.
+Above 362 frames, select dense/default attention without adaptive caching;
+see the [duration contract](../cuda/long-video-contract.md). Smaller native durations use `--frames` or `--seconds`.
 `auto` uses 16:9, or effective first/last anchor geometry for FL2VA. Native
 geometry flags bypass only the target components they replace.
 

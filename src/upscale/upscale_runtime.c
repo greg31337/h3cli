@@ -84,3 +84,60 @@ h3_result *h3_upscale(h3_ctx *ctx,const h3_upscale_source *source,const h3_upsca
     h3_result *r=t?h3_upscale_execute(ctx,source,p,t,o):NULL;
     h3_upscale_transfer_free(t);h3_upscale_plan_free(p);return r;
 }
+
+h3_result *h3_upscale_av_state(const char *model_dir,const char *path,
+    const h3_upscale_options *o,char *e,size_t n) {
+    char local[512];if(!e||!n){e=local;n=sizeof(local);}*e=0;
+    if(!model_dir||!*model_dir||!path||!*path||!o||o->refine_steps||o->seed_set||!o->model_path) {
+        snprintf(e,n,"AV upscaling requires a model directory, source state, learned model and zero refinement without a seed override");return NULL;
+    }
+    if(!h3_upscale_request_valid(o,e,n))return NULL;
+    char *sidecar=NULL;if(asprintf(&sidecar,"%s.presentation",path)<0)return NULL;
+    int collision=h3_upscale_paths_alias(path,o->model_path)||h3_upscale_paths_alias(sidecar,o->model_path)||
+        h3_upscale_paths_alias(path,o->delivery.output_path)||h3_upscale_paths_alias(sidecar,o->delivery.output_path);
+    free(sidecar);
+    if(collision){snprintf(e,n,"upscale paths must not alias the source state or presentation");return NULL;}
+    h3_av_state *source=h3_av_state_load(path,e,n),*target=NULL;
+    h3_upscale_model *model=NULL;h3_result *result=NULL;float *video=NULL;
+    h3_presentation presentation={0};h3_av_state_info shape;uint8_t signature[32],parent[32];
+    if(!source||h3_presentation_load(path,source,&presentation,e,n)!=1||
+       !h3_upscale_av_plan(source,&presentation,&shape,e,n)||
+       !h3_av_state_metadata_signature(model_dir,presentation.ref2va,signature,e,n))goto done;
+    if(memcmp(signature,source->info.compatibility,32)) {
+        snprintf(e,n,"upscale source decoder metadata differs from this installation; use the original model installation");goto done;
+    }
+    uint64_t reserve=(uint64_t)shape.video_t*shape.latent_h*shape.latent_w*512*2*4+(UINT64_C(2)<<30);
+    if(!h3_upscale_transfer_admit(shape.geometry_profile,reserve,e,n))goto done;
+    model=h3_upscale_model_load(o->model_path,e,n);if(!model)goto done;
+    video=h3_upscale_volume(model,source->video,source->info.video_t,source->info.latent_h,source->info.latent_w,
+        shape.latent_h,shape.latent_w,o->delivery.on_progress,o->delivery.callback_opaque,NULL,NULL,e,n);
+    /* Release the learned network before loading either decoder. The complete
+     * temporal volume includes continuation context; delivery trims it once. */
+    h3_upscale_model_free(model);model=NULL;if(!video)goto done;
+    h3_av_state_fingerprint(source,parent);
+    target=h3_av_state_new_profile(shape.render_width,shape.render_height,shape.frames,shape.geometry_profile,
+        source->info.seed,source->info.compatibility);
+    if(!target){snprintf(e,n,"cannot retain upscaled AV state");goto done;}
+    memcpy(target->video,video,shape.video_elements*sizeof(float));free(video);video=NULL;
+    memcpy(target->audio,source->audio,shape.audio_elements*sizeof(float));
+    h3_av_state_free(source);source=NULL;
+    presentation.render_width=presentation.width=shape.render_width;
+    presentation.render_height=presentation.height=shape.render_height;
+    presentation.geometry_profile=shape.geometry_profile;
+    /* Recipe 3 uses an AV fingerprint as its parent and permits saved trim;
+     * recipes 1/2 retain their .h3up parent and untrimmed-source contract. */
+    presentation.upscale_recipe=3;
+    for(int i=0;i<32;i++)snprintf(presentation.upscale_parent_sha256+2*i,3,"%02x",parent[i]);
+    snprintf(presentation.upscale_artifact_sha256,sizeof(presentation.upscale_artifact_sha256),"%s",h3_upscale_artifact_sha256());
+    if(!h3_presentation_validate(&presentation,&target->info,e,n))goto done;
+    H3_VERBOSE("h3cli: upscale AV K=0: complete temporal context; unchanged audio; no DiT evaluations; trim=%d frames\n",presentation.trim_frames);
+    if(o->state_only) {
+        result=calloc(1,sizeof(*result));if(!result){snprintf(e,n,"cannot allocate upscale result");goto done;}
+        result->av_state=target;result->presentation=presentation;result->width=shape.render_width;result->height=shape.render_height;
+        result->frames=shape.frames-presentation.trim_frames;result->audio_samples=shape.audio_t*800-presentation.trim_samples;
+        result->fps=24;result->sample_rate=32000;result->seed=target->info.seed;
+    } else result=h3_decode_av_owned(model_dir,target,&presentation,&o->delivery,e,n);
+    target=NULL;
+done:
+    h3_upscale_model_free(model);h3_av_state_free(source);h3_av_state_free(target);free(video);return result;
+}

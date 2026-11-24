@@ -1,0 +1,354 @@
+## An alternative twenty-segment afternoon walk for Panda. Run with run2.sh.
+## CUDA only: render at 1920x1088, then deliver learned 2x at 3840x2176.
+## Each segment generates 243 frames. Continuations trim 39 inherited frames.
+## Settings and seed are inherited; the global reference applies to every segment.
+#upscale 0
+#ref panda panda.png
+#ref-image panda
+
+### 1
+#size 1920x1088
+#frames 243
+#steps 50
+#no-preview-vae
+#cuda-weight-mode stream
+#continue-context 39
+#continue-mode hard
+#ref-image-size high
+#seed 42
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation] The target video shows <Subject 1> taking an afternoon walk along a suburban sidewalk and noticing a rotating lawn sprinkler.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and natural feline movement.
+detailed_description:
+The target video is a photorealistic, cinematic, uninterrupted realistic single shot in warm late-afternoon daylight. The camera tracks at the cat's shoulder height from a low rear-three-quarter angle, moving smoothly at walking speed.
+[Shot 1] <Subject 1> walks along a pale concrete sidewalk bordered by small front gardens, mature maple trees, and quiet detached houses. Its tail sways naturally, and one ear turns toward a bird in the branches. Ahead, a rotating lawn sprinkler sweeps a fine fan of water across the edge of a driveway. The cat slows as the water reaches the pavement, keeping its paws on the dry sidewalk. The camera eases closer without changing direction. End with <Subject 1> standing a few steps from the wet driveway, watching the sprinkler turn away. Keep the route, light, and movement physically continuous, without a cut or time jump.
+overall_soundscape:
+Only natural diegetic suburban sounds: soft pawsteps, leaves in a light breeze, birds, distant traffic, and the approaching sprinkler's gentle hiss and tick. No narration, music, or added sound effects.
+non_diegetic_music:
+N/A
+
+### 2
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> timing the sprinkler, crossing the driveway, and reaching an open neighborhood park gate.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, coat markings, eye color, proportions, and the pose and location inherited from the preceding segment.
+detailed_description:
+Continue directly from the preceding shot in the same warm late-afternoon light. Preserve the inherited first 39 frames, including the cat's stance, sprinkler position, camera height, and direction of travel. New action follows that opening context smoothly.
+[Shot 1] <Subject 1> remains on the dry pavement as the same sprinkler turns away. It takes two cautious steps, then trots across the narrow wet driveway before the spray returns. A few droplets darken the concrete behind it; the cat remains calm and dry. The camera tracks laterally with the crossing, then settles back into the low following angle as the cat resumes walking. Just beyond the driveway, a green-painted park gate stands open beside a flowering hedge. End as <Subject 1> puts its front paws through the gate, with the sidewalk still visible behind. No cut, sudden relocation, or unexplained change of direction.
+overall_soundscape:
+The sprinkler hiss continues through the opening, followed by quick pawsteps across damp concrete, birds, rustling hedge leaves, and increasingly distant traffic. Ambient sound flows across the segment boundary. No narration or music.
+non_diegetic_music:
+N/A
+
+### 3
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> entering the park, following a gravel path, and becoming curious about a windblown leaf near a meadow.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - identity, coat pattern, eye color, body proportions, and the inherited forward stride through the gate.
+detailed_description:
+Continue the same uninterrupted walk, preserving the inherited first 39 frames and the exact green gate, cat position, low camera angle, and afternoon lighting. The camera follows through the opening before making a gentle arc with the path.
+[Shot 1] <Subject 1> finishes passing through the gate and steps onto a pale gravel path under tall trees. A dry maple leaf tumbles across the path a short distance ahead. The cat's ears turn forward, and it follows the leaf with a few quicker, light steps. The path curves gradually toward a small open meadow, with the trees thinning naturally along its edge. The leaf skips from the gravel into the short grass. End with <Subject 1> at the meadow edge, one front paw lifted as the leaf comes to rest just ahead. Keep all movement continuous and grounded in the visible surroundings.
+overall_soundscape:
+Gravel pawsteps, the dry leaf scraping the path, birds overhead, and wind through the tree canopy. The sprinkler fades behind the gate. No intelligible speech, narration, or music.
+non_diegetic_music:
+N/A
+
+### 4
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> making a playful pounce at the leaf, briefly reacting to a distant child, and walking toward pond reeds.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - face, fur markings, eyes, proportions, and the opening lifted-paw pose beside the same leaf.
+detailed_description:
+Continue directly from the meadow entrance, retaining the inherited first 39 frames and the same camera motion, leaf position, and light. The camera remains low and follows the cat with a small, smooth sideways arc.
+[Shot 1] A breeze flips the same leaf onto its edge. <Subject 1> makes one small, restrained pounce, touching the grass beside it, then looks up and relaxes. Far across the meadow, a distant off-screen child calls, <d>[English] Look, a cat!</d>. The cat turns one ear toward the voice without becoming frightened. It resumes an easy walk through the grass toward a small pond visible nearby. The camera follows as reeds and reflected sky come into view. End with <Subject 1> reaching the first clump of reeds, facing along the water's edge. Keep the journey in one continuous shot without a jump in place or time.
+overall_soundscape:
+Soft grass movement, the light landing of the paws, birds, breeze, faint playground activity, and the single distant child's line. Water becomes faintly audible near the end. No other intelligible speech, narration, or music.
+non_diegetic_music:
+N/A
+
+### 5
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> watching ducks beside the pond and approaching a short wooden footbridge over an inlet.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, coat pattern, eyes, body proportions, and opening position beside the pond reeds.
+detailed_description:
+Continue the preceding shot with its inherited first 39 frames, preserving the cat's position, nearby reeds, waterline, low camera height, and afternoon light. The camera gradually settles into a lateral track along the shore.
+[Shot 1] <Subject 1> takes a few steps beside the reeds and notices two ducks gliding several meters out on the pond. It pauses briefly with alert ears and watches the ripples, without stalking or chasing. The cat then turns its attention back to the gravel path along the bank. A short wooden footbridge crosses a narrow inlet just ahead. The cat approaches the bridge at an unhurried pace, while the camera follows parallel to the water. End with one front paw resting on the first weathered plank and the other paws still on the path. Keep the ducks distant and the geography continuous.
+overall_soundscape:
+Quiet water lapping, ducks making soft calls, reeds brushing together, gravel pawsteps, and birds. The meadow sounds recede naturally. No narration, dialogue, music, or added effects.
+non_diegetic_music:
+N/A
+
+### 6
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> crossing the footbridge and reaching low garden stones beside a broad wooden fence.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - identity, coat markings, eyes, proportions, and the front paw already placed on the first bridge plank.
+detailed_description:
+Preserve the inherited first 39 frames and continue from the same bridge entrance. Maintain the water, railings, light, and low tracking camera. The camera eases behind the cat as it steps fully onto the bridge.
+[Shot 1] <Subject 1> walks across the short wooden span, placing its paws naturally on the planks. Halfway across, it glances between the low rails at the gently moving water, then continues forward. On the far side, the gravel path runs beside a wooden garden fence with a broad, level top rail. Three low landscape stones form an easy stepped route beside the fence and a nearby shed. The cat leaves the bridge and approaches the stones. End as it places both front paws on the lowest stone, beginning a controlled climb. Show the transition from bridge to bank and stones without skipping any movement.
+overall_soundscape:
+Wooden paw taps, a faint bridge creak, inlet water, wind in the reeds, and then gravel and stone contacts. The sound remains continuous across the handoff. No narration or music.
+non_diegetic_music:
+N/A
+
+### 7
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> climbing the low stones, stepping onto the fence, and balancing toward a nearby shed roof.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial features, coat markings, eyes, proportions, and opening climbing pose at the same stones.
+detailed_description:
+Continue the inherited first 39 frames at the stones without changing the cat's stance or the positions of the fence and shed. The camera follows from behind, smoothly rising with the cat while preserving the warm late-afternoon light.
+[Shot 1] <Subject 1> completes its step onto the lowest stone, then moves up the next two stones. The upper stone sits just below the fence's broad top rail. The cat stretches its front paws onto the wood, transfers its weight, and brings its hind paws onto the rail. With its tail extended for balance, it walks carefully toward the low shed roof beside the fence. The roof edge is only a short, level jump away. End with the cat beside that edge, looking across the small gap and beginning to lower its body. Keep the climb and balance anatomically natural and continuous.
+overall_soundscape:
+Soft paw contacts on stone, light claw taps and a faint creak on the fence, birds, leaves, and distant neighborhood ambience. No narration, intelligible speech, or music.
+non_diegetic_music:
+N/A
+
+### 8
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> making a short jump onto the shed roof and approaching a sturdy trellis beside a low garage.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - identity, markings, eye color, proportions, and the opening poised position on the fence beside the shed.
+detailed_description:
+Continue from the inherited first 39 frames, with the same fence, small roof gap, body position, camera elevation, and lighting. The camera tracks alongside the fence and gently tilts to follow the landing.
+[Shot 1] <Subject 1> finishes lowering its body and makes one short, natural leap from the broad fence rail to the shed roof. It lands softly with all four paws, steadies itself, and walks over the weathered shingles. At the far edge, a sturdy wooden trellis connects this low roof to the edge of an adjoining garage roof. Vines grow along the sides while the central crosspieces remain clear. The cat reaches the trellis, sniffs a wooden crosspiece, and places its front paws on the first accessible rung. End at the start of the upward movement. Keep the shed and garage close together and avoid any cut or sudden change of height.
+overall_soundscape:
+A soft landing, quiet shingle contacts, a slight wooden creak, birds, and wind around the roof edge. The distant pond remains faintly audible. No dialogue, narration, or music.
+non_diegetic_music:
+N/A
+
+### 9
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> climbing onto the low garage roof and noticing a calm orange tabby beside a brick chimney.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white fur pattern, eyes, proportions, and the opening position at the trellis.
+detailed_description:
+Preserve the inherited first 39 frames, the cat's grip on the same trellis, and the layout of the adjoining roofs. The camera rises gradually beside the short climb and settles at roof level in the same afternoon light.
+[Shot 1] <Subject 1> climbs the few exposed crosspieces with careful, coordinated paw placements. It reaches the low garage roof edge, draws its body onto the shallow slope, and walks toward the ridge. A calm orange tabby with short fur and a pale chin is sitting beside a small brick chimney a short distance ahead. <Subject 1> notices the other cat and slows, keeping its body relaxed and its tail neutral. The tabby turns its head toward Panda without standing. End with the two cats facing one another from a comfortable distance. Keep the roof geometry and all climbing movement continuous.
+overall_soundscape:
+Wooden claw contacts give way to soft roof pawsteps, with light wind, birds, and distant traffic below. A single quiet greeting chirrup may come from the tabby. No human speech, narration, or music.
+non_diegetic_music:
+N/A
+
+### 10
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> exchanging a cautious greeting with the orange tabby and turning toward a short exterior garden stair.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - identity, coat, eyes, proportions, and the opening pose opposite the same orange tabby and chimney.
+detailed_description:
+Continue the inherited first 39 frames of the rooftop encounter, matching both cats' positions, the chimney, camera height, and warm light. The camera makes a very slow sideward arc, keeping both animals comfortably in view.
+[Shot 1] <Subject 1> takes two measured steps toward the orange tabby. The tabby stands, and the cats briefly touch noses with relaxed ears, without hissing, chasing, or fighting. The tabby then sits again beside the chimney and looks toward the park. Panda turns away and walks a few paces along the shallow roof toward a small landing and a broad wooden exterior stair leading into the neighboring garden. The camera follows Panda while the tabby recedes behind. End with Panda at the landing, its front paws approaching the first step down. Show the whole greeting and turn without a cut.
+overall_soundscape:
+Quiet roof pawsteps, a brief soft cat chirrup, light wind, birds, and faint neighborhood sounds. No exaggerated animal noises, human dialogue, narration, or music.
+non_diegetic_music:
+N/A
+
+### 11
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> descending the broad wooden steps and reaching an open community-garden gate.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - face, coat markings, eye color, proportions, and the opening position at the roof landing.
+detailed_description:
+Retain the inherited first 39 frames at the same landing, preserving the roof edge, first stair tread, cat posture, camera position, and light. The camera follows the descent with a slow downward move beside the stair.
+[Shot 1] <Subject 1> steps onto the first broad wooden tread and continues down the short exterior stair with controlled, ordinary feline movement. The orange tabby remains on the roof behind and gradually leaves the camera's view. At the foot of the stair, a narrow stone path leads directly to an open community-garden gate, with raised planting beds visible through it. Panda walks along the path, briefly brushes its flank past a leafy plant, and reaches the gate. End with its head and front paws passing between the gateposts. Keep the route short, visible, and physically connected.
+overall_soundscape:
+Soft wooden paw taps and small stair creaks, followed by stone contacts, leaves, birds, and distant garden activity. Rooftop wind fades naturally. No intelligible speech, narration, or music.
+non_diegetic_music:
+N/A
+
+### 12
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> walking between raised garden beds and noticing a gray tabby near an open greenhouse.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - identity, coat pattern, eye color, proportions, and the inherited stride through the garden gate.
+detailed_description:
+Continue the inherited first 39 frames through the same gate, maintaining the surrounding plants, cat position, low camera movement, and afternoon light. The camera follows at shoulder height along the narrow garden path.
+[Shot 1] <Subject 1> enters the community garden and walks between low raised beds of herbs and leafy vegetables. It pauses for a moment beside a lavender stem, sniffs without biting, and continues. An open glass greenhouse stands at the end of the short path, its panes catching warm reflections of the sky. A relaxed gray tabby with dark stripes is resting beside a terracotta pot near the greenhouse door. Panda notices the tabby, slows, and approaches with a loose tail and forward ears. End a few paw lengths from the other cat, with the open doorway just beyond. No cut or change in location.
+overall_soundscape:
+Pawsteps on packed earth, leaves touching the cat's fur, a distant watering can, birds, and a quiet insect hum. Maintain a gentle outdoor atmosphere without dialogue, narration, or music.
+non_diegetic_music:
+N/A
+
+### 13
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> greeting the gray tabby, then entering the greenhouse between rows of plants.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - face, markings, eyes, proportions, and the opening position beside the same gray tabby, pot, and greenhouse door.
+detailed_description:
+Continue the inherited first 39 frames of the garden encounter without shifting either cat, the pot, or the doorway. The camera holds a low three-quarter view and then follows Panda smoothly through the open door.
+[Shot 1] The gray tabby raises its head as <Subject 1> draws closer. The two cats exchange a brief, gentle nose sniff. The gray tabby remains beside its terracotta pot and relaxes again, while Panda turns toward the greenhouse. Panda crosses the wooden threshold and walks along a narrow brick aisle between low benches of potted plants. Sunlight filters through the glass and foliage in soft moving patches. Near a plant ahead, a small pale butterfly lifts into the air. End with Panda just inside the aisle, looking toward the butterfly as it hovers above the plants. Keep the change from outdoor to filtered indoor light gradual.
+overall_soundscape:
+Quiet breathing, soft pawsteps across the threshold and onto brick, faint leaf movement, and softened garden birdsong through the open door. No human speech, narration, music, or amplified wing sounds.
+non_diegetic_music:
+N/A
+
+### 14
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> following the butterfly through the greenhouse and emerging onto a short creek-side path.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - identity, fur markings, eye color, proportions, and opening gaze toward the same pale butterfly.
+detailed_description:
+Preserve the inherited first 39 frames in the greenhouse aisle, including the cat, butterfly, plant benches, and filtered light. The camera tracks beside Panda through the narrow aisle, then settles behind it at the far doorway.
+[Shot 1] The butterfly drifts slowly above the plants toward the open far door. <Subject 1> follows with curious, light steps, watching it without jumping onto the benches or disturbing the pots. A leaf brushes the cat's shoulder as it passes. The butterfly slips outside, and Panda steps across the far threshold into warm daylight. A shallow landscaped creek runs just beyond the greenhouse, with broad flat stepping stones forming a short crossing. Panda walks the few steps to the bank. End with its front paws near the first stone, looking across the gently moving water. Keep the greenhouse exit and creek visibly adjacent.
+overall_soundscape:
+Soft brick pawsteps and leaf rustles transition into clearer birdsong, breeze, and nearby trickling water. Outdoor sound grows as the cat reaches the door. No dialogue, narration, or music.
+non_diegetic_music:
+N/A
+
+### 15
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> crossing the shallow creek on broad stepping stones and approaching a vine-covered arch.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat, eyes, proportions, and opening position beside the first creek stone.
+detailed_description:
+Continue the inherited first 39 frames at the same creek bank, matching the stone arrangement, cat posture, camera height, and light. The camera moves laterally beside the short crossing, keeping every paw placement visible.
+[Shot 1] <Subject 1> places one paw on the first broad stone, tests its footing, and steps fully onto it. It crosses three closely spaced, stable stones with slow, natural movements, tail extended slightly for balance. Clear shallow water flows around the stones without splashing the cat. On the far bank, a grassy path passes under a low wooden arch covered in green vines. Panda steps onto the grass, gives one small paw shake, and resumes walking toward the arch. End as its head passes beneath the first hanging leaves. Keep the crossing continuous, with no jump between stones or banks.
+overall_soundscape:
+Gentle creek water, light paw contacts on stone, grass brushing the paws, birds, and leaves overhead. The water recedes slightly as the cat reaches the arch. No speech, narration, or music.
+non_diegetic_music:
+N/A
+
+### 16
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> passing under the vine arch and discovering a mirrored metal sphere in a quiet sculpture garden.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - face, markings, eye color, proportions, and opening position beneath the same hanging vines.
+detailed_description:
+Retain the inherited first 39 frames beneath the arch, with matching leaves, cat position, camera direction, and afternoon light. The camera follows at a low front-side angle as the cat enters the small garden beyond.
+[Shot 1] <Subject 1> walks beneath the vine arch and emerges onto a pale stone path surrounded by ornamental grasses. A low, polished metal sphere rests on a stone base beside the path, reflecting the sky, plants, and the approaching cat. Panda notices the moving reflection and slows. It approaches to a comfortable distance, tilts its head slightly, and watches its own distorted shape without becoming alarmed. The camera begins a gentle arc that keeps the reflection aligned with the cat's real movement. End with Panda standing beside the sphere, its nose close to the reflected image. Keep the reflection physically consistent with the curved surface.
+overall_soundscape:
+Quiet stone pawsteps, ornamental grasses moving in the breeze, birds, and faint creek water behind the arch. No artificial sounds from the sculpture, dialogue, narration, or music.
+non_diegetic_music:
+N/A
+
+### 17
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> circling the mirrored sphere and following the path toward the entrance of a small hedge maze.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - identity, coat pattern, eyes, proportions, and opening position and reflection beside the same metal sphere.
+detailed_description:
+Continue the inherited first 39 frames at the sculpture, preserving the reflected scene, cat posture, slow camera arc, and light. Keep the curved reflection synchronized with the real cat throughout the opening.
+[Shot 1] <Subject 1> takes a few careful steps around the polished sphere and briefly sniffs its cool surface. The reflection shifts naturally as the cat moves. Losing interest, Panda turns back to the stone path and continues between the ornamental grasses. Ahead, neatly clipped hedges form a small, inviting maze, with a clear opening and a glimpse of a wooden gazebo roof beyond. A dry leaf rolls along the path toward the entrance. Panda follows it at an easy walk. End with the cat entering the first hedge passage and the sculpture still partly visible behind. Keep the route and the turn continuous.
+overall_soundscape:
+Soft pawsteps, the leaf scraping across stone, grass and hedge rustles, birds, and a faint breeze. No dialogue, narration, music, or unusual sounds from the sculpture.
+non_diegetic_music:
+N/A
+
+### 18
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> following a short hedge passage, rounding a bend, and reaching the steps of a small gazebo.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, coat markings, eyes, proportions, and opening stride into the same hedge passage.
+detailed_description:
+Continue the inherited first 39 frames at the maze entrance, maintaining the cat's direction, hedge spacing, camera height, and sunlit highlights. The camera follows closely enough to reveal the route around one gentle bend.
+[Shot 1] <Subject 1> walks along the short passage between green hedges. The dry leaf settles against one side, and the cat continues past it. At a simple fork, Panda pauses briefly, turns its ears toward faint wind bells, and takes the right-hand path. The camera rounds the corner with it, revealing a small gazebo immediately beyond the hedge opening. Sunlight falls across the gazebo's low wooden steps. Panda walks out of the passage and approaches the first step. End with its front paws placed on that step, ready to climb onto the deck. Keep the layout compact and visibly connected, without a cut or an impossible maze transition.
+overall_soundscape:
+Pawsteps on fine gravel, close hedge rustling, birds, and delicate wind bells becoming clearer near the gazebo. No dialogue, narration, music, or exaggerated echo.
+non_diegetic_music:
+N/A
+
+### 19
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> crossing the gazebo deck and following a grassy path toward a sun-warmed stone on a low hill.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - face, coat, eye color, proportions, and the opening front-paw placement on the same gazebo step.
+detailed_description:
+Preserve the inherited first 39 frames at the gazebo steps, matching the deck, cat position, bell sounds, camera motion, and warm light. The camera follows onto the deck, then gently lowers as the cat leaves the far side.
+[Shot 1] <Subject 1> climbs the two low steps and walks across the small gazebo deck. A light breeze moves the hanging wind bells overhead, and the cat briefly looks up before continuing. It descends the opposite low steps onto a grassy path that rises along a gentle, nearby slope. The camera follows at shoulder height as Panda climbs at an unhurried pace. Between the trees, familiar rooftops and a patch of the pond become visible below. A broad flat stone lies a few paces ahead near the top of the slope. End with Panda approaching that stone, still moving uphill. Keep every part of the deck crossing and short climb continuous.
+overall_soundscape:
+Wooden paw taps, delicate wind bells, then soft grass contacts and a slightly clearer hill breeze. Birds and distant neighborhood sounds remain quiet below. No dialogue, narration, or music.
+non_diegetic_music:
+N/A
+
+### 20
+#continue
+#frames 243
+subject_definitions:
+<Subject 1> is the black-and-white cat in <Picture 1>, called Panda.
+summary:
+[reference generation + video continuation] The target video shows <Subject 1> settling on the warm hilltop stone and peacefully surveying the neighborhood at the end of the walk.
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - facial identity, black-and-white coat pattern, eye color, body proportions, and the inherited final uphill stride.
+detailed_description:
+Continue the inherited first 39 frames of the approach to the same flat stone, keeping the grassy slope, visible rooftops, cat position, trailing camera, and afternoon light unchanged. The camera begins a slow, gentle arc only after the cat reaches the stone.
+[Shot 1] <Subject 1> takes the last few steps uphill and steps onto the broad sun-warmed stone. It turns once with natural paw movements, then sits facing the view of treetops, garden roofs, and the distant pond. Its tail curls loosely beside its paws. The cat blinks slowly and turns one ear toward a bird, then becomes still and comfortable. The camera eases into a three-quarter side view and draws back slightly to include the neighborhood below. End on a calm, steady composition of Panda resting after the afternoon walk. Keep the final shot continuous, with no new event, cut, fade, or sudden change in light.
+overall_soundscape:
+Steady soft breeze through grass and trees, birds, very distant traffic, fading wind bells, and the cat's quiet breathing. Let the natural ambience continue through the final frame. No dialogue, narration, or music.
+non_diegetic_music:
+N/A

@@ -4,6 +4,8 @@
 ## Uncomment either file-wide directive below to label clips or render seed variants.
 ## #overlay-segment-name
 ## #seed-set 100,200,300
+## Optional learned 2x delivery before merging; continuations require refinement 0.
+## #upscale 0
 #ref panda panda.png
 
 

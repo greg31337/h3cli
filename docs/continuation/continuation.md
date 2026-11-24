@@ -12,6 +12,12 @@ format, reference handling, and output trimming. Both accept ordinary denoiser
 reuse 2/3; bridge also has separate core-reuse 4/6 support. Approximate CUDA
 adaptive/SubBlock continuation requires both reuse controls to be 1.
 
+CUDA targets now extend to 736 aligned frames, with contexts through **702**.
+Metal retains 362 target frames and contexts through **345**. Above 362 target
+frames, both hard and bridge modes require dense BF16, default attention, all
+50 blocks and reuse/core-reuse 1; optional approximation modes remain limited
+to legacy durations. See the [duration contract](../cuda/long-video-contract.md).
+
 Start with **39 frames** of context. Legal contexts are `39 + 51*k`: 39, 90,
 141, 192, etc., subject to source/target lengths. These map to 12/27/42/57 video
 latent steps and 65/150/235/320 audio ticks. A 39-frame context is exactly

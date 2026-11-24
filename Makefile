@@ -400,6 +400,13 @@ test-upscale-state: test-sampler
 	python3 tests/test_upscale_file.py
 	python3 tests/test_upscale_cli.py
 
+bin/upscale_av_tests: tests/test_upscale_av.o $(LIB_OBJ) | bin
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+.PHONY: test-upscale-av
+test-upscale-av: bin/upscale_av_tests
+	./bin/upscale_av_tests
+test-current-host: test-upscale-av
+
 bin/upscale_network: tests/upscale_network.o $(LIB_OBJ) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
@@ -796,6 +803,11 @@ bin/cuda_sglang_vision: tests/cuda_sglang_vision.o $(LIB_OBJ) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 bin/cuda_sglang_audio: tests/cuda_sglang_audio.o $(LIB_OBJ) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+bin/cuda_audio_plan: tests/cuda_audio_plan.o src/cuda/cuda_cudnn.o | bin
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+.PHONY: test-cuda-audio-plan
+test-cuda-audio-plan: bin/cuda_audio_plan
+	./bin/cuda_audio_plan
 bin/cuda_sglang_encoder: tests/cuda_sglang_encoder.o $(LIB_OBJ) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 bin/cuda_sglang_media_input: tests/cuda_sglang_media_input.o $(LIB_OBJ) | bin
@@ -1084,3 +1096,23 @@ endif
 # Stock still context recovery with provisioned real models.
 bin/still_context: tests/still_context.o bin/libh3.a | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+# No media generation or inherited large-canvas fixture defaults.
+.PHONY: test-long-video-host
+test-long-video-host: bin/h3cli bin/long_video_tests bin/continuation_tests bin/bridge_tests test-server-contract
+	./bin/long_video_tests
+	./bin/continuation_tests
+	./bin/bridge_tests
+	python3 tests/test_long_video_guard.py
+	python3 tests/long_video_rejection.py
+	python3 tests/test_render_script.py
+
+bin/long_video_tests: tests/test_long_video.o $(LIB_OBJ) | bin
+	$(CC) $(CFLAGS) $^ $(LDLIBS) -o $@
+
+bin/long_video_api: tests/long_video_api.o $(LIB_OBJ) | bin
+	$(CC) $(CFLAGS) $^ $(LDLIBS) -o $@
+bin/long_video_recovery: tests/long_video_recovery.o $(LIB_OBJ) | bin
+	$(CC) $(CFLAGS) $^ $(LDLIBS) -o $@
+bin/long_video_state: tests/long_video_state.o $(LIB_OBJ) | bin
+	$(CC) $(CFLAGS) $^ $(LDLIBS) -o $@

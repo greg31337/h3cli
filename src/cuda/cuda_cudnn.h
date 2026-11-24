@@ -3,6 +3,9 @@
 #include <cuda_runtime_api.h>
 #include <stddef.h>
 #include <stdint.h>
+/* Shared by plan admission and the tracked allocator. Decoder FFT workspace
+ * grows with duration; the old 512 MiB ceiling does not cover 736 frames. */
+static constexpr size_t H3_CUDNN_AUDIO_WORKSPACE_LIMIT = size_t{3} << 30;
 #ifdef H3_CUDA_USE_CUDNN
 /* Independent reference-audio context. Caller owns the bounded workspace and
  * channels-first buffers; an output of nullptr only prepares/queries a plan. */

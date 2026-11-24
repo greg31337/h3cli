@@ -9,6 +9,8 @@ To render a text script, use `./bin/h3cli --render scenes.txt`. Add `--dry-run`
 to inspect expanded prompts and outputs, or `--output-dir DIR` to choose a
 fresh output directory. The default `scenes-render/scenes.mp4` combines all
 rendered segments; `#nomerge` anywhere in the script disables merging.
+Put `#upscale 0|2|3|4` before the first segment to apply learned 2× upscaling
+before merging. Scripts containing `#continue` require `#upscale 0`.
 Continued segments inherit omitted structured prompt sections and can override
 individual sections. See [text-script rendering](features/sequence-rendering.md)
 for the format, canonical section order and examples.
@@ -443,10 +445,17 @@ legal H3 temporal shape, so `--seconds 10` produces 243 frames (10.125 seconds).
 | 56 | 2.333 seconds |
 | 107 | 4.458 seconds |
 | 243 | 10.125 seconds |
-| 362 | 15.083 seconds |
+| 362 | 15.083 seconds (Metal ceiling) |
+| 464 | 19.333 seconds (CUDA) |
+| 736 | 30.667 seconds (CUDA ceiling) |
 
-Short clips are useful for development. The released workflow is intended for
-roughly 4–15 second videos. A request such as `--frames 23` is rounded up to 39
+CUDA accepts up to 736 aligned frames; Metal retains 362. Above 362, use dense
+BF16, default attention, all 50 blocks and reuse/core-reuse 1. Optional
+approximation and LoRA modes are rejected. Requests still pass canvas, sequence
+and memory admission; see the [duration contract](cuda/long-video-contract.md).
+
+Short clips are useful for development. CUDA also supports longer requests
+within the duration and resource limits above. A request such as `--frames 23` is rounded up to 39
 frames rather than producing an arbitrary temporal shape.
 
 ### 6. Improve the prompt

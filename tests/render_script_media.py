@@ -50,6 +50,16 @@ args = sys.argv[1:]
 def value(name, default=None):
     return args[args.index('--'+name)+1] if '--'+name in args else default
 prompt = value('prompt', '')
+upscale_source = value('upscale-av-state') or value('upscale-state')
+saved = json.loads(Path(upscale_source).read_text()) if upscale_source else None
+if saved:
+    prompt = saved['prompt']
+    assert '--prompt' not in args and '--continue-from' not in args
+    if value('upscale-av-state'):
+        assert value('upscale-refine-steps') == '0'
+    if 'FAIL_UPSCALE' in prompt:
+        print('synthetic upscale failure', file=sys.stderr)
+        raise SystemExit(7)
 if 'RACE_OUTPUT' in prompt:
     (Path(value('output')).parent.parent/'a.mp4').write_bytes(b'concurrent output; preserve me')
 if 'FAIL_WORKER' in prompt:
@@ -59,10 +69,18 @@ frames = int(value('frames', '56'))
 if '--seconds' in args:
     frames = math.floor(float(value('seconds'))*24+.5)
 frames = max(frames, 5) + (5-max(frames, 5))%17
+trim = 0
 if '--continue-from' in args:
     assert Path(value('continue-from')).is_file()
-    frames -= int(value('continue-context', '39'))
+    trim = int(value('continue-context', '39'))
 width, height = int(value('width','864')), int(value('height','480'))
+if saved:
+    width, height, frames, trim = saved['width']*2, saved['height']*2, saved['frames'], saved['trim']
+metadata = dict(width=width, height=height, frames=frames, trim=trim, prompt=prompt)
+if '--continue-from' in args:
+    previous = json.loads(Path(value('continue-from')).read_text())
+    assert (previous['width'], previous['height']) == (width, height)
+frames -= trim
 color = 'blue' if 'blue' in prompt else 'red'
 frequency = 660 if color == 'blue' else 440
 encoding = ['-c:v', 'libx264rgb', '-crf', '0', '-pix_fmt', 'rgb24'] if '--lossless-video' in args else ['-c:v','libx264','-crf','18','-pix_fmt','yuv420p']
@@ -72,9 +90,13 @@ command = [os.environ['H3_FFMPEG'], '-nostdin','-v','error','-n', '-f','lavfi','
            '-frames:v',str(frames),*encoding,'-c:a','aac','-ar','32000','-ac','2',value('output')]
 subprocess.run(command, check=True)
 state = Path(value('save-av-state'))
-state.write_text('Synthetic test state; not inference evidence.\\n')
+state.write_text(json.dumps(metadata))
 state.with_suffix('.argv.json').write_text(json.dumps(args))
 Path(str(state)+'.presentation').write_text('Synthetic presentation.\\n')
+if value('save-upscale-state'):
+    Path(value('save-upscale-state')).write_text(json.dumps(metadata))
+with (state.parent/'worker-order.jsonl').open('a') as log:
+    log.write(json.dumps(dict(stage='upscale' if saved else 'generation', state=state.name))+'\\n')
 ''')
         self.worker.chmod(0o755)
 
@@ -116,6 +138,120 @@ print(json.dumps(data))
 
     def probe_calls(self):
         return [json.loads(line) for line in (self.root/'probe-calls.jsonl').read_text().splitlines()]
+
+    def test_upscale_continuation_overlay_and_seed_runs(self):
+        report = self.run_script('''#upscale 0
+#overlay-segment-name
+#seed-set 0,1
+### a
+#size 256x256
+#frames 39
+red
+### b
+#continue
+#frames 56
+blue
+''')
+        self.assertEqual(report['status'], 'complete')
+        self.assertEqual([m['frames'] for m in report['merged']], [56,56,56,56])
+        self.assertTrue(all((m['width'],m['height'])==(512,512) for m in report['merged']))
+        order=[json.loads(line)['stage'] for line in (self.out/'.render/worker-order.jsonl').read_text().splitlines()]
+        self.assertEqual(order, ['generation','upscale']*4)
+        for offset in (0,1):
+            rows=report['segments'][2*offset:2*offset+2]
+            for row in rows:
+                self.assertEqual(row['upscale_status'], 'complete')
+                native=json.loads(Path(row['state']).read_text())
+                upscaled=json.loads(Path(row['upscaled_state']).read_text())
+                self.assertEqual((native['width'],native['height']), (256,256))
+                self.assertEqual((upscaled['width'],upscaled['height']), (512,512))
+                self.assertEqual(native['trim'], upscaled['trim'])
+                self.assertTrue(Path(row['source_video']).is_file())
+                original=self.rgb(Path(row['original_video']))
+                labeled=self.rgb(Path(row['video']))
+                self.assertNotEqual(original,labeled)
+                self.assertEqual(original[:512*256*3],labeled[:512*256*3])
+            second=rows[1]['command']
+            self.assertEqual(second[second.index('--continue-from')+1],rows[0]['state'])
+            merged=self.rgb(self.out/f'seed-{offset}/scenes.mp4')
+            self.assertEqual(merged,b''.join(self.rgb(Path(row['video'])) for row in rows))
+            self.assertEqual(len(merged),56*512*512*3)
+
+    def test_upscale_refinement_capture_and_encoding_merge(self):
+        report=self.run_script('#upscale 2\n### a\n#size 256x256\n#frames 22\nred\n### b\n#lossless-video\nblue')
+        self.assertEqual(report['status'],'complete')
+        self.assertEqual(report['merged'][0]['frames'],44)
+        self.assertTrue(report['merged'][0]['lossless_normalization'])
+        for i,row in enumerate(report['segments']):
+            self.assertTrue((self.out/f'.render/{i:04d}.h3up').is_file())
+            self.assertIn('--upscale-state',row['upscale_command'])
+            self.assertEqual(row['upscale_status'],'complete')
+        merged=self.rgb(self.out/'scenes.mp4')
+        self.assertEqual(merged,b''.join(self.rgb(Path(row['video'])) for row in report['segments']))
+        self.assertEqual(len(merged),44*512*512*3)
+
+    def test_upscale_nomerge_still_publishes_only_upscaled_clips(self):
+        report=self.run_script('#upscale 0\n#nomerge\n### a\n#size 256x256\n#frames 22\nred')
+        self.assertEqual(report['merged'],[])
+        self.assertEqual(sorted(p.name for p in self.out.glob('*.mp4')),['a.mp4'])
+        self.assertEqual(len(self.rgb(self.out/'a.mp4')),22*512*512*3)
+
+    def test_upscale_failure_preserves_sources_and_prevents_merging(self):
+        report=self.run_script('#upscale 0\n### a\n#size 256x256\n#frames 22\nred\n### b\nFAIL_UPSCALE',1)
+        self.assertEqual(report['status'],'failed')
+        self.assertEqual([s['status'] for s in report['segments']],['complete','failed'])
+        self.assertEqual(report['segments'][1]['upscale_status'],'failed')
+        self.assertEqual(report['segments'][1]['stage'],'upscale')
+        self.assertTrue((self.out/'a.mp4').is_file())
+        self.assertFalse((self.out/'b.mp4').exists())
+        self.assertFalse((self.out/'scenes.mp4').exists())
+        self.assertTrue((self.out/'.render/0001.h3av').is_file())
+        self.assertTrue((self.out/'.render/0001.mp4').is_file())
+
+    def test_upscale_invalid_delivery_is_not_published(self):
+        self.probe_wrapper(edit="""if name == '0000-upscaled.mp4':
+    next(s for s in data['streams'] if s['codec_type']=='video')['width'] = 256
+""")
+        report=self.run_script('#upscale 0\n### a\n#size 256x256\n#frames 22\nred',1)
+        self.assertEqual(report['segments'][0]['upscale_status'],'failed')
+        self.assertFalse((self.out/'a.mp4').exists())
+        self.assertFalse((self.out/'scenes.mp4').exists())
+        self.assertTrue((self.out/'.render/0000.h3av').is_file())
+
+    def test_upscale_cancellation_preserves_native_state(self):
+        self.worker.write_text(self.worker.read_text().replace("if saved:\n    prompt", """if saved:
+    import signal, time
+    def stop(sig, frame):
+        Path(value('output')).with_suffix('.stopped').touch()
+        raise SystemExit(0)
+    signal.signal(signal.SIGTERM, stop)
+    Path(value('output')).with_suffix('.ready').touch()
+    time.sleep(30)
+if saved:
+    prompt"""))
+        process=subprocess.Popen(self.command('#upscale 0\n### a\n#size 256x256\n#frames 22\nred'),
+                                 env=self.env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        try:
+            ready=self.out/'.render/0000-upscaled.ready'
+            deadline=time.monotonic()+15
+            while not ready.exists() and process.poll() is None and time.monotonic()<deadline:
+                time.sleep(.02)
+            self.assertTrue(ready.exists(),'upscale worker did not start')
+            process.send_signal(signal.SIGINT)
+            output,_=process.communicate(timeout=10)
+            (self.root/'driver.log').write_bytes(output)
+            self.assertEqual(process.returncode,130,output.decode())
+            report=json.loads((self.out/'run.json').read_text())
+            self.assertEqual(report['status'],'interrupted')
+            self.assertEqual(report['segments'][0]['upscale_status'],'interrupted')
+            self.assertTrue((self.out/'.render/0000-upscaled.stopped').exists())
+            self.assertTrue((self.out/'.render/0000.h3av').is_file())
+            self.assertFalse((self.out/'a.mp4').exists())
+            self.assertFalse((self.out/'scenes.mp4').exists())
+        finally:
+            if process.poll() is None:
+                process.kill();process.wait()
+            process.stdout.close()
 
     def test_seed_runs_aliases_overlays_and_independent_continuations(self):
         reference = self.root/'reference image.png'

@@ -416,6 +416,10 @@ h3_result *h3_decode_still_latent(const char *latent_path, const char *model_dir
 
 h3_result *h3_decode_av_state(const char *model_dir, const char *state_path,
     const h3_decode_options *options, char *error, size_t error_size);
+/* Learned 2x transfer of a complete native AV state, with zero refinement.
+ * Preserves audio and presentation trimming; loads no text encoder or DiT. */
+h3_result *h3_upscale_av_state(const char *model_dir, const char *state_path,
+    const h3_upscale_options *options, char *error, size_t error_size);
 /* Saves canonical .h3av plus fingerprint-associated .presentation sidecar. */
 int h3_result_save_av_state(const h3_result *result, const char *path,
     char *error, size_t error_size);

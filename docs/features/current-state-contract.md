@@ -25,6 +25,19 @@ their meanings. Required sampler/source section 46 records the new identities;
 old readers reject them. Metal rejects profiles 2/3 before tensor allocation.
 Profile 3 requires upscale provenance; profile 2 cannot masquerade as refinement.
 
+Presentation upscale recipe 3 records learned 2× transfer from a native AV
+state, with zero refinement and the parent AV fingerprint. It preserves the
+source's coupled video/audio prefix trim, including hard/bridge continuation
+delivery. Existing `.h3up` recipes 1/2 remain untrimmed. This adds no container
+fields and does not change ordinary saved-state bytes; readers without recipe 3
+support reject it. See [AV upscaling](latent-upscaling.md).
+
+CUDA duration through 736 frames is independent of canvas profile. AV schema 3
+expresses it directly; sampler/source envelope 2 uses required section 15 v2
+above 362 frames. Short section 15 v1 remains byte-compatible. Metal rejects
+long execution even for profile 0/1. See the
+[duration contract](../cuda/long-video-contract.md).
+
 Require matching current files for decode, continuation, bridge, conditioning
 reuse, checkpoint resume, and upscale. Retain bounds, finite-value, checksum,
 canonical encoding, model/device/build provenance, and output-collision checks.

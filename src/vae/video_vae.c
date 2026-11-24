@@ -1,3 +1,4 @@
+#include "src/geometry.h"
 #include "src/log.h"
 #include "src/memory.h"
 #include "src/digest.h"
@@ -1332,7 +1333,7 @@ int h3_video_vae_decoder_decode_progress(h3_video_vae_decoder *decoder,
 int h3_video_vae_decoder_stream_progress(h3_video_vae_decoder *decoder,
     const float *latent, int time, h3_video_batch_callback callback, void *opaque,
     h3_video_vae_progress progress, void *progress_opaque, char *error, size_t size) {
-    if (!decoder || !latent || !callback || time < 7 || time > 107 || (time-2)%5) {
+    if (!decoder || !latent || !callback || time < 7 || time > h3_video_time_limit(H3_NATIVE_CUDA) || (time-2)%5) {
         fail(error,size,"invalid streaming video VAE arguments"); return 0;
     }
     int chunks=(time-2)/5;

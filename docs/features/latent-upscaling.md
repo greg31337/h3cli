@@ -12,6 +12,12 @@ Its SHA-256 must be
 `4f57821f5837f32f7142b67d815606dbd7550f194e5c769f7d6c3f83b146a5e6`.
 Native inference does not require Python, Torch or ComfyUI.
 
+Temporal support follows the source backend: CUDA up to 736 frames, Metal up
+to 362, including K=0. Sequence and memory checks still apply; 736 frames at a
+3840×2176 target exceed the sequence ceiling. Long upscale execution is not
+runtime-qualified by the bounded duration campaign; see the
+[duration contract](../cuda/long-video-contract.md).
+
 With `--models-path ROOT`, the upscaler defaults to
 `ROOT/latent-upscale/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors`.
 `ROOT` defaults to cwd `models`. Missing weights download automatically;
@@ -47,7 +53,7 @@ explicit `--upscale-noise`. `--upscale-seed` defaults to the source seed. This
 is h3cli's native latent-upscaling recipe; official MiniMax Regenerate-2K parity
 is not claimed.
 
-Fresh upscaling restores prompt, geometry and conditions from the source.
+Fresh `.h3up` upscaling restores prompt, geometry and conditions from the source.
 Quantization, reuse/adaptive cache, SubBlock, LoRA/Turbo, continuation/bridge,
 token reduction and preview VAEs are excluded from the supported dense BF16
 scope. Targets double both aligned source axes. Metal retains its ceiling of
@@ -56,6 +62,29 @@ CUDA accepts sources through **1920×1088** and outputs through **3840×2176**,
 including transpose (8,355,840 pixels, at most 3840 per axis).
 CUDA ordinary generation also accepts the new source canvas. Resource admission can still
 reject a valid canvas that does not fit available memory.
+
+For a completed native `.h3av` with its current `.presentation` sidecar, use
+the separate zero-refinement path:
+
+```sh
+./bin/h3cli --models-path /path/to/models \
+  --upscale-av-state outputs/source.h3av --upscale-refine-steps 0 \
+  --save-av-state outputs/upscaled.h3av -o outputs/upscaled.mp4
+```
+
+This path also accepts dense hard/bridge continuation results. It upscales the
+complete video latent with its temporal context, copies audio exactly, and
+retains the saved prefix trim for final delivery. It loads only the upscaler
+and VAEs; it needs no prompt, references, text encoder or DiT. It requires the
+original model installation and backend, a full-VAE native source with an exact
+render canvas, and no previous upscaling. Refinement, noise/seed overrides and
+sampler import are unsupported for this input type. `--state-only` can save the
+larger AV state without decoding. Keep the original AV state for continuations.
+
+In a [render script](sequence-rendering.md#upscaling-before-merging), file-wide
+`#upscale 0` runs this transfer for every segment before merging. Independent
+segments can instead use `#upscale 2`, `3` or `4` via `.h3up` source capture;
+any continuation combined with nonzero refinement is rejected before rendering.
 
 For a short maximum-canvas job on the 72 GB test GPU, use `--frames 22` during
 source generation and `H3_CUDA_WEIGHT_MODE=stream` during refinement and resume.
@@ -86,7 +115,8 @@ with the ordinary `--decode-av-state` command and their `.presentation` sidecar.
 `--upscale-import-sampler` explicitly imports a completed current dense
 text-only CUDA `.h3sample` using the metadata identity contract. Incomplete or
 conditioned samplers, unsupported schema versions, bare AV states and MP4
-files are rejected; capture a `.h3up` source instead. See the
+files are rejected by this import route. Capture a `.h3up` source for refinement,
+or use `--upscale-av-state` with a matching presentation for zero refinement. See the
 [source/refinement format](upscale-source-format.md) and
 [qualification evidence](../experiments/latent-upscale-qualification.md).
 

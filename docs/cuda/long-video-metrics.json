@@ -1,0 +1,700 @@
+{
+  "schema": 1,
+  "date": "2026-11-23",
+  "records": [
+    {
+      "case": "native-002/decode",
+      "status": "passed",
+      "seconds": 7.661965528037399,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 1028608,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "decode compatibility": 4.4e-05,
+        "audio VAE": 0.872562,
+        "video VAE load": 2.613405,
+        "video VAE decode": 3.247815,
+        "FFmpeg": 0.168253
+      },
+      "plan": {
+        "kind": "decode",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "native-002/native",
+      "status": "passed",
+      "seconds": 82.73871391499415,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 38566892,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "tokenizer": 0.322553,
+        "text encoder": 22.174488,
+        "refine text": 0.963083,
+        "precompute AdaLN": 11.24321,
+        "load transformer core": 26.664544,
+        "DiT initialization": 39.677725,
+        "denoise": 7.52322,
+        "audio VAE": 0.677643,
+        "video VAE load": 4.569007,
+        "video VAE decode": 3.245258,
+        "FFmpeg": 0.172635
+      },
+      "plan": {
+        "kind": "native",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "native-002/preview",
+      "status": "passed",
+      "seconds": 3.887825491838157,
+      "peak_device_used_mib": 962,
+      "peak_process_rss_kib": 1014400,
+      "tracked_tensor_peak_bytes": 620689504,
+      "phase_seconds": {
+        "decode compatibility": 4.3e-05,
+        "audio VAE": 0.870802,
+        "tiny VAE load": 0.130527,
+        "tiny video VAE": 1.021338,
+        "FFmpeg": 0.136838
+      },
+      "plan": {
+        "kind": "decode",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "conditions-001/anchors",
+      "status": "passed",
+      "seconds": 78.182945612818,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 38665056,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "tokenizer": 0.329988,
+        "video VAE encoder": 0.90681,
+        "Qwen vision": 0.915286,
+        "reference vision preparation": 1.905828,
+        "text encoder": 21.956213,
+        "refine text": 0.619722,
+        "precompute AdaLN": 6.551042,
+        "load transformer core": 27.192607,
+        "DiT initialization": 35.046903,
+        "denoise": 7.853519,
+        "audio VAE": 0.562806,
+        "video VAE load": 2.676588,
+        "video VAE decode": 3.264725,
+        "FFmpeg": 0.187766
+      },
+      "plan": {
+        "kind": "native",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "conditions-001/references",
+      "status": "passed",
+      "seconds": 120.66869394714013,
+      "peak_device_used_mib": 6868,
+      "peak_process_rss_kib": 38752884,
+      "tracked_tensor_peak_bytes": 6735811472,
+      "phase_seconds": {
+        "tokenizer": 0.319204,
+        "audio VAE encoder": 0.396757,
+        "video VAE encoder": 13.360285,
+        "Qwen vision": 1.095073,
+        "reference vision preparation": 15.266355,
+        "text encoder": 24.227011,
+        "refine text": 0.646121,
+        "precompute AdaLN": 13.081113,
+        "load transformer core": 35.58526,
+        "DiT initialization": 50.1339,
+        "denoise": 15.903674,
+        "audio VAE": 0.695629,
+        "video VAE load": 4.642315,
+        "video VAE decode": 3.274906,
+        "FFmpeg": 0.200282
+      },
+      "plan": {
+        "kind": "native",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "lifecycle-001/pause",
+      "status": "passed",
+      "seconds": 87.74765702104196,
+      "peak_device_used_mib": 4528,
+      "peak_process_rss_kib": 38600472,
+      "tracked_tensor_peak_bytes": 4221849016,
+      "phase_seconds": {
+        "tokenizer": 0.325826,
+        "text encoder": 25.812195,
+        "refine text": 1.162059,
+        "precompute AdaLN": 17.77332,
+        "load transformer core": 33.523164,
+        "DiT initialization": 53.343911
+      },
+      "plan": {
+        "kind": "decode",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "lifecycle-001/resume",
+      "status": "passed",
+      "seconds": 41.160012673120946,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 38400440,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "load transformer core": 23.660519,
+        "DiT initialization": 24.32196,
+        "denoise": 4.135635,
+        "audio VAE": 0.685074,
+        "video VAE load": 2.732621,
+        "video VAE decode": 3.289301,
+        "FFmpeg": 0.181103
+      },
+      "plan": {
+        "kind": "decode",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "continuation-001/bridge-decode",
+      "status": "passed",
+      "seconds": 6.928755193948746,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 981056,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "decode compatibility": 4.4e-05,
+        "audio VAE": 0.864662,
+        "video VAE load": 2.56936,
+        "video VAE decode": 2.916212,
+        "FFmpeg": 0.05354
+      },
+      "plan": {
+        "kind": "decode",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 17,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "continuation-001/bridge",
+      "status": "passed",
+      "seconds": 76.78618254698813,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 39153152,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "tokenizer": 0.319332,
+        "text encoder": 16.245115,
+        "refine text": 0.530931,
+        "precompute AdaLN": 8.659915,
+        "load transformer core": 27.384373,
+        "DiT initialization": 37.240989,
+        "denoise": 7.654292,
+        "audio VAE": 0.601807,
+        "video VAE load": 3.007551,
+        "video VAE decode": 2.934028,
+        "FFmpeg": 0.040638
+      },
+      "plan": {
+        "kind": "continuation",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 17,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "continuation-001/hard-decode",
+      "status": "passed",
+      "seconds": 6.926994956098497,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 981188,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "decode compatibility": 3.9e-05,
+        "audio VAE": 0.873682,
+        "video VAE load": 2.613402,
+        "video VAE decode": 2.911335,
+        "FFmpeg": 0.057951
+      },
+      "plan": {
+        "kind": "decode",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 17,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "continuation-001/hard",
+      "status": "passed",
+      "seconds": 74.10025382321328,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 38646772,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "tokenizer": 0.336341,
+        "text encoder": 16.349678,
+        "refine text": 0.860958,
+        "precompute AdaLN": 9.519633,
+        "load transformer core": 25.283086,
+        "DiT initialization": 36.23293,
+        "denoise": 7.563756,
+        "audio VAE": 0.689777,
+        "video VAE load": 4.621926,
+        "video VAE decode": 2.912433,
+        "FFmpeg": 0.043654
+      },
+      "plan": {
+        "kind": "continuation",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 17,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "continuation-001/source",
+      "status": "passed",
+      "seconds": 77.26662503601983,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 38568732,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "tokenizer": 0.32134,
+        "text encoder": 19.848126,
+        "refine text": 1.109506,
+        "precompute AdaLN": 12.329363,
+        "load transformer core": 24.996503,
+        "DiT initialization": 39.096283,
+        "denoise": 7.400773,
+        "audio VAE": 0.593907,
+        "video VAE load": 2.674249,
+        "video VAE decode": 3.158798,
+        "FFmpeg": 0.153807
+      },
+      "plan": {
+        "kind": "native",
+        "width": 256,
+        "height": 256,
+        "frames": 447,
+        "delivered": 447,
+        "sequence_rows": 18130,
+        "live_bytes": 11260424192,
+        "capacity_bytes": 12511582436
+      }
+    },
+    {
+      "case": "api-001/api",
+      "status": "passed",
+      "seconds": 65.59865899803117,
+      "peak_device_used_mib": 4528,
+      "peak_process_rss_kib": 38542432,
+      "tracked_tensor_peak_bytes": 4221849016,
+      "phase_seconds": {},
+      "plan": {
+        "kind": "api",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "recovery-001/preview-cancel",
+      "status": "passed",
+      "seconds": 1.859098727349192,
+      "peak_device_used_mib": 628,
+      "peak_process_rss_kib": 691532,
+      "tracked_tensor_peak_bytes": 620689504,
+      "phase_seconds": {},
+      "plan": {
+        "kind": "decode",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "recovery-001/recovery",
+      "status": "passed",
+      "seconds": 14.55342278489843,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 1022268,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {},
+      "plan": {
+        "kind": "decode",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "script-003/long",
+      "status": "passed",
+      "seconds": 67.09297466091812,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 38710084,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "tokenizer": 0.317357,
+        "text encoder": 14.005019,
+        "refine text": 0.407733,
+        "precompute AdaLN": 6.59668,
+        "load transformer core": 26.391464,
+        "DiT initialization": 33.974257,
+        "denoise": 7.812175,
+        "audio VAE": 0.594932,
+        "video VAE load": 2.640646,
+        "video VAE decode": 3.28116,
+        "FFmpeg": 0.153588
+      },
+      "plan": {
+        "kind": "script",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "script-003/seeds",
+      "status": "passed",
+      "seconds": 241.60597788309678,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 38692144,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "tokenizer": 1.28406,
+        "text encoder": 54.878465,
+        "refine text": 1.675825,
+        "precompute AdaLN": 26.559432,
+        "load transformer core": 101.921616,
+        "DiT initialization": 132.294854,
+        "denoise": 24.937265,
+        "audio VAE": 1.101444,
+        "video VAE load": 11.008961,
+        "video VAE decode": 1.409526,
+        "FFmpeg": 0.352829
+      },
+      "plan": {
+        "kind": "script",
+        "width": 256,
+        "height": 256,
+        "frames": 22,
+        "delivered": 22,
+        "sequence_rows": 8714,
+        "live_bytes": 7885729792,
+        "capacity_bytes": 8761921992
+      }
+    },
+    {
+      "case": "http-001/http",
+      "status": "passed",
+      "seconds": 114.13386437203735,
+      "peak_device_used_mib": 9912,
+      "peak_process_rss_kib": 38738128,
+      "tracked_tensor_peak_bytes": null,
+      "phase_seconds": {},
+      "plan": {
+        "kind": "http",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "soundtrack-001/soundtrack",
+      "status": "passed",
+      "seconds": 119.60121628735214,
+      "peak_device_used_mib": 6866,
+      "peak_process_rss_kib": 38712288,
+      "tracked_tensor_peak_bytes": 6735811472,
+      "phase_seconds": {
+        "tokenizer": 0.335131,
+        "audio VAE encoder": 0.395271,
+        "video VAE encoder": 13.162567,
+        "Qwen vision": 0.911855,
+        "reference vision preparation": 14.845735,
+        "text encoder": 24.7575,
+        "refine text": 0.99392,
+        "precompute AdaLN": 14.316434,
+        "load transformer core": 33.385275,
+        "DiT initialization": 49.512367,
+        "denoise": 15.586398,
+        "audio VAE": 0.661115,
+        "video VAE load": 4.577201,
+        "video VAE decode": 3.279437,
+        "FFmpeg": 0.23437
+      },
+      "plan": {
+        "kind": "native",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "standalone-linux-001/decode",
+      "status": "passed",
+      "seconds": 7.709782880265266,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 1035164,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "decode compatibility": 3.6e-05,
+        "audio VAE": 0.870758,
+        "video VAE load": 2.621751,
+        "video VAE decode": 3.34539,
+        "FFmpeg": 0.152047
+      },
+      "plan": {
+        "kind": "decode",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "standalone-linux-001/native",
+      "status": "passed",
+      "seconds": 107.59704316034913,
+      "peak_device_used_mib": 5568,
+      "peak_process_rss_kib": 38550552,
+      "tracked_tensor_peak_bytes": 5366930164,
+      "phase_seconds": {
+        "tokenizer": 0.362858,
+        "text encoder": 16.506823,
+        "refine text": 1.101489,
+        "precompute AdaLN": 15.259694,
+        "load transformer core": 37.068293,
+        "DiT initialization": 54.160291,
+        "denoise": 7.539961,
+        "audio VAE": 0.698522,
+        "video VAE load": 4.97986,
+        "video VAE decode": 3.299733,
+        "FFmpeg": 0.171383
+      },
+      "plan": {
+        "kind": "native",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    },
+    {
+      "case": "standalone-linux-001/preview",
+      "status": "passed",
+      "seconds": 3.979038331191987,
+      "peak_device_used_mib": 1000,
+      "peak_process_rss_kib": 1018600,
+      "tracked_tensor_peak_bytes": 620689504,
+      "phase_seconds": {
+        "decode compatibility": 4e-05,
+        "audio VAE": 0.873794,
+        "tiny VAE load": 0.149974,
+        "tiny video VAE": 1.002425,
+        "FFmpeg": 0.125787
+      },
+      "plan": {
+        "kind": "decode",
+        "width": 256,
+        "height": 256,
+        "frames": 464,
+        "delivered": 464,
+        "sequence_rows": 18506,
+        "live_bytes": 11395182592,
+        "capacity_bytes": 12661313992
+      }
+    }
+  ],
+  "finite_saved_states": [
+    {
+      "case": "native-002/native.h3av",
+      "floats": 891200
+    },
+    {
+      "case": "conditions-001/anchors.h3av",
+      "floats": 891200
+    },
+    {
+      "case": "conditions-001/references.h3av",
+      "floats": 891200
+    },
+    {
+      "case": "lifecycle-001/resumed.h3av",
+      "floats": 891200
+    },
+    {
+      "case": "continuation-001/bridge.h3av",
+      "floats": 891200
+    },
+    {
+      "case": "continuation-001/hard.h3av",
+      "floats": 891200
+    },
+    {
+      "case": "continuation-001/source.h3av",
+      "floats": 858688
+    },
+    {
+      "case": "script-003/long/.render/0000.h3av",
+      "floats": 891200
+    },
+    {
+      "case": "script-003/seeds/.render/0000.h3av",
+      "floats": 45376
+    },
+    {
+      "case": "script-003/seeds/.render/0001.h3av",
+      "floats": 45376
+    },
+    {
+      "case": "script-003/seeds/.render/0002.h3av",
+      "floats": 45376
+    },
+    {
+      "case": "script-003/seeds/.render/0003.h3av",
+      "floats": 45376
+    },
+    {
+      "case": "soundtrack-001/soundtrack.h3av",
+      "floats": 891200
+    },
+    {
+      "case": "standalone-linux-001/native.h3av",
+      "floats": 891200
+    }
+  ],
+  "excluded_attempts": [
+    "native-001: missing encoder shared library",
+    "script-001: segment/final output name collision",
+    "script-002: legacy 96x96 preflight probe violates canvas envelope"
+  ],
+  "regression": {
+    "passed": true,
+    "outputs": 204,
+    "seconds": 119.46998678706586,
+    "mode": "native",
+    "source_sha256": "d928d3fe748088bab98997c8be65b4c93bb58d27a1731e6fed7d56178fc03f36",
+    "golden_manifest_sha256": "fa6f86cfa9db94b98d599d9044fd22a4a6605191cb48e0b2ca34dd7e022aafe3",
+    "binary_sha256": {
+      "bin/h3cli": "e80848f32b48b2d33f1e5a0e8b65329053e59d8fbca2033ffe118d7d43d162c4",
+      "bin/cuda_reference_probe": "2dc33a9bdc99481fca677c2af7e084dadd115865294cdc7e8b7f875cc4c3a689",
+      "bin/cuda_sglang_patch_test": "c0acba12db78e00c0c6f98da06d627c08d225c86d0ff7923ec3aaab2b40a741f",
+      "bin/cuda_sglang_media_input": "ecffcabdbb5d887ad713ec6fee04057357bb1053d4fb1ee944cec202c9e30ddb",
+      "bin/cuda_sglang_vision": "ecd9495024cb5de47663e8ac066b9c90c73c727caabccadd3400ed970c37d03d",
+      "bin/cuda_sglang_encoder": "649aa066d92890a8c5954529caf99d1186564647a21aea7b75c6976c19a46d15",
+      "bin/cuda_sglang_soundtrack_input": "f557c576126c5e8e460dcfb402fa83342250912aa67806b5ad52d6c763b4f082",
+      "bin/cuda_sglang_audio_encode": "b9bac3504209bf268f86c634497097744bbca74fc4a9a55a4fe7bc66071db41c",
+      "bin/cuda_sglang_vae": "803a14a49aed2a3b077c67e2b62108da855e12527e1c7b2901d9b6369906e82d",
+      "bin/cuda_sglang_audio": "638f1b70653e9b9b21a6d55cc59058f4357ff1fd968e07bc684f7753f30fec76"
+    }
+  },
+  "linux_artifact": {
+    "sha256": "9de678dbb6ef280eb383ec85c556525171e3feae208a3ae38b8b2126063ebec4",
+    "source_snapshot_sha256": "f61ab61fe009469452b3f6f859287104318dcc49b552cc65553d35605e517c58",
+    "production_files_matched": 217
+  },
+  "measurement_notes": [
+    "Whole-device VRAM and descendant RSS are sampled and may miss short peaks.",
+    "RSS sums descendant resident pages; shared pages may be counted twice.",
+    "Tracked tensor peaks exclude driver and library allocations.",
+    "Phase durations may be nested; do not sum them as independent wall time."
+  ]
+}

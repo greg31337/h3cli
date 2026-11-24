@@ -50,9 +50,9 @@ int h3_bridge_profile_build(int context_frames, int video_steps, float maximum,
     if (error && error_size) *error = 0;
     if (warning && warning_size) *warning = 0;
     h3_bridge_profile p = {0};
-    if (!profile || context_frames > 362 ||
+    if (!profile || context_frames > h3_frame_limit(H3_NATIVE_CUDA) ||
         !h3_continuation_context(context_frames, &p.prefix))
-        return fail(error, error_size, "bridge context must be 39 + 51*k frames within 39..362");
+        return fail(error, error_size, "bridge context must be 39 + 51*k frames within the backend limit");
     if (video_steps < 1 || video_steps >= p.prefix.video_prefix_t)
         return fail(error, error_size, "bridge steps must be positive and shorter than the video context; retain at least one exact row");
     if (!isfinite(maximum) || maximum < 0 || maximum > 1)

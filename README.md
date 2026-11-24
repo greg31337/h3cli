@@ -15,6 +15,11 @@ matching settings, and validation scope.
 [Get started](#get-started) · [First video](#make-your-first-video) ·
 [Quality](#choose-your-quality) · [Documentation](docs/README.md)
 
+CUDA supports up to **736 aligned frames (30.667 seconds at 24 fps)** with dense
+BF16 and default attention. Metal retains **362 frames**. Canvas, sequence and
+memory limits still apply; see the [duration contract](docs/cuda/long-video-contract.md)
+for supported settings and validation scope.
+
 ## What you can do
 
 - Generate videos with dialogue, music, and sound effects from a text prompt.

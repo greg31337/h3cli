@@ -36,6 +36,15 @@ static inline uint32_t h3_canvas_mlp_rows(uint32_t rows,uint32_t hidden) {
 #define H3_NATIVE_CUDA 1
 #define H3_UPSCALE_LATENT_AXIS 240
 #endif
+/* Output duration is independent of canvas and reference-input duration. */
+enum { H3_LEGACY_MAX_FRAMES=362, H3_CUDA_MAX_FRAMES=736,
+       H3_CUDA_MAX_VIDEO_T=2+5*((H3_CUDA_MAX_FRAMES-5)/17),
+       H3_CUDA_MAX_AUDIO_T=(H3_CUDA_MAX_FRAMES*40+12)/24 };
+static inline int h3_frame_limit(int cuda) { return cuda?H3_CUDA_MAX_FRAMES:H3_LEGACY_MAX_FRAMES; }
+static inline int h3_video_time_limit(int cuda) { return cuda?H3_CUDA_MAX_VIDEO_T:107; }
+static inline int h3_frames_supported(int frames,int cuda) {
+    return frames>=5 && frames<=h3_frame_limit(cuda) && (frames-5)%17==0;
+}
 static inline int h3_canvas_delivery_valid(int w,int h,int profile) {
     if(w<32||h<32||w%2||h%2||profile<0||profile>3)return 0;
     int64_t pixels=(int64_t)w*h;
@@ -64,7 +73,7 @@ typedef struct {
 } h3_canvas_memory;
 static inline int h3_canvas_memory_estimate(int w,int h,int frames,int profile,
     uint64_t text_rows,uint64_t reference_rows,h3_canvas_memory *out) {
-    if(!out||!h3_canvas_valid(w,h,profile)||frames<22||frames>362||(frames-5)%17)return 0;
+    if(!out||!h3_canvas_valid(w,h,profile)||frames<22||frames>H3_CUDA_MAX_FRAMES||(frames-5)%17)return 0;
     uint64_t t=2+5*(uint64_t)((frames-5)/17), hw=(uint64_t)w*h/256;
     uint64_t audio=((uint64_t)frames*40+12)/24,video=t*hw/4;
     if(text_rows>UINT64_MAX-reference_rows)return 0;

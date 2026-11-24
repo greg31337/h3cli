@@ -44,7 +44,7 @@ int h3_geometry_valid(int width,int height,int profile) {
     return h3_canvas_valid(width,height,profile);
 }
 int h3_av_state_shape_profile(int width,int height,int frames,int profile,h3_av_state_info *info) {
-    if (!info || !h3_geometry_valid(width,height,profile) || frames < 5 || frames > 362 ||
+    if (!info || !h3_geometry_valid(width,height,profile) || frames < 5 || frames > H3_CUDA_MAX_FRAMES ||
         (frames - 5) % 17) return 0;
     h3_av_state_info result = {0};
     result.version = 3; result.geometry_profile = profile;
@@ -239,8 +239,8 @@ h3_av_state *h3_av_state_load(const char *path, char *error, size_t size) {
         get(h+120,4)>3) {
         fail(error, size, "invalid h3av magic, version, geometry profile, endianness or header"); goto done;
     }
-    if(!h3_canvas_backend((int)get(h+120,4),H3_NATIVE_CUDA)) {
-        fail(error,size,"extended AV geometry requires CUDA"); goto done;
+    if(get(h+32,4)>(unsigned)h3_frame_limit(H3_NATIVE_CUDA)||!h3_canvas_backend((int)get(h+120,4),H3_NATIVE_CUDA)) {
+        fail(error,size,"extended AV geometry/duration requires CUDA"); goto done;
     }
     int v[10];
     for (unsigned i=0; i<10; i++) {

@@ -85,7 +85,9 @@ Two translations must be explicit:
   limits; do not resize it again to satisfy an overridden upstream target.
   [Resolved plan](https://github.com/sgl-project/sglang/blob/7ee7bef79decaf78f7669994f74e6f75c7784c14/python/sglang/multimodal_gen/runtime/pipelines_core/stages/model_specific_stages/minimax_h3/resolved_plan.py).
 
-The upstream target duration range is 4–15 seconds. Shorter native h3cli jobs
+The upstream target duration range is 4–15 seconds. The native CUDA adapter
+extends output targets through 736/24 seconds; Metal retains 4–15. Reference
+input limits remain unchanged. Shorter native h3cli jobs
 remain available through, for example, `"h3cli": "--frames 22"`.
 Upstream `quality=high` selects Cache-DiT. The requested server mapping instead
 uses h3cli's existing `--quality high`: native conservative adaptive caching on

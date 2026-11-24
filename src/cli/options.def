@@ -55,6 +55,7 @@ H3_OPTION("continue-bridge-profile", OPT_BRIDGE_PROFILE, 1, ENUM, NONE, 0, "cont
 H3_OPTION("save-upscale-state", OPT_SAVE_UPSCALE, 1, STRING, OUTPUT, 0, "save-upscale-state", 0, 1.7976931348623157e308, NULL, NULL, "all", "all")
 H3_OPTION("state-only", OPT_STATE_ONLY, 0, BOOL, NONE, 0, "state-only", 0, 1.7976931348623157e308, NULL, "false", "all", "generation")
 H3_OPTION("upscale-state", OPT_UPSCALE_STATE, 1, STRING, STATE, 0, "upscale-state", 0, 1.7976931348623157e308, NULL, NULL, "all", "upscale")
+H3_OPTION("upscale-av-state", OPT_UPSCALE_AV_STATE, 1, STRING, STATE, 0, "upscale-av-state", 0, 1.7976931348623157e308, NULL, NULL, "all", "upscale_av")
 H3_OPTION("upscale-model", OPT_UPSCALE_MODEL, 1, STRING, MODEL, 0, "upscale-model", 0, 1.7976931348623157e308, NULL, "models/latent-upscale/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors", "all", "all")
 H3_OPTION("upscale-refine-steps", OPT_UPSCALE_STEPS, 1, INT, NONE, 0, "upscale-refine-steps", 0, 2147483647, NULL, "4", "all", "upscale")
 H3_OPTION("upscale-noise", OPT_UPSCALE_NOISE, 1, FLOAT, NONE, 0, "upscale-noise", 0, 1, NULL, "0.25", "all", "upscale")

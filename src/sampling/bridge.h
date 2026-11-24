@@ -6,8 +6,8 @@
 
 enum {
     H3_BRIDGE_LEVELS = 10,
-    H3_BRIDGE_MAX_VIDEO_T = 107,
-    H3_BRIDGE_MAX_AUDIO_T = 604
+    H3_BRIDGE_MAX_VIDEO_T = H3_CUDA_MAX_VIDEO_T,
+    H3_BRIDGE_MAX_AUDIO_T = H3_CUDA_MAX_AUDIO_T+1
 };
 
 /* Owned, dimension-independent temporal plan. No token-sized float masks.
@@ -32,7 +32,7 @@ const char *h3_bridge_profile_name(h3_bridge_profile_type type);
 /* Normalized time [0,1); time >= 1 is exact. Invalid input returns NaN. */
 float h3_bridge_strength(h3_bridge_profile_type type, float maximum, double time);
 /* Warning is optional and separate from an error: one exact video row is
- * valid. On failure the destination is unchanged. Context is 39+51*k <= 362. */
+ * valid. On failure the destination is unchanged. Context is 39+51*k within the backend frame limit. */
 int h3_bridge_profile_build(int context_frames, int video_steps, float maximum,
     h3_bridge_profile_type type, h3_bridge_profile *profile,
     char *warning, size_t warning_size, char *error, size_t error_size);

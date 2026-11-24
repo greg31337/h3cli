@@ -617,6 +617,7 @@ int h3_sampler_state_validate(const h3_sampler_state *s,char *error,size_t size)
     if(!h3_upscale_options_valid(p,error,size))return 0;
     if(!h3_av_state_shape_profile(s->render_width,s->render_height,s->aligned_frames,p->geometry_profile,&shape) ||
         s->aligned_frames!=h3_align_frame_count(p->frames) || s->aligned_frames<22 ||
+        !h3_frames_supported(s->aligned_frames,H3_NATIVE_CUDA) ||
         shape.video_t!=s->latent_t || shape.audio_t!=s->audio_t || shape.latent_h!=s->latent_h || shape.latent_w!=s->latent_w ||
         shape.video_elements!=s->video_elements || shape.audio_elements!=s->audio_elements ||
         !h3_geometry_valid(p->width,p->height,p->geometry_profile) ||

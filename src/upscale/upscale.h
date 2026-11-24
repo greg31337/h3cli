@@ -43,6 +43,9 @@ float *h3_upscale_bilinear(const float *input,int time,int height,int width,
     int target_height,int target_width,char *error,size_t size);
 int h3_upscale_schedule(int steps,float sigma,h3_sigma_schedule *schedule);
 int h3_upscale_request_valid(const h3_upscale_options *options,char *error,size_t size);
+int h3_upscale_av_plan(const h3_av_state *source,const h3_presentation *presentation,
+    h3_av_state_info *target,char *error,size_t size);
+int h3_upscale_transfer_admit(int geometry_profile,uint64_t network_reserve_bytes,char *error,size_t size);
 int h3_upscale_audio_intact(const h3_sampler_state *state);
 void h3_upscale_condition_hash(const h3_sampler_state *state,uint8_t hash[32]);
 void h3_upscale_presentation(const h3_sampler_state *state,h3_presentation *presentation);

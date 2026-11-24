@@ -51,6 +51,15 @@ class ContainerTests(unittest.TestCase):
         result=subprocess.run([str(BINARY),'--load',str(self.path)],capture_output=True,text=True)
         self.assertEqual(result.returncode==0,accepted,result.stderr)
         if error: self.assertIn(error,result.stderr)
+    def test_legacy_temporal_section_wire_size(self):
+        temporal=next(p for p in entries(self.original) if p[0]==15)
+        self.assertEqual(temporal[1:3],[1,1])
+        # Fixed prefix metadata + bridge scalars/classes + original 107/604 arrays.
+        self.assertEqual(len(temporal[-1]),120+44+24+96+107+604)
+        changed=entries(self.original)
+        next(p for p in changed if p[0]==15)[1]=2
+        self.check(build(changed),error='section 15')
+
     def test_adaptive_budget_format(self):
         fixture=Path(self.temp.name)/'adaptive.h3sample'
         subprocess.run([str(BINARY),'--adaptive-fixture',str(fixture)],cwd=ROOT,check=True,

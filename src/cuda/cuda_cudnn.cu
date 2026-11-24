@@ -74,7 +74,7 @@ int h3_cudnn_reference_conv(void *opaque,float *out,const float *in,const float 
             int64_t bytes=0;
             if(!graph->validate().is_good()||!graph->build_operation_graph(c->handle).is_good()||
                !graph->create_execution_plan(1,{}).is_good()||!graph->build_plan_at_index(c->handle,0).is_good()||
-               !graph->get_workspace_size_plan_at_index(0,bytes).is_good()||bytes<0||bytes>(512u<<20)){
+               !graph->get_workspace_size_plan_at_index(0,bytes).is_good()||bytes<0){
                 snprintf(error,size,"reference audio qualified dgrad engine 1 unavailable");return 0;
             }
             p->graph=graph;p->bytes=(size_t)bytes;
@@ -94,7 +94,10 @@ int h3_cudnn_reference_conv(void *opaque,float *out,const float *in,const float 
             ((ci==2048&&co==1024&&kernel==7)||(ci==512&&co==512&&kernel>=3)))?5:1;
         if(transpose)REF_DN(cudnnGetConvolutionBackwardDataWorkspaceSize(c->handle,p->w,p->x,p->conv,p->y,(cudnnConvolutionBwdDataAlgo_t)p->algorithm,&p->bytes));
         else REF_DN(cudnnGetConvolutionForwardWorkspaceSize(c->handle,p->x,p->w,p->conv,p->y,(cudnnConvolutionFwdAlgo_t)p->algorithm,&p->bytes));
-        if(p->bytes>(512u<<20)){snprintf(error,size,"reference audio cuDNN workspace exceeds 512 MiB");return 0;}
+        }
+        if(p->bytes>H3_CUDNN_AUDIO_WORKSPACE_LIMIT){
+            snprintf(error,size,"reference audio cuDNN workspace needs %zu bytes (limit %zu), batch=%u length=%u channels=%u->%u kernel=%u stride=%u dilation=%u transpose=%d",
+                p->bytes,H3_CUDNN_AUDIO_WORKSPACE_LIMIT,batch,length,ci,co,kernel,stride,dilation,transpose);return 0;
         }
         found=c->plans.emplace(key,std::move(p)).first;
     }

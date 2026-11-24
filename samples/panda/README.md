@@ -88,3 +88,29 @@ Media delivery uses the native renderer's merging and audio alignment.
 Existing output directories are never reused;
 choose a fresh `--output-dir` for another run. Without the launcher's explicit
 output option, direct `--render` defaults to `panda-render` beside the script.
+
+## Twenty-segment CUDA alternative
+
+[panda2.txt](panda2.txt) follows a shorter variation of Panda's walk, from the
+sprinkler and pond through rooftops, gardens, and a small hedge maze to the
+hilltop. Its 20 segments each generate 243 frames at **1920×1088**, with
+file-wide `#upscale 0` delivering **3840×2176** clips before merging. It uses
+50 denoising steps, full VAEs, streamed CUDA weights, seed 42, and one global
+reference to `panda.png`.
+
+[run2.sh](run2.sh) uses the same binary selection and argument forwarding as
+`run.sh`, selecting `panda2.txt` and defaulting to `outputs/panda2-render`.
+For the standalone Linux package, run from the repository root:
+
+```sh
+H3CLI_BIN="$PWD/linux-package/h3cli-linux-x86_64" sh samples/panda/run2.sh \
+  --models-path /path/to/models --offline
+H3CLI_BIN="$PWD/linux-package/h3cli-linux-x86_64" sh samples/panda/run2.sh \
+  --dry-run > /tmp/panda2-plan.json
+```
+
+The first clip delivers 243 frames; each of the 19 continuations trims its
+39-frame inherited context and delivers 204 new frames. The combined movie,
+`outputs/panda2-render/panda2.mp4`, contains **4,119 frames** at 24 fps
+(2 minutes 51.625 seconds). The source states remain at 1920×1088 for the
+continuation chain; upscaled states and logs are retained under `.render/`.

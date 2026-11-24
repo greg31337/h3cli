@@ -295,12 +295,13 @@ static int merge(const h3_render_plan *p, size_t merge_index, sj_value *row, sj_
         if (j && !signature_equal(videos[indices[0]], videos[indices[j]])) normalize = 1;
     }
     const h3_render_segment *first = &p->segments[indices[0]];
+    int width=h3_render_width(p,first),height=h3_render_height(p,first);
     char *listing = strdup("ffconcat version 1.0\n");
     char *list_path = h3_render_format("%s/merge-%04zu.txt", p->work, merge_index);
     char *partial = h3_render_format("%s/merge-%04zu.mp4", p->work, merge_index);
     char *target = h3_render_format("%s/%s", p->output, sj_field(row, "name"));
     int ok = 0;
-    if (normalize) fprintf(stderr, "h3cli: normalizing %s to %dx%d lossless RGB for merging\n", sj_field(row, "name"), first->width, first->height);
+    if (normalize) fprintf(stderr, "h3cli: normalizing %s to %dx%d lossless RGB for merging\n", sj_field(row, "name"), width, height);
     for (size_t j = 0; j < inputs->count; j++) {
         const h3_render_segment *s = &p->segments[indices[j]];
         char *source = h3_render_format("%s/%s", p->output, s->name);
@@ -310,7 +311,7 @@ static int merge(const h3_render_plan *p, size_t merge_index, sj_value *row, sj_
         char *audio = h3_render_format("aresample=32000,apad=whole_len=%lld,atrim=end_sample=%lld,asetpts=PTS-STARTPTS",
                                        (long long)s->delivered*32000/24, (long long)s->delivered*32000/24);
         char *canvas = h3_render_format("scale=%d:%d:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=%d:%d:(ow-iw)/2:(oh-ih)/2,setsar=1",
-                                        first->width, first->height, first->width, first->height);
+                                        width, height, width, height);
         char *argv[64]; size_t n = 0;
 #define ARG(x) argv[n++] = (char *)(x)
         ARG(ffmpeg); ARG("-nostdin"); ARG("-hide_banner"); ARG("-loglevel"); ARG("warning"); ARG("-n");
@@ -324,7 +325,7 @@ static int merge(const h3_render_plan *p, size_t merge_index, sj_value *row, sj_
         ARG("-video_track_timescale"); ARG("24000"); ARG(prepared); argv[n] = NULL;
 #undef ARG
         int prepared_ok = process(argv, log, 0, NULL, 0, error, size);
-        sj_value *verified = prepared_ok ? inspect(probe, prepared, s->delivered, first->width, first->height, options, NULL, error, size) : NULL;
+        sj_value *verified = prepared_ok ? inspect(probe, prepared, s->delivered, width, height, options, NULL, error, size) : NULL;
         if (verified) {
             char *next = h3_render_format("%sfile '%s'\nduration %.12f\n", listing, name, (double)s->delivered / 24.0);
             free(listing); listing = next;
@@ -340,36 +341,42 @@ static int merge(const h3_render_plan *p, size_t merge_index, sj_value *row, sj_
         "-i", list_path, "-map", "0:v:0", "-map", "0:a:0", "-map_metadata", "-1", "-c:v", "copy", "-af", audio,
         "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", partial, NULL};
     int merged = process(argv, log, 0, NULL, 0, error, size); free(log); free(audio);
-    sj_value *verified = merged ? inspect(probe, partial, frames, first->width, first->height, options, NULL, error, size) : NULL;
+    sj_value *verified = merged ? inspect(probe, partial, frames, width, height, options, NULL, error, size) : NULL;
     if (!verified) goto done;
     sj_free(verified);
     if (interrupted || !publish_video(partial, target, error, size)) goto done;
     sj_set(row, "status", sj_string("complete")); sj_add(row, "video", sj_string(target));
     sj_add(row, "frames", sj_int(frames)); sj_add(row, "seconds", sj_real((double)frames / 24.0));
     sj_add(row, "lossless_normalization", sj_bool(normalize));
-    sj_add(row, "width", sj_int(first->width)); sj_add(row, "height", sj_int(first->height));
+    sj_add(row, "width", sj_int(width)); sj_add(row, "height", sj_int(height));
     fprintf(stderr, "h3cli: merged video: %s\n", target); ok = 1;
 done:
     free(indices); free(listing); free(list_path); free(partial); free(target); return ok;
 }
 static int preflight(const h3_render_plan *p, const char *ffmpeg, const char *probe,
                      const probe_options *options, char *error, size_t size) {
+    const h3_render_segment *first = NULL;
+    for (size_t i = 0; i < p->count; i++) if (!p->segments[i].skipped) { first = &p->segments[i]; break; }
+    if (!first) { snprintf(error, size, "no active segment for media preflight"); return 0; }
+    int width = h3_render_width(p,first), height = h3_render_height(p,first);
+    /* Probe the effective output canvas, including bounded test campaigns. */
+    char *pattern = h3_render_format("color=c=gray:s=%dx%d:r=24:d=0.25", width, height);
     char *path = h3_render_format("%s/probe.mp4", p->work), *log = h3_render_format("%s/preflight.log", p->work);
     char *argv[] = {(char *)ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error", "-n", "-f", "lavfi", "-i",
-        "color=c=gray:s=96x96:r=24:d=0.25", "-f", "lavfi", "-i", "anullsrc=r=32000:cl=stereo", "-t", "0.25",
+        pattern, "-f", "lavfi", "-i", "anullsrc=r=32000:cl=stereo", "-t", "0.25",
         "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", path, NULL};
     int ok = process(argv, log, 0, NULL, 30, error, size);
-    sj_value *video = ok ? inspect(probe, path, 6, 96, 96, options, NULL, error, size) : NULL;
+    sj_value *video = ok ? inspect(probe, path, 6, width, height, options, NULL, error, size) : NULL;
     ok = video != NULL; sj_free(video);
     if (ok && p->overlay_segment_name) {
         char *image = h3_render_format("%s/probe-label.ppm", p->work);
         char *labeled = h3_render_format("%s/probe-labeled.mp4", p->work);
         char *label_log = h3_render_format("%s/preflight-overlay.log", p->work);
-        ok = label_video(ffmpeg, path, "segment", 96, 96, image, labeled, label_log, error, size);
-        video = ok ? inspect(probe, labeled, 6, 96, 96, options, NULL, error, size) : NULL;
+        ok = label_video(ffmpeg, path, "segment", width, height, image, labeled, label_log, error, size);
+        video = ok ? inspect(probe, labeled, 6, width, height, options, NULL, error, size) : NULL;
         ok = video != NULL; sj_free(video); free(image); free(labeled); free(label_log);
     }
-    free(path); free(log); return ok;
+    free(pattern); free(path); free(log); return ok;
 }
 int h3_render_run(const h3_request *request, const char *binary, int (*validate)(const h3_request *)) {
     h3_render_plan plan = {0}; sj_value *report = NULL, **videos = NULL, *running = NULL;
@@ -383,6 +390,11 @@ int h3_render_run(const h3_request *request, const char *binary, int (*validate)
         int valid = h3_render_request(&plan, i, &segment, error, sizeof(error)) && !validate(&segment);
         h3_request_free(&segment);
         if (!valid) { if (!*error) snprintf(error, sizeof(error), "%s:%d: invalid generation options", plan.source, plan.segments[i].line); goto done; }
+        if(plan.upscale) {
+            valid=h3_render_upscale_request(&plan,i,&segment,error,sizeof(error))&&!validate(&segment);
+            h3_request_free(&segment);
+            if(!valid){if(!*error)snprintf(error,sizeof(error),"%s:%d: invalid upscale options",plan.source,plan.segments[i].line);goto done;}
+        }
     }
     report = h3_render_plan_json(&plan, binary);
     if (!report) { snprintf(error, sizeof(error), "cannot allocate render report"); goto done; }
@@ -423,7 +435,9 @@ int h3_render_run(const h3_request *request, const char *binary, int (*validate)
     for (size_t run = 0; run < runs; run++) {
         for (size_t i = run * per_run; i < (run + 1) * per_run; i++) {
             const h3_render_segment *s = &plan.segments[i]; if (s->skipped) continue;
+            int width=h3_render_width(&plan,s),height=h3_render_height(&plan,s);
             running = segments->items[i]; sj_set(running, "status", sj_string("running"));
+            sj_set(running,"stage",sj_string("generation"));
             if (!report_write(&plan, report, error, sizeof(error))) goto done;
             fprintf(stderr, "h3cli: segment %zu/%zu: %s (%d delivered frames)\n", ++completed, active, s->name, s->delivered);
             const sj_value *command = sj_get(running, "command");
@@ -439,14 +453,32 @@ int h3_render_run(const h3_request *request, const char *binary, int (*validate)
             struct stat st;
             int state_ok = !stat(state, &st) && S_ISREG(st.st_mode) && st.st_size > 0 && !stat(sidecar, &st) && S_ISREG(st.st_mode) && st.st_size > 0;
             sj_add(running, "state", sj_string(state)); free(state); free(sidecar);
+            if(videos[i]&&state_ok&&!interrupted&&plan.upscale) {
+                sj_set(running,"stage",sj_string("upscale"));sj_set(running,"upscale_status",sj_string("running"));
+                sj_add(running,"source_video",sj_string(partial));
+                if(!report_write(&plan,report,error,sizeof(error))){free(partial);goto done;}
+                fprintf(stderr,"h3cli: upscale segment %s to %dx%d; refinement steps=%d\n",s->name,width,height,plan.upscale_refine_steps);
+                command=sj_get(running,"upscale_command");argv=calloc(command->count+1,sizeof(*argv));
+                if(!argv){free(partial);snprintf(error,sizeof(error),"out of memory");goto done;}
+                for(size_t j=0;j<command->count;j++)argv[j]=(char *)sj_text(command->items[j]);
+                log=h3_render_format("%s/%04zu-upscale.log",plan.work,i);
+                int upscaled=process(argv,log,1,NULL,0,error,sizeof(error));free(argv);free(log);
+                free(partial);partial=h3_render_format("%s/%04zu-upscaled.mp4",plan.work,i);
+                sj_free(videos[i]);videos[i]=upscaled?inspect(probe,partial,s->delivered,width,height,&options,NULL,error,sizeof(error)):NULL;
+                state=h3_render_format("%s/%04zu-upscaled.h3av",plan.work,i);sidecar=h3_render_format("%s.presentation",state);
+                state_ok=!stat(state,&st)&&S_ISREG(st.st_mode)&&st.st_size>0&&!stat(sidecar,&st)&&S_ISREG(st.st_mode)&&st.st_size>0;
+                sj_add(running,"upscaled_state",sj_string(state));free(state);free(sidecar);
+                if(videos[i]&&state_ok&&!interrupted)sj_set(running,"upscale_status",sj_string("complete"));
+            }
             if (videos[i] && state_ok && !interrupted && plan.overlay_segment_name) {
+                sj_set(running,"stage",sj_string("overlay"));
                 char *image = h3_render_format("%s/%04zu-label.ppm", plan.work, i);
                 char *labeled = h3_render_format("%s/%04zu-labeled.mp4", plan.work, i);
                 char *label_log = h3_render_format("%s/%04zu-overlay.log", plan.work, i);
                 fprintf(stderr, "h3cli: overlay segment name: %s\n", s->label);
-                int labeled_ok = label_video(ffmpeg, partial, s->label, s->width, s->height, image, labeled, label_log, error, sizeof(error));
+                int labeled_ok = label_video(ffmpeg, partial, s->label, width, height, image, labeled, label_log, error, sizeof(error));
                 sj_free(videos[i]);
-                videos[i] = labeled_ok ? inspect(probe, labeled, s->delivered, s->width, s->height, &options, NULL, error, sizeof(error)) : NULL;
+                videos[i] = labeled_ok ? inspect(probe, labeled, s->delivered, width, height, &options, NULL, error, sizeof(error)) : NULL;
                 sj_add(running, "original_video", sj_string(partial));
                 free(image); free(label_log); free(partial); partial = labeled;
             }
@@ -475,7 +507,11 @@ done:
         sj_set(report, "status", sj_string(state));
         sj_add(report, "elapsed_seconds", sj_real(now() - started));
         if (*error) sj_add(report, "error", sj_string(error));
-        if (running) sj_set(running, "status", sj_string(state));
+        if (running) {
+            sj_set(running, "status", sj_string(state));
+            const char *up=sj_field(running,"upscale_status");
+            if(up&&!strcmp(up,"running"))sj_set(running,"upscale_status",sj_string(state));
+        }
         char report_error[2048] = {0};
         if (!report_write(&plan, report, report_error, sizeof(report_error))) {
             fprintf(stderr, "h3cli: render: %s\n", report_error); if (!status) status = 1;

@@ -57,7 +57,7 @@ static int snapshot(const h3_request *r,const char *destination,int persist_plan
     }
     /* Preserve identities of custom selected checkpoints and their metadata,
      * including additional files used by native saved-state validation. */
-    if(strcmp(h3_request_operation(r),"decode_av"))for(unsigned bit=1;ok&&bit<=2;bit<<=1)if(groups&bit){
+    if(strcmp(h3_request_operation(r),"decode_av")&&strcmp(h3_request_operation(r),"upscale_av"))for(unsigned bit=1;ok&&bit<=2;bit<<=1)if(groups&bit){
         char *dir=srv_path(p.paths.main,bit==1?"FL2VA":"Ref2VA");ok=dir&&tree(a,dir,0,error,size);free(dir);
     }
     for(size_t i=0;ok&&i<r->count;i++)if(!strcmp(r->values[i].option->name,"lora")){

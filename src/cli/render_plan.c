@@ -107,7 +107,7 @@ static int forbidden(const char *name) {
         "prompt", "output", "continue-from", "save-av-state", "keep-continuation-prefix",
         "help", "info", "server", "still", "state-only", "decode-av-state",
         "decode-still-latent", "save-still-latent", "resume-sampler-state",
-        "stop-after-step", "preview-on-stop", "upscale-state", "inspect-upscale-state",
+        "stop-after-step", "preview-on-stop", "upscale-state", "upscale-av-state", "inspect-upscale-state",
         "download-models", "list-models", "render", "output-dir", "dry-run"
     };
     for (size_t i = 0; i < sizeof(names)/sizeof(*names); i++)
@@ -384,6 +384,12 @@ static int parse(h3_render_plan *p, const h3_request *defaults, const char *base
             if (!strcmp(name, "nomerge")) {
                 if (arity) { snprintf(error, size, "#nomerge takes no arguments"); good = 0; }
                 else p->nomerge = 1;
+            } else if (!strcmp(name, "upscale")) {
+                if (s) { snprintf(error, size, "#upscale belongs before the first segment definition"); good = 0; }
+                else if (p->upscale) { snprintf(error, size, "use #upscale only once"); good = 0; }
+                else if (arity != 1 || strlen(first) != 1 || !strchr("0234", *first)) {
+                    snprintf(error, size, "use #upscale 0, 2, 3 or 4 (refinement steps)"); good = 0;
+                } else { p->upscale = 1; p->upscale_refine_steps = *first - '0'; }
             } else if (!strcmp(name, "overlay-segment-name") || !strcmp(name, "seed-set") || !strcmp(name, "ref")) {
                 if (s) { snprintf(error, size, "#%s belongs before the first segment definition", name); good = 0; }
                 else if (!strcmp(name, "overlay-segment-name")) {
@@ -510,6 +516,8 @@ static int validate(h3_render_plan *p, char *error, size_t size) {
         h3_render_segment *s = &p->segments[i];
 #define FAIL(...) do { snprintf(error, size, __VA_ARGS__); goto invalid; } while (0)
         if (s->continuing && !i) FAIL("#continue needs a preceding segment");
+        if (s->continuing && p->upscale && p->upscale_refine_steps)
+            FAIL("continuations require #upscale 0; refinement is unsupported with #continue");
         if (s->continuing && s->skipped != p->segments[i-1].skipped)
             FAIL("continuation chain mixes skipped (!###) and rendered (###) segments");
         if (s->skipped) continue;
@@ -521,10 +529,40 @@ static int validate(h3_render_plan *p, char *error, size_t size) {
             (int64_t)rw * s->height != (int64_t)rh * s->width)) FAIL("internal render size must fit and match the output aspect ratio");
         double requested = integer(s, "frames");
         if (has(s, "seconds")) requested = round(strtod(value(s, "seconds"), NULL) * 24.0);
-        if (requested < 1 || requested > 362) FAIL("frame count must align within the native 22..362 generation range");
+        if (!isfinite(requested) || requested < 1 || requested > h3_frame_limit(H3_NATIVE_CUDA)) FAIL("frame count must align within the native 22..%d generation range",h3_frame_limit(H3_NATIVE_CUDA));
         int frames = (int)requested; if (frames < 5) frames = 5;
         s->frames = frames + (17 - (frames - 5) % 17) % 17; s->delivered = s->frames;
-        if (s->frames < 22) FAIL("frame count must align within the native 22..362 generation range");
+        if (s->frames < 22 || !h3_frames_supported(s->frames,H3_NATIVE_CUDA)) FAIL("frame count must align within the native 22..%d generation range",h3_frame_limit(H3_NATIVE_CUDA));
+        if (p->upscale) {
+            int w=h3_render_width(p,s),h=h3_render_height(p,s);
+            int profile=h3_canvas_valid(w,h,0)?0:h3_canvas_valid(w,h,1)?1:3;
+            h3_canvas_memory memory;
+            if(s->width>(H3_NATIVE_CUDA?1920:960)||s->height>(H3_NATIVE_CUDA?1920:960)||
+               !h3_canvas_backend(profile,H3_NATIVE_CUDA)||
+               !h3_canvas_memory_estimate(w,h,s->frames,profile,0,0,&memory)||
+               !h3_canvas_sequence_valid(memory.sequence_rows,H3_NATIVE_CUDA))
+                FAIL("#upscale 2x target exceeds this backend canvas or sequence limit");
+            if ((rw&&rw!=s->width)||(rh&&rh!=s->height)) FAIL("#upscale requires an exact source render canvas");
+            int reuse=integer(s,"reuse"),adaptive=strcmp(value(s,"adaptive-cache"),"off")!=0;
+            int preview=has(s,"preview-vae");
+            const char *quality=value(s,"quality");
+            for(size_t j=0;quality&&j<5;j++)if(!strcmp(quality,h3_quality_presets[j].name)) {
+                const h3_quality_preset *q=&h3_quality_presets[j];
+                if(!has(s,"reuse"))reuse=(!H3_NATIVE_CUDA&&q->adaptive)?2:q->reuse;
+                if(!has(s,"adaptive-cache"))adaptive=H3_NATIVE_CUDA&&q->adaptive;
+                if(!has(s,"preview-vae")&&!has(s,"no-preview-vae"))preview=q->preview;
+            }
+            if(reuse!=1||integer(s,"core-reuse")!=1||integer(s,"layers")!=50||preview||adaptive||
+               strcmp(value(s,"cuda-attention"),"default")||strcmp(value(s,"cuda-denoise-quant"),"off")||
+               strcmp(value(s,"backend"),"mpsgraph")||strcmp(value(s,"metal-attention"),"dense")||
+               has(s,"token-reduction")||has(s,"use-int8-row-fc2")||has(s,"lora"))
+                FAIL("#upscale requires dense BF16, all 50 layers, default attention, full VAE and no LoRA");
+            const char *managed[]={"save-upscale-state","save-sampler-state","upscale-refine-steps","upscale-import-sampler"};
+            for(size_t j=0;j<sizeof(managed)/sizeof(*managed);j++)if(has(s,managed[j]))
+                FAIL("#upscale manages --%s; remove that segment/CLI option",managed[j]);
+            if(!p->upscale_refine_steps&&(has(s,"upscale-noise")||has(s,"upscale-seed")))
+                FAIL("#upscale 0 does not accept upscale noise or seed overrides");
+        }
         for (size_t j = 0; j < s->settings.count; j++) {
             const h3_option_value *v = &s->settings.values[j];
             if (v->option->path != H3_PATH_MEDIA) continue;
@@ -622,6 +660,14 @@ void h3_render_plan_free(h3_render_plan *p) {
 int h3_render_request(const h3_render_plan *p, size_t index, h3_request *request, char *error, size_t size) {
     const h3_render_segment *s = &p->segments[index];
     if (!clone_settings(request, &s->settings, 1, error, size)) return 0;
+    if (p->upscale) {
+        h3_request_remove(request,"upscale-model");h3_request_remove(request,"upscale-noise");h3_request_remove(request,"upscale-seed");
+        if(p->upscale_refine_steps) {
+            char *source=h3_render_format("%s/%04zu.h3up",p->work,index);
+            int ok=h3_request_add(request,"save-upscale-state",source,NULL,H3_SOURCE_MANAGED,error,size);free(source);
+            if(!ok)return 0;
+        }
+    }
     if (!s->continuing) {
         for (size_t i = 0; i < h3_cli_option_count; i++)
             if (!strncmp(h3_cli_options[i].name, "continue-", 9)) h3_request_remove(request, h3_cli_options[i].name);
@@ -637,11 +683,32 @@ int h3_render_request(const h3_render_plan *p, size_t index, h3_request *request
     }
     free(state); free(output); return ok;
 }
+int h3_render_upscale_request(const h3_render_plan *p,size_t index,h3_request *request,char *error,size_t size) {
+    if(!p->upscale){snprintf(error,size,"upscaling is not enabled");return 0;}
+    const h3_render_segment *s=&p->segments[index];
+    const char *forward[]={"models-path","model-dir","offline","upscale-model","upscale-noise","upscale-seed",
+        "cuda-device","cuda-weight-mode","profile","verbose","output-quality","ffmpeg-crf","lossless-video"};
+    for(size_t i=0;i<s->settings.count;i++)for(size_t j=0;j<sizeof(forward)/sizeof(*forward);j++) {
+        const h3_option_value *v=&s->settings.values[i];
+        if(!strcmp(v->option->name,forward[j])&&!h3_request_add(request,v->option->name,v->value,v->second,H3_SOURCE_NATIVE,error,size))return 0;
+    }
+    char *source=h3_render_format("%s/%04zu.%s",p->work,index,p->upscale_refine_steps?"h3up":"h3av");
+    char *output=h3_render_format("%s/%04zu-upscaled.mp4",p->work,index);
+    char *state=h3_render_format("%s/%04zu-upscaled.h3av",p->work,index);
+    char steps[16];snprintf(steps,sizeof(steps),"%d",p->upscale_refine_steps);
+    int ok=h3_request_add(request,p->upscale_refine_steps?"upscale-state":"upscale-av-state",source,NULL,H3_SOURCE_MANAGED,error,size)&&
+        h3_request_add(request,"upscale-refine-steps",steps,NULL,H3_SOURCE_MANAGED,error,size)&&
+        h3_request_add(request,"save-av-state",state,NULL,H3_SOURCE_MANAGED,error,size)&&
+        h3_request_add(request,"output",output,NULL,H3_SOURCE_MANAGED,error,size);
+    free(source);free(output);free(state);return ok;
+}
 sj_value *h3_render_plan_json(const h3_render_plan *p, const char *binary) {
     sj_value *report = sj_object(), *segments = sj_array(), *merges = sj_array();
     sj_add(report, "status", sj_string("planned")); sj_add(report, "input", sj_string(p->source));
     sj_add(report, "output", sj_string(p->output)); sj_add(report, "nomerge", sj_bool(p->nomerge));
     sj_add(report, "overlay_segment_name", sj_bool(p->overlay_segment_name));
+    sj_add(report, "upscale", sj_bool(p->upscale));
+    if(p->upscale)sj_add(report,"upscale_refine_steps",sj_int(p->upscale_refine_steps));
     sj_value *seeds = sj_array(), *aliases = sj_object();
     for (size_t i = 0; i < p->seed_count; i++) sj_add(seeds, NULL, sj_uint(p->seed_set[i]));
     for (size_t i = 0; i < p->reference_count; i++) sj_add(aliases, p->references[i].name, sj_string(p->references[i].path));
@@ -656,7 +723,8 @@ sj_value *h3_render_plan_json(const h3_render_plan *p, const char *binary) {
         sj_add(row, "prompt", sj_string(s->prompt)); sj_add(row, "continuing", sj_bool(s->continuing));
         sj_add(row, "status", sj_string(s->skipped ? "skipped" : "planned"));
         sj_add(row, "frames", sj_int(s->frames)); sj_add(row, "delivered", sj_int(s->delivered));
-        sj_add(row, "width", sj_int(s->width)); sj_add(row, "height", sj_int(s->height));
+        sj_add(row, "width", sj_int(h3_render_width(p,s))); sj_add(row, "height", sj_int(h3_render_height(p,s)));
+        if(p->upscale){sj_add(row,"source_width",sj_int(s->width));sj_add(row,"source_height",sj_int(s->height));}
         char *video = h3_render_format("%s/%s", p->output, s->name);
         sj_add(row, "video", sj_string(video)); free(video);
         if (!s->skipped) {
@@ -666,6 +734,13 @@ sj_value *h3_render_plan_json(const h3_render_plan *p, const char *binary) {
             sj_value *command = sj_array();
             for (int j = 0; argv && j < argc; j++) sj_add(command, NULL, sj_string(j ? argv[j] : binary));
             h3_argv_free(argv); h3_request_free(&request); sj_add(row, "command", command);
+            if(p->upscale) {
+                if(!h3_render_upscale_request(p,i,&request,error,sizeof(error))){h3_request_free(&request);sj_free(row);sj_free(report);return NULL;}
+                argv=h3_request_argv(&request,&argc);command=sj_array();
+                for(int j=0;argv&&j<argc;j++)sj_add(command,NULL,sj_string(j?argv[j]:binary));
+                h3_argv_free(argv);h3_request_free(&request);sj_add(row,"upscale_command",command);
+                sj_add(row,"upscale_status",sj_string("planned"));
+            }
         }
         sj_add(segments, NULL, row);
     }

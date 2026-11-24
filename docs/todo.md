@@ -1,7 +1,9 @@
 # CUDA rendering through 736 frames
 
-Status: **planned — 0/24 tasks complete**.
-Created **2026-11-23**.
+Status: **24/24 tasks complete — final artifacts verified; 204/204 regression outputs match**.
+Created **2026-11-23**. Evidence: [contract](cuda/long-video-contract.md),
+[acceptance report](cuda/long-video-results.md),
+[memory estimates](cuda/long-video-memory-estimates.md).
 
 Extend native **CUDA** video generation from the current 362-frame ceiling to
 **736 aligned frames at 24 FPS (30.667 seconds)**. Metal retains its existing
@@ -21,7 +23,8 @@ evidence. The [empty-latent still milestone](empty-still-todo.md) is unchanged.
 ## Scope and production contract
 
 - Keep the existing upward alignment to `5 + 17*n` and the 24 FPS timebase.
-  Ordinary video keeps its existing minimum of 22 aligned frames. Accept a
+  Script video keeps its existing minimum of 22 aligned frames; the lower-level
+  native API retains its existing five-frame shape. Accept a
   request only when its aligned result is at most **736 on CUDA or 362 on
   Metal**; reject overflow and out-of-range requests before model work. Do not
   clamp or truncate requests.
@@ -102,15 +105,12 @@ delivering 17 new frames. The merged source plus suffix is exactly 464 frames,
 so all artifacts remain below 20 seconds. Smaller continuation fixtures may
 also be used. Never merge two full 464-frame clips during development.
 
-[CONTRIBUTING.md](../CONTRIBUTING.md) normally requires the immutable
-204-output CUDA regression after coherent code changes. Its fixed **640×480**
-render conflicts with the user's current **256×256-only** test instruction.
-Defer that unchanged gate under this instruction; do not resize its fixtures,
-edit golden hashes, add skips or describe host checks as a numerical gate pass.
-The historical 204/204 result does not qualify the new code. The prior explicit
-request to run that gate authorized the completed run, not a new exception to
-this milestone's testing restriction. Record this regression gap at closeout.
-Documentation-only changes require document/link checks, not model execution.
+[CONTRIBUTING.md](../CONTRIBUTING.md) requires the immutable 204-output CUDA
+regression after coherent code changes. The user's execution request explicitly
+authorizes that unchanged gate at the end of this milestone, including its fixed
+640×480 fixture. This is the only exception to the bounded development envelope.
+Do not resize fixtures, edit golden hashes or add skips. Documentation-only
+changes require document/link checks, not model execution.
 
 ## CUDA host planning baseline
 
@@ -143,21 +143,21 @@ upscale-plan guards; frame support is not an unlimited sequence-length claim.
 
 ## M0 — Freeze temporal policy and bounded development
 
-- [ ] LVD001 Inventory every output-frame, latent-time, context and media-input
+- [x] LVD001 Inventory every output-frame, latent-time, context and media-input
   limit, including literals 362/107/604/15 and indirect helper callers. Freeze
   the backend/feature support matrix, baseline identities and legacy behavior.
   Distinguish output-duration limits from intentional reference-media limits;
   record the excluded quality criteria and runtime-validation gaps above.
-- [ ] LVD002 Introduce shared backend-aware temporal limits and conversions in
+- [x] LVD002 Introduce shared backend-aware temporal limits and conversions in
   the host/geometry policy. Derive CUDA's 736/217/1,227 while retaining Metal's
   362/107/603 and backend-appropriate legal continuation contexts;
   validate seconds conversion, upward alignment, signed/unsigned casts and
   overflow. Keep still-image and existing short-video shapes unchanged.
-- [ ] LVD003 Extend phase-specific host/device estimates to the new ceiling,
+- [x] LVD003 Extend phase-specific host/device estimates to the new ceiling,
   using actual text, references, anchors and audio. Reproduce the table above
   without allocating long-video tensors; retain backend sequence/index bounds,
   capacity reserves, streamed placement and actionable rejection diagnostics.
-- [ ] LVD004 Add a dedicated guarded test entry point and bounded host target.
+- [x] LVD004 Add a dedicated guarded test entry point and bounded host target.
   Check effective source/target/delivery canvases, aligned duration, reference
   media, resume/decode inputs, child workers and every merged output before
   launch. Reject 481/719/736-frame runtime jobs, all non-256×256 video canvases
@@ -170,28 +170,28 @@ development envelope.
 
 ## M1 — Generation, conditioning and public entry points
 
-- [ ] LVD005 Update native validation in [engine](../src/engine.c) and
+- [x] LVD005 Update native validation in [engine](../src/engine.c) and
   [script planning](../src/cli/render_plan.c) to use the shared policy.
   Support CLI/API `frames` and `seconds` through each backend's aligned ceiling,
   preserving defaults, option precedence and script inheritance. Reject invalid
   durations before model loading or creating outputs, with consistent diagnostics.
-- [ ] LVD006 Update explicit native HTTP requests and the
+- [x] LVD006 Update explicit native HTTP requests and the
   [SGLang-compatible target-duration adapter](../src/server/sglang.c).
   Extend its 15-second *output* ceiling consistently with native
   alignment on CUDA, while retaining Metal's existing ceiling and the
   reference-media/minimum-duration contracts. Validate explicit versus derived
   duration, resolved execution backend and contradictory request fields.
-- [ ] LVD007 Audit [conditioning/layout](../src/host.c), positional encodings,
+- [x] LVD007 Audit [conditioning/layout](../src/host.c), positional encodings,
   first/last-frame indices and audio/video row offsets through 736 frames.
   Ensure helpers such as [soundtrack preparation](../src/sglang/sglang_media.c)
   accept long target requests without expanding/truncating the input-media
   contract accidentally. Preserve reference order, image-size policy and seeds.
-- [ ] LVD008 Audit CUDA allocation products, kernel launch dimensions, GEMM
+- [x] LVD008 Audit CUDA allocation products, kernel launch dimensions, GEMM
   shapes, packed audio rows, attention sequence bounds and independent MLP
   slabs at the new maximum. Use checked arithmetic and bounded logical-index
   probes. Preserve existing global attention and numeric order; retain explicit
   failure when sufficient VRAM cannot overcome an existing kernel limit.
-- [ ] LVD009 Preserve Metal's 362-frame policy across generation, continuation,
+- [x] LVD009 Preserve Metal's 362-frame policy across generation, continuation,
   saved-state resume, full/preview decode and K=0/2/3/4 upscaling. Audit shared
   helper callers so raising CUDA limits cannot enable long Metal execution.
   Reject effective durations above 362 before model loading or large allocation,
@@ -202,40 +202,40 @@ all conditioning semantics, with separate resource/backend admission.
 
 ## M2 — State, delivery and connected workflows
 
-- [ ] LVD010 Extend AV-state and presentation shape validation to the shared
+- [x] LVD010 Extend AV-state and presentation shape validation to the shared
   ceiling. Audit element counts, file-length bounds, trim offsets and timestamps.
   Preserve legacy format/identity rules; ensure old readers safely reject new
   long states and malformed files before large allocation. Add a required
   format field/version only if the existing metadata cannot express the policy.
   Identify extended CUDA durations independently of canvas profile and reject
   their execution on Metal, even when their canvas is valid there.
-- [ ] LVD011 Extend sampler checkpoints, clean source bundles and their
+- [x] LVD011 Extend sampler checkpoints, clean source bundles and their
   inspectors to represent longer temporal shapes safely. Preserve ownership of
   references/audio, RNG state and exact same-build pause/resume behavior. Audit
   container limits and any serialized fixed-size temporal structures without
   weakening provenance or existing build/runtime compatibility checks.
-- [ ] LVD012 Extend CUDA [full VAE streaming decode](../src/vae/video_vae.c)
+- [x] LVD012 Extend CUDA [full VAE streaming decode](../src/vae/video_vae.c)
   beyond its `T<=107` guard using the backend-aware limit; Metal retains that
   guard. Preserve 22-frame chunk decoding, five-frame overlaps, chunk order and
   bounded stitching/delivery memory.
   Validate final-chunk counts, cancellation, failure cleanup and decode-only
   paths; never retain the whole RGB movie to implement the longer duration.
-- [ ] LVD013 Validate CUDA generated audio decoding through 1,227 latent steps:
+- [x] LVD013 Validate CUDA generated audio decoding through 1,227 latent steps:
   checked buffer/sample counts, audio/video timestamps and complete delivery.
   Keep the 15-second reference-audio encoder limit independent. Verify no
   target-duration truncation, integer overflow or stale audio after context reuse.
-- [ ] LVD014 Extend CUDA preview decoding and shared frame-count helpers, including
+- [x] LVD014 Extend CUDA preview decoding and shared frame-count helpers, including
   [h3_tiny_vae_frames](../src/vae/tiny_vae.c), which also gates ordinary full-VAE
   delivery. Cover selected-frame bounds, tails and saved-state preview/decode.
   Enforce Metal's existing temporal ceiling at execution boundaries. Preserve
   the existing prohibition on preview-VAE upscale delivery.
-- [ ] LVD015 Extend CUDA hard continuation and bridge temporal plans/masks,
+- [x] LVD015 Extend CUDA hard continuation and bridge temporal plans/masks,
   including [fixed bridge arrays](../src/sampling/bridge.h), validation and serialization.
   Derive the largest legal preserved context (**702 frames** at this ceiling)
   and require a longer target. Metal retains its existing target/context bounds.
   Preserve exact prefix bytes, audio alignment and suffix trimming. Keep
   first/last-anchor and upscale-continuation exclusions.
-- [ ] LVD016 Extend the CUDA learned upscaler's temporal guards and
+- [x] LVD016 Extend the CUDA learned upscaler's temporal guards and
   source/condition planning where existing sequence/memory limits admit the result; keep Metal's
   362-frame source/target ceiling, including no-refinement jobs.
   Preserve K=0/2/3/4 schedules, full-context normalization, clean audio and raw
@@ -248,7 +248,7 @@ continuation paths; connected upscale paths have explicit, checked compatibility
 
 ## M3 — Bounded tests and acceptance
 
-- [ ] LVD017 Add host tests for old and new boundaries, including 362/363,
+- [x] LVD017 Add host tests for old and new boundaries, including 362/363,
   464/480/481, 719/720/736/737, huge integers and nonfinite seconds. Check
   temporal alignment, audio counts, anchor positions, 702-frame contexts,
   state metadata and resource/index rejection at supported maximum canvases.
@@ -256,45 +256,45 @@ continuation paths; connected upscale paths have explicit, checked compatibility
   including indirect saved-state and shared-upscaler entry points.
   Use small allocations/logical extents for cases outside the runtime envelope.
   Test the runner itself against forbidden dimensions, durations and merges.
-- [ ] LVD018 Run guarded CUDA native cases at **256×256 / 464 frames** for
+- [x] LVD018 Run guarded CUDA native cases at **256×256 / 464 frames** for
   prompt-only generation, both first/last anchors and supported references.
   Use short 256×256 reference videos and bounded audio fixtures under their
   existing input limits. Verify output dimensions, frame count, finite values,
   timestamps and audio duration; record per-phase time, whole-device/tracked
   peaks and host RSS. Do not assess motion or scene consistency.
-- [ ] LVD019 On CUDA at 256×256 within 464 frames, exercise pause/resume,
+- [x] LVD019 On CUDA at 256×256 within 464 frames, exercise pause/resume,
   cancellation recovery, full/preview decode-only and reused API contexts. Compare seeded
   latent/audio results and replay outputs under the existing numerical
   contracts. Test allocator/encoder failure cleanup and repeated context use
   without increasing duration or resolution to induce failures.
-- [ ] LVD020 Exercise real CUDA `--render` workers and HTTP generation with an
+- [x] LVD020 Exercise real CUDA `--render` workers and HTTP generation with an
   extended-duration 256×256 case. Verify effective commands and preserve global
   versus local references, comma lists, image-size inheritance and seed offsets.
   Use shorter separate fixtures for independent-shot merging/seed sets; ensure
   every final file stays below 20 seconds and no subprocess bypasses the guard.
-- [ ] LVD021 Run CUDA hard and bridge continuation at 256×256 with the
+- [x] LVD021 Run CUDA hard and bridge continuation at 256×256 with the
   **447-frame source → 464-frame target / 447-frame context** case. Check exact
   protected prefix, 17 delivered new frames, audio trimming, saved-state replay
   and a 464-frame final merge. Exercise the 702/736 boundary through host-only
   planning and mask/index checks, never a long render or full movie allocation.
-- [ ] LVD022 Build on local macOS, run the bounded host suite, and verify
+- [x] LVD022 Build on local macOS, run the bounded host suite, and verify
   256×256 / 22- or 39-frame legacy Metal rendering and saved-state/preview
   behavior. Verify early rejection above 362 frames across CLI/API/script/HTTP,
   resume, full/preview decode and upscale paths without loading models or
   allocating long tensors. Preserve existing Metal canvas rejection too.
-- [ ] LVD023 Run compatible regression checks through the guarded entry point;
+- [x] LVD023 Run compatible regression checks through the guarded entry point;
   build final macOS/Linux artifacts and verify offline 256×256 rendering and
   saved-state delivery within each backend's limits: CUDA extended-duration
   checks, Metal short compatibility and long-request rejection. Keep all 204
-  golden hashes unchanged. Record the immutable CUDA gate as **deferred: fixed 640×480
-  conflicts with user test limits**, and exclude noncompliant legacy suites
+  golden hashes unchanged. Run the unchanged immutable CUDA gate under the
+  explicit execution authorization, and exclude noncompliant legacy suites
   rather than invoking their hidden defaults. Capture final artifact identities.
-- [ ] LVD024 Update CLI help, README/usage, sequence rendering, HTTP, state,
+- [x] LVD024 Update CLI help, README/usage, sequence rendering, HTTP, state,
   continuation and upscale documentation with the CUDA-only duration extension
   and Metal's unchanged 362-frame ceiling. Publish an acceptance report
   separating measured CUDA 256×256/464-frame behavior, Metal compatibility/rejection,
   host-only 736-frame and larger-canvas checks, deferred upscale execution and
-  the deferred immutable gate. Include resource estimates/measurements and
+  the explicitly authorized immutable gate. Include resource estimates/measurements and
   retained failures, validate links/archive hashes, and mark completion only
   when all required bounded checks pass. No quality/consistency review is needed.
 
@@ -307,6 +307,7 @@ allocation; invalid or unaffordable requests fail before unsafe work.
 All 24 tasks have recorded evidence within the user's testing envelope.
 **No 30-second or high-resolution runtime test is required or authorized by
 this plan.** CUDA end-to-end evidence reaches 464 frames at 256×256; 736-frame
-execution, larger-canvas long execution, long upscale execution and the new
-code's immutable 204-output regression remain explicitly unverified under
-these restrictions. Motion and scene consistency are outside the milestone.
+execution, larger-canvas long execution, and long upscale execution remain
+explicitly unverified under these restrictions. The unchanged 204-output gate
+is required by the execution request. Motion and scene consistency are outside
+the milestone.

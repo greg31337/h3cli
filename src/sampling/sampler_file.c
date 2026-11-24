@@ -166,7 +166,7 @@ static void section(buffer *b,unsigned id,unsigned format_version,h3_sampler_sta
             i32(b,&p->video_bridge_t); i32(b,&p->video_exact_t); i32(b,&p->bridge_frames); i32(b,&p->audio_bridge_t); i32(b,&p->audio_exact_t);
             int type=(int)p->type; i32(b,&type); p->type=type; f32(b,&p->max_strength); i32(b,&p->class_count);
             bytes(b,p->active,sizeof(p->active)); bytes(b,p->class_mask,sizeof(p->class_mask));
-            bytes(b,p->video_classes,sizeof(p->video_classes)); bytes(b,p->audio_classes,sizeof(p->audio_classes));
+            bytes(b,p->video_classes,format_version>=2?sizeof(p->video_classes):107); bytes(b,p->audio_classes,format_version>=2?sizeof(p->audio_classes):604);
         } break;
     }
     case 16:
@@ -327,11 +327,12 @@ static void section(buffer *b,unsigned id,unsigned format_version,h3_sampler_sta
 }
 static unsigned dtype(unsigned id) { return (id==5 || id==41 || id==42 || (id>=25 && id<=29))?3:((id==7||id==8||(id>=12&&id<=13)||(id>=17&&id<=22))?2:1); }
 static unsigned section_version(unsigned id,const h3_sampler_state *s) {
+    if(id==15&&s->aligned_frames>H3_LEGACY_MAX_FRAMES)return 2;
     if(id==40)return 3;
     if(id==45&&s->upscale.stage==2)return 2;
     return id==44?2u:1u;
 }
-static int supported_version(unsigned id,uint64_t version) { return id!=33 && (id==45 ? (version==1||version==2) : version==(id==40?3u:id==44?2u:1u)); }
+static int supported_version(unsigned id,uint64_t version) { return id!=33 && ((id==45||id==15) ? (version==1||version==2) : version==(id==40?3u:id==44?2u:1u)); }
 static int needed(unsigned id,const h3_sampler_state *s) { return (id==21 && s->upscale.stage==2) || (id==46 && s->params.geometry_profile) || (id==45 && s->upscale.stage) || id<=16 || (id>=17 && id<=20 && s->reuse_interval>1 && !s->sampler_mode) || id==24 ||
     (id>=25 && id<=28 && s->reuse_interval>1 && s->sampler_mode) || (id==29 && s->params.core_reuse>1) || id==32 || (id==34 && s->params.cuda_denoise_quant) || (id==35 && s->params.cuda_attention) || (id==36 && s->params.backend) || (id==37 && s->params.metal_attention.weight_format) || (id==38 && s->params.cuda_attention==H3_ATTENTION_SOL) || (id==39 && s->params._arithmetic_recipe) || (id>=40 && id<=42 && s->params.adaptive_cache) || (id==43 && s->params.cuda_attention==H3_ATTENTION_SUBBLOCK) || (id==44 && (s->upscale.stage || s->params.adaptive_cache || s->params.cuda_attention==H3_ATTENTION_SUBBLOCK)); }
 static int present(unsigned id,const h3_sampler_state *s) {
@@ -419,7 +420,7 @@ int h3_sampler_model_requirements(const char *path, int source, int *ref2va,
         h3_sampler_state state = {0};
         buffer b = {.data=payload, .length=(size_t)bytes_value, .read=1, .ok=1};
         section(&b, 1, (unsigned)get(entry+4, 4), &state);
-        ok = b.ok && b.offset == b.length && (state.ref2va == 0 || state.ref2va == 1);
+        ok = b.ok && b.offset == b.length && h3_frames_supported(state.aligned_frames,H3_NATIVE_CUDA) && (state.ref2va == 0 || state.ref2va == 1);
         *ref2va = state.ref2va; found = 1;
     }
     if (fd >= 0) close(fd);
@@ -473,6 +474,12 @@ static h3_sampler_state *load_state(const char *path,int source,uint64_t budget,
         if(needed(id,s) && get(e+8,4)!=REQUIRED) { fail(error,size,"required section marked optional"); goto invalid; }
         buffer b={(uint8_t *)data+get(e+24,8),(size_t)get(e+32,8),0,0,1,1,0}; section(&b,id,(unsigned)get(e+4,4),s);
         if(!b.ok || b.offset!=b.length) { if(error&&size) snprintf(error,size,"h3sample: invalid section %u dimensions/length",id); goto invalid; }
+        if(id==1 && !h3_frames_supported(s->aligned_frames,H3_NATIVE_CUDA)) {
+            fail(error,size,"checkpoint duration exceeds backend limit (extended durations require CUDA)");goto invalid;
+        }
+        if(id==15 && s->aligned_frames>H3_LEGACY_MAX_FRAMES && get(e+4,4)!=2) {
+            fail(error,size,"extended duration requires temporal section version 2");goto invalid;
+        }
         if(id==40) {
             /* Warmup/device metadata follows the cache payloads on disk. Read
              * these small records first so history can be checked before 41/42. */

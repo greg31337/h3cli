@@ -46,4 +46,20 @@ with tempfile.TemporaryDirectory() as d:
         p = subprocess.run(fresh+args, capture_output=True, text=True)
         assert p.returncode == 2 and message in p.stderr, (args, p.returncode, p.stderr)
         assert 'cannot open model' not in p.stderr
-print(f'ok: {len(cases)+len(fresh_cases)} upscale CLI preflight cases')
+    av = str(Path(d)/'source.h3av')
+    base = [str(binary), '-d', '/missing-model', '--upscale-av-state', av]
+    av_cases = [([], 'requires --upscale-refine-steps 0'),
+                (['--upscale-refine-steps', '2'], 'requires --upscale-refine-steps 0'),
+                (['--upscale-refine-steps', '0', '--upscale-import-sampler'], 'sampler import'),
+                (['--upscale-refine-steps', '0', '--upscale-seed', '1'], 'seed override'),
+                (['--upscale-refine-steps', '0', '--upscale-noise', '.2'], 'explicit sigma'),
+                (['--upscale-refine-steps', '0', '--upscale-state', source], 'conflict'),
+                (['--upscale-refine-steps', '0', '--preview-vae'], 'conflict'),
+                (['--upscale-refine-steps', '0', '--output', av], 'alias'),
+                (['--upscale-refine-steps', '0', '--output', av+'.presentation'], 'alias'),
+                (['--upscale-refine-steps', '0', '--save-av-state', av], 'alias'),
+                (['--upscale-refine-steps', '0', '--save-av-state', av+'.presentation'], 'alias')]
+    for args, message in av_cases:
+        p = subprocess.run(base+args, capture_output=True, text=True)
+        assert p.returncode == 2 and message in p.stderr, (args, p.returncode, p.stderr)
+print(f'ok: {len(cases)+len(fresh_cases)+len(av_cases)} upscale CLI preflight cases')

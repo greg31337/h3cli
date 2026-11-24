@@ -8,6 +8,12 @@ current AV latents, original sigma grids, continuation masks, and native CPU/GPU
 velocity and core-reuse history. A `.h3av` still stores a completed clean AV latent for starting the
 next segment. Neither format embeds model weights.
 
+CUDA checkpoints above 362 frames use required **section 15 version 2**, with
+expanded temporal bridge arrays, up to 736 frames. Short checkpoints retain
+version 1 and its original array lengths. Old readers reject the new required
+version. Metal rejects long checkpoints before model loading or large tensor
+allocation. See the [duration/state contract](../cuda/long-video-contract.md).
+
 ## Stop and resume
 
 Use the same model, engine build, GPU family, and numerical environment for both
@@ -229,7 +235,9 @@ canonical source `.h3av` file, and separate SHA-256 values for the channel-major
 raw copied video/audio tails. F32 0.999 and 0.001 coefficients, I32 exact-audio
 preservation mode (1), and I32 bridge-present flag follow. When present, the
 bridge subsection stores all profile scalar fields, active-class bitmap, F32
-class strengths, and complete temporal video/audio class arrays. The output trim
+class strengths, and complete temporal video/audio class arrays: 107/604 bytes
+in section version 1, or 217/1,228 bytes in version 2. Version 2 is required for
+CUDA states above 362 frames, even without a bridge. The output trim
 policy is stored explicitly in section 1. The source latent itself is omitted.
 
 Section 23 has U64 token count and raw U32 tokenizer IDs, I32 positions-present,

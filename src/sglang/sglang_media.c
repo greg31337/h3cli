@@ -1,3 +1,4 @@
+#include "src/geometry.h"
 /* Reference-only byte preprocessing. The Lanczos coefficient recipe and
  * fixed-point rounding follow Pillow 11.3.0 src/libImaging/Resample.c.
  * Copyright notices and MIT-CMU license: third_party/pillow/LICENSE. */
@@ -157,7 +158,7 @@ int h3_sglang_read_reference_image(const char *path,int iw,int ih,int ow,int oh,
  * rounded to FP32 before waveform convolution. No GPU or Python dependency. */
 int h3_sglang_read_soundtrack(const char *path,int max_frames,float **pcm,int *samples,char *error,size_t size) {
     *pcm=NULL;*samples=0;
-    if(max_frames<1||max_frames>362)return 0;
+    if(max_frames<1||max_frames>h3_frame_limit(H3_NATIVE_CUDA))return 0;
     int cap=(int)fmin(15*44100,ceil((double)max_frames*44100/24)),source_samples=0;
     float *source=NULL;
     if(!h3_ffmpeg_read_soundtrack_44100(path,cap,&source,&source_samples,error,size))return 0;

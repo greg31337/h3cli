@@ -40,7 +40,8 @@ static void state_io(void) {
     CHECK(!h3_av_state_shape(32,32,INT_MAX,&info));
     CHECK(!h3_av_state_shape(31,32,56,&info));
     CHECK(!h3_av_state_shape(32,32,55,&info));
-    CHECK(!h3_av_state_shape(32,32,413,&info));
+    CHECK(h3_av_state_shape(32,32,413,&info)); /* bounded metadata, including on Metal */
+    CHECK(!h3_av_state_shape(32,32,753,&info));
     h3_av_state *s=h3_av_state_new(32,32,56,UINT64_MAX,signature); CHECK(s);
     const uint32_t bits[]={0,0x80000000,1,0x3f800000,0x7f800000,0xff800000,0x7fc12345};
     for (size_t i=0;i<s->info.video_elements;i++) memcpy(s->video+i,bits+i%7,4);

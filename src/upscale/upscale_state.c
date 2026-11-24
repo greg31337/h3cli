@@ -34,10 +34,10 @@ int h3_upscale_paths_alias(const char *a,const char *b) {
 }
 int h3_upscale_options_valid(const h3_params *p,char *e,size_t n) {
     if(!p)return fail(e,n,"missing options");
-    if(p->geometry_profile>=2&&(p->denoise_reuse!=1||p->core_reuse!=1||p->dit_layers!=50||
+    if((p->geometry_profile>=2||p->frames>H3_LEGACY_MAX_FRAMES)&&(p->denoise_reuse!=1||p->core_reuse!=1||p->dit_layers!=50||
        p->token_reduction||p->cuda_denoise_quant||p->cuda_attention||p->adaptive_cache||
        p->backend||p->attention_mode||p->use_int8_row_fc2))
-        return fail(e,n,"extended CUDA canvas requires dense BF16, all 50 blocks and default attention; approximation/quantization modes are unqualified");
+        return fail(e,n,"extended CUDA canvas/duration requires dense BF16, all 50 blocks and default attention; approximation/quantization modes are unqualified");
     if((p->geometry_profile==1||p->geometry_profile==3) && (!h3_geometry_valid(p->width,p->height,p->geometry_profile)||
        p->still||p->continuation||p->denoise_reuse!=1||p->core_reuse!=1||p->dit_layers!=50||
        p->token_reduction||p->cuda_denoise_quant||p->cuda_attention||p->adaptive_cache||p->backend||
@@ -48,9 +48,10 @@ int h3_upscale_options_valid(const h3_params *p,char *e,size_t n) {
     if(!p->save_upscale_state)return p->state_only&&!p->resume_sampler_state&&!p->geometry_profile?
         fail(e,n,"state-only requires --save-upscale-state or the explicit API geometry profile"):1;
     if(p->reference_count>12||(p->reference_count&&!p->references))return fail(e,n,"invalid source references");
-    char *path=resolved(p->save_upscale_state);
-    if(!path)return fail(e,n,"source output needs a nonempty filename and existing parent directory");
-    free(path);
+    /* Render planning owns future output directories; policy validation must
+     * not require their creation. The atomic writer validates the destination. */
+    size_t path_length=strlen(p->save_upscale_state);
+    if(!path_length||p->save_upscale_state[path_length-1]=='/')return fail(e,n,"source output needs a nonempty filename");
     if(p->still||p->continuation||p->resume_sampler_state||p->save_sampler_state||p->stop_after_step>=0||
        p->denoise_reuse!=1||p->core_reuse!=1||p->dit_layers!=50||p->token_reduction||
        p->cuda_denoise_quant||p->cuda_attention||p->adaptive_cache||

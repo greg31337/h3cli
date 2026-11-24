@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """CPU-only request/registry tests; no model loading or network service."""
-import json, os, re, shlex, subprocess
+import json, os, re, shlex, subprocess, sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
@@ -90,10 +90,17 @@ r=normalize({**base,'task':'fl2va','conditions':anchors,'h3cli':base['h3cli']+' 
 r=normalize({**base,'conditions':anchors,'h3cli':base['h3cli']+' --ref-image reference'});assert 'first-frame' not in r['map'] and 'last-frame' not in r['map']
 r=normalize({**base,'conditions':refs,'h3cli':base['h3cli']+' --first-frame first'});assert not any(v['name']=='ref-image' for v in r['options'])
 r=normalize({**base,'conditions':refs,'h3cli':base['h3cli']+' --ref-image-size max'});assert r['map']['ref-image']=='missing.jpg'
-for flag,op in [('decode-av-state','decode_av'),('resume-sampler-state','resume'),('decode-still-latent','decode_still'),('upscale-state','upscale'),('inspect-upscale-state','inspect_upscale')]:
+for flag,op in [('decode-av-state','decode_av'),('resume-sampler-state','resume'),('decode-still-latent','decode_still'),('upscale-state','upscale'),('upscale-av-state','upscale_av'),('inspect-upscale-state','inspect_upscale')]:
  r=normalize({**fixtures['canonical'],'conditions':refs,'h3cli':'--'+flag+' saved'});assert r['operation']==op and 'prompt' not in r['map'] and 'steps' not in r['map'] and not any(v['name'].startswith('ref-') for v in r['options'])
 for target,dims in [({'short_edge':256,'aspect_ratio':'16:9','duration_seconds':4},('448','256','107')),({'short_edge':2048,'aspect_ratio':'16:9','duration_seconds':15},('1344','768','362')),({'short_edge':272,'aspect_ratio':'1:1','duration_seconds':4},('256','256','107')),({'short_edge':304,'aspect_ratio':'1:1','duration_seconds':4},('320','320','107'))]:
  r=normalize({**fixtures['canonical'],'target':target});assert tuple(r['map'][k] for k in ('width','height','frames'))==dims,(target,r)
+# Output duration extends only on CUDA; the independent input cap is unchanged.
+for seconds,frames in ((464/24,464),(20,481),(719/24,719),(30,736),(736/24,736)):
+ body={**fixtures['canonical'],'target':{'short_edge':256,'aspect_ratio':'1:1','duration_seconds':seconds}}
+ if sys.platform=='darwin':normalize(body,False,'duration_seconds')
+ else:assert normalize(body)['map']['frames']==str(frames)
+normalize({**fixtures['canonical'],'target':{'short_edge':256,'aspect_ratio':'1:1','duration_seconds':737/24}},False,'duration_seconds')
+normalize({**fixtures['canonical'],'seconds':5,'target':{'short_edge':256,'aspect_ratio':'1:1','duration_seconds':4}},False,'contradicts')
 for field,value in [('fps',24),('num_frames',22),('enable_cache_dit',True),('enable_teacache',True),('guidance_scale',1),('negative_prompt',''),('flow_shift',1),('audio_flow_shift',2),('video_path','a'),('task_type','x')]:normalize({**base,field:value},False,field)
 for field in ('enable_cache_dit','enable_teacache','enable_upscaling','enhance_prompt'):normalize({**base,field:False})
 for raw in ('{"h3cli":"--help","h3cli":"--info"}','{"h3cli":"--prompt \\u0000"}','{"h3cli":"--help","seed":NaN}'):

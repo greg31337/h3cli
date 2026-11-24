@@ -680,7 +680,7 @@ int h3_request_params_valid(const h3_params *params, const h3_device_info *devic
         snprintf(error,error_size, "canvas exceeds backend geometry limits (Metal native 768*1344; CUDA native 1920*1088)");
         return 0;
     }
-    if(geometry>=2) {
+    if(geometry>=2 || params->frames>H3_LEGACY_MAX_FRAMES) {
         h3_params policy=*params;policy.geometry_profile=geometry;
         if(!h3_upscale_options_valid(&policy,error,error_size))return 0;
     }
@@ -708,8 +708,8 @@ int h3_request_params_valid(const h3_params *params, const h3_device_info *devic
             return 0;
         }
     }
-    if (!params->still && (params->frames < 5 || params->frames > 362 || h3_align_frame_count(params->frames) > 362)) {
-        snprintf(error,error_size, "frames must align within the released 5..362 range");
+    if (!params->still && (params->frames < 5 || params->frames > h3_frame_limit(cuda) || !h3_frames_supported(h3_align_frame_count(params->frames),cuda))) {
+        snprintf(error,error_size, "frames must align within 5..%d (%s)",h3_frame_limit(cuda),cuda?"CUDA":"Metal");
         return 0;
     }
     if (params->steps < 1 || params->steps > H3_MAX_STEPS) {
@@ -2163,7 +2163,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     if(!h3_approximate_layout_valid(params,has_continuation,context_frames,&layout,detail,sizeof(detail))) {
         h3_set_error(ctx,"%s",detail);goto cleanup;
     }
-    if(params->geometry_profile>=2) {
+    if(params->geometry_profile>=2||temporal.frame_count>H3_LEGACY_MAX_FRAMES) {
         h3_canvas_memory estimate;
         if(!h3_canvas_memory_estimate(render_width,render_height,temporal.frame_count,
             params->geometry_profile,text.tokens,layout.img_cond_rows+layout.audio_cond_rows,&estimate)||
@@ -2572,7 +2572,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
         goto cleanup;
     }
     if (progress.cancelled) goto cleanup;
-    if(params->geometry_profile>=2) {
+    if(params->geometry_profile>=2||temporal.frame_count>H3_LEGACY_MAX_FRAMES) {
         h3_canvas_memory estimate;
         if(!h3_canvas_memory_estimate(render_width,render_height,temporal.frame_count,
             params->geometry_profile,0,0,&estimate)||
@@ -2830,7 +2830,7 @@ static h3_result *h3_generate_request(h3_ctx *ctx,const char *prompt,const h3_pa
     if (!params->resume_sampler_state) return h3_generate_state(ctx,prompt,params,NULL);
     h3_sampler_state *state=h3_sampler_state_load_with_budget(params->resume_sampler_state,params->adaptive_cache_max_bytes,params->adaptive_cache_max_bytes_set||params->adaptive_cache_max_bytes,ctx->error,sizeof(ctx->error));
     if (!state) return NULL;
-    if(state->params.geometry_profile>=2&&ctx->lora) {
+    if((state->params.geometry_profile>=2||state->aligned_frames>H3_LEGACY_MAX_FRAMES)&&ctx->lora) {
         h3_set_error(ctx,"runtime LoRA is unqualified for extended CUDA canvases");h3_sampler_state_free(state);return NULL;
     }
     if(params->state_only&&state->upscale.stage!=2) {h3_set_error(ctx,"state-only resume requires an upscale refinement checkpoint");h3_sampler_state_free(state);return NULL;}
@@ -2938,7 +2938,7 @@ h3_result *h3_generate(h3_ctx *ctx,const char *prompt,const h3_params *params) {
         geometry_params.geometry_profile=h3_canvas_native_profile(params->width,params->height,!strcmp(ctx->device.backend,"cuda"));
     params=&geometry_params;
     if(params->geometry_profile==3&&!params->resume_sampler_state) {h3_set_error(ctx,"4K profile is reserved for saved-source upscaling");return NULL;}
-    if(params->geometry_profile>=2&&ctx->lora) {h3_set_error(ctx,"runtime LoRA is unqualified for extended CUDA canvases");return NULL;}
+    if((params->geometry_profile>=2||params->frames>H3_LEGACY_MAX_FRAMES)&&ctx->lora) {h3_set_error(ctx,"runtime LoRA is unqualified for extended CUDA canvases");return NULL;}
     if(!h3_canvas_backend(params->geometry_profile,!strcmp(ctx->device.backend,"cuda"))) {h3_set_error(ctx,"canvas requires CUDA or exceeds native geometry limits");return NULL;}
     if(!h3_upscale_options_valid(params,ctx->error,sizeof(ctx->error)))return NULL;
     if(params->save_upscale_state&&ctx->lora) {h3_set_error(ctx,"upscale source capture does not support LoRA");return NULL;}
