@@ -56,10 +56,14 @@ that path with your downloaded executable when using a release package.
 
 ## Development and releases
 
-- [Current implementation tasks](todo.md): extend CUDA rendering through 736
-  frames; Metal retains its 362-frame limit. Runtime tests remain restricted to
-  256×256 and under 20 seconds, with host-only maximum-duration checks and no
-  motion or scene-consistency acceptance gates.
+- [Current implementation tasks](todo.md): plan CUDA rendering through 1,450
+  frames with native NVFP4 support; Metal retains its 362-frame limit. Feature
+  runtime tests remain at 256×256 and under 20 seconds, with host/descriptor-only
+  maximum-duration checks and the unchanged 204-output regression gate.
+- [Completed 736-frame CUDA milestone](long-video-736-todo.md): the archived
+  duration-extension checklist, with its [contract](cuda/long-video-contract.md),
+  [acceptance evidence](cuda/long-video-results.md), and
+  [audio workspace correction](cuda/long-video-audio-workspace.md).
 - [Completed CUDA large-canvas milestone](large-canvas-todo.md): native rendering
   to 1920×1088 and learned 2× upscaling to 3840×2176, with
   [memory estimates](cuda/large-canvas-memory-estimates.md),
