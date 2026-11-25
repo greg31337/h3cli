@@ -17,6 +17,7 @@ def main():
     ap.add_argument('--out',type=Path,required=True)
     ap.add_argument('--reject-only',action='store_true')
     ap.add_argument('--precision',choices=('bf16','nvfp4'),default='bf16')
+    ap.add_argument('--attention',choices=('default','sage3'),default='default')
     ap.add_argument('--quant-cache')
     a=ap.parse_args();a.out.mkdir(parents=True,exist_ok=False)
     with socket.socket() as sock:
@@ -51,6 +52,8 @@ def main():
                 if label=='video' and a.precision=='nvfp4':
                     flags+=' --cuda-denoise-quant nvfp4'
                     if a.quant_cache:flags+=' --cuda-denoise-quant-cache '+shlex.quote(a.quant_cache)
+                if label=='video' and a.attention!='default':flags+=' --cuda-attention '+a.attention
+                if label=='video':flags+=' --save-av-state result.h3av'
                 status,job=request('POST','/v1/h3/jobs',{'h3cli':flags+' --steps 2 --seed 42 -p "A red ceramic teapot on a wooden table."'})
                 assert status==202,(status,job)
                 end=time.monotonic()+1200
@@ -64,6 +67,13 @@ def main():
                 for path in results:
                     completion=json.loads(path.read_text())
                     assert (completion['width'],completion['height'],completion['frames'])==(*size,frames)
+                if label=='video':
+                    sidecars=list((a.out/'state/jobs'/job['id']).rglob('*.h3av.presentation'))
+                    assert sidecars
+                    for path in sidecars:
+                        fields=dict(line.split(' ',1) for line in path.read_text().splitlines())
+                        assert int(fields['attention'].split()[0])==(2 if a.attention=='sage3' else 0)
+                        assert int(fields['denoise_quant'].split()[0])==(2 if a.precision=='nvfp4' else 0)
                 records.append(dict(kind=label,job=job))
             (a.out/'result.json').write_text(json.dumps(records,indent=2)+'\n')
         finally:

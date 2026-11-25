@@ -249,6 +249,9 @@ bin/quant_long: tests/quant_long.o $(LIB_OBJ) | bin
 bin/long_video_capacity: tests/long_video_capacity.o src/weights/quant.o src/weights/residency.o | bin
 	$(CC) $(LDFLAGS) -o $@ $^ -lm
 
+bin/sage3_capacity: tests/sage3_capacity.o src/weights/quant.o src/weights/residency.o | bin
+	$(CC) $(LDFLAGS) -o $@ $^ -lm
+
 bin/quant_projection: tests/quant_projection.o $(LIB_OBJ) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 

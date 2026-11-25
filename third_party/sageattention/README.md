@@ -23,6 +23,11 @@ The FP4 quantizer device functions retain the upstream arithmetic and scale
 layouts. The SM89-named INT8/FP8 device kernel is instantiated for SM120a with
 the 2++ FP16 partial / FP32 buffer accumulation mode.
 
+The transposed FP4 value packer widens the original BF16 token-stride product
+to 64 bits before pointer arithmetic. Full H3 Q/K/V arrays can exceed 32-bit
+element offsets at long durations. Quantization, scaling, rounding and packed
+layout arithmetic are unchanged; the adapted hash is recorded in `upstream.json`.
+
 The parent project's `h3_cuda_sage*.cu` files supply native allocation,
 stream/stride bindings, INT8/FP8 preprocessing, bounded head/query workspaces,
 BF16 outputs and finite-input checks. Inference has no Python, PyTorch or

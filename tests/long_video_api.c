@@ -7,6 +7,7 @@
 #include "src/device.h"
 #include "src/sglang/sglang.h"
 #include "src/vae/audio_vae.h"
+#include "src/denoise/attention.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,17 +21,23 @@ static int cancel_load(const char *phase,int done,int total,void *opaque) {
     if(!strcmp(phase,"load transformer core")&&done>=1){(*calls)++;return 1;}return 0;
 }
 int main(int argc,char **argv) {
-    CHECK(argc==3||argc==5);
+    CHECK(argc==3||argc==5||argc==6);
     h3_ctx *ctx=h3_load_dir(argv[1]);CHECK(ctx);h3_cache_set_enabled(ctx,1);
     h3_params p=H3_PARAMS_DEFAULT;p.width=256;p.height=256;p.frames=464;p.steps=2;p.seed=42;
     p.state_only=1;p.save_upscale_state=argv[2];
-    if(argc==5&&!strcmp(argv[3],"nvfp4")) {
+    if(argc>=5&&!strcmp(argv[3],"nvfp4")) {
         p.cuda_denoise_quant=2;p.cuda_denoise_quant_cache=*argv[4]?argv[4]:NULL;
         p.save_upscale_state=NULL;p.geometry_profile=2;
+    }
+    if(argc==6) {
+        CHECK(h3_attention_parse(argv[5],&p.cuda_attention));
+        CHECK(p.cuda_attention==H3_ATTENTION_DEFAULT||p.cuda_attention==H3_ATTENTION_SAGE3);
+        if(p.cuda_attention){p.save_upscale_state=NULL;p.geometry_profile=2;}
     }
     const char *prompt="A red ceramic teapot on a wooden table, soft studio light.";
     h3_result *first=h3_generate(ctx,prompt,&p);
     snprintf(error,sizeof(error),"%s",h3_last_error(ctx));CHECK(first&&first->av_state);
+    CHECK(first->presentation.cuda_attention==p.cuda_attention);
     h3_memory_snapshot first_memory={0};h3_memory_sample(&first_memory);CHECK(first_memory.process_valid);
     h3_device_info first_device;CHECK(h3_device_query(&first_device,error,sizeof(error)));
     h3_result *again=h3_generate(ctx,prompt,&p);
@@ -59,14 +66,25 @@ int main(int argc,char **argv) {
     CHECK(!memcmp(first->av_state->video,recovered->av_state->video,first->av_state->info.video_elements*4));
     CHECK(!memcmp(first->av_state->audio,recovered->av_state->audio,first->av_state->info.audio_elements*4));
     h3_result_free(recovered);
-    if(p.cuda_denoise_quant) {
+    if(p.cuda_denoise_quant||p.cuda_attention) {
         /* One live API context must invalidate prepared resources on precision
          * changes, then recover its original long recipe after host denial. */
         h3_params short_request=p;short_request.frames=22;short_request.cuda_denoise_quant=0;short_request.cuda_denoise_quant_cache=NULL;
+        short_request.cuda_attention=H3_ATTENTION_DEFAULT;
         h3_result *short_result=h3_generate(ctx,prompt,&short_request);
         snprintf(error,sizeof(error),"%s",h3_last_error(ctx));CHECK(short_result&&short_result->av_state);
         CHECK(!short_result->presentation.cuda_denoise_quant);
+        CHECK(!short_result->presentation.cuda_attention);
         h3_result_free(short_result);
+        if(p.cuda_attention) {
+            h3_result *restored=h3_generate(ctx,prompt,&p);
+            snprintf(error,sizeof(error),"%s",h3_last_error(ctx));CHECK(restored&&restored->av_state);
+            CHECK(restored->presentation.cuda_attention==p.cuda_attention);
+            CHECK(restored->presentation.cuda_denoise_quant==p.cuda_denoise_quant);
+            CHECK(!memcmp(first->av_state->video,restored->av_state->video,first->av_state->info.video_elements*4));
+            CHECK(!memcmp(first->av_state->audio,restored->av_state->audio,first->av_state->info.audio_elements*4));
+            h3_result_free(restored);
+        }
     }
     /* Independent audio-VAE calls must produce identical PCM from unchanged audio. */
     char audio_path[4096];snprintf(audio_path,sizeof(audio_path),"%s/FL2VA/audio_vae",argv[1]);

@@ -22,11 +22,16 @@ Reference media retain their separate 2–15-second input rules.
 | `.h3up` source capture and learned upscale | Supported within sequence/memory bounds | Rejected |
 | AV K=0 transfer and `#upscale` | Supported within sequence/memory bounds | Rejected |
 
-Extended duration/canvas requests use all 50 blocks, default dense attention,
-reuse/core-reuse 1 and existing conditioning exclusions. FP8, Sage, SOL,
+Extended duration/canvas requests use all 50 blocks, default dense or Sage3 attention,
+reuse/core-reuse 1 and existing conditioning exclusions. FP8, Sage2++, SOL,
 SubBlock, adaptive cache, token reduction, runtime LoRA and layer thinning
 remain unavailable for these extended combinations. Their existing supported
 short-video combinations are unchanged. BF16 remains the default.
+
+The later [Sage3 extension](sage3-long-contract.md) supports both projection
+formats for native generation, continuation and resume. Source capture and all
+upscale routes still require default attention. Attention recipe 1 / plan 1
+composes with long NVFP4 projection recipe 5; their selection is independent.
 
 NVFP4 requires SM120 and cuBLASLt 12.8 Update 1 or newer. An unavailable kernel
 fails explicitly; it never changes the requested precision to BF16. Packed

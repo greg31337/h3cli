@@ -6,6 +6,7 @@
 #include "src/vae/tiny_vae.h"
 #include "src/upscale/upscale_gpu.h"
 #include "src/weights/quant.h"
+#include "src/denoise/sage3_plan.h"
 #include "src/sampling/sampler_state.h"
 #include <assert.h>
 #include <limits.h>
@@ -86,6 +87,11 @@ int main(void) {
     assert(h3_canvas_memory_estimate(1920,1088,1450,2,512,0,&m));
     assert(m.video_rows==871080&&m.sequence_rows==876426);
     assert(h3_canvas_sequence_valid(m.sequence_rows,1));
+    assert(h3_canvas_memory_estimate(1920,1088,1450,2,512,123574,&extra));
+    assert(extra.sequence_rows==1000000&&h3_attention_layout_valid(H3_ATTENTION_SAGE3,extra.sequence_rows,error,sizeof(error)));
+    assert(h3_canvas_memory_estimate(1920,1088,1450,2,512,123575,&extra));
+    assert(!h3_attention_layout_valid(H3_ATTENTION_SAGE3,extra.sequence_rows,error,sizeof(error)));
+    assert(!h3_canvas_memory_estimate(1920,1088,1450,2,512,UINT64_MAX,&extra));
     assert(h3_canvas_memory_estimate(3840,2176,1450,3,512,0,&m));
     assert(m.video_rows==3484320&&!h3_canvas_sequence_valid(m.sequence_rows,1));
     assert(!h3_canvas_memory_estimate(256,256,1467,0,512,0,&m));
@@ -112,6 +118,31 @@ int main(void) {
     assert(h3_quant_native_recipe(2,0,0,464,256,256)==5);
     assert(h3_quant_native_recipe(2,0,0,22,1920,1088)==5);
     assert(h3_quant_native_recipe(0,0,0,1450,1920,1088)==0);
+    assert(h3_quant_native_recipe(2,0,H3_ATTENTION_SAGE3,362,1344,768)==2);
+    assert(h3_quant_native_recipe(2,0,H3_ATTENTION_SAGE3,363,256,256)==5);
+    assert(h3_quant_native_recipe(2,0,H3_ATTENTION_SAGE3,1450,1920,1088)==5);
+    assert(h3_quant_native_recipe(2,0,H3_ATTENTION_SAGE3,22,1920,1088)==5);
+    h3_sage3_plan sp;
+    const uint64_t sage_rows[]={1,17,127,128,129,257,4096,133446,223116,299593,299594,333282,599186,599187,876426,999999,1000000};
+    for(size_t i=0;i<sizeof(sage_rows)/sizeof(*sage_rows);i++) {
+        uint64_t rows=sage_rows[i];
+        assert(h3_sage3_plan_build(rows,56,H3_ATTENTION_WORKSPACE_BYTES,&sp));
+        assert(h3_attention_layout_valid(H3_ATTENTION_SAGE3,rows,error,sizeof(error)));
+        assert(sp.padded_rows>=rows&&sp.padded_rows-rows<128&&sp.padded_rows%128==0);
+        assert(sp.query_rows>=128&&sp.query_rows<=sp.padded_rows&&sp.query_rows%128==0);
+        assert(sp.head_group>=1&&sp.head_group<=56&&sp.workspace_bytes<=H3_ATTENTION_WORKSPACE_BYTES);
+        assert((uint64_t)sp.head_group*sp.padded_rows*128<INT32_MAX);
+        assert((uint64_t)sp.head_group*(sp.query_rows/128)*sp.padded_rows<INT32_MAX);
+        assert(sp.input_elements==rows*56*128);
+    }
+    assert(sp.input_elements==UINT64_C(7168000000)&&sp.input_elements>UINT32_MAX);
+    assert(sp.head_group==1&&sp.query_rows<sp.padded_rows);
+    assert(!h3_sage3_plan_build(0,56,H3_ATTENTION_WORKSPACE_BYTES,&sp));
+    assert(!h3_sage3_plan_build(1000001,56,H3_ATTENTION_WORKSPACE_BYTES,&sp));
+    assert(!h3_sage3_plan_build(UINT64_MAX,56,H3_ATTENTION_WORKSPACE_BYTES,&sp));
+    assert(!h3_sage3_plan_build(128,55,H3_ATTENTION_WORKSPACE_BYTES,&sp));
+    assert(!h3_sage3_plan_build(128,56,H3_SAGE_RESERVED_BYTES,&sp));
+    assert(!h3_sage3_plan_build(1000000,56,UINT64_C(128)<<20,&sp));
     for(int version=1;version<=3;version++) {
         const size_t video[]={0,107,217,427},audio[]={0,604,1228,2418};
         assert(h3_sampler_temporal_classes((unsigned)version,0)==video[version]);
@@ -137,6 +168,33 @@ int main(void) {
     assert(last_qkv>UINT32_MAX);
     p.frames=464;p.cuda_attention=1;snprintf(device.backend,sizeof(device.backend),"cuda");
     assert(!h3_request_params_valid(&p,&device,error,sizeof(error))&&strstr(error,"unqualified"));
+    p.cuda_attention=H3_ATTENTION_SAGE3;
+    const int sage_canvases[][2]={{256,256},{640,480},{960,544},{1024,768},{1344,768},{1920,1088}};
+    for(size_t i=0;i<sizeof(sage_canvases)/sizeof(*sage_canvases);i++)for(int quant=0;quant<=2;quant++) {
+        p.width=sage_canvases[i][0];p.height=sage_canvases[i][1];p.frames=1450;p.cuda_denoise_quant=quant;
+        assert(h3_request_params_valid(&p,&device,error,sizeof(error))==(quant!=H3_QUANT_FP8));
+        p.save_upscale_state="/tmp/forbidden.h3up";
+        assert(!h3_request_params_valid(&p,&device,error,sizeof(error)));p.save_upscale_state=NULL;
+    }
+    p.width=p.height=256;p.frames=464;p.cuda_denoise_quant=0;
+    for(int mode=0;mode<=4;mode++) {
+        p.cuda_attention=mode;
+        assert(h3_request_params_valid(&p,&device,error,sizeof(error))==(mode==0||mode==H3_ATTENTION_SAGE3));
+    }
+    p.cuda_attention=H3_ATTENTION_SAGE3;
+    for(int flag=0;flag<7;flag++) {
+        h3_params bad=p;
+        switch(flag) {
+        case 0:bad.denoise_reuse=2;break;
+        case 1:bad.core_reuse=4;break;
+        case 2:bad.dit_layers=49;break;
+        case 3:bad.token_reduction=1;break;
+        case 4:bad.adaptive_cache=1;break;
+        case 5:bad.backend=1;break;
+        case 6:bad.geometry_profile=1;break;
+        }
+        assert(!h3_request_params_valid(&bad,&device,error,sizeof(error)));
+    }
     puts("PASS backend duration, overflow, anchors, bridge indices and upscale capacity metadata");
     return 0;
 }

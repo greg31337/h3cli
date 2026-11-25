@@ -240,7 +240,7 @@ __global__ void scaled_fp4_quant_trans_kernel(
     in_vec = reinterpret_cast<PackedVec const*>(input + 
                                           batch_id * stride_bz_input + // batch dim
                                           head_id * stride_h_input +   // head dim
-                                          token_id * stride_seq_input + // seq dim
+                                          int64_t(token_id) * stride_seq_input + // h3: full BF16 sequence may exceed 32-bit offsets
                                           (threadIdx.x % NUM_THREADS_PER_TOKEN) * CVT_FP4_ELTS_PER_THREAD)[0]; // feature dim
   }
 

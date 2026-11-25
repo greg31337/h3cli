@@ -17,7 +17,7 @@ GIB = 1 << 30
 
 
 def plan(kind, width, height, frames, *, context=0, merged=None, steps=2, cuda=True, reference_frames=0,
-         precision='bf16', placement='stream'):
+         precision='bf16', placement='stream', attention='default'):
     if kind not in ('native', 'continuation', 'decode', 'script', 'http', 'api'):
         raise ValueError('unsupported bounded campaign operation')
     if (width,height)!=(256,256):
@@ -30,12 +30,14 @@ def plan(kind, width, height, frames, *, context=0, merged=None, steps=2, cuda=T
         raise ValueError('unsupported campaign precision/placement')
     if precision!='bf16' and not cuda:
         raise ValueError('NVFP4 requires CUDA')
+    if attention not in ('default','sage3') or (attention!='default' and not cuda):
+        raise ValueError('unsupported bounded attention/backend')
     if reference_frames<0 or reference_frames>360:
         raise ValueError('reference input exceeds its independent 15-second cap')
     if context and (context<39 or (context-39)%51 or context>=frames):
         raise ValueError('invalid preserved context')
     delivered=frames-context
-    if merged is not None and (merged<delivered or merged>480):
+    if merged is not None and (merged<delivered or merged>464):
         raise ValueError('merged delivery exceeds 20 seconds')
     t=2+5*((frames-5)//17); a=(frames*40+12)//24
     # Include an intentionally generous reference/text reserve in admission.
@@ -43,16 +45,18 @@ def plan(kind, width, height, frames, *, context=0, merged=None, steps=2, cuda=T
     # Keep reserves conservative: bounded quant scratch/cold staging <=2 GiB;
     # resident packed core <11 GiB; streamed packed operand <0.1 GiB.
     weights=(11*GIB if placement!='stream' else GIB//10) if precision=='nvfp4' else (36*GIB if placement!='stream' else 1541406720)
-    live=max(7*GIB, sequence*358400+GIB+weights+2*GIB)
+    attention_bytes=GIB//2 if attention=='sage3' else 0
+    live=max(7*GIB, sequence*358400+GIB+weights+2*GIB+attention_bytes)
     capacity=math.ceil(live/.9)
     if capacity>60*GIB: raise ValueError('development capacity exceeds 60 GiB')
     return dict(kind=kind,width=width,height=height,frames=frames,delivered=delivered,
         source_canvas=[width,height],target_canvas=[width,height],context=context,merged=merged,
-        steps=steps,precision=precision,placement=placement,reference_frames=reference_frames,
+        steps=steps,precision=precision,placement=placement,attention=attention,
+        attention_workspace_bytes=attention_bytes,reference_frames=reference_frames,
         sequence_rows=sequence,live_bytes=live,capacity_bytes=capacity)
 
 
-def inspect_video(path, *, max_frames=480, env=None):
+def inspect_video(path, *, max_frames=464, env=None):
     env=env or os.environ
     info=json.loads(subprocess.check_output([env.get('H3_FFPROBE','ffprobe'),'-v','error',
         '-count_frames','-show_streams','-of','json',str(path)],text=True))
@@ -70,7 +74,16 @@ def inspect_state(path):
     with Path(path).open('rb') as f: header=f.read(160)
     if header[:8]!=b'H3AV\r\n\x1a\n': raise ValueError('expected AV state')
     w,h,frames=struct.unpack_from('<III',header,24)
-    return plan('decode',w,h,frames)
+    precision,attention='bf16','default'
+    sidecar=Path(str(path)+'.presentation')
+    if sidecar.exists():
+        if sidecar.stat().st_size>65536:raise ValueError('oversized presentation metadata')
+        policy=dict(line.split(' ',1) for line in sidecar.read_text().splitlines())
+        quant=int(policy.get('denoise_quant','0').split()[0]);mode=int(policy.get('attention','0').split()[0])
+        if quant not in (0,2) or mode not in (0,2):raise ValueError('unsupported saved execution policy')
+        precision='nvfp4' if quant==2 else 'bf16'
+        attention='sage3' if mode==2 else 'default'
+    return plan('decode',w,h,frames,precision=precision,attention=attention)
 
 
 def inspect_checkpoint(path):
@@ -84,6 +97,22 @@ def inspect_checkpoint(path):
         if not 1<=count<=64:raise ValueError('invalid bounded section table')
         entries=f.read(72*count)
         if len(entries)!=72*count:raise ValueError('truncated section table')
+        precision,attention='bf16','default'
+        for i in range(count):
+            kind,version,flags,dtype,items,offset,size=struct.unpack_from('<4I3Q',entries,i*72)
+            if kind not in (34,35):continue
+            expected=8 if kind==34 else 12
+            if version!=1 or flags!=1 or size!=expected or offset<96+72*count:
+                raise ValueError('invalid bounded execution policy')
+            f.seek(offset);policy=f.read(size)
+            if len(policy)!=size:raise ValueError('truncated execution policy')
+            if kind==34:
+                mode,recipe=struct.unpack('<2I',policy)
+                if mode!=2 or recipe not in (2,5):raise ValueError('unsupported saved projection policy')
+                precision='nvfp4'
+            else:
+                if struct.unpack('<3I',policy)!=(2,1,1):raise ValueError('unsupported saved attention policy')
+                attention='sage3'
         for i in range(count):
             kind,version,flags,dtype,items,offset,size=struct.unpack_from('<4I3Q',entries,i*72)
             if kind==1:
@@ -95,7 +124,7 @@ def inspect_checkpoint(path):
                 width,height=struct.unpack_from('<ii',identity,16)
                 steps=struct.unpack_from('<i',identity,4)[0]
                 if (width,height)!=(w,h):raise ValueError('hidden render canvas')
-                return plan('decode',w,h,frames,steps=steps)
+                return plan('decode',w,h,frames,steps=steps,precision=precision,attention=attention)
     raise ValueError('missing checkpoint identity')
 
 def process_tree(root):

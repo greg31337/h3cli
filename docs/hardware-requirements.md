@@ -177,7 +177,10 @@ every admitted request fits every machine.
 
 ## CUDA videos through 1,450 frames
 
-Native BF16 and opt-in SM120 NVFP4 support the [duration contract](cuda/long-video-1450-contract.md),
+Native BF16 and opt-in SM120 NVFP4 support the [duration contract](cuda/long-video-1450-contract.md)
+with default or Sage3 attention. Sage3 retains BF16 full-sequence tensors and
+adds a 512 MiB workspace; its [capacity estimates](cuda/sage3-long-memory-estimates.md)
+include that cost and do not assume lower VRAM use. Both selections remain
 subject to sequence and actual free-memory admission. The [capacity report](cuda/long-video-1450-memory-estimates.md)
 separates resident/streamed and cold/warm budgets. Full 1,450-frame runs are not
 runtime-qualified; bounded feature tests use 256×256 and at most 464 frames.

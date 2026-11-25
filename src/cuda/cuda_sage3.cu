@@ -54,20 +54,14 @@ static void pack_qk(sage_context &s,const nv_bfloat16 *input,uint8_t *packed,uin
 }
 void sage3_run(sage_context &s,nv_bfloat16 *out,const nv_bfloat16 *q,const nv_bfloat16 *k,
     const nv_bfloat16 *v,unsigned seq,unsigned heads,float scale,bool head_major) {
-    unsigned kp=(seq+127)/128*128,tiles=sage_reduce_partials(seq);
-    size_t fixed=(size_t)kp*400+(size_t)tiles*128*8+8192;
-    size_t available=s.capacity-sage_reserved_bytes;
-    if(fixed>=available)throw std::runtime_error("Sage3 K/V exceeds workspace admission");
-    // Favor complete query ranges per head. Larger shapes still use bounded
-    // 128-aligned query chunks, determined solely by shape and fixed budget.
-    size_t blocks=std::min<size_t>(kp/128,(available-fixed)/(128*600+(size_t)kp*4));
-    if(!blocks)throw std::runtime_error("Sage3 correction exceeds workspace admission");
-    unsigned chunk=(unsigned)blocks*128;
-    // Includes K BF16, K/V FP4+scales, Q center/mean/pack, FP32 correction,
-    // padded output/LSE and reductions. Alignment slack is reserved per head.
-    size_t per_head=(size_t)kp*400+(size_t)chunk*600+(size_t)(chunk/128)*kp*4+(size_t)tiles*128*8+8192;
-    unsigned group_max=(unsigned)std::min<size_t>(heads,(s.capacity-sage_reserved_bytes)/per_head);
-    if(!group_max)throw std::runtime_error("Sage3 shape exceeds workspace admission");
+    h3_sage3_plan plan;
+    if(!h3_sage3_plan_build(seq,heads,s.capacity,&plan))
+        throw std::runtime_error("Sage3 shape exceeds checked sequence/workspace admission");
+    unsigned kp=plan.padded_rows,tiles=plan.partials,chunk=plan.query_rows,group_max=plan.head_group;
+    if(s.test_query_rows) {
+        if(seq>4096)throw std::runtime_error("Sage3 test plan forbids full video/production-sized operator inputs");
+        chunk=std::min(chunk,s.test_query_rows);group_max=std::min(group_max,s.test_head_group);
+    }
     for(unsigned first=0;first<heads;first+=group_max){
         unsigned group=std::min(group_max,heads-first);s.offset=sage_reserved_bytes;
         auto km=s.alloc<nv_bfloat16>(group*128);auto vs=s.alloc<float>(group*128);

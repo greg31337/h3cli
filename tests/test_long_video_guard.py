@@ -65,4 +65,18 @@ class GuardTests(unittest.TestCase):
             path.write_bytes(header+entry+identity)
             with self.assertRaises(ValueError):inspect_checkpoint(path)
 
+    def test_sage3_admission_and_worker_identity(self):
+        for precision in ('bf16','nvfp4'):
+            dense=plan('native',256,256,464,precision=precision)
+            sage=plan('native',256,256,464,precision=precision,attention='sage3')
+            self.assertEqual(sage['live_bytes']-dense['live_bytes'],512*(1<<20))
+            self.assertEqual(sage['attention_workspace_bytes'],512*(1<<20))
+            device_admission(sage,73415,72000)
+        with self.assertRaises(ValueError):plan('native',256,256,22,attention='sage3',cuda=False)
+        with self.assertRaises(ValueError):plan('native',256,256,464,attention='sage2++')
+        data=dict(segments=[dict(name='a',frames=464,delivered=464,command=['--width','256','--height','256','--frames','464','--steps','2'])],merged=[])
+        with self.assertRaises(ValueError):script_plan(data,attention='sage3')
+        data['segments'][0]['command']+=['--cuda-attention','sage3']
+        self.assertEqual(script_plan(data,attention='sage3')['attention'],'sage3')
+
 if __name__=='__main__':unittest.main()

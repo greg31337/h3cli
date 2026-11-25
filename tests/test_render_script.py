@@ -114,7 +114,7 @@ Continue.
 
     def test_upscale_rejects_incompatible_source_and_managed_options(self):
         cases = ('#preview-vae', '#quality preview', '#quality high', '#reuse 2', '#core-reuse 4', '#layers 1',
-                 '#render-width 128\n#render-height 128', '#cuda-denoise-quant fp8', '#cuda-attention sol',
+                 '#render-width 128\n#render-height 128', '#cuda-denoise-quant fp8', '#cuda-attention sol', '#cuda-attention sage3',
                  '#adaptive-cache conservative', '#metal-attention sol', '#upscale-refine-steps 0', '#save-upscale-state x.h3up',
                  '#save-sampler-state x.h3sampler', '#upscale-import-sampler', '#upscale-noise .25', '#upscale-seed 7')
         for directive in cases:
@@ -173,6 +173,22 @@ Continue.
         for k in (0,2):
             result=self.invoke(f'#upscale {k}\n### shot\n#size 256x256\n#frames 22\nText.', '--cuda-denoise-quant','nvfp4',dry=False)
             self.assertNotEqual(result.returncode,0);self.assertFalse(self.out.exists())
+
+    def test_long_sage3_native_workers_and_boundaries(self):
+        for quant in ('off','nvfp4'):
+            for width,height in ((256,256),(640,480),(960,544),(1024,768),(1344,768),(1920,1088)):
+                text=f'### shot\n#cuda-attention sage3\n#cuda-denoise-quant {quant}\n#seconds 60\n#size {width}x{height}\n#steps 2\nA teapot.'
+                result=self.invoke(text)
+                if sys.platform=='darwin':self.assertNotEqual(result.returncode,0)
+                else:
+                    self.assertEqual(result.returncode,0,result.stderr)
+                    row=json.loads(result.stdout)['segments'][0]
+                    self.assertEqual(row['frames'],1450)
+                    self.assertEqual(self.command_values(row,'cuda-attention'),['sage3'])
+                    self.assertEqual(self.command_values(row,'cuda-denoise-quant'),[quant])
+            for raw in (362,363,464,481,736,737,1433,1440,1450,1451):
+                result=self.invoke(f'### shot\n#cuda-attention sage3\n#cuda-denoise-quant {quant}\n#size 256x256\n#frames {raw}\n#steps 2\nA teapot.')
+                self.assertEqual(result.returncode==0,sys.platform!='darwin' and raw<=1450,result.stderr)
 
     def test_cuda_canvas_and_reference_size_inheritance(self):
         text = '### first\n#size 1920x1088\n#frames 22\nA teapot.\n### second\n#ref-image-size high\nA vase.\n'

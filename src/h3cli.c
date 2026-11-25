@@ -191,6 +191,7 @@ static void usage(const char *program) {
           "      --subblock-warmup N        Dense initial steps: 2..16, <= steps-2 (default 10)\n"
           "      --subblock-sparsity F       Drop fraction [0,1), default 0.75; requires subblock\n"
           "      --cuda-attention MODE      default, sage2++, sage3, sol or subblock; main CUDA DiT only\n"
+          "                                sage3 supports native CUDA through 1450 frames; no upscale\n"
           "      --cuda-denoise-quant MODE  off (default), fp8 or nvfp4; CUDA DiT only\n"
           "      --cuda-denoise-quant-cache DIR  Packed denoiser artifact cache\n"
           "      --cuda-denoise-quant-verify  Strict weight hashes (slow; default metadata)\n"
@@ -1058,6 +1059,11 @@ static int cli_execute(int argc, char **argv) {
                 ((params.cuda_attention_set || params.cuda_attention) &&
                  params.cuda_attention != state->params.cuda_attention)) {
                 fprintf(stderr,"h3cli: resume attention differs from the checkpoint; restart denoising to change attention\n");
+                h3_sampler_state_free(state);return 2;
+            }
+            if ((params.cuda_denoise_quant_set || params.cuda_denoise_quant) &&
+                params.cuda_denoise_quant != state->params.cuda_denoise_quant) {
+                fprintf(stderr,"h3cli: resume quantization differs from the checkpoint; restart denoising to change precision\n");
                 h3_sampler_state_free(state);return 2;
             }
             if(((params.adaptive_cache_set||params.adaptive_cache)&&params.adaptive_cache!=state->params.adaptive_cache)||

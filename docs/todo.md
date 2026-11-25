@@ -1,13 +1,16 @@
 # CUDA rendering through 1,450 frames with NVFP4 and Sage3
 
-Status: **Sage3 extension planned — 32/48 tasks complete.**
+Status: **Complete — 48/48 tasks, including all 16 LSG tasks.**
 
 Created **2026-11-24**. The original 1,450-frame CUDA limit and bounded native NVFP4
 implementation are complete. Connected workflows, offline macOS/Linux packages
 and the final **204/204 exact-output regression** passed within the development
 envelope below. Full-duration runtime qualification remains outside that envelope.
-The Sage3 extension was added **2026-11-24** and has **0/16 tasks complete**;
-the recorded baseline results do not validate the planned attention changes.
+The Sage3 extension completed **2026-11-24** with **16/16 tasks complete**.
+Its [contract](cuda/sage3-long-contract.md),
+[capacity estimates](cuda/sage3-long-memory-estimates.md) and
+[acceptance report](cuda/sage3-long-results.md) record new bounded evidence and
+a final **204/204** regression on the delivered Linux artifact.
 
 The completed 736-frame checklist is [archived byte-for-byte](long-video-736-todo.md),
 SHA-256 `61d69175f8390d6df7409a72e8a4ca50d37605bc1c51e52124b0a91f01921bd3`.
@@ -20,7 +23,7 @@ evidence. Preserve the [large-canvas](large-canvas-todo.md) and
 
 ## Completed baseline: objective and scope
 
-This section records the scope of completed tasks LNV001–LNV032. The planned
+This section records the scope of completed tasks LNV001–LNV032. The completed
 M6 extension below adds long-video Sage3 support to that baseline; its other
 backend, precision, geometry and workflow exclusions remain in force.
 
@@ -113,8 +116,8 @@ SSH details and raw records in ignored outputs, following
    runtime cases as an automatic prerequisite for finishing this plan.
 
 Documentation-only updates to this plan run document/link/archive checks;
-they do not require GPU jobs or a regression run. A passing implementation
-baseline does not complete any of the new Sage3 tasks below.
+they do not require GPU jobs or a regression run. The Sage3 tasks below have
+separate implementation and final-artifact evidence.
 
 ### Verified baseline before implementation
 
@@ -411,9 +414,9 @@ all 204 recorded outputs.
 Completion does **not** claim 60-second/high-resolution runtime qualification,
 a 72 GB fit for every supported shape, or motion/scene consistency.
 
-## M6 — Sage3 attention through 1,450 frames (planned)
+## M6 — Sage3 attention through 1,450 frames (completed)
 
-### Target behavior and limits
+### Delivered behavior and limits
 
 Extend the existing opt-in `--cuda-attention sage3` implementation to native
 CUDA videos through **1,450 aligned frames**. `--seconds 60` still aligns to
@@ -423,12 +426,12 @@ result strictly below 60 seconds. Keep the current native canvas ceiling of
 Actual device/host admission remains mandatory; this is not a promise that
 every canvas fits the 72 GB card.
 
-| Native generation selection | Current long-video status | Target status |
+| Native generation selection | Previous long-video status | Delivered status |
 | --- | --- | --- |
-| Default attention + BF16 projections | Supported | Preserve |
-| Default attention + NVFP4 projections | Supported, bounded recipe 5 | Preserve |
-| Sage3 attention + BF16 projections | Rejected | Support through 1,450 frames |
-| Sage3 attention + NVFP4 projections | Rejected | Support with bounded projection/MLP execution |
+| Default attention + BF16 projections | Supported | Preserved |
+| Default attention + NVFP4 projections | Supported, bounded recipe 5 | Preserved |
+| Sage3 attention + BF16 projections | Rejected | Supported through 1,450 frames |
+| Sage3 attention + NVFP4 projections | Rejected | Supported with bounded projection/MLP execution |
 
 - Attention and projection precision remain independent. Sage3 uses NVFP4
   attention operands with its existing smoothing/scaling/correction algorithm,
@@ -470,63 +473,63 @@ remain unchanged. No new 60-second render is authorized by this plan.
 
 ### Implementation tasks
 
-- [ ] LSG001 Freeze the long Sage3 contract and baseline artifact identities.
+- [x] LSG001 Freeze the long Sage3 contract and baseline artifact identities.
   Record supported attention/projection/conditioning combinations, alignment,
   unchanged exclusions and the bounded evidence required below. Inventory
   assumptions in [native Sage3](../src/cuda/cuda_sage3.cu), its adapter and
   imported kernels against H=56, D=128 and the maximum admitted sequence.
   Preserve existing short Sage3 and default-attention behavior.
-- [ ] LSG002 Extend the [guarded campaign](../tests/long_video_campaign.py) and
+- [x] LSG002 Extend the [guarded campaign](../tests/long_video_campaign.py) and
   [resource guard](../tests/long_video_guard.py) to carry explicit attention
   selection through every worker and record it in plans/results. Include the
   Sage workspace in admission, inspect saved attention/precision provenance,
   and prevent automatic BF16 source capture when Sage3 is selected. Enforce
   the same limits for references, child jobs, operator fixtures and merges;
   reject historical attention suites with oversized hidden defaults.
-- [ ] LSG003 Separate native long-video attention admission from source/upscale
+- [x] LSG003 Separate native long-video attention admission from source/upscale
   policy in [upscale_state.c](../src/upscale/upscale_state.c), shared CUDA policy
   and all indirect entry points. Permit only default or Sage3 attention with
   BF16/NVFP4 projections for the target native scope. Check build/device/library
   capabilities and unsupported combinations before model loading, cache
   preparation, large allocation or output creation; never silently fall back.
-- [ ] LSG004 Compose Sage3 with bounded NVFP4 execution in
+- [x] LSG004 Compose Sage3 with bounded NVFP4 execution in
   [quant.c](../src/weights/quant.c) and its policy consumers. The current
   `!attention` condition selects recipe 5 only with default attention. Extended
   Sage3 requests must not select recipe 2 or restore full-sequence MLP scratch.
   Preserve tensor-wide activation scales, 8,192-row slabs and packed-weight
   cache identity. Preserve old recipes; version any changed arithmetic or
   chunk plan explicitly and use the same selection in execution and state I/O.
-- [ ] LSG005 Audit and correct long-sequence index/stride/count arithmetic in
+- [x] LSG005 Audit and correct long-sequence index/stride/count arithmetic in
   [cuda_sage.cu](../src/cuda/cuda_sage.cu), preprocessing, reductions, correction
   GEMMs, output scatter and imported launch bindings. Replace the blanket
   `seq*56*128 <= INT_MAX` restriction only after downstream offsets are checked
   with size_t/64-bit arithmetic. Validate CUDA grid, padded sequence and library
   descriptor limits before launch; retain precise failures for invalid shapes.
-- [ ] LSG006 Make the fixed-budget Sage3 planner cover admitted long sequences
+- [x] LSG006 Make the fixed-budget Sage3 planner cover admitted long sequences
   within the existing 512 MiB workspace. Bound centered/packed K/V, scales,
   Q chunks, FP32 score corrections, reductions and output scratch without a
   full sequence-squared temporary. Preserve logical-key tail masking, full
   key coverage and the pinned reduction/rounding order. Keep existing short
   plans unchanged; version a new long plan if execution arithmetic changes.
-- [ ] LSG007 Integrate Sage3 workspace and actual buffer lifetimes into native
+- [x] LSG007 Integrate Sage3 workspace and actual buffer lifetimes into native
   memory admission and host-only capacity reports. Cover 256×256, 640×480,
   **960×544**, 1024×768, 1344×768 and 1920×1088 through 1,450 frames with both
   projection formats and resident/streamed placement. Account for BF16 Q/K/V,
   correction scratch, NVFP4 cold/warm buffers, reference rows and host caches;
   apply the physical reserve once and distinguish estimates from measurements.
-- [ ] LSG008 Persist and cross-check attention recipe/plan plus projection
+- [x] LSG008 Persist and cross-check attention recipe/plan plus projection
   recipe in sampler state, presentation metadata and prepared-context keys.
   Audit early readers as well as post-load validation so malformed or
   incompatible combinations fail before payload allocation. Resume restores
   the saved selection and rejects conflicting overrides. Keep old states
   readable; completed AV replay requires decoder assets, not Sage kernels.
-- [ ] LSG009 Propagate the combined policy through CLI, public API, HTTP and
+- [x] LSG009 Propagate the combined policy through CLI, public API, HTTP and
   every `--render` worker, including saved conditioning, inherited/global and
   segment-local references, anchors, seeds, dry runs and continuation workers.
   Preserve source model/attention/precision provenance, prefix trimming and
   bridge semantics. Audit `.h3up`, AV-transfer and `#upscale` rejection even
   when Sage3 is visible only in a source sidecar or checkpoint.
-- [ ] LSG010 Qualify resource lifetime and failure recovery for Sage3 with
+- [x] LSG010 Qualify resource lifetime and failure recovery for Sage3 with
   resident, streamed and automatic BF16/NVFP4 weight placement. Reserve scratch
   before weight admission; preserve auto-placement allocation retry. Exercise
   cancellation, allocation failure, repeated requests and attention/precision
@@ -535,21 +538,21 @@ remain unchanged. No new 60-second render is authorized by this plan.
 
 ### Verification, measurement and delivery tasks
 
-- [ ] LSG011 Add host/metadata/descriptor-only boundary coverage for 362/363,
+- [x] LSG011 Add host/metadata/descriptor-only boundary coverage for 362/363,
   464/481, 736/737, 1,433/1,440/1,450/1,451 frames and `--seconds 60`. Include
   the six canvases above, references near the one-million-row limit, 128-row
   padding tails, 32-bit element-offset crossings and head/query workspace
   boundaries. Verify both projection formats, unavailable builds/devices and
   every retained exclusion, including Metal and source/upscale routes, without
   allocating the production-sized inputs.
-- [ ] LSG012 Extend bounded native Sage3 operator checks with forced-small
+- [x] LSG012 Extend bounded native Sage3 operator checks with forced-small
   head/query chunks to exercise long-plan loops, tails and offset calculations.
   Cover both output layouts, zero/constant/outlier/nonfinite inputs, immutable
   inputs, guard regions, logical padded-key masking and all valid keys across
   chunks. Compare the pinned Sage3 oracle and an independent blocked FP32
   reference under declared existing numerical contracts; retain short-case
   parity and bounded sanitizer checks. Do not retune tolerances after failures.
-- [ ] LSG013 Run guarded **256×256 / 464-frame / two-evaluation** native cases
+- [x] LSG013 Run guarded **256×256 / 464-frame / two-evaluation** native cases
   for Sage3 with BF16 and NVFP4 projections, plus matched default-attention
   controls. Cover FL2VA prompt-only, first/last anchors and supported mixed
   Ref2VA references; use shorter fixtures for supplemental worker cases.
@@ -557,7 +560,7 @@ remain unchanged. No new 60-second render is authorized by this plan.
   audio latents, expected delivery dimensions/timestamps and complete decode.
   Record approximate-output differences separately from correctness; neither
   BF16 equality nor motion/scene consistency is an acceptance requirement.
-- [ ] LSG014 Verify same-build pause/resume, full/preview replay, cached
+- [x] LSG014 Verify same-build pause/resume, full/preview replay, cached
   conditioning, API/HTTP/script propagation and lifecycle recovery for both
   Sage3 projection formats. Use **447-frame source → 464-frame target with
   447-frame context** for hard/bridge continuation and keep the final merge
@@ -565,7 +568,7 @@ remain unchanged. No new 60-second render is authorized by this plan.
   resume contracts. Run local macOS host/state/parser compatibility checks
   and bounded Metal smoke/rejection checks; reject indirect long/Sage3 execution
   on Metal.
-- [ ] LSG015 Measure complete attention cost and denoising on the authorized
+- [x] LSG015 Measure complete attention cost and denoising on the authorized
   GPU using the bounded matrix, with identical model/prompt/seed/steps and
   matched weight placement. Record warmup and three warm samples; report cold
   preparation separately. Include smoothing, packing, correction, kernel and
@@ -574,7 +577,7 @@ remain unchanged. No new 60-second render is authorized by this plan.
   with streamed, record auto placement separately, and avoid adding overlapping
   profiler categories. Do not infer 60-second speedup or VRAM savings from
   these short runs; investigate regressions and report any remaining overhead.
-- [ ] LSG016 Build final macOS/Linux artifacts and verify offline bounded
+- [x] LSG016 Build final macOS/Linux artifacts and verify offline bounded
   package behavior and source/binary provenance. Run the complete unchanged
   **204-output regression** before implementation, after coherent code changes
   and on the final delivered artifact; preserve all fixtures and golden hashes.
@@ -583,16 +586,20 @@ remain unchanged. No new 60-second render is authorized by this plan.
   Publish the new contract, capacity report and bounded acceptance evidence;
   validate links, archive/golden hashes and task counts before marking complete.
 
-### Sage3 completion criteria
+### Sage3 acceptance
 
-All 16 LSG tasks must have new evidence. Native CUDA generation must accept
-Sage3 with either BF16 or bounded NVFP4 projections through 1,450 aligned
-frames and the existing canvas/sequence limits, subject to resource admission.
+All 16 LSG tasks have new evidence, mapped individually in the
+[acceptance report](cuda/sage3-long-results.md#task-evidence). Native CUDA
+generation accepts Sage3 with either BF16 or bounded NVFP4 projections through
+1,450 aligned frames and the existing canvas/sequence limits, subject to
+resource admission.
 Public entry points, continuation, state/replay, failures and package artifacts
-must pass the bounded matrix, with unchanged default-attention outputs and a
-fresh **204/204** final regression. Unsupported combinations must fail early.
+pass the bounded matrix, with unchanged default-attention outputs and a fresh
+**204/204** final regression. Unsupported combinations fail early. Both offline
+packages are built; the tested Linux executable is delivered under
+`linux-package/h3cli-linux-x86_64` on `cuda-test`.
 
-Completion must distinguish measured 256×256/464-frame behavior from maximum
+Completion distinguishes measured 256×256/464-frame behavior from maximum
 duration/canvas planning and descriptor coverage. It does not establish
 60-second runtime performance, perceptual equivalence, lower VRAM consumption
 or a 72 GB fit for every supported shape. No additional large runtime campaign

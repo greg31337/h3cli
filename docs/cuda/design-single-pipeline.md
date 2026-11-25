@@ -22,10 +22,15 @@ is no public execution selector or old tuning override.
 | `--preview-vae` | Independent approximate delivery option | SGLang full decoder |
 
 Native CUDA requests through 1,450 frames or 1920×1088 accept BF16 or NVFP4
-with default attention and full depth. Extended NVFP4 uses bounded projection/MLP
+with default or Sage3 attention and full depth. Extended NVFP4 uses bounded projection/MLP
 execution recipe 5, preserving tensor-wide scales and packed-weight recipe 2.
 Other approximate combinations retain their existing short-video limits.
 See the [duration/precision contract](long-video-1450-contract.md).
+The [Sage3 extension](sage3-long-contract.md) retains attention recipe 1 / plan 1,
+its 512 MiB workspace and BF16 Q/K/V storage. All source/upscale routes still
+require default attention. In the public API, set `h3_params.cuda_attention` to
+`H3_ATTENTION_SAGE3` independently of `cuda_denoise_quant`; mode changes
+invalidate prepared resources and resume checks saved recipes.
 
 Select attention and projection precision independently. Sage3's FP4 attention
 operands do not imply NVFP4 projection weights. The original dense/Sage/SOL

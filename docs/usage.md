@@ -392,7 +392,7 @@ Width and height must each be multiples of 32, at least 32, and their product
 must not exceed `768 * 1344` pixels on Metal. CUDA also accepts up to
 `1920 * 1088` pixels with each axis at most 1920, including portrait transpose.
 The extended CUDA canvas supports BF16 or native NVFP4, all 50 blocks and
-default attention; other approximation modes and runtime LoRA are unqualified. Those are mechanical limits, not a promise
+default or Sage3 attention; other approximation modes and runtime LoRA are unqualified. Those are mechanical limits, not a promise
 that every tiny canvas has good model quality. H3-Base is a 768p model.
 
 | Canvas | Current guidance |
@@ -452,10 +452,15 @@ legal H3 temporal shape, so `--seconds 10` produces 243 frames (10.125 seconds).
 | 1450 | 60.417 seconds (CUDA ceiling) |
 
 CUDA accepts up to 1,450 aligned frames; Metal retains 362. `--seconds 60`
-aligns upward to 1,450. Above 362, use BF16 or native NVFP4, default attention,
+aligns upward to 1,450. Above 362, use BF16 or native NVFP4, default or Sage3 attention,
 all 50 blocks and reuse/core-reuse 1. Other approximation and LoRA modes are
-rejected. NVFP4 source capture and upscaling remain unsupported. Requests still pass canvas, sequence
+rejected. NVFP4 or Sage3 source capture and upscaling remain unsupported. Requests still pass canvas, sequence
 and memory admission; see the [duration contract](cuda/long-video-1450-contract.md).
+
+Use `--cuda-attention sage3` to select native FP4 attention independently of
+`--cuda-denoise-quant nvfp4` projections. Long Sage3 retains BF16 Q/K/V storage
+and adds a 512 MiB workspace. It is a speed option, without guaranteed VRAM
+savings; see its [contract and bounded validation](cuda/sage3-long-contract.md).
 
 Short clips are useful for development. CUDA also supports longer requests
 within the duration and resource limits above. A request such as `--frames 23` is rounded up to 39

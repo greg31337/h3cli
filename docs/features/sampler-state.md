@@ -14,6 +14,12 @@ and **version 3** at 737–1,450 frames. The fixed video/audio class arrays are
 and its original 107/604 bytes. Old readers reject unknown required versions. Metal rejects long checkpoints before model loading or large tensor
 allocation. See the [duration/state contract](../cuda/long-video-1450-contract.md).
 
+Long native Sage3 keeps attention section 35 recipe 1 / plan 1, composed with
+BF16 or NVFP4 projection section 34 recipe 5. Early readers reject incompatible
+combinations before tensor allocation. Resume restores both policies and rejects
+conflicting overrides; completed AV replay needs decoder assets only. See the
+[Sage3 contract](../cuda/sage3-long-contract.md).
+
 ## Stop and resume
 
 Use the same model, engine build, GPU family, and numerical environment for both

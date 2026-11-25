@@ -2,6 +2,7 @@
 #include "src/sampling/sampler_state.h"
 #include "src/sampling/av_state.h"
 #include "src/weights/quant.h"
+#include "src/denoise/attention.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,9 +37,10 @@ int h3_upscale_paths_alias(const char *a,const char *b) {
 int h3_upscale_options_valid(const h3_params *p,char *e,size_t n) {
     if(!p)return fail(e,n,"missing options");
     if((p->geometry_profile>=2||p->frames>H3_LEGACY_MAX_FRAMES)&&(p->denoise_reuse!=1||p->core_reuse!=1||p->dit_layers!=50||
-       p->token_reduction||(p->cuda_denoise_quant&&p->cuda_denoise_quant!=H3_QUANT_NVFP4)||p->cuda_attention||p->adaptive_cache||
+       p->token_reduction||(p->cuda_denoise_quant&&p->cuda_denoise_quant!=H3_QUANT_NVFP4)||
+       (p->cuda_attention!=H3_ATTENTION_DEFAULT&&p->cuda_attention!=H3_ATTENTION_SAGE3)||p->adaptive_cache||
        p->backend||p->attention_mode||p->use_int8_row_fc2))
-        return fail(e,n,"extended CUDA canvas/duration requires BF16 or native NVFP4, all 50 blocks and default attention; other approximation modes are unqualified");
+        return fail(e,n,"extended CUDA canvas/duration requires BF16 or native NVFP4, all 50 blocks and default or Sage3 attention; other approximation modes are unqualified");
     if((p->geometry_profile==1||p->geometry_profile==3) && (!h3_geometry_valid(p->width,p->height,p->geometry_profile)||
        p->still||p->continuation||p->denoise_reuse!=1||p->core_reuse!=1||p->dit_layers!=50||
        p->token_reduction||p->cuda_denoise_quant||p->cuda_attention||p->adaptive_cache||p->backend||

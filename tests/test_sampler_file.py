@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import struct
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -82,6 +83,33 @@ class ContainerTests(unittest.TestCase):
         parts[-1][2]=0
         self.check(build(parts),error='before allocation')
 
+    def test_long_sage_policy_before_payload_allocation(self):
+        # Change only identity/temporal records. The actual tiny fixture tensors
+        # stay short: successful policy admission must reach later validation.
+        for mode in (1,2,3,4):
+            for quant in (0,2):
+                parts=entries(self.original)
+                identity=next(p[-1] for p in parts if p[0]==1)
+                struct.pack_into('<i',identity,24,464)
+                struct.pack_into('<i',identity,168,464)
+                t=next(p for p in parts if p[0]==15)
+                prefix=t[-1][:-711];v=t[-1][-711:-604];a=t[-1][-604:]
+                t[1]=2;t[-1]=prefix+v+bytes(217-107)+a+bytes(1228-604);t[4]=len(t[-1])
+                parts.append([35,1,1,1,12,bytearray(struct.pack('<3I',mode,1,1))])
+                if quant:parts.append([34,1,1,1,8,bytearray(struct.pack('<2I',2,5))])
+                if sys.platform=='darwin':self.check(build(parts),error='backend limit')
+                elif mode!=2:self.check(build(parts),error='before allocation')
+                else:
+                    self.path.write_bytes(build(parts))
+                    result=subprocess.run([str(BINARY),'--load',str(self.path)],capture_output=True,text=True)
+                    type(self).total_cases+=1
+                    self.assertNotEqual(result.returncode,0)
+                    self.assertNotIn('before allocation',result.stderr,result.stderr)
+                    # Invalid recipes must fail at the small early policy read.
+                    for recipe,plan in ((0,1),(1,0),(2,1),(1,2)):
+                        policy=next(p for p in parts if p[0]==35)
+                        policy[-1]=bytearray(struct.pack('<3I',2,recipe,plan))
+                        self.check(build(parts),error='before allocation')
     def test_adaptive_budget_format(self):
         fixture=Path(self.temp.name)/'adaptive.h3sample'
         subprocess.run([str(BINARY),'--adaptive-fixture',str(fixture)],cwd=ROOT,check=True,

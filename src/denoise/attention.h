@@ -1,6 +1,7 @@
 #ifndef H3_ATTENTION_H
 #define H3_ATTENTION_H
 #include <stddef.h>
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -18,6 +19,7 @@ unsigned h3_attention_plan(int mode);
 int h3_attention_parse(const char *text,int *mode);
 int h3_attention_options(int mode,char *error,size_t size);
 int h3_attention_preflight(int mode,char *error,size_t size);
+int h3_attention_layout_valid(int mode,uint64_t rows,char *error,size_t size);
 int h3_attention_exchange(int mode);
 int h3_attention_current(void);
 #ifdef __cplusplus

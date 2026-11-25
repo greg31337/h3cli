@@ -1,6 +1,7 @@
 #pragma once
 #include "src/cuda/cuda_sage.h"
 #include "src/denoise/attention.h"
+#include "src/denoise/sage3_plan.h"
 #include <cuda_bf16.h>
 #include <cublas_v2.h>
 #include <algorithm>
@@ -15,11 +16,12 @@
 #include <unistd.h>
 inline void sage_check(cudaError_t e){if(e!=cudaSuccess)throw std::runtime_error(cudaGetErrorString(e));}
 struct sage_timing {cudaEvent_t start=nullptr,end=nullptr;int category;};
-constexpr size_t sage_reserved_bytes=256+(4u<<20);
+constexpr size_t sage_reserved_bytes=H3_SAGE_RESERVED_BYTES;
 struct sage_context {
     char *workspace;size_t capacity,offset=sage_reserved_bytes;
     cudaStream_t stream; cublasHandle_t blas=nullptr;
     bool profiling;
+    unsigned test_query_rows=0,test_head_group=0;
     cudaError_t timer_error=cudaSuccess;
     h3_sage_stats stats={};std::vector<sage_timing> timings;
     template<class T> T *alloc(size_t n) {
@@ -66,9 +68,7 @@ void sage3_run(sage_context &,nv_bfloat16 *,const nv_bfloat16 *,const nv_bfloat1
  * The native thread mapping differs; each thread owns one channel and
  * reproduces the original per-warp sums explicitly. */
 inline unsigned sage_reduce_partials(unsigned seq) {
-    if(seq<64)return 1;
-    unsigned values=(seq+3)/4;
-    return values<256?1:std::max(std::min(37u,(values+15)/16),(values+255)/256);
+    return h3_sage_reduce_partials(seq);
 }
 static __global__ void sage_reduce_tiles(const nv_bfloat16 *k,const nv_bfloat16 *v,
     float *sums,float *maxima,unsigned seq,unsigned heads,unsigned first,unsigned partials,unsigned *fault) {

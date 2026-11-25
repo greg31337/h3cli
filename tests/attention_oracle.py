@@ -73,6 +73,10 @@ def main():
     p.add_argument('--input',help='Captured NHD BF16 Q/K/V file; use one sequence length')
     p.add_argument('--segments-log',help='Model log containing captured joint-token segment ranges')
     a=p.parse_args();out=Path(a.output);out.mkdir(parents=True,exist_ok=True)
+    if os.environ.get('H3_TEST_MAX_EVALUATIONS') and any(n<1 or n>4096 for n in a.lengths):
+        p.error('bounded operator envelope: every sequence must contain 1..4096 rows')
+    if a.input and (len(a.lengths)!=1 or Path(a.input).stat().st_size!=3*a.lengths[0]*56*128*2):
+        p.error('captured input size does not match the declared bounded shape')
     torch.backends.cuda.matmul.allow_tf32=False;torch.manual_seed(a.seed)
     scale=float(torch.tensor(1/math.sqrt(128),dtype=torch.bfloat16))
     results=[];failed=False;segments={};binary_hash=sha(a.binary)

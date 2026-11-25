@@ -16,7 +16,7 @@ def digest(path):
     assert len(data)==160+nv+na
     return hashlib.sha256(data[160:160+nv]).hexdigest(),hashlib.sha256(data[160+nv:]).hexdigest()
 
-def script_plan(data,precision='bf16',placement='stream'):
+def script_plan(data,precision='bf16',placement='stream',attention='default'):
     rows=data['segments']; by_name={}
     for s in rows:
         cmd=s['command']
@@ -24,24 +24,27 @@ def script_plan(data,precision='bf16',placement='stream'):
         context=int(value('continue-context')) if '--continue-context' in cmd else (39 if '--continue-from' in cmd else 0)
         actual=value('cuda-denoise-quant') if '--cuda-denoise-quant' in cmd else 'off'
         if actual!=('nvfp4' if precision=='nvfp4' else 'off'):raise ValueError('script worker lost requested precision')
+        actual_attention=value('cuda-attention') if '--cuda-attention' in cmd else 'default'
+        if actual_attention!=attention:raise ValueError('script worker lost requested attention')
         for flag,expected in (('layers','50'),('reuse','1'),('core-reuse','1')):
             if '--'+flag in cmd and value(flag)!=expected:raise ValueError('script worker changed full-depth dense policy')
-        plan('script',int(value('width')),int(value('height')),int(value('frames')),context=context,steps=int(value('steps')),precision=precision,placement=placement)
+        plan('script',int(value('width')),int(value('height')),int(value('frames')),context=context,steps=int(value('steps')),precision=precision,placement=placement,attention=attention)
         by_name[s['name']]=s['delivered']
     for merged in data['merged']:
-        if sum(by_name[n] for n in merged['segments'])>480:raise ValueError('script merge exceeds 20 seconds')
-    result=plan('script',256,256,max(s['frames'] for s in rows),precision=precision,placement=placement)
+        if sum(by_name[n] for n in merged['segments'])>464:raise ValueError('script merge exceeds 464 frames')
+    result=plan('script',256,256,max(s['frames'] for s in rows),precision=precision,placement=placement,attention=attention)
     result['child_commands']=[s['command'] for s in rows];result['merges']=data['merged']
     return result
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('mode',choices=('native','conditions','lifecycle','continuation','script','api','http','recovery','soundtrack'))
+    ap.add_argument('mode',choices=('native','benchmark','conditions','cached','lifecycle','continuation','script','api','http','recovery','soundtrack'))
     ap.add_argument('--model',required=True);ap.add_argument('--out',type=Path,required=True)
     ap.add_argument('--source',type=Path);ap.add_argument('--preview-model',required=True)
     ap.add_argument('--binary',type=Path,default=Path('bin/h3cli'))
     ap.add_argument('--precision',choices=('bf16','nvfp4'),default='bf16')
     ap.add_argument('--placement',choices=('auto','resident','stream'),default='stream')
+    ap.add_argument('--attention',choices=('default','sage3'),default='default')
     ap.add_argument('--quant-cache')
     ap.add_argument('--completed-checkpoint',type=Path)
     a=ap.parse_args();a.out=a.out.resolve();a.out.mkdir(parents=True,exist_ok=False)
@@ -50,8 +53,9 @@ def main():
     if a.quant_cache:
         if not quant:raise ValueError('packed cache requires NVFP4')
         quant+=['--cuda-denoise-quant-cache',a.quant_cache]
+    if a.attention!='default':quant+=['--cuda-attention',a.attention]
     def bounded(kind,frames=464,**kw):
-        return plan(kind,256,256,frames,precision=a.precision,placement=a.placement,**kw)
+        return plan(kind,256,256,frames,precision=a.precision,placement=a.placement,attention=a.attention,**kw)
     records=[]
     def run(name,p,flags=(),media=True,command=None):
         output=a.out/(name+'.mp4')
@@ -59,12 +63,12 @@ def main():
         decode='--decode-av-state' in flags
         cmd=command or base+([] if decode else quant)+flags+['-o',str(output)]
         resources=bounded(p['kind'],p['frames'],context=p.get('context',0))
-        p.update({key:resources[key] for key in ('precision','placement','live_bytes','capacity_bytes')})
+        p.update({key:resources[key] for key in ('precision','placement','attention','attention_workspace_bytes','live_bytes','capacity_bytes')})
         records.append(run_case(cmd,p,output,media=media));return output
     def native(name,frames=464,extra=(),capture=True):
         return run(name,bounded('native',frames),['-p',PROMPT,'--width','256','--height','256',
             '--frames',frames,'--steps','2','--seed','42','--save-av-state',a.out/(name+'.h3av'),
-            *(['--save-upscale-state',a.out/(name+'.h3up')] if capture and a.precision=='bf16' else []),*extra])
+            *(['--save-upscale-state',a.out/(name+'.h3up')] if capture and a.precision=='bf16' and a.attention=='default' else []),*extra])
     def inspect_all():
         for path in a.out.rglob('*.mp4'):
             if path.stat().st_size:inspect_video(path)
@@ -76,17 +80,21 @@ def main():
                 mode,recipe=map(int,fields['denoise_quant'].split()[:2])
                 assert mode==(2 if a.precision=='nvfp4' else 0)
                 assert recipe==(5 if mode and shape['frames']>362 else 2 if mode else 0)
+                assert int(fields['attention'].split()[0])==(2 if a.attention=='sage3' else 0)
         for pattern in ('*.h3sample','*.h3up'):
             for path in a.out.rglob(pattern):inspect_checkpoint(path)
     with open('/tmp/h3-long-video-gpu.lock','a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         if a.mode=='native':
             native('native')
-            if a.precision=='bf16':subprocess.run(['bin/long_video_state',str(a.out/'native.h3up')],check=True)
+            if a.precision=='bf16' and a.attention=='default':subprocess.run(['bin/long_video_state',str(a.out/'native.h3up')],check=True)
             p=inspect_state(a.out/'native.h3av')
             run('decode',p,['--decode-av-state',a.out/'native.h3av'])
             assert hashlib.sha256((a.out/'native.mp4').read_bytes()).digest()==hashlib.sha256((a.out/'decode.mp4').read_bytes()).digest()
             run('preview',p,['--decode-av-state',a.out/'native.h3av','--preview-vae','--preview-vae-model',a.preview_model])
+        elif a.mode=='benchmark':
+            for name in ('warmup','sample-1','sample-2','sample-3'):
+                native(name,capture=False)
         elif a.mode=='conditions':
             ff=os.environ.get('H3_FFMPEG','ffmpeg')
             for name,color in (('first','red'),('last','blue')):
@@ -100,12 +108,26 @@ def main():
         elif a.mode=='soundtrack':
             assert a.source;inspect_video(a.source,max_frames=360)
             native('soundtrack',extra=['--ref-video',a.source.resolve()])
+        elif a.mode=='cached':
+            condition=a.out/'conditioning.h3cond'
+            native('saved',extra=['--save-conditioning',condition],capture=False)
+            native('loaded',extra=['--load-conditioning',condition],capture=False)
+            assert digest(a.out/'saved.h3av')==digest(a.out/'loaded.h3av')
         elif a.mode=='lifecycle':
             assert a.source;p=inspect_state(a.source)
             run('pause',p,['-p',PROMPT,'--width','256','--height','256','--frames','464','--steps','2','--seed','42',
                 '--stop-after-step','1','--save-sampler-state',a.out/'paused.h3sample'],False)
             run('resume',p,['--resume-sampler-state',a.out/'paused.h3sample','--save-av-state',a.out/'resumed.h3av'])
             assert digest(a.source)==digest(a.out/'resumed.h3av')
+            if a.attention=='sage3':
+                # Conflicting saved policies must fail before model lookup or
+                # output creation, including an explicitly selected BF16 mode.
+                for flag,value,message in (('--cuda-attention','default','resume attention differs'),
+                    ('--cuda-denoise-quant','off' if a.precision=='nvfp4' else 'nvfp4','resume quantization differs')):
+                    target=a.out/'forbidden.mp4'
+                    result=subprocess.run([str(a.binary.resolve()),'-d',str(a.out/'missing-model'),'--offline',
+                        '--resume-sampler-state',str(a.out/'paused.h3sample'),flag,value,'-o',str(target)],capture_output=True,text=True)
+                    assert result.returncode==2 and message in result.stderr and not target.exists(),result.stderr
         elif a.mode=='continuation':
             native('source',447)
             for mode in ('hard','bridge'):
@@ -130,13 +152,25 @@ def main():
                 source=a.out/(name+'.txt');source.write_text(body);directory=a.out/name
                 cmd=base+quant+['--render',str(source),'--output-dir',str(directory)]
                 data=json.loads(subprocess.check_output(cmd+['--dry-run'],text=True))
-                p=script_plan(data,a.precision,a.placement);run(name,p,media=False,command=cmd)
+                p=script_plan(data,a.precision,a.placement,a.attention);run(name,p,media=False,command=cmd)
+            if a.source:
+                fixtures=a.source.resolve();inspect_video(fixtures/'reference.mp4',max_frames=360)
+                text=(f'#ref actor "{fixtures}/first.png"\n#ref extra "{fixtures}/last.png"\n'
+                      f'#ref-image actor\n#ref-audio "{fixtures}/reference.wav"\n'
+                      '### source\n#size 256x256\n#steps 2\n#frames 39\n#ref-image extra\n'+PROMPT+
+                      '\n### continued\n#frames 56\n#continue\n#continue-context 39\n#continue-mode bridge\n'+PROMPT+'\n')
+                source=a.out/'references.txt';source.write_text(text)
+                cmd=base+quant+['--render',str(source),'--output-dir',str(a.out/'references')]
+                data=json.loads(subprocess.check_output(cmd+['--dry-run'],text=True))
+                assert sum('--ref-image'==v for v in data['segments'][0]['command'])==2
+                assert sum('--ref-image'==v for v in data['segments'][1]['command'])==1
+                run('references',script_plan(data,a.precision,a.placement,a.attention),media=False,command=cmd)
         elif a.mode=='api':
-            run('api',bounded('api'),media=False,command=['bin/long_video_api',a.model,str(a.out/'source.h3up'),a.precision,a.quant_cache or ''])
+            run('api',bounded('api'),media=False,command=['bin/long_video_api',a.model,str(a.out/'source.h3up'),a.precision,a.quant_cache or '',a.attention])
         elif a.mode=='http':
             # HTTP rebases cache names into each job's artifact directory;
             # native CLI/API cache paths cannot be sent as absolute HTTP paths.
-            run('http',bounded('http'),media=False,command=['python3','tests/long_video_http.py','--model',a.model,'--out',str(a.out/'http'),'--precision',a.precision,*(['--quant-cache',Path(a.quant_cache).name] if a.quant_cache else [])])
+            run('http',bounded('http'),media=False,command=['python3','tests/long_video_http.py','--model',a.model,'--out',str(a.out/'http'),'--precision',a.precision,'--attention',a.attention,*(['--quant-cache',Path(a.quant_cache).name] if a.quant_cache else [])])
         elif a.mode=='recovery':
             assert a.source;p=inspect_state(a.source)
             checkpoint=a.completed_checkpoint or a.out.parent/(a.precision+'-continuation')/'bridge.h3sample'

@@ -1838,6 +1838,7 @@ static h3_dit *load_dit(const char *weight_directory,
     }
     if (!copy_layout(dit, layout, error, error_size) ||
         !validate_layout(dit, text, error, error_size) ||
+        !h3_attention_layout_valid(h3_attention_current(),dit->sequence,error,error_size) ||
         !configure_token_reduction(dit, token_reduction,
                                    error, error_size)) goto failed;
     dit->adaptive_recipe=h3_adaptive_execution_recipe(dit->adaptive_mode,h3_cuda_policy_current().projection_precision,

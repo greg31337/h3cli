@@ -23,6 +23,7 @@ int main(int argc,char **argv) {
     h3_gpu *g=NULL;h3_gpu_tensor *tensor[4]={0};uint16_t *host=NULL;FILE *input=NULL;int result=1,mode=0;
     if(argc<6||!h3_attention_parse(argv[1],&mode))return 2;
     char *end=NULL;unsigned long length=strtoul(argv[2],&end,10);if(!*argv[2]||*end||!length||length>200000)return 2;
+    if(getenv("H3_TEST_MAX_EVALUATIONS")&&length>4096){fputs("bounded operator envelope: at most 4096 rows\n",stderr);return 2;}
     unsigned seq=(unsigned)length;int head_major=atoi(argv[4]),iterations=atoi(argv[5]);
     if((head_major!=0&&head_major!=1)||iterations<1||iterations>20)return 2;
     size_t n=(size_t)seq*56*128,guard=256;uint64_t input_hash[3];

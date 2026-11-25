@@ -1,4 +1,5 @@
 #include "src/denoise/attention.h"
+#include "src/denoise/sage3_plan.h"
 #include "src/denoise/subblock.h"
 #include "src/cuda/cuda_sol_policy.h"
 #include <stdio.h>
@@ -48,6 +49,13 @@ int h3_attention_preflight(int mode,char *error,size_t size) {
     return 0;
 }
 int h3_attention_exchange(int mode){int previous=requested;requested=mode;return previous;}
+int h3_attention_layout_valid(int mode,uint64_t rows,char *error,size_t size) {
+    if(mode!=H3_ATTENTION_SAGE3)return 1;
+    h3_sage3_plan plan;
+    if(h3_sage3_plan_build(rows,56,H3_ATTENTION_WORKSPACE_BYTES,&plan))return 1;
+    if(error&&size)snprintf(error,size,"Sage3 sequence exceeds checked CUDA bounds or 512 MiB workspace");
+    return 0;
+}
 int h3_attention_current(void){return requested;}
 
 unsigned h3_attention_recipe(int mode){return mode==H3_ATTENTION_SOL?H3_CUDA_SOL_VERSION:mode?H3_ATTENTION_VERSION:0;}

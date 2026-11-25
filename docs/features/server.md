@@ -97,8 +97,11 @@ its mapping is `--steps N-1`. Explicit `--steps` retains native evaluation
 semantics. Target geometry follows the pinned short-edge/area-cap/nearest-32
 rounding policy, including ties to even. Target duration is 4–1450/24 seconds on CUDA and 4–15 seconds on Metal,
 aligned to `17n+5` frames. Native flags use the 1450/362-frame backend ceilings.
-Above 362 frames, select BF16 or NVFP4 with default attention and without adaptive caching;
+Above 362 frames, select BF16 or NVFP4 with default or Sage3 attention and without adaptive caching;
 see the [duration contract](../cuda/long-video-1450-contract.md). Smaller native durations use `--frames` or `--seconds`.
+Native job flags accept `--cuda-attention sage3` independently of projection
+precision. Workers preserve its saved attention/precision provenance; source
+capture and upscaling retain their default-attention requirements.
 `auto` uses 16:9, or effective first/last anchor geometry for FL2VA. Native
 geometry flags bypass only the target components they replace.
 

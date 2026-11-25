@@ -8,8 +8,9 @@ import sys
 
 p=argparse.ArgumentParser();p.add_argument('--binary',default='./bin/attention_native')
 p.add_argument('--output',required=True);p.add_argument('--lengths',nargs='+',type=int,default=[1,17,65,129,257,2281])
+p.add_argument('--modes',nargs='+',choices=['sage2++','sage3'],default=['sage2++','sage3'])
 a=p.parse_args();out=Path(a.output);out.mkdir(parents=True,exist_ok=True);results=[]
-for mode in ('sage2++','sage3'):
+for mode in a.modes:
     for length in a.lengths:
         for pattern in ('zero','constant','random'):
             for layout in (0,1):

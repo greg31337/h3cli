@@ -508,8 +508,20 @@ static h3_sampler_state *load_state(const char *path,int source,uint64_t budget,
                     fail(error,size,"unsupported quantization recipe before allocation");goto invalid;
                 }
             }
-            if(extended&&(entries[35]||entries[40])) {
-                fail(error,size,"extended checkpoint requires default attention without adaptive cache before allocation");goto invalid;
+            if(extended&&entries[40]) {
+                fail(error,size,"extended checkpoint excludes adaptive cache before allocation");goto invalid;
+            }
+            if(extended&&entries[35]) {
+                const uint8_t *attention=entries[35];
+                if(get(attention+8,4)!=REQUIRED||get(attention+32,8)!=12) {
+                    fail(error,size,"invalid attention policy before allocation");goto invalid;
+                }
+                const uint8_t *a=data+get(attention+24,8);
+                if(get(a,4)!=H3_ATTENTION_SAGE3||source||s->params.geometry_profile==3||
+                   get(a+4,4)!=h3_attention_recipe(H3_ATTENTION_SAGE3)||
+                   get(a+8,4)!=h3_attention_plan(H3_ATTENTION_SAGE3)) {
+                    fail(error,size,"extended checkpoint requires default or Sage3 attention before allocation");goto invalid;
+                }
             }
         }
         if(id==15 && get(e+4,4)!=section_version(15,s)) {

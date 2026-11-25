@@ -1,5 +1,7 @@
 > Current long native NVFP4 uses [execution recipe 5](long-video-1450-contract.md)
 > through 1,450 CUDA frames. The historical short-video results below remain unchanged.
+> It composes with opt-in [Sage3 attention](sage3-long-contract.md); attention and
+> projection precision are independent, and retained Q/K/V storage stays BF16.
 
 > Historical kernel/qualification guide. M3B/M4 remove `--fast-cuda` and use
 > [one CUDA pipeline with explicit attention/precision options](design-single-pipeline.md).

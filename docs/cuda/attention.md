@@ -1,3 +1,7 @@
+> Current native Sage3 supports up to [1,450 CUDA frames](sage3-long-contract.md)
+> with BF16 or NVFP4 projections. Runtime evidence is bounded to 256×256/464 frames;
+> maximum-shape support is checked through metadata and workspace plans.
+
 > Historical kernel/qualification guide. M3B/M4 remove `--fast-cuda` and use
 > [one CUDA pipeline with explicit attention/precision options](design-single-pipeline.md).
 > Commands and old acceptance statements below describe their recorded recipes.

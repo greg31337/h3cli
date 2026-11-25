@@ -40,6 +40,13 @@ packed-weight recipe 2. Metal rejects
 long execution even for profile 0/1. See the
 [duration contract](../cuda/long-video-1450-contract.md).
 
+Native long Sage3 retains attention recipe 1 / plan 1 and composes with BF16 or
+NVFP4 projection recipe 5. Early sampler readers validate both policies before
+payload allocation; presentation and prepared-context keys preserve them.
+Resume rejects conflicting attention overrides. Completed AV replay only needs
+decoder assets. Sage3 `.h3up`, AV transfer and upscale remain excluded; see the
+[Sage3 contract](../cuda/sage3-long-contract.md).
+
 Require matching current files for decode, continuation, bridge, conditioning
 reuse, checkpoint resume, and upscale. Retain bounds, finite-value, checksum,
 canonical encoding, model/device/build provenance, and output-collision checks.

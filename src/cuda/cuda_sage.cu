@@ -10,6 +10,15 @@ void *h3_sage_create(void *workspace,size_t bytes,cudaStream_t stream,bool profi
     try {
         if(!workspace||bytes<H3_ATTENTION_WORKSPACE_BYTES)throw std::runtime_error("Sage requires 512 MiB admitted workspace");
         s=new sage_context;s->workspace=(char*)workspace;s->capacity=bytes;s->stream=stream;s->profiling=profile;
+        if(const char *test=getenv("H3_TEST_SAGE_PLAN")) {
+            char tail=0;
+            const char *budget=getenv("H3_TEST_MAX_EVALUATIONS");
+            if(!budget||strcmp(budget,"6")||sscanf(test,"%u:%u%c",&s->test_query_rows,&s->test_head_group,&tail)!=2||
+               !s->test_query_rows||s->test_query_rows>4096||s->test_query_rows%128||
+               !s->test_head_group||s->test_head_group>56)
+                throw std::runtime_error("Sage test plan requires 128..4096 aligned query rows, 1..56 heads and the six-evaluation test budget");
+            fprintf(stderr,"h3cli: TEST Sage3 query_rows=%u head_group=%u; operator inputs limited to 4096 rows\n",s->test_query_rows,s->test_head_group);
+        }
         sage_check(cudaMemsetAsync(s->fault(),0,256,stream));
         if(cublasCreate(&s->blas)!=CUBLAS_STATUS_SUCCESS)throw std::runtime_error("Sage correction cuBLAS creation failed");
         if(cublasSetStream(s->blas,stream)!=CUBLAS_STATUS_SUCCESS||cublasSetMathMode(s->blas,CUBLAS_DEFAULT_MATH)!=CUBLAS_STATUS_SUCCESS||
@@ -28,7 +37,8 @@ int h3_sage_run(void *context,int mode,void *out,const void *q,const void *k,con
     unsigned seq,unsigned heads,float scale,bool head_major,char *error,size_t size) {
     try {
         auto *s=(sage_context*)context;
-        if(!s||!out||!q||!k||!v||!seq||heads!=56||(size_t)seq*heads*128>INT_MAX||
+        if(!s||!out||!q||!k||!v||!h3_canvas_sequence_valid(seq,1)||heads!=56||
+           (mode==1&&(size_t)seq*heads*128>INT_MAX)||
            mode<1||mode>2||!std::isfinite(scale)||((uintptr_t)out|(uintptr_t)q|(uintptr_t)k|(uintptr_t)v)%16)
             throw std::runtime_error("invalid Sage shape, pointers, alignment or precision");
         if(mode==1)sage2_run(*s,(nv_bfloat16*)out,(const nv_bfloat16*)q,(const nv_bfloat16*)k,(const nv_bfloat16*)v,seq,heads,scale,head_major);

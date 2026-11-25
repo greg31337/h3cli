@@ -37,7 +37,7 @@ unsigned h3_quant_execution_recipe(int mode,int adaptive_cache,int attention) {
     return mode&&attention==H3_ATTENTION_SUBBLOCK?H3_QUANT_SUBBLOCK_VERSION:h3_quant_recipe(mode,adaptive_cache);
 }
 unsigned h3_quant_native_recipe(int mode,int adaptive_cache,int attention,int frames,int width,int height) {
-    if(mode==H3_QUANT_NVFP4&&!adaptive_cache&&!attention&&
+    if(mode==H3_QUANT_NVFP4&&!adaptive_cache&&(attention==H3_ATTENTION_DEFAULT||attention==H3_ATTENTION_SAGE3)&&
        (frames>H3_LEGACY_MAX_FRAMES||(int64_t)width*height>H3_LEGACY_PIXELS))return H3_QUANT_LONG_VERSION;
     return h3_quant_execution_recipe(mode,adaptive_cache,attention);
 }

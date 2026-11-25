@@ -14,9 +14,15 @@ adaptive/SubBlock continuation requires both reuse controls to be 1.
 
 CUDA targets now extend to 1,450 aligned frames, with contexts through **1,416**.
 Metal retains 362 target frames and contexts through **345**. Above 362 target
-frames, both hard and bridge modes require BF16 or NVFP4, default attention, all
+frames, both hard and bridge modes require BF16 or NVFP4, default or Sage3 attention, all
 50 blocks and reuse/core-reuse 1; other approximation modes remain limited
 to legacy durations. See the [duration contract](../cuda/long-video-1450-contract.md).
+Sage3 preserves full temporal context and the existing exact protected-history
+rules. Select `--cuda-attention sage3` for the continuation target as well;
+its metadata records the requested attention and projection precision. Sampler
+checkpoint resume restores its saved selection. The [bounded validation](../cuda/sage3-long-results.md)
+uses a 447-frame source/context and a 464-frame target; maximum-duration runtime
+and scene consistency are not established by that test.
 
 Start with **39 frames** of context. Legal contexts are `39 + 51*k`: 39, 90,
 141, 192, etc., subject to source/target lengths. These map to 12/27/42/57 video

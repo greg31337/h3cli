@@ -107,7 +107,7 @@
     },
     "sageattention3_blackwell/sageattn3/quantization/fp4_quantization_4d.cu": {
       "upstream_sha256": "445168840f5728043fb6bc1528218cbd56691882be2a4e9a6ec05df7369f2f13",
-      "native_sha256": "5d9afc9446961959707c894588e1865dd75c3a1f36a09dd3d1eaeb4404f5fa03"
+      "native_sha256": "fcc20a390c28f4ea3e5997bc463e6f109dea687dee0b3a242f2e4cf5a2951abe"
     },
     "sageattention3_blackwell/sageattn3/quantization/cuda_utils.h": {
       "upstream_sha256": "0ba38b3699591b0265f62b2036777052319523a241b58a7a089d00e84fc8e6be",

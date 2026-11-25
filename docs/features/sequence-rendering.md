@@ -17,8 +17,11 @@ continuation/bridge above 1344×768 or transpose has host checks only.
 frames on CUDA, 362 on Metal**. Preserved continuation context is limited to
 1,416 frames on CUDA or 345 on Metal and must be shorter than the target. The existing
 upward alignment remains; `#seconds 60` resolves to 1,450 frames on CUDA.
-Long native segments accept BF16 or NVFP4 with default attention; `#upscale`
-requires BF16; see the
+Long native segments accept BF16 or NVFP4 with default or Sage3 attention;
+`--cuda-attention sage3` reaches every native worker, including continuation and
+seed variants. A segment's `#cuda-attention sage3` is inherited by later segments.
+`#upscale`
+requires BF16 and default attention; see the
 [duration contract](../cuda/long-video-1450-contract.md). Merge lengths remain the
 sum of delivered segments and can exceed one segment’s duration.
 
