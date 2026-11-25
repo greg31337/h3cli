@@ -28,7 +28,7 @@ int h3_presentation_validate(const h3_presentation *p,const h3_av_state_info *i,
        (p->ref2va!=0&&p->ref2va!=1)||p->geometry_profile!=i->geometry_profile||
        !h3_canvas_delivery_valid(p->width,p->height,p->geometry_profile)||
        p->cuda_denoise_quant<0||p->cuda_denoise_quant>2||
-       (p->cuda_denoise_quant&&(p->quant_version!=h3_quant_execution_recipe(p->cuda_denoise_quant,p->adaptive_cache,p->cuda_attention)||!hex64(p->quant_model_sha256)))||
+       (p->cuda_denoise_quant&&(p->quant_version!=h3_quant_native_recipe(p->cuda_denoise_quant,p->adaptive_cache,p->cuda_attention,i->frames,p->width,p->height)||!hex64(p->quant_model_sha256)))||
        (!p->cuda_denoise_quant&&(p->quant_version||p->quant_model_sha256[0]||p->quant_model_metadata))||
        (p->quant_model_metadata!=0&&p->quant_model_metadata!=1)||
        (p->cuda_attention<0||p->cuda_attention>4)||

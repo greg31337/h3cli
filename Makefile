@@ -226,7 +226,7 @@ src/sglang/sglang.o src/sglang/sglang_rng.o: override CFLAGS += -fno-fast-math -
 tests/lora_runtime_test.o: src/weights/lora.c src/weights/lora.h src/weights/lora_json.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DH3_LORA_TESTING -fno-fast-math -ffp-contract=off -I. -c $< -o $@
 
-bin/lora_host: tests/lora_host.o tests/lora_runtime_test.o src/weights/lora_json.o src/weights/safetensors.o src/memory.o $(if $(filter Linux,$(PLATFORM)),src/digest.o src/weights/quant.o) | bin
+bin/lora_host: tests/lora_host.o tests/lora_runtime_test.o src/weights/lora_json.o src/weights/safetensors.o src/memory.o $(if $(filter Linux,$(PLATFORM)),src/digest.o src/weights/quant.o src/weights/residency.o) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ -lm $(if $(filter 1,$(CUDA_OPENSSL)),-lcrypto)
 
 bin/lora_runtime_generate: tests/lora_runtime_generate.o $(LIB_OBJ) | bin
@@ -237,11 +237,17 @@ test-lora-runtime: bin/lora_host
 	python3 tests/test_lora_runtime.py
 
 test-lora-runtime-sanitize: | bin/sanitizers/lora-runtime
-	$(CC) $(CPPFLAGS) -I. -std=c11 -O1 -g -D_GNU_SOURCE -D_DARWIN_C_SOURCE -fno-fast-math -ffp-contract=off -DH3_LORA_TESTING -fsanitize=address,undefined -fno-omit-frame-pointer tests/lora_host.c src/weights/lora.c src/weights/lora_json.c src/weights/safetensors.c src/memory.c $(if $(filter Linux,$(PLATFORM)),src/digest.c src/weights/quant.c) -lm $(if $(filter 1,$(CUDA_OPENSSL)),-lcrypto) -o bin/sanitizers/lora-runtime/lora_host_sanitize
+	$(CC) $(CPPFLAGS) -I. -std=c11 -O1 -g -D_GNU_SOURCE -D_DARWIN_C_SOURCE -fno-fast-math -ffp-contract=off -DH3_LORA_TESTING -fsanitize=address,undefined -fno-omit-frame-pointer tests/lora_host.c src/weights/lora.c src/weights/lora_json.c src/weights/safetensors.c src/memory.c $(if $(filter Linux,$(PLATFORM)),src/digest.c src/weights/quant.c src/weights/residency.c) -lm $(if $(filter 1,$(CUDA_OPENSSL)),-lcrypto) -o bin/sanitizers/lora-runtime/lora_host_sanitize
 	H3_LORA_HOST=bin/sanitizers/lora-runtime/lora_host_sanitize python3 tests/test_lora_runtime.py
 
 bin/quant_native: tests/quant_native.o $(LIB_OBJ) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+bin/quant_long: tests/quant_long.o $(LIB_OBJ) | bin
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+bin/long_video_capacity: tests/long_video_capacity.o src/weights/quant.o src/weights/residency.o | bin
+	$(CC) $(LDFLAGS) -o $@ $^ -lm
 
 bin/quant_projection: tests/quant_projection.o $(LIB_OBJ) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
@@ -252,7 +258,7 @@ bin/quant_workflow: tests/quant_workflow.o $(LIB_OBJ) | bin
 bin/quant_prepare: src/weights/quant_prepare.o $(LIB_OBJ) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-bin/quant_cache_tests: tests/test_quant_cache.o src/weights/quant_cache.o src/weights/quant.o $(if $(filter Linux,$(PLATFORM)),src/digest.o) | bin
+bin/quant_cache_tests: tests/test_quant_cache.o src/weights/quant_cache.o src/weights/quant.o src/weights/residency.o $(if $(filter Linux,$(PLATFORM)),src/digest.o) | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(if $(filter 1,$(CUDA_OPENSSL)),-lcrypto)
 
 .PHONY: test-quant test-quant-cache
@@ -1044,7 +1050,7 @@ test-current-cuda: all
 	python3 tests/current_cuda_suite.py --out "$${H3_CUDA_CURRENT_OUT:?set a fresh output directory}" --state "$${H3_CUDA_CURRENT_STATE:?set a current CUDA AV state}" --cow-directory "$${H3_CUDA_COW_TMP:?set a scratch directory on a CoW filesystem}"
 
 SERVER_CONTRACT_C := tests/server_contract.c src/server/sglang.c src/server/json.c src/request.c src/cli/options.c src/cli/arguments.c src/weights/lora_json.c
-bin/server_contract: $(SERVER_CONTRACT_C) src/cli/options.def | bin
+bin/server_contract: $(SERVER_CONTRACT_C) src/cli/options.def src/geometry.h src/host.h | bin
 	$(CC) $(CPPFLAGS) $(CFLAGS) -I. $(SERVER_CONTRACT_C) -lm -o $@
 # Deliberately separate executable: no fault injection in production workers.
 src/server/worker.test.o: src/server/worker.c tests/server_fake_worker.inc

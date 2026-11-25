@@ -120,9 +120,9 @@ VAE's own normalization only at reconstruction. Temporal memory is retained
 at every residual memory block within a decode and reset between clips or
 denoising previews. Frame selection uses global expanded indices with
 `index % 20 >= 3`: 7/17/27 latent frames deliver 22/56/90 frames. Production
-supports the backend duration ceiling: 736 frames on CUDA and 362 on Metal,
+supports the backend duration ceiling: 1,450 frames on CUDA and 362 on Metal,
 with the existing canvas limits. Long CUDA full/preview replay is tested at
-256×256/464 frames; see the [duration contract](../cuda/long-video-contract.md).
+256×256/464 frames; see the [duration contract](../cuda/long-video-1450-contract.md).
 
 Metal executes the network in FP16 through MPSGraph. Weights and at most two
 batch/geometry graphs are cached; input storage is reused. Production batches

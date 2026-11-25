@@ -60,6 +60,28 @@ class ContainerTests(unittest.TestCase):
         next(p for p in changed if p[0]==15)[1]=2
         self.check(build(changed),error='section 15')
 
+    def test_temporal_versions_before_tensor_allocation(self):
+        # Expand only the small temporal metadata; movie tensors remain the
+        # original short fixture. A mismatched version must fail before them.
+        for version,video,audio in ((2,217,1228),(3,427,2418)):
+            parts=entries(self.original);p=next(p for p in parts if p[0]==15)
+            prefix=p[-1][:-711];v=p[-1][-711:-604];a=p[-1][-604:]
+            p[1]=version;p[-1]=prefix+v+bytes(video-107)+a+bytes(audio-604)
+            p[4]=len(p[-1])
+            self.check(build(parts),error='before allocation')
+            p[-1]=p[-1][:-1];p[4]-=1
+            self.check(build(parts),error='before allocation')
+        parts=entries(self.original);p=next(p for p in parts if p[0]==15)
+        p[-1][-1]=1
+        self.check(build(parts)) # Nonzero inactive class tail is invalid.
+
+    def test_long_quant_recipe_requires_extended_shape(self):
+        parts=entries(self.original)
+        parts.append([34,1,1,1,8,bytearray(struct.pack('<II',2,5))])
+        self.check(build(parts),error='before allocation')
+        parts[-1][2]=0
+        self.check(build(parts),error='before allocation')
+
     def test_adaptive_budget_format(self):
         fixture=Path(self.temp.name)/'adaptive.h3sample'
         subprocess.run([str(BINARY),'--adaptive-fixture',str(fixture)],cwd=ROOT,check=True,
@@ -114,7 +136,7 @@ class ContainerTests(unittest.TestCase):
             parts=entries(self.original)
             parts.append([34,1,1,1,8,bytearray(struct.pack('<II',mode,2))])
             self.check(build(parts),True)
-            parts[-1][2]=0;self.check(build(parts),error='quantization policy must be required')
+            parts[-1][2]=0;self.check(build(parts),error='invalid quantization policy before allocation')
             parts[-1][2]=1
             for version in (1,99):
                 struct.pack_into('<I',parts[-1][-1],4,version)

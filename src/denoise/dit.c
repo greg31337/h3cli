@@ -1940,7 +1940,7 @@ static h3_dit *load_dit(const char *weight_directory,
         }
         /* Packed streaming belongs to the backend descriptor, not BF16 SSD slots. */
         dit->ssd_streaming=0;
-        dit->fused_mlp=0;
+        dit->fused_mlp=h3_cuda_policy_current().quant_recipe==H3_QUANT_LONG_VERSION;
     }
     #ifdef __APPLE__
     if (!dit->ssd_streaming && !dit->cuda_quant) {

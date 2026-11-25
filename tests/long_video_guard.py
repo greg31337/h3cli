@@ -16,7 +16,8 @@ import time
 GIB = 1 << 30
 
 
-def plan(kind, width, height, frames, *, context=0, merged=None, steps=2, cuda=True, reference_frames=0):
+def plan(kind, width, height, frames, *, context=0, merged=None, steps=2, cuda=True, reference_frames=0,
+         precision='bf16', placement='stream'):
     if kind not in ('native', 'continuation', 'decode', 'script', 'http', 'api'):
         raise ValueError('unsupported bounded campaign operation')
     if (width,height)!=(256,256):
@@ -25,6 +26,10 @@ def plan(kind, width, height, frames, *, context=0, merged=None, steps=2, cuda=T
         raise ValueError('aligned frames must fit the backend and 20-second envelope')
     if steps<1 or steps>6:
         raise ValueError('at most six full-depth evaluations')
+    if precision not in ('bf16','nvfp4') or placement not in ('auto','resident','stream'):
+        raise ValueError('unsupported campaign precision/placement')
+    if precision!='bf16' and not cuda:
+        raise ValueError('NVFP4 requires CUDA')
     if reference_frames<0 or reference_frames>360:
         raise ValueError('reference input exceeds its independent 15-second cap')
     if context and (context<39 or (context-39)%51 or context>=frames):
@@ -35,10 +40,15 @@ def plan(kind, width, height, frames, *, context=0, merged=None, steps=2, cuda=T
     t=2+5*((frames-5)//17); a=(frames*40+12)//24
     # Include an intentionally generous reference/text reserve in admission.
     sequence=t*64+2*a+8192
-    live=max(7*GIB, sequence*358400+GIB+1541406720+2*GIB)
+    # Keep reserves conservative: bounded quant scratch/cold staging <=2 GiB;
+    # resident packed core <11 GiB; streamed packed operand <0.1 GiB.
+    weights=(11*GIB if placement!='stream' else GIB//10) if precision=='nvfp4' else (36*GIB if placement!='stream' else 1541406720)
+    live=max(7*GIB, sequence*358400+GIB+weights+2*GIB)
     capacity=math.ceil(live/.9)
     if capacity>60*GIB: raise ValueError('development capacity exceeds 60 GiB')
     return dict(kind=kind,width=width,height=height,frames=frames,delivered=delivered,
+        source_canvas=[width,height],target_canvas=[width,height],context=context,merged=merged,
+        steps=steps,precision=precision,placement=placement,reference_frames=reference_frames,
         sequence_rows=sequence,live_bytes=live,capacity_bytes=capacity)
 
 
@@ -61,6 +71,32 @@ def inspect_state(path):
     if header[:8]!=b'H3AV\r\n\x1a\n': raise ValueError('expected AV state')
     w,h,frames=struct.unpack_from('<III',header,24)
     return plan('decode',w,h,frames)
+
+
+def inspect_checkpoint(path):
+    """Read only the small identity/table, before a native loader allocates data."""
+    import struct
+    with Path(path).open('rb') as f:
+        header=f.read(96)
+        if header[:8] not in (b'H3SAMPLE',b'H3UPSRC\x01') or len(header)!=96:
+            raise ValueError('expected sampler/source container')
+        count=struct.unpack_from('<I',header,20)[0]
+        if not 1<=count<=64:raise ValueError('invalid bounded section table')
+        entries=f.read(72*count)
+        if len(entries)!=72*count:raise ValueError('truncated section table')
+        for i in range(count):
+            kind,version,flags,dtype,items,offset,size=struct.unpack_from('<4I3Q',entries,i*72)
+            if kind==1:
+                if version!=1 or size<172 or size>512 or offset<96+72*count:
+                    raise ValueError('invalid bounded identity')
+                f.seek(offset);identity=f.read(size)
+                if len(identity)!=size:raise ValueError('truncated identity')
+                w,h,frames=struct.unpack_from('<iii',identity,160)
+                width,height=struct.unpack_from('<ii',identity,16)
+                steps=struct.unpack_from('<i',identity,4)[0]
+                if (width,height)!=(w,h):raise ValueError('hidden render canvas')
+                return plan('decode',w,h,frames,steps=steps)
+    raise ValueError('missing checkpoint identity')
 
 def process_tree(root):
     """Include workers that create their own process group/session."""
@@ -94,6 +130,8 @@ def device_admission(p,total_mib,free_mib):
 def run_case(command, p, output, *, media=True, env=None):
     """Caller holds campaign lock; commands and inspected inputs come from a fixed runner."""
     output = Path(output).resolve()
+    if (env or os.environ).get('H3_TEST_DIT_BLOCKS') not in (None,'50'):
+        raise ValueError('bounded campaign requires all 50 DiT blocks')
     output.parent.mkdir(parents=True, exist_ok=True)
     record = output.with_suffix('.run.json')
     if output.exists() or record.exists():
@@ -104,7 +142,8 @@ def run_case(command, p, output, *, media=True, env=None):
     available = int(re.search(r'MemAvailable:\s+(\d+)', Path('/proc/meminfo').read_text())[1]) * 1024
     if available < 32 * GIB:
         raise ValueError('insufficient available host RAM for this campaign')
-    env = dict(env or os.environ, H3_CUDA_WEIGHT_MODE='stream', H3_PROFILE='1', H3_TEST_MAX_EVALUATIONS='6', H3_OFFLINE='1')
+    env = dict(env or os.environ, H3_CUDA_WEIGHT_MODE=p.get('placement','stream'), H3_PROFILE='1',
+               H3_TEST_CUDA_CAPACITY_BYTES=str(60*GIB), H3_TEST_MAX_EVALUATIONS='6', H3_OFFLINE='1')
     started = time.monotonic()
     metadata = dict(plan=p, command=command, gpu_total_mib=total, gpu_free_mib=free,
                     device_reserve_bytes=reserve,host_available_bytes=available, status='running')

@@ -44,6 +44,7 @@ int h3_cuda_policy_resolve(const h3_params *p,const char *backend,int lora,
        !h3_quant_options(p->cuda_denoise_quant,p->cuda_denoise_quant_cache,error,size))return 0;
     *out=(h3_cuda_policy){.active=1,.weights=weights,.weights_captured=1,.base_recipe=H3_SGLANG_VERSION,
         .attention=p->cuda_attention,.projection_precision=p->cuda_denoise_quant,
+        .quant_recipe=h3_quant_native_recipe(p->cuda_denoise_quant,p->adaptive_cache,p->cuda_attention,p->frames,p->width,p->height),
         .preview=p->preview_vae,.adaptive_cache=p->adaptive_cache,
         .subblock_sparsity=p->subblock_sparsity,
         .adaptive_cache_warmup=p->adaptive_cache_warmup,.subblock_warmup=p->subblock_warmup,

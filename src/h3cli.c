@@ -98,7 +98,7 @@ static void usage(const char *program) {
         "                        Learned 2x CUDA upscale: up to 3840x2176; full VAE only\n"
         "      --render-width N   Lower internal model width (optional)\n"
         "      --render-height N  Lower internal model height (optional)\n"
-        "      --frames N         Raw target frames including context (default: 56; CUDA <=736, Metal <=362)\n"
+        "      --frames N         Raw target frames including context (default: 56; CUDA <=1450, Metal <=362)\n"
         "      --seconds N        Requested duration at 24 fps (instead of --frames)\n"
         "      --steps N          Denoising passes (default: 20)\n"
         "      --quality LEVEL    lossless, extra-high, high, preview or fast-preview\n"

@@ -6,6 +6,7 @@
 #include "src/sampling/av_state.h"
 #include "src/digest.h"
 #include "src/weights/q8.h"
+#include "src/weights/quant.h"
 #include "src/denoise/attention.h"
 #include "src/denoise/subblock.h"
 #include "src/denoise/approximate.h"
@@ -166,7 +167,9 @@ static void section(buffer *b,unsigned id,unsigned format_version,h3_sampler_sta
             i32(b,&p->video_bridge_t); i32(b,&p->video_exact_t); i32(b,&p->bridge_frames); i32(b,&p->audio_bridge_t); i32(b,&p->audio_exact_t);
             int type=(int)p->type; i32(b,&type); p->type=type; f32(b,&p->max_strength); i32(b,&p->class_count);
             bytes(b,p->active,sizeof(p->active)); bytes(b,p->class_mask,sizeof(p->class_mask));
-            bytes(b,p->video_classes,format_version>=2?sizeof(p->video_classes):107); bytes(b,p->audio_classes,format_version>=2?sizeof(p->audio_classes):604);
+            /* Wire extents are fixed by version, not by today's C array size. */
+            bytes(b,p->video_classes,h3_sampler_temporal_classes(format_version,0));
+            bytes(b,p->audio_classes,h3_sampler_temporal_classes(format_version,1));
         } break;
     }
     case 16:
@@ -327,12 +330,12 @@ static void section(buffer *b,unsigned id,unsigned format_version,h3_sampler_sta
 }
 static unsigned dtype(unsigned id) { return (id==5 || id==41 || id==42 || (id>=25 && id<=29))?3:((id==7||id==8||(id>=12&&id<=13)||(id>=17&&id<=22))?2:1); }
 static unsigned section_version(unsigned id,const h3_sampler_state *s) {
-    if(id==15&&s->aligned_frames>H3_LEGACY_MAX_FRAMES)return 2;
+    if(id==15)return h3_sampler_temporal_version(s->aligned_frames);
     if(id==40)return 3;
     if(id==45&&s->upscale.stage==2)return 2;
     return id==44?2u:1u;
 }
-static int supported_version(unsigned id,uint64_t version) { return id!=33 && ((id==45||id==15) ? (version==1||version==2) : version==(id==40?3u:id==44?2u:1u)); }
+static int supported_version(unsigned id,uint64_t version) { return id!=33 && (id==15?(version>=1&&version<=3):id==45?(version==1||version==2):version==(id==40?3u:id==44?2u:1u)); }
 static int needed(unsigned id,const h3_sampler_state *s) { return (id==21 && s->upscale.stage==2) || (id==46 && s->params.geometry_profile) || (id==45 && s->upscale.stage) || id<=16 || (id>=17 && id<=20 && s->reuse_interval>1 && !s->sampler_mode) || id==24 ||
     (id>=25 && id<=28 && s->reuse_interval>1 && s->sampler_mode) || (id==29 && s->params.core_reuse>1) || id==32 || (id==34 && s->params.cuda_denoise_quant) || (id==35 && s->params.cuda_attention) || (id==36 && s->params.backend) || (id==37 && s->params.metal_attention.weight_format) || (id==38 && s->params.cuda_attention==H3_ATTENTION_SOL) || (id==39 && s->params._arithmetic_recipe) || (id>=40 && id<=42 && s->params.adaptive_cache) || (id==43 && s->params.cuda_attention==H3_ATTENTION_SUBBLOCK) || (id==44 && (s->upscale.stage || s->params.adaptive_cache || s->params.cuda_attention==H3_ATTENTION_SUBBLOCK)); }
 static int present(unsigned id,const h3_sampler_state *s) {
@@ -477,8 +480,40 @@ static h3_sampler_state *load_state(const char *path,int source,uint64_t budget,
         if(id==1 && !h3_frames_supported(s->aligned_frames,H3_NATIVE_CUDA)) {
             fail(error,size,"checkpoint duration exceeds backend limit (extended durations require CUDA)");goto invalid;
         }
-        if(id==15 && s->aligned_frames>H3_LEGACY_MAX_FRAMES && get(e+4,4)!=2) {
-            fail(error,size,"extended duration requires temporal section version 2");goto invalid;
+        if(id==1) {
+            const uint8_t *temporal=entries[15];
+            unsigned version=h3_sampler_temporal_version(s->aligned_frames);
+            if(!temporal||get(temporal+4,4)!=version||get(temporal+8,4)!=REQUIRED||get(temporal+32,8)<120) {
+                fail(error,size,"invalid section 15 temporal version before allocation");goto invalid;
+            }
+            const uint8_t *payload=data+get(temporal+24,8);
+            uint64_t bridge=get(payload+116,4);
+            uint64_t expected=120+(bridge?44+24+96+h3_sampler_temporal_classes(version,0)+h3_sampler_temporal_classes(version,1):0);
+            if(bridge>1||get(temporal+32,8)!=expected) {
+                fail(error,size,"invalid section 15 dimensions/length before allocation");goto invalid;
+            }
+            /* Precision identity is tiny and follows large tensors on disk.
+             * Reject unsupported extended policies before those allocations. */
+            int extended=s->aligned_frames>H3_LEGACY_MAX_FRAMES||s->params.geometry_profile>=2;
+            const uint8_t *quant=entries[34];
+            if(quant) {
+                if(get(quant+8,4)!=REQUIRED||get(quant+32,8)!=8) {
+                    fail(error,size,"invalid quantization policy before allocation");goto invalid;
+                }
+                const uint8_t *q=data+get(quant+24,8);uint64_t mode=get(q,4),recipe=get(q+4,4);
+                if(mode<1||mode>2||recipe<2||recipe>H3_QUANT_LONG_VERSION||
+                   source||s->params.geometry_profile==1||s->params.geometry_profile==3||
+                   (extended&&(mode!=H3_QUANT_NVFP4||recipe!=h3_quant_native_recipe((int)mode,0,0,s->aligned_frames,s->params.width,s->params.height)))||
+                   (!extended&&recipe==H3_QUANT_LONG_VERSION)) {
+                    fail(error,size,"unsupported quantization recipe before allocation");goto invalid;
+                }
+            }
+            if(extended&&(entries[35]||entries[40])) {
+                fail(error,size,"extended checkpoint requires default attention without adaptive cache before allocation");goto invalid;
+            }
+        }
+        if(id==15 && get(e+4,4)!=section_version(15,s)) {
+            fail(error,size,"temporal section version does not match effective duration");goto invalid;
         }
         if(id==40) {
             /* Warmup/device metadata follows the cache payloads on disk. Read

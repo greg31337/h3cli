@@ -86,11 +86,13 @@ __global__ static void quant_diagnostics(const __nv_bfloat16 *source,const unsig
     if(zeroed)atomicAdd(counts+2,(unsigned long long)zeroed);
 }
 static int quant_pack(h3_gpu *g,const void *source,void *packed,unsigned rows,unsigned padded,unsigned k,
-                      int mode,size_t scale,size_t global,const float *weight_global=nullptr) {
+                      int mode,size_t scale,size_t global,const float *weight_global=nullptr,const float *global_amax=nullptr) {
     float *gs=(float*)((char*)packed+global);
     if(!checked(g,cudaMemsetAsync(gs,0,16,g->compute),"quant scale reset"))return 0;
     unsigned grid=(unsigned)std::min<size_t>(4096,((size_t)rows*k+255)/256);
-    quant_amax<<<grid,256,0,g->compute>>>((const __nv_bfloat16*)source,(size_t)rows*k,gs,(unsigned*)g->quant_fault->data);
+    if(global_amax) {
+        if(!checked(g,cudaMemcpyAsync(gs,global_amax,sizeof(float),cudaMemcpyDeviceToDevice,g->compute),"tensor-wide quant amax"))return 0;
+    }else quant_amax<<<grid,256,0,g->compute>>>((const __nv_bfloat16*)source,(size_t)rows*k,gs,(unsigned*)g->quant_fault->data);
     quant_finish_scale<<<1,1,0,g->compute>>>(gs,weight_global,mode);
     if(mode==H3_QUANT_FP8)
         quant_fp8_pack<<<grid,256,0,g->compute>>>((const __nv_bfloat16*)source,(unsigned char*)packed,(float*)((char*)packed+scale),gs,rows,padded,k);
@@ -125,6 +127,18 @@ static int quant_mkdir(const std::string &path) {
     }
     return 1;
 }
+static cuda_gemm_plan *quant_plan(h3_gpu *g,unsigned padded,unsigned k,unsigned n,int mode);
+int h3_gpu_quant_shape_preflight(h3_gpu *g,uint64_t rows) {
+    if(!g||!h3_canvas_sequence_valid(rows,1))return 0;
+    const unsigned nk[][2]={{21504,5376},{5376,7168},{28672,5376},{5376,14336}};
+    unsigned slab=(unsigned)std::min<uint64_t>(H3_QUANT_LONG_ROWS,quant_up(rows,128));
+    unsigned tail=(unsigned)quant_up(rows%H3_QUANT_LONG_ROWS,128);
+    for(const auto &shape:nk) {
+        if(!quant_plan(g,slab,shape[1],shape[0],H3_QUANT_NVFP4)||
+           (tail&&!quant_plan(g,tail,shape[1],shape[0],H3_QUANT_NVFP4)))return 0;
+    }
+    return 1;
+}
 int h3_gpu_quant_configure(h3_gpu *g,int mode,const char *cache,uint64_t weights,uint64_t activations,int force_stream) {
     if(g && g->policy.active && mode!=g->policy.projection_precision)
         return h3_gpu_set_error(g,"quantization differs from captured CUDA request policy");
@@ -150,14 +164,29 @@ int h3_gpu_quant_configure(h3_gpu *g,int mode,const char *cache,uint64_t weights
     }
     if(force_stream&&g->weight_options.mode==H3_WEIGHTS_RESIDENT)return h3_gpu_set_error(g,"--ssd-streaming conflicts with CUDA resident weight mode");
     /* Largest conversion operand, packed stream buffer and activation/output scratch. */
-    int stream=h3_gpu_plan_weights(g,packed+(1ull<<30),activations+(2ull<<30));
+    uint64_t future=activations+(2ull<<30),planned_weights=packed+(1ull<<30);
+    if(g->policy.quant_recipe==H3_QUANT_LONG_VERSION) {
+        h3_quant_memory m;
+        uint64_t rows=(activations+358399)/358400;
+        if(!h3_quant_memory_estimate(rows,(unsigned)(weights/bf16_block),&m))
+            return h3_gpu_set_error(g,"invalid bounded NVFP4 geometry");
+        future=m.future_bytes+m.cold_conversion_bytes;planned_weights=m.packed_core_bytes;
+        if(!h3_memory_check(m.cold_host_bytes,"NVFP4 packed host cache and cold conversion",g->error,sizeof(g->error)))return 0;
+        if(!h3_gpu_quant_shape_preflight(g,rows))return 0;
+        H3_VERBOSE("h3cli: bounded NVFP4 recipe=5 rows=%llu slab=%llu packed=%llu stream=%llu cold_conversion=%llu activation=%llu padded_output=%llu mlp=%llu future=%llu host_stream=%llu\n",
+            (unsigned long long)rows,(unsigned long long)m.chunk_rows,(unsigned long long)m.packed_core_bytes,
+            (unsigned long long)m.packed_stream_bytes,(unsigned long long)m.cold_conversion_bytes,
+            (unsigned long long)m.activation_bytes,(unsigned long long)m.padded_output_bytes,
+            (unsigned long long)m.mlp_bytes,(unsigned long long)future,(unsigned long long)m.streamed_host_bytes);
+    }
+    int stream=h3_gpu_plan_weights(g,planned_weights,future);
     if(stream<0)return 0;
     g->quant_streaming=stream!=0||force_stream;
     g->quant_diagnostics=getenv("H3_QUANT_DIAGNOSTICS")&&!strcmp(getenv("H3_QUANT_DIAGNOSTICS"),"1");
     g->quant_fault=h3_gpu_tensor_alloc(g,6,H3_GPU_U32,H3_GPU_DEVICE_ONLY);
     if(!g->quant_fault||!checked(g,cudaMemset(g->quant_fault->data,0,24),"quant finite flag"))return 0;
     H3_VERBOSE("h3cli: DiT quantization=%s recipe=%d native cuBLASLt=%zu SM120 W%dA%d BF16-output FP32-accumulation weights=%s cache=%s verification=%s\n",
-        h3_quant_name(mode),h3_quant_execution_recipe(mode,g->policy.adaptive_cache,g->policy.attention),cublasLtGetVersion(),mode==1?8:4,mode==1?8:4,
+        h3_quant_name(mode),(g->policy.quant_recipe?g->policy.quant_recipe:h3_quant_execution_recipe(mode,g->policy.adaptive_cache,g->policy.attention)),cublasLtGetVersion(),mode==1?8:4,mode==1?8:4,
         g->quant_streaming?"compressed-stream":"compressed-resident",g->quant_cache.c_str(),
         g->quant_verify?"sha256-strict":"metadata-v2 (no weight hashing)");
     if(g->policy.adaptive_cache)H3_VERBOSE("h3cli: adaptive quantization: block 0 projections BF16, blocks 1-49 %s, cache BF16, score FP32; packing recipe %d\n",h3_quant_name(mode),H3_QUANT_VERSION);
@@ -336,31 +365,15 @@ static int quant_arena(h3_gpu *g,h3_gpu_tensor **tensor,size_t bytes,h3_gpu_dtyp
     h3_gpu_tensor_free(*tensor);*tensor=h3_gpu_tensor_alloc(g,(bytes+item_size(dtype)-1)/item_size(dtype),dtype,H3_GPU_DEVICE_ONLY);
     return *tensor!=nullptr;
 }
-static int quant_gemm(h3_gpu *g,h3_gpu_tensor *out,const h3_gpu_tensor *in,const h3_gpu_tensor *w,
-                       unsigned rows,unsigned k,unsigned n) {
-    if(!launch_ready(g)||!w||!rows||w->owner!=g||w->quant_k!=k||w->quant_n!=n||
-        !h3_gpu_require_bf16(g,in,(size_t)rows*k,"quant input")||!h3_gpu_require_bf16(g,out,(size_t)rows*n,"quant output"))return 0;
-    unsigned padded=(unsigned)quant_up(rows,128);size_t scale,global,bytes=quant_bytes(padded,k,w->quant_mode,&scale,&global);
-    if(!quant_arena(g,&g->quant_activation,bytes,H3_GPU_I8))return 0;
-    const void *weight=w->data;
-    if(!w->quant_host.empty()) {
-        if(!quant_arena(g,&g->quant_stream,w->quant_host.size(),H3_GPU_I8))return 0;
-        if(!checked(g,cudaMemcpyAsync(g->quant_stream->data,w->quant_host.data(),w->quant_host.size(),cudaMemcpyHostToDevice,g->compute),"packed weight stream"))return 0;
-        g->stats.h2d_bytes+=w->quant_host.size();g->stats.streamed_bytes+=w->quant_host.size();weight=g->quant_stream->data;
-    }else weight=tensor_pointer(w);
-    void *input=g->quant_activation->data,*output=tensor_pointer(out);
-    if(padded!=rows){if(!quant_arena(g,&g->quant_output,(size_t)padded*n*2,H3_GPU_BF16))return 0;output=g->quant_output->data;}
-    profile_scope timing(g,0);
-    {profile_scope conversion(g,7);
-     if(!quant_pack(g,tensor_pointer(in),input,rows,padded,k,w->quant_mode,scale,global,(const float*)((const char*)weight+w->quant_global)))return 0;}
-    auto key=std::make_tuple(padded,k,n,w->quant_mode);
+static cuda_gemm_plan *quant_plan(h3_gpu *g,unsigned padded,unsigned k,unsigned n,int mode) {
+    auto key=std::make_tuple(padded,k,n,mode);
     auto found=g->quant_plans.find(key);
     if(found==g->quant_plans.end()) {
         if(g->quant_plans.size()>=128)g->quant_plans.clear();
         auto plan=std::make_unique<cuda_gemm_plan>();auto &p=*plan;
         cublasOperation_t trans=CUBLAS_OP_T;cublasLtPointerMode_t pointer=CUBLASLT_POINTER_MODE_DEVICE;
-        cudaDataType_t dtype=w->quant_mode==1?CUDA_R_8F_E4M3:CUDA_R_4F_E2M1;
-        cublasLtMatmulMatrixScale_t scaling=w->quant_mode==1?CUBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F:CUBLASLT_MATMUL_MATRIX_SCALE_VEC16_UE4M3;
+        cudaDataType_t dtype=mode==1?CUDA_R_8F_E4M3:CUDA_R_4F_E2M1;
+        cublasLtMatmulMatrixScale_t scaling=mode==1?CUBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F:CUBLASLT_MATMUL_MATRIX_SCALE_VEC16_UE4M3;
         cublasStatus_t status=CUBLAS_STATUS_SUCCESS;
 #define QLT(call) do{if(status==CUBLAS_STATUS_SUCCESS){status=(call);if(status!=CUBLAS_STATUS_SUCCESS)fprintf(stderr,"h3cli: quant descriptor %s failed status=%d\n",#call,(int)status);}}while(0)
         QLT(cublasLtMatmulDescCreate(&p.operation,CUBLAS_COMPUTE_32F,CUDA_R_32F));
@@ -368,9 +381,12 @@ static int quant_gemm(h3_gpu *g,h3_gpu_tensor *out,const h3_gpu_tensor *in,const
         QLT(cublasLtMatmulDescSetAttribute(p.operation,CUBLASLT_MATMUL_DESC_POINTER_MODE,&pointer,sizeof(pointer)));
         QLT(cublasLtMatmulDescSetAttribute(p.operation,CUBLASLT_MATMUL_DESC_A_SCALE_MODE,&scaling,sizeof(scaling)));
         QLT(cublasLtMatmulDescSetAttribute(p.operation,CUBLASLT_MATMUL_DESC_B_SCALE_MODE,&scaling,sizeof(scaling)));
-        const void *weight_scale=(const char*)weight+w->quant_scale,*activation_scale=(const char*)input+scale;
-        QLT(cublasLtMatmulDescSetAttribute(p.operation,CUBLASLT_MATMUL_DESC_A_SCALE_POINTER,&weight_scale,sizeof(weight_scale)));
-        QLT(cublasLtMatmulDescSetAttribute(p.operation,CUBLASLT_MATMUL_DESC_B_SCALE_POINTER,&activation_scale,sizeof(activation_scale)));
+        /* cuBLASLt requires non-null scale addresses even for a descriptor-only
+         * heuristic query. The existing aligned GEMM workspace is not read by
+         * the query; execution replaces both addresses with real scale arrays. */
+        const void *query_scale=g->workspace;
+        QLT(cublasLtMatmulDescSetAttribute(p.operation,CUBLASLT_MATMUL_DESC_A_SCALE_POINTER,&query_scale,sizeof(query_scale)));
+        QLT(cublasLtMatmulDescSetAttribute(p.operation,CUBLASLT_MATMUL_DESC_B_SCALE_POINTER,&query_scale,sizeof(query_scale)));
         QLT(cublasLtMatrixLayoutCreate(&p.a,dtype,k,n,k));QLT(cublasLtMatrixLayoutCreate(&p.b,dtype,k,padded,k));
         QLT(cublasLtMatrixLayoutCreate(&p.c,CUDA_R_16BF,n,padded,n));
         cublasLtMatmulPreference_t preference=nullptr;QLT(cublasLtMatmulPreferenceCreate(&preference));
@@ -381,24 +397,103 @@ static int quant_gemm(h3_gpu *g,h3_gpu_tensor *out,const h3_gpu_tensor *in,const
         int chosen=-1;
         for(int i=0;i<count;i++){cublasLtMatmulHeuristicResult_t check={};if(candidates[i].state==CUBLAS_STATUS_SUCCESS&&
             cublasLtMatmulAlgoCheck(g->lt,p.operation,p.a,p.b,p.c,p.c,&candidates[i].algo,&check)==CUBLAS_STATUS_SUCCESS&&check.state==CUBLAS_STATUS_SUCCESS&&check.workspaceSize<=g->workspace_bytes){chosen=i;break;}}
-        if(status!=CUBLAS_STATUS_SUCCESS||chosen<0)return h3_gpu_set_error(g,"native %s GEMM %ux%ux%u unavailable: cuBLASLt status=%d candidates=%d",h3_quant_name(w->quant_mode),padded,n,k,(int)status,count);
+        if(status!=CUBLAS_STATUS_SUCCESS||chosen<0){h3_gpu_set_error(g,"native %s GEMM %ux%ux%u unavailable: cuBLASLt status=%d candidates=%d",h3_quant_name(mode),padded,n,k,(int)status,count);return nullptr;}
         p.algorithm=candidates[chosen].algo;
-        if(g->profiling)fprintf(stderr,"h3cli: native %s GEMM plan rows=%u N=%u K=%u candidates=%d workspace=%zu\n",h3_quant_name(w->quant_mode),padded,n,k,count,g->workspace_bytes);
+        if(g->profiling)fprintf(stderr,"h3cli: native %s GEMM plan rows=%u N=%u K=%u candidates=%d workspace=%zu\n",h3_quant_name(mode),padded,n,k,count,g->workspace_bytes);
         found=g->quant_plans.emplace(key,std::move(plan)).first;
 #undef QLT
     }
-    auto &p=*found->second;const void *ws=(const char*)weight+w->quant_scale,*as=(const char*)input+scale;
+    return found->second.get();
+}
+static int quant_gemm_core(h3_gpu *g,void *destination,const void *source,const h3_gpu_tensor *w,
+                           unsigned rows,unsigned k,unsigned n,const float *global_amax=nullptr) {
+    unsigned padded=(unsigned)quant_up(rows,128);size_t scale,global,bytes=quant_bytes(padded,k,w->quant_mode,&scale,&global);
+    if(!quant_arena(g,&g->quant_activation,bytes,H3_GPU_I8))return 0;
+    const void *weight=w->data;
+    if(!w->quant_host.empty()) {
+        if(!quant_arena(g,&g->quant_stream,w->quant_host.size(),H3_GPU_I8))return 0;
+        if(!checked(g,cudaMemcpyAsync(g->quant_stream->data,w->quant_host.data(),w->quant_host.size(),cudaMemcpyHostToDevice,g->compute),"packed weight stream"))return 0;
+        g->stats.h2d_bytes+=w->quant_host.size();g->stats.streamed_bytes+=w->quant_host.size();weight=g->quant_stream->data;
+    }else weight=tensor_pointer(w);
+    void *input=g->quant_activation->data,*output=destination;
+    if(padded!=rows){if(!quant_arena(g,&g->quant_output,(size_t)padded*n*2,H3_GPU_BF16))return 0;output=g->quant_output->data;}
+    profile_scope timing(g,0);
+    {profile_scope conversion(g,7);
+     if(!quant_pack(g,source,input,rows,padded,k,w->quant_mode,scale,global,(const float*)((const char*)weight+w->quant_global),global_amax))return 0;}
+    auto *plan=quant_plan(g,padded,k,n,w->quant_mode);if(!plan)return 0;
+    auto &p=*plan;const void *ws=(const char*)weight+w->quant_scale,*as=(const char*)input+scale;
     const float *gs=(const float*)((char*)input+global);
     cublasStatus_t status=cublasLtMatmulDescSetAttribute(p.operation,CUBLASLT_MATMUL_DESC_A_SCALE_POINTER,&ws,sizeof(ws));
     if(status==CUBLAS_STATUS_SUCCESS)status=cublasLtMatmulDescSetAttribute(p.operation,CUBLASLT_MATMUL_DESC_B_SCALE_POINTER,&as,sizeof(as));
     if(status==CUBLAS_STATUS_SUCCESS)status=cublasLtMatmul(g->lt,p.operation,gs+1,weight,p.a,input,p.b,gs+2,output,p.c,output,p.c,&p.algorithm,g->workspace,g->workspace_bytes,g->compute);
     if(status!=CUBLAS_STATUS_SUCCESS)return h3_gpu_set_error(g,"native %s GEMM failed: cuBLASLt status=%d",h3_quant_name(w->quant_mode),(int)status);
-    if(padded!=rows&&!checked(g,cudaMemcpyAsync(out->data,output,(size_t)rows*n*2,cudaMemcpyDeviceToDevice,g->compute),"quant output tail"))return 0;
+    if(padded!=rows&&!checked(g,cudaMemcpyAsync(destination,output,(size_t)rows*n*2,cudaMemcpyDeviceToDevice,g->compute),"quant output tail"))return 0;
     g->quant_calls++;g->stats.linear_dispatches++;return launch_status(g,"native quantized projection");
 }
+static int quant_reduce(h3_gpu *g,const void *source,size_t count,float *maximum,bool reset) {
+    if(reset&&!checked(g,cudaMemsetAsync(maximum,0,4,g->compute),"tensor-wide amax reset"))return 0;
+    unsigned grid=(unsigned)std::min<size_t>(4096,(count+255)/256);
+    quant_amax<<<grid,256,0,g->compute>>>((const __nv_bfloat16*)source,count,maximum,(unsigned*)g->quant_fault->data);
+    return launch_status(g,"tensor-wide amax reduction");
+}
+static int quant_gemm(h3_gpu *g,h3_gpu_tensor *out,const h3_gpu_tensor *in,const h3_gpu_tensor *w,
+                       unsigned rows,unsigned k,unsigned n,size_t out_offset=0,size_t in_offset=0) {
+    if(!launch_ready(g)||!w||!rows||w->owner!=g||w->quant_k!=k||w->quant_n!=n||
+       !h3_gpu_require_bf16(g,in,in_offset+(size_t)rows*k,"quant input")||
+       !h3_gpu_require_bf16(g,out,out_offset+(size_t)rows*n,"quant output")||
+       in_offset>in->elements||(size_t)rows*k>in->elements-in_offset||
+       out_offset>out->elements||(size_t)rows*n>out->elements-out_offset)return 0;
+    const char *source=(const char*)tensor_pointer(in,in_offset*2);
+    char *destination=(char*)tensor_pointer(out,out_offset*2);
+    if(g->policy.quant_recipe!=H3_QUANT_LONG_VERSION) {
+        if(out_offset||in_offset)return h3_gpu_set_error(g,"offsets require bounded NVFP4 recipe");
+        return quant_gemm_core(g,destination,source,w,rows,k,n);
+    }
+    if(!h3_canvas_sequence_valid(rows,1)||!quant_arena(g,&g->quant_globals,32,H3_GPU_F32))return 0;
+    auto *maximum=(float*)g->quant_globals->data;
+    if(!quant_reduce(g,source,(size_t)rows*k,maximum,true))return 0;
+    for(unsigned row=0;row<rows;row+=H3_QUANT_LONG_ROWS) {
+        unsigned count=std::min(H3_QUANT_LONG_ROWS,rows-row);
+        if(!quant_gemm_core(g,destination+(size_t)row*n*2,source+(size_t)row*k*2,w,count,k,n,maximum))return 0;
+    }
+    return 1;
+}
+static int quant_mlp(h3_gpu *g,h3_gpu_tensor *out,const h3_gpu_tensor *in,
+    const h3_gpu_tensor *w1,const h3_gpu_tensor *w2,unsigned rows,unsigned width,unsigned hidden,unsigned n) {
+    if(!launch_ready(g)||!w1||!w2||w1->owner!=g||w2->owner!=g||
+       w1->quant_mode!=H3_QUANT_NVFP4||w2->quant_mode!=H3_QUANT_NVFP4||
+       w1->quant_n!=2*hidden||w1->quant_k!=width||w2->quant_n!=n||w2->quant_k!=hidden)
+        return h3_gpu_set_error(g,"invalid bounded NVFP4 MLP shape/weights");
+    unsigned slab=std::min(rows,H3_QUANT_LONG_ROWS);
+    if(!quant_arena(g,&g->quant_mlp_fc1,(size_t)slab*hidden*4,H3_GPU_BF16)||
+       !quant_arena(g,&g->quant_mlp_activated,(size_t)slab*hidden*2,H3_GPU_BF16)||
+       !quant_arena(g,&g->quant_globals,32,H3_GPU_F32))return 0;
+    auto *maximum=(float*)g->quant_globals->data;
+    const char *source=(const char*)tensor_pointer(in);char *destination=(char*)tensor_pointer(out);
+    if(!quant_reduce(g,source,(size_t)rows*width,maximum,true))return 0;
+    /* FC2's global scale depends on every activated row. A bounded first pass
+     * finds that maximum; recomputation retains exact temporal context and
+     * avoids retaining full-sequence FC1 and SwiGLU tensors. */
+    for(unsigned row=0;row<rows;row+=slab) {
+        unsigned count=std::min(slab,rows-row);
+        if(!quant_gemm_core(g,g->quant_mlp_fc1->data,source+(size_t)row*width*2,w1,count,width,hidden*2,maximum)||
+           !h3_gpu_swiglu_bf16(g,g->quant_mlp_activated,g->quant_mlp_fc1,count,hidden)||
+           !quant_reduce(g,g->quant_mlp_activated->data,(size_t)count*hidden,maximum+1,row==0))return 0;
+    }
+    for(unsigned row=0;row<rows;row+=slab) {
+        unsigned count=std::min(slab,rows-row);
+        if(rows>slab&&(!quant_gemm_core(g,g->quant_mlp_fc1->data,source+(size_t)row*width*2,w1,count,width,hidden*2,maximum)||
+           !h3_gpu_swiglu_bf16(g,g->quant_mlp_activated,g->quant_mlp_fc1,count,hidden)))return 0;
+        if(!quant_gemm_core(g,destination+(size_t)row*n*2,g->quant_mlp_activated->data,w2,count,hidden,n,maximum+1))return 0;
+    }
+    return 1;
+}
+
 #else
+int h3_gpu_quant_shape_preflight(h3_gpu *g,uint64_t){return h3_gpu_set_error(g,"native quantization unavailable in this build");}
 int h3_quant_preflight(int mode,char *error,size_t size){if(!mode)return 1;snprintf(error,size,"cuda-denoise-quant requires CUDA 12.8 Update 1 or newer");return 0;}
 int h3_gpu_quant_configure(h3_gpu *g,int mode,const char*,uint64_t,uint64_t,int){return h3_quant_preflight(mode,g->error,sizeof(g->error));}
 h3_gpu_tensor *h3_gpu_quant_load(h3_gpu*,const char*,uint64_t,unsigned,unsigned){return nullptr;}
-static int quant_gemm(h3_gpu *g,h3_gpu_tensor*,const h3_gpu_tensor*,const h3_gpu_tensor*,unsigned,unsigned,unsigned){return h3_gpu_set_error(g,"native quantization unavailable in this build");}
+static int quant_gemm(h3_gpu *g,h3_gpu_tensor*,const h3_gpu_tensor*,const h3_gpu_tensor*,unsigned,unsigned,unsigned,size_t=0,size_t=0){return h3_gpu_set_error(g,"native quantization unavailable in this build");}
+static int quant_mlp(h3_gpu *g,h3_gpu_tensor*,const h3_gpu_tensor*,const h3_gpu_tensor*,const h3_gpu_tensor*,unsigned,unsigned,unsigned,unsigned){return h3_gpu_set_error(g,"native quantization unavailable in this build");}
 #endif

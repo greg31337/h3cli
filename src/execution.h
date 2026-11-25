@@ -12,6 +12,7 @@ typedef struct {
     h3_weight_options weights;
     int weights_captured;
     int base_recipe, attention, projection_precision;
+    unsigned quant_recipe;
     int preview;
     int adaptive_cache;
     float subblock_sparsity;

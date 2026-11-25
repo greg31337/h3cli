@@ -1,12 +1,15 @@
 #ifndef H3_QUANT_H
 #define H3_QUANT_H
 #include <stddef.h>
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
 #define H3_QUANT_VERSION 2
 #define H3_QUANT_ADAPTIVE_VERSION 3
 #define H3_QUANT_SUBBLOCK_VERSION 4
+#define H3_QUANT_LONG_VERSION 5
+#define H3_QUANT_LONG_ROWS 8192u
 enum { H3_QUANT_OFF=0, H3_QUANT_FP8=1, H3_QUANT_NVFP4=2 };
 typedef struct { int mode; const char *cache; } h3_quant_scope;
 const char *h3_quant_name(int mode);
@@ -25,6 +28,19 @@ int h3_quant_projection(const char *name,int requested);
 unsigned h3_quant_recipe(int mode,int adaptive_cache);
 /* Recipe 4 binds unchanged all-block projection arithmetic to SubBlock. */
 unsigned h3_quant_execution_recipe(int mode,int adaptive_cache,int attention);
+/* Recipe 5: bounded projections and two-pass MLP, tensor-wide activation amax.
+ * The row slab is part of execution identity, never of packed-weight identity. */
+unsigned h3_quant_native_recipe(int mode,int adaptive_cache,int attention,int frames,int width,int height);
+typedef struct {
+    uint64_t logical_rows,padded_rows,chunk_rows;
+    uint64_t packed_core_bytes,packed_stream_bytes,cold_conversion_bytes;
+    uint64_t activation_bytes,padded_output_bytes,mlp_bytes,global_bytes;
+    uint64_t future_bytes,cold_device_bytes,warm_device_bytes;
+    uint64_t streamed_host_bytes,cold_host_bytes;
+} h3_quant_memory;
+/* Host/descriptor-only: no tensor allocation. Includes conservative DiT/library
+ * allowance; physical free-memory reserve is applied separately, once. */
+int h3_quant_memory_estimate(uint64_t rows,unsigned blocks,h3_quant_memory *out);
 int h3_quant_projection_policy(const char *name,int requested,int adaptive_cache);
 h3_quant_scope h3_quant_exchange(h3_quant_scope next);
 h3_quant_scope h3_quant_current(void);

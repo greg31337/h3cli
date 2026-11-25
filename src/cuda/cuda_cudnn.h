@@ -6,11 +6,16 @@
 /* Shared by plan admission and the tracked allocator. Decoder FFT workspace
  * grows with duration; the old 512 MiB ceiling does not cover 736 frames. */
 static constexpr size_t H3_CUDNN_AUDIO_WORKSPACE_LIMIT = size_t{3} << 30;
+/* Descriptor-audited through 1450 frames: peak 123,750,400 bytes. */
+static constexpr size_t H3_CUDNN_AUDIO_LAYOUT_LIMIT = size_t{128} << 20;
 #ifdef H3_CUDA_USE_CUDNN
 /* Independent reference-audio context. Caller owns the bounded workspace and
  * channels-first buffers; an output of nullptr only prepares/queries a plan. */
 void *h3_cudnn_reference_create(cudaStream_t stream);
 void h3_cudnn_reference_free(void *state);
+/* Queries every generated-audio decoder convolution, without tensor allocation. */
+int h3_cudnn_audio_decode_plan(unsigned time,size_t *workspace,size_t *layout,
+    char *error,size_t error_size);
 int h3_cudnn_reference_conv(void *state,float *out,const float *in,const float *weight,
     unsigned batch,unsigned length,unsigned ci,unsigned co,unsigned kernel,
     unsigned stride,unsigned padding,unsigned dilation,bool transpose,

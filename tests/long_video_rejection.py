@@ -21,7 +21,7 @@ with tempfile.TemporaryDirectory() as tmp:
         assert 'missing required model' not in p.stderr.lower(),p.stderr
         if words:assert any(w in p.stderr for w in words),p.stderr
         checks+=1
-    for frames in ((737,2147483647) if sys.platform!='darwin' else (363,464,736,737,2147483647)):
+    for frames in ((1451,2147483647) if sys.platform!='darwin' else (363,464,736,753,1450,1451,2147483647)):
         reject(['-p','A teapot.','--width','256','--height','256','--frames',frames,'--steps','2'],('frames','limit'))
     for seconds in ('nan','inf','1e99','-1'):
         reject(['-p','A teapot.','--seconds',seconds],('seconds',))

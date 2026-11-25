@@ -32,11 +32,13 @@ delivery. Existing `.h3up` recipes 1/2 remain untrimmed. This adds no container
 fields and does not change ordinary saved-state bytes; readers without recipe 3
 support reject it. See [AV upscaling](latent-upscaling.md).
 
-CUDA duration through 736 frames is independent of canvas profile. AV schema 3
+CUDA duration through 1,450 frames is independent of canvas profile. AV schema 3
 expresses it directly; sampler/source envelope 2 uses required section 15 v2
-above 362 frames. Short section 15 v1 remains byte-compatible. Metal rejects
+for 363–736 frames and v3 for 737–1,450. Short section 15 v1 remains
+byte-compatible. Native long NVFP4 records execution recipe 5 while retaining
+packed-weight recipe 2. Metal rejects
 long execution even for profile 0/1. See the
-[duration contract](../cuda/long-video-contract.md).
+[duration contract](../cuda/long-video-1450-contract.md).
 
 Require matching current files for decode, continuation, bridge, conditioning
 reuse, checkpoint resume, and upscale. Retain bounds, finite-value, checksum,

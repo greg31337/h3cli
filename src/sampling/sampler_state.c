@@ -284,7 +284,7 @@ static int capture_effective(h3_sampler_state *s, const h3_sampler_state *parent
     s->params.save_conditioning=s->params.load_conditioning=NULL;
     s->params.conditioning_schedule=0;
     s->params.save_upscale_state=NULL;s->params.state_only=0;
-    s->quant_version=h3_quant_execution_recipe(p->cuda_denoise_quant,p->adaptive_cache,p->cuda_attention);
+    s->quant_version=h3_quant_native_recipe(p->cuda_denoise_quant,p->adaptive_cache,p->cuda_attention,p->frames,p->width,p->height);
     s->attention_version=h3_attention_execution_recipe(p->cuda_attention,p->cuda_denoise_quant);
     s->attention_plan=h3_attention_plan(p->cuda_attention);
     s->params.cuda_attention_set=0;s->params.cuda_sol_set=0;
@@ -607,7 +607,7 @@ int h3_sampler_state_validate(const h3_sampler_state *s,char *error,size_t size)
        s->attention_plan!=h3_attention_plan(s->params.cuda_attention))
         return fail(error,size,"unsupported attention policy, recipe or plan");
     if(s->params.cuda_denoise_quant<0||s->params.cuda_denoise_quant>2||
-       s->quant_version!=h3_quant_execution_recipe(s->params.cuda_denoise_quant,s->params.adaptive_cache,s->params.cuda_attention))
+       s->quant_version!=h3_quant_native_recipe(s->params.cuda_denoise_quant,s->params.adaptive_cache,s->params.cuda_attention,s->params.frames,s->params.width,s->params.height))
         return fail(error,size,"unsupported denoiser quantization checkpoint recipe");
     if(s->params.cuda_denoise_quant && s->params.adaptive_cache &&
        (s->params.cuda_attention || s->params.adaptive_cache>1))

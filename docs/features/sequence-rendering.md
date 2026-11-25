@@ -9,16 +9,17 @@ On CUDA, `#size 1920x1088` and its portrait transpose use the extended native
 canvas policy. Metal retains its previous ceiling. `--ref-image-size` is
 inherited by segments and can be overridden with `#ref-image-size`; it sizes
 reference images independently of `#size`. The
-[extended canvas contract](../cuda/large-canvas-contract.md) requires dense BF16
+[native CUDA contract](../cuda/long-video-1450-contract.md) supports BF16 or NVFP4
 and memory admission. Independent segments are qualified at the new canvas;
 continuation/bridge above 1344×768 or transpose has host checks only.
 
-`#frames` and `#seconds` follow the backend duration ceiling: **736 aligned
+`#frames` and `#seconds` follow the backend duration ceiling: **1,450 aligned
 frames on CUDA, 362 on Metal**. Preserved continuation context is limited to
-702 frames on CUDA or 345 on Metal and must be shorter than the target. The existing
-upward alignment remains; `#seconds 30` resolves to 736 frames on CUDA.
-Long segments require dense BF16/default attention; see the
-[duration contract](../cuda/long-video-contract.md). Merge lengths remain the
+1,416 frames on CUDA or 345 on Metal and must be shorter than the target. The existing
+upward alignment remains; `#seconds 60` resolves to 1,450 frames on CUDA.
+Long native segments accept BF16 or NVFP4 with default attention; `#upscale`
+requires BF16; see the
+[duration contract](../cuda/long-video-1450-contract.md). Merge lengths remain the
 sum of delivered segments and can exceed one segment’s duration.
 
 ```sh

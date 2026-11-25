@@ -158,6 +158,7 @@ struct h3_gpu {
     bool quant_streaming=false,quant_diagnostics=false;
     std::string quant_cache;
     h3_gpu_tensor *quant_activation=nullptr,*quant_output=nullptr,*quant_stream=nullptr,*quant_fault=nullptr;
+    h3_gpu_tensor *quant_globals=nullptr,*quant_mlp_fc1=nullptr,*quant_mlp_activated=nullptr;
     std::map<std::tuple<unsigned,unsigned,unsigned,int>,std::unique_ptr<cuda_gemm_plan>> quant_plans;
     uint64_t quant_calls=0,quant_cache_hits=0,quant_cache_misses=0;
 };
@@ -389,7 +390,7 @@ void h3_gpu_free(h3_gpu *g) {
         g->sglang_host_weights.size(),(unsigned long long)g->sglang_host_read_bytes,
         (unsigned long long)g->stats.h2d_bytes,(unsigned long long)g->stats.d2h_bytes);
     if(g->dit_attention_configured)H3_VERBOSE("h3cli: projection counters requested=%s recipe=%d native_calls=%llu cache_hits=%llu prepared=%llu\n",
-        h3_quant_name(g->quant_mode),h3_quant_execution_recipe(g->quant_mode,g->policy.adaptive_cache,g->policy.attention),
+        h3_quant_name(g->quant_mode),(g->policy.quant_recipe?g->policy.quant_recipe:h3_quant_execution_recipe(g->quant_mode,g->policy.adaptive_cache,g->policy.attention)),
         (unsigned long long)g->quant_calls,(unsigned long long)g->quant_cache_hits,
         (unsigned long long)g->quant_cache_misses);
     clear_sglang_host_weights(g);
@@ -401,6 +402,7 @@ void h3_gpu_free(h3_gpu *g) {
     for(auto *t:{g->vae_q,g->vae_k,g->vae_v,g->vae_rgb,g->vae_fault})h3_gpu_tensor_free(t);
     h3_gpu_tensor_free(g->quant_activation);h3_gpu_tensor_free(g->quant_output);
     h3_gpu_tensor_free(g->quant_stream);h3_gpu_tensor_free(g->quant_fault);
+    h3_gpu_tensor_free(g->quant_globals);h3_gpu_tensor_free(g->quant_mlp_fc1);h3_gpu_tensor_free(g->quant_mlp_activated);
     if(g->lt)cublasLtDestroy(g->lt);
     if(g->upscale_blas)cublasDestroy(g->upscale_blas);
     h3_cuda_subblock_free(g->subblock);g->subblock=nullptr;
@@ -507,7 +509,7 @@ void h3_gpu_profile_mark(h3_gpu *g,const char *phase) {
     if(g->sglang_vae)fprintf(stderr,"h3cli: full VAE profile: graph_replays=%llu pinned_output=%zu\n",
         (unsigned long long)g->vae_replays,g->vae_pinned_bytes);
     if(g->quant_mode)fprintf(stderr,"h3cli: quant profile %s / %s: mode=%s recipe=%d native_calls=%llu cache_hits=%llu prepared=%llu conversion=%.6fs (included in GEMM) stream=%s\n",
-        g->label.c_str(),phase,h3_quant_name(g->quant_mode),h3_quant_execution_recipe(g->quant_mode,g->policy.adaptive_cache,g->policy.attention),
+        g->label.c_str(),phase,h3_quant_name(g->quant_mode),(g->policy.quant_recipe?g->policy.quant_recipe:h3_quant_execution_recipe(g->quant_mode,g->policy.adaptive_cache,g->policy.attention)),
         (unsigned long long)g->quant_calls,(unsigned long long)g->quant_cache_hits,
         (unsigned long long)g->quant_cache_misses,g->stats.quant_conversion_seconds,g->quant_streaming?"compressed":"resident");
     if(g->quant_diagnostics)fprintf(stderr,"h3cli: quant packing diagnostics (weights and activations): clipped=%llu nonzero-to-zero=%llu\n",
@@ -533,6 +535,14 @@ const char *h3_gpu_backend_name(const h3_gpu*) {return "CUDA";}
 int h3_gpu_prefers_device_sampler(const h3_gpu *g,int) {return g!=nullptr;}
 int h3_gpu_should_retry_streaming(const h3_gpu *g) {
     return g&&g->allocation_failed&&g->weight_options.mode==H3_WEIGHTS_AUTO;
+}
+int h3_gpu_audio_decode_preflight(unsigned time,char *error,size_t size) {
+#ifdef H3_CUDA_USE_CUDNN
+    size_t workspace=0,layout=0;
+    return h3_cudnn_audio_decode_plan(time,&workspace,&layout,error,size);
+#else
+    (void)time;snprintf(error,size,"generated audio requires CUDA_CUDNN=1");return 0;
+#endif
 }
 int h3_gpu_has_nax_mlp(const h3_gpu*) {return 0;}
 int h3_gpu_has_int8_mlp(const h3_gpu*) {return 0;}
@@ -927,8 +937,8 @@ int h3_gpu_sglang_posterior(h3_gpu *g,const float *moments,const float *epsilon,
 }
 static int gemm(h3_gpu*g,h3_gpu_tensor*out,size_t out_offset,const h3_gpu_tensor*in,size_t in_offset,const h3_gpu_tensor*w,const h3_gpu_tensor*b,uint32_t rows,uint32_t k,uint32_t n,h3_gpu_dtype dtype) {
     if(w&&w->quant_mode) {
-        if(dtype!=H3_GPU_BF16||out_offset||in_offset||b)return h3_gpu_set_error(g,"unsupported quantized projection offset/bias/type");
-        return quant_gemm(g,out,in,w,rows,k,n);
+        if(dtype!=H3_GPU_BF16||b)return h3_gpu_set_error(g,"unsupported quantized projection bias/type");
+        return quant_gemm(g,out,in,w,rows,k,n,out_offset,in_offset);
     }
     size_t size=item_size(dtype);
     if(!launch_ready(g)||!rows||!k||!n||rows>INT32_MAX||k>INT32_MAX||n>INT32_MAX||!in||!out||in->dtype!=dtype||out->dtype!=dtype||!w||w->dtype!=dtype||in_offset>in->elements||(size_t)rows*k>in->elements-in_offset||out_offset>out->elements||(size_t)rows*n>out->elements-out_offset||w->elements<(size_t)n*k||(b&&(b->dtype!=dtype||b->elements<n)))return h3_gpu_set_error(g,"linear %ux%ux%u: invalid tensor shape/type",rows,n,k);
@@ -1110,6 +1120,8 @@ int h3_gpu_mlp_bf16(h3_gpu*g,h3_gpu_tensor*out,const h3_gpu_tensor*in,const h3_g
     if(!h3_canvas_sequence_valid(rows,1)||!hidden||hidden>INT32_MAX/2||!width||!output_dim||
        !h3_gpu_require_bf16(g,in,(size_t)rows*width,"MLP input")||
        !h3_gpu_require_bf16(g,out,(size_t)rows*output_dim,"MLP output"))return 0;
+    if(w1&&w1->quant_mode&&g->policy.quant_recipe==H3_QUANT_LONG_VERSION)
+        return quant_mlp(g,out,in,w1,w2,rows,width,hidden,output_dim);
     uint32_t slab=h3_canvas_mlp_rows(rows,hidden);
     auto*fused=h3_gpu_tensor_new_bf16(g,(size_t)slab*hidden*2);auto*activated=h3_gpu_tensor_new_bf16(g,(size_t)slab*hidden);
     int ok=fused&&activated;

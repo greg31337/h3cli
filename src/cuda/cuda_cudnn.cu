@@ -1,5 +1,6 @@
 /* Native cuDNN convolution plans for the shared SGLang pipeline. */
 #include "src/cuda/cuda_cudnn.h"
+#include "src/geometry.h"
 #include <cstdint>
 #include <cstring>
 // cuDNN frontend v1.11 uses the CUDA 12 graph query signature. CUDA 13
@@ -115,6 +116,41 @@ int h3_cudnn_reference_conv(void *opaque,float *out,const float *in,const float 
     else s=cudnnConvolutionForward(c->handle,&alpha,p.x,in,p.w,weight,p.conv,(cudnnConvolutionFwdAlgo_t)p.algorithm,workspace,capacity,&beta,p.y,out);
 #undef REF_DN
     return s==CUDNN_STATUS_SUCCESS?1:fail(s);
+}
+
+int h3_cudnn_audio_decode_plan(unsigned time,size_t *workspace,size_t *layout,
+    char *error,size_t error_size) {
+    if(!workspace||!layout||!time||time>H3_CUDA_MAX_AUDIO_T) {
+        snprintf(error,error_size,"invalid generated audio temporal extent");return 0;
+    }
+    *workspace=*layout=0;
+    void *context=h3_cudnn_reference_create(nullptr);
+    if(!context){snprintf(error,error_size,"generated audio requires qualified cuDNN 9.20");return 0;}
+    auto query=[&](unsigned length,unsigned ci,unsigned co,unsigned kernel,unsigned stride,
+                   unsigned padding,unsigned dilation,bool transpose) {
+        size_t output=transpose?(size_t)(length-1)*stride-2*padding+kernel:
+            ((size_t)length+2*padding-(size_t)dilation*(kernel-1)-1)/stride+1;
+        size_t bytes=0,extent=2*std::max(size_t(length)*ci,output*co)*sizeof(float);
+        if(extent>H3_CUDNN_AUDIO_LAYOUT_LIMIT) {
+            snprintf(error,error_size,"generated audio layout needs %zu bytes (limit %zu), T=%u channels=%u->%u",
+                extent,H3_CUDNN_AUDIO_LAYOUT_LIMIT,length,ci,co);return false;
+        }
+        if(!h3_cudnn_reference_conv(context,nullptr,nullptr,nullptr,2,length,ci,co,kernel,
+            stride,padding,dilation,transpose,nullptr,0,&bytes,error,error_size))return false;
+        *workspace=std::max(*workspace,bytes);*layout=std::max(*layout,extent);return true;
+    };
+    unsigned length=time;
+    bool ok=query(length,32,2048,1,1,0,1,false)&&query(length,2048,1024,7,1,3,1,false);
+    for(unsigned stage=0;ok&&stage<7;stage++) {
+        unsigned ci=1024>>stage,co=ci/2,kernel=stage<2?9:4,stride=stage<2?5:2;
+        ok=query(length,ci,co,kernel,stride,(kernel-stride)/2,1,true);length*=stride;
+        for(unsigned k:{3u,7u,11u}) {
+            for(unsigned dilation:{1u,3u,5u})if(ok)ok=query(length,co,co,k,1,dilation*(k-1)/2,dilation,false);
+            if(ok)ok=query(length,co,co,k,1,(k-1)/2,1,false);
+        }
+    }
+    if(ok)ok=query(length,8,1,7,1,3,1,false);
+    h3_cudnn_reference_free(context);return ok;
 }
 
 int h3_cudnn_reference_conv3d(void *opaque,float *out,const float *in,const float *weight,

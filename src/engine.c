@@ -288,7 +288,7 @@ char *h3_prepared_key(const char *conditioning,
         if(m.weight_format&&!h3_key_append(&key,"/weight%d/v%d/group%d/kernel%d",m.weight_format,H3_Q8_VERSION,H3_Q8_GROUP,m.q8_kernel)){free(key.text);return NULL;}
     }
     if (params->cuda_denoise_quant && !h3_key_append(&key,"|denoise-quant=%d/v%d/verify%d",
-        params->cuda_denoise_quant,h3_quant_execution_recipe(params->cuda_denoise_quant,params->adaptive_cache,params->cuda_attention),h3_quant_verify())) {free(key.text);return NULL;}
+        params->cuda_denoise_quant,h3_quant_native_recipe(params->cuda_denoise_quant,params->adaptive_cache,params->cuda_attention,params->frames,params->width,params->height),h3_quant_verify())) {free(key.text);return NULL;}
     if (params->continuation && params->continuation_mode == H3_CONTINUE_BRIDGE &&
         !h3_key_append(&key, "|bridge=%d:%a:%d", params->bridge_video_steps,
             (double)params->bridge_max_strength, params->bridge_profile)) {
@@ -1191,6 +1191,10 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     }
     h3_generation_progress progress = {.ctx = ctx, .params = params};
     h3_temporal_shape temporal = params->still ? (h3_temporal_shape){.frame_count=1,.video_t=1,.audio_t=2} : h3_temporal(params->frames);
+#ifndef __APPLE__
+    if(temporal.frame_count>H3_LEGACY_MAX_FRAMES &&
+       !h3_gpu_audio_decode_preflight((unsigned)temporal.audio_t,ctx->error,sizeof(ctx->error)))return NULL;
+#endif
     h3_denoise_prefix prefix = {0};
     h3_bridge_profile bridge;
     int bridge_mode = has_continuation && params->continuation_mode == H3_CONTINUE_BRIDGE;
@@ -1303,7 +1307,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
         if(!identified)return NULL;
         delivery.quant_model_metadata=!strict;
         delivery.cuda_denoise_quant=params->cuda_denoise_quant;
-        delivery.quant_version=h3_quant_execution_recipe(params->cuda_denoise_quant,params->adaptive_cache,params->cuda_attention);
+        delivery.quant_version=h3_quant_native_recipe(params->cuda_denoise_quant,params->adaptive_cache,params->cuda_attention,params->frames,params->width,params->height);
         for(int i=0;i<32;i++)snprintf(delivery.quant_model_sha256+i*2,3,"%02x",digest[i]);
     }
     h3_live_preview live_preview;

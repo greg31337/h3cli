@@ -136,7 +136,7 @@ Continue.
         self.assertEqual(self.command_values(plan['segments'][1], 'ref-image'), [])
 
     def test_upscale_backend_geometry_and_duration_planning(self):
-        for width,height,frames in ((960,544,22),(1344,768,39),(1920,1088,22),(256,256,736)):
+        for width,height,frames in ((960,544,22),(1344,768,39),(1920,1088,22),(256,256,736),(256,256,1450)):
             result = self.invoke(f'#upscale 0\n### a\n#size {width}x{height}\n#frames {frames}\nText.')
             allowed = sys.platform != 'darwin' or (width<=960 and height<=960 and frames<=362)
             self.assertEqual(result.returncode==0, allowed, result.stderr)
@@ -150,15 +150,29 @@ Continue.
         self.assertFalse(self.out.exists())
 
     def test_backend_duration_boundaries(self):
-        for raw,aligned in ((362,362),(363,379),(464,464),(480,481),(719,719),(720,736),(736,736),(737,753),(2147483647,2147483647)):
+        for raw,aligned in ((362,362),(363,379),(464,464),(480,481),(719,719),(720,736),(736,736),(737,753),(1433,1433),(1434,1450),(1440,1450),(1450,1450),(1451,1467),(2147483647,2147483647)):
             result=self.invoke(f'### shot\n#size 256x256\n#frames {raw}\nA teapot.')
-            limit=362 if sys.platform=='darwin' else 736
+            limit=362 if sys.platform=='darwin' else 1450
             if aligned>limit:self.assertNotEqual(result.returncode,0)
             else:
                 self.assertEqual(result.returncode,0,result.stderr)
                 self.assertEqual(json.loads(result.stdout)['segments'][0]['frames'],aligned)
         for seconds in ('nan','inf','1e99','-1'):
             self.assertNotEqual(self.invoke(f'#seconds {seconds}\n### shot\nA teapot.').returncode,0)
+
+    def test_long_nvfp4_native_and_upscale_exclusion(self):
+        for width,height in ((256,256),(1920,1088),(1088,1920)):
+            text=f'### shot\n#seconds 60\n#size {width}x{height}\n#steps 2\nA teapot.'
+            result=self.invoke(text,'--cuda-denoise-quant','nvfp4')
+            if sys.platform=='darwin':self.assertNotEqual(result.returncode,0)
+            else:
+                self.assertEqual(result.returncode,0,result.stderr)
+                row=json.loads(result.stdout)['segments'][0]
+                self.assertEqual(row['frames'],1450)
+                self.assertEqual(self.command_values(row,'cuda-denoise-quant'),['nvfp4'])
+        for k in (0,2):
+            result=self.invoke(f'#upscale {k}\n### shot\n#size 256x256\n#frames 22\nText.', '--cuda-denoise-quant','nvfp4',dry=False)
+            self.assertNotEqual(result.returncode,0);self.assertFalse(self.out.exists())
 
     def test_cuda_canvas_and_reference_size_inheritance(self):
         text = '### first\n#size 1920x1088\n#frames 22\nA teapot.\n### second\n#ref-image-size high\nA vase.\n'

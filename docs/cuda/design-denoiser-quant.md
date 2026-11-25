@@ -1,3 +1,6 @@
+> Long native NVFP4 uses [bounded execution recipe 5](long-video-1450-contract.md).
+> Its packed-weight layout remains the recipe described below.
+
 # CUDA denoiser quantization
 
 Implementation contract: [T001–T064](../todo.md). Starting source revision:

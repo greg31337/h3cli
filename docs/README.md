@@ -27,6 +27,7 @@ that path with your downloaded executable when using a release package.
 | Text scripts, merged sequences and inherited prompt sections | [Text-script rendering](features/sequence-rendering.md) |
 | Quality and speed | [Quality presets](usage.md#4-choose-a-speedquality-preset) |
 | MP4 compression and lossless RGB | [Output encoding](features/output-encoding.md) |
+| Long CUDA video and NVFP4 | [1,450-frame contract](cuda/long-video-1450-contract.md), [capacity estimates](cuda/long-video-1450-memory-estimates.md) |
 | Resolution and duration | [Canvas sizes and frame counts](usage.md#5-pick-resolution-and-duration) |
 | Image, video, and audio references | [Reference media](usage.md#8-add-image-video-and-audio-references) |
 | Preview decoding and later full-quality delivery | [Preview VAE](preview/preview-vae.md) |

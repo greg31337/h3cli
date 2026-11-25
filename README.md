@@ -15,9 +15,9 @@ matching settings, and validation scope.
 [Get started](#get-started) · [First video](#make-your-first-video) ·
 [Quality](#choose-your-quality) · [Documentation](docs/README.md)
 
-CUDA supports up to **736 aligned frames (30.667 seconds at 24 fps)** with dense
-BF16 and default attention. Metal retains **362 frames**. Canvas, sequence and
-memory limits still apply; see the [duration contract](docs/cuda/long-video-contract.md)
+CUDA supports up to **1,450 aligned frames (60.417 seconds at 24 fps)** with
+BF16 or opt-in NVFP4 and default attention. Metal retains **362 frames**. Canvas, sequence and
+memory limits still apply; see the [duration contract](docs/cuda/long-video-1450-contract.md)
 for supported settings and validation scope.
 
 ## What you can do
@@ -128,8 +128,9 @@ landscape, portrait, and longer clips.
 
 CUDA native video and `--render` accept up to **1920×1088**, including portrait
 transpose. The existing learned 2× upscaler accepts that source and delivers
-**3840×2176** with K=0/2/3/4 and full VAE. These extended canvases require dense
-BF16 and memory admission; Metal retains its existing limits. See
+**3840×2176** with K=0/2/3/4 and full VAE. Native extended canvases accept
+BF16 or NVFP4; learned upscaling requires BF16. Memory and sequence admission
+apply; Metal retains its existing limits. See
 [latent upscaling](docs/features/latent-upscaling.md) and the
 [canvas/memory contract](docs/cuda/large-canvas-contract.md).
 

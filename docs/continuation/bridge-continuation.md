@@ -12,10 +12,10 @@ pass. Numerical correctness and matching CPU/GPU results do not establish that
 bridge improves a given transition. The current duration extension is
 tracked in [the task list](../todo.md).
 
-CUDA targets can reach 736 frames with contexts through 702; Metal retains
-362/345. Extended CUDA durations require dense BF16/default attention and all
-50 blocks, without approximation. See the
-[duration contract](../cuda/long-video-contract.md) for state and memory limits.
+CUDA targets can reach 1,450 frames with contexts through 1,416; Metal retains
+362/345. Extended CUDA durations require BF16 or NVFP4 with default attention and all
+50 blocks, without other approximation modes. See the
+[duration contract](../cuda/long-video-1450-contract.md) for state and memory limits.
 
 ## Generate a bridge segment
 

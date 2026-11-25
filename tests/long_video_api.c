@@ -15,11 +15,19 @@
 static char error[1024];
 #define CHECK(x) do {if(!(x)){fprintf(stderr,"FAIL %d: %s: %s\n",__LINE__,#x,error);return 1;}}while(0)
 static int denied(uint64_t *bytes,void *opaque){(void)opaque;*bytes=0;return 1;}
+static int cancel_load(const char *phase,int done,int total,void *opaque) {
+    (void)total;int *calls=opaque;
+    if(!strcmp(phase,"load transformer core")&&done>=1){(*calls)++;return 1;}return 0;
+}
 int main(int argc,char **argv) {
-    CHECK(argc==3);
+    CHECK(argc==3||argc==5);
     h3_ctx *ctx=h3_load_dir(argv[1]);CHECK(ctx);h3_cache_set_enabled(ctx,1);
     h3_params p=H3_PARAMS_DEFAULT;p.width=256;p.height=256;p.frames=464;p.steps=2;p.seed=42;
     p.state_only=1;p.save_upscale_state=argv[2];
+    if(argc==5&&!strcmp(argv[3],"nvfp4")) {
+        p.cuda_denoise_quant=2;p.cuda_denoise_quant_cache=*argv[4]?argv[4]:NULL;
+        p.save_upscale_state=NULL;p.geometry_profile=2;
+    }
     const char *prompt="A red ceramic teapot on a wooden table, soft studio light.";
     h3_result *first=h3_generate(ctx,prompt,&p);
     snprintf(error,sizeof(error),"%s",h3_last_error(ctx));CHECK(first&&first->av_state);
@@ -43,6 +51,23 @@ int main(int argc,char **argv) {
     h3_result *bad=h3_generate(ctx,prompt,&p);
     h3_memory_set_test_query(NULL,NULL);
     CHECK(!bad&&h3_memory_error(h3_last_error(ctx)));
+    int cancellations=0;p.on_progress=cancel_load;p.callback_opaque=&cancellations;
+    bad=h3_generate(ctx,prompt,&p);CHECK(!bad&&cancellations==1);
+    p.on_progress=NULL;p.callback_opaque=NULL;
+    h3_result *recovered=h3_generate(ctx,prompt,&p);
+    snprintf(error,sizeof(error),"%s",h3_last_error(ctx));CHECK(recovered&&recovered->av_state);
+    CHECK(!memcmp(first->av_state->video,recovered->av_state->video,first->av_state->info.video_elements*4));
+    CHECK(!memcmp(first->av_state->audio,recovered->av_state->audio,first->av_state->info.audio_elements*4));
+    h3_result_free(recovered);
+    if(p.cuda_denoise_quant) {
+        /* One live API context must invalidate prepared resources on precision
+         * changes, then recover its original long recipe after host denial. */
+        h3_params short_request=p;short_request.frames=22;short_request.cuda_denoise_quant=0;short_request.cuda_denoise_quant_cache=NULL;
+        h3_result *short_result=h3_generate(ctx,prompt,&short_request);
+        snprintf(error,sizeof(error),"%s",h3_last_error(ctx));CHECK(short_result&&short_result->av_state);
+        CHECK(!short_result->presentation.cuda_denoise_quant);
+        h3_result_free(short_result);
+    }
     /* Independent audio-VAE calls must produce identical PCM from unchanged audio. */
     char audio_path[4096];snprintf(audio_path,sizeof(audio_path),"%s/FL2VA/audio_vae",argv[1]);
     h3_audio_waveform a={0},b={0};int old=h3_sglang_exchange(1);

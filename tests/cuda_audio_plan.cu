@@ -1,4 +1,4 @@
-/* Descriptor-only AudioVAE coverage through 736 frames. No movie, PCM,
+/* Descriptor-only AudioVAE coverage through 1450 frames. No movie, PCM,
  * activation, weight or workspace tensors are allocated or executed. */
 #include "src/cuda/cuda_cudnn.h"
 #include "src/geometry.h"
@@ -20,7 +20,7 @@ static void check(void *context, unsigned length, unsigned ci, unsigned co,
     size_t layout = 2 * std::max(size_t(length) * ci, size_t(output) * co) * sizeof(float);
     if (!h3_cudnn_reference_conv(context, nullptr, nullptr, nullptr, 2, length,
             ci, co, kernel, stride, padding, dilation, transpose, nullptr, 0,
-            &bytes, error, sizeof(error)) || layout > (64u << 20)) {
+            &bytes, error, sizeof(error)) || layout > H3_CUDNN_AUDIO_LAYOUT_LIMIT) {
         std::fprintf(stderr, "FAIL frames=%u length=%u channels=%u->%u kernel=%u stride=%u dilation=%u transpose=%d layout=%zu: %s\n",
             frames, length, ci, co, kernel, stride, dilation, transpose, layout, error);
         std::exit(1);

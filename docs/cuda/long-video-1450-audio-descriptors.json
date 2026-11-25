@@ -1,0 +1,441 @@
+{
+  "schema": 1,
+  "kind": "descriptor queries only; no full movie/PCM/workspace allocation",
+  "cudnn_version": "9.20.0",
+  "convolution_descriptors": 8084,
+  "maximum_workspace_bytes": 2176942080,
+  "maximum_layout_bytes": 123750400,
+  "pre_convolution_algorithm": "qualified FFT tiling (5), FP32 FMA, unchanged for every duration",
+  "pre_convolution_queries": [
+    {
+      "frames": 5,
+      "audio_t": 8,
+      "workspace_bytes": 286048256
+    },
+    {
+      "frames": 22,
+      "audio_t": 37,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 39,
+      "audio_t": 65,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 56,
+      "audio_t": 93,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 73,
+      "audio_t": 122,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 90,
+      "audio_t": 150,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 107,
+      "audio_t": 178,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 124,
+      "audio_t": 207,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 141,
+      "audio_t": 235,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 158,
+      "audio_t": 263,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 175,
+      "audio_t": 292,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 192,
+      "audio_t": 320,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 209,
+      "audio_t": 348,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 226,
+      "audio_t": 377,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 243,
+      "audio_t": 405,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 260,
+      "audio_t": 433,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 277,
+      "audio_t": 462,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 294,
+      "audio_t": 490,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 311,
+      "audio_t": 518,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 328,
+      "audio_t": 547,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 345,
+      "audio_t": 575,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 362,
+      "audio_t": 603,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 379,
+      "audio_t": 632,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 396,
+      "audio_t": 660,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 413,
+      "audio_t": 688,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 430,
+      "audio_t": 717,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 447,
+      "audio_t": 745,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 464,
+      "audio_t": 773,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 481,
+      "audio_t": 802,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 498,
+      "audio_t": 830,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 515,
+      "audio_t": 858,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 532,
+      "audio_t": 887,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 549,
+      "audio_t": 915,
+      "workspace_bytes": 286883840
+    },
+    {
+      "frames": 566,
+      "audio_t": 943,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 583,
+      "audio_t": 972,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 600,
+      "audio_t": 1000,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 617,
+      "audio_t": 1028,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 634,
+      "audio_t": 1057,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 651,
+      "audio_t": 1085,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 668,
+      "audio_t": 1113,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 685,
+      "audio_t": 1142,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 702,
+      "audio_t": 1170,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 719,
+      "audio_t": 1198,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 736,
+      "audio_t": 1227,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 753,
+      "audio_t": 1255,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 770,
+      "audio_t": 1283,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 787,
+      "audio_t": 1312,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 804,
+      "audio_t": 1340,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 821,
+      "audio_t": 1368,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 838,
+      "audio_t": 1397,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 855,
+      "audio_t": 1425,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 872,
+      "audio_t": 1453,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 889,
+      "audio_t": 1482,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 906,
+      "audio_t": 1510,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 923,
+      "audio_t": 1538,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 940,
+      "audio_t": 1567,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 957,
+      "audio_t": 1595,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 974,
+      "audio_t": 1623,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 991,
+      "audio_t": 1652,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1008,
+      "audio_t": 1680,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1025,
+      "audio_t": 1708,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1042,
+      "audio_t": 1737,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1059,
+      "audio_t": 1765,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1076,
+      "audio_t": 1793,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1093,
+      "audio_t": 1822,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1110,
+      "audio_t": 1850,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1127,
+      "audio_t": 1878,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1144,
+      "audio_t": 1907,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1161,
+      "audio_t": 1935,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1178,
+      "audio_t": 1963,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1195,
+      "audio_t": 1992,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1212,
+      "audio_t": 2020,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1229,
+      "audio_t": 2048,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1246,
+      "audio_t": 2077,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1263,
+      "audio_t": 2105,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1280,
+      "audio_t": 2133,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1297,
+      "audio_t": 2162,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1314,
+      "audio_t": 2190,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1331,
+      "audio_t": 2218,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1348,
+      "audio_t": 2247,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1365,
+      "audio_t": 2275,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1382,
+      "audio_t": 2303,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1399,
+      "audio_t": 2332,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1416,
+      "audio_t": 2360,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1433,
+      "audio_t": 2388,
+      "workspace_bytes": 2176942080
+    },
+    {
+      "frames": 1450,
+      "audio_t": 2417,
+      "workspace_bytes": 2176942080
+    }
+  ]
+}

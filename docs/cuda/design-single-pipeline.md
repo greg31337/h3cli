@@ -21,6 +21,12 @@ is no public execution selector or old tuning override.
 | `--cuda-denoise-quant-cache DIR` | Persistent packed weights | User cache directory |
 | `--preview-vae` | Independent approximate delivery option | SGLang full decoder |
 
+Native CUDA requests through 1,450 frames or 1920×1088 accept BF16 or NVFP4
+with default attention and full depth. Extended NVFP4 uses bounded projection/MLP
+execution recipe 5, preserving tensor-wide scales and packed-weight recipe 2.
+Other approximate combinations retain their existing short-video limits.
+See the [duration/precision contract](long-video-1450-contract.md).
+
 Select attention and projection precision independently. Sage3's FP4 attention
 operands do not imply NVFP4 projection weights. The original dense/Sage/SOL
 matrix covers twelve configurations; SubBlock adds its separately guarded

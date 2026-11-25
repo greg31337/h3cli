@@ -11,6 +11,14 @@
 
 #define H3_SAMPLE_VERSION 2
 #define H3_SAMPLE_BACKEND_VERSION 1
+/* Section 15 wire lengths survive growth of in-memory bridge arrays. */
+static inline unsigned h3_sampler_temporal_version(int frames) {
+    return frames>H3_CUDA_V2_MAX_FRAMES?3u:frames>H3_LEGACY_MAX_FRAMES?2u:1u;
+}
+static inline size_t h3_sampler_temporal_classes(unsigned version,int audio) {
+    return version==1?(audio?604u:107u):version==2?(audio?1228u:217u):
+           version==3?(audio?2418u:427u):0;
+}
 
 /* Portable derived BF16 tensors. IDs: 1 refined text, 2 final AdaLN,
  * 100..149 block AdaLN. Runtime objects and immutable weights are excluded. */

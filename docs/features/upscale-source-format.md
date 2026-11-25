@@ -5,10 +5,11 @@ Native latent upscaling is a regular CUDA/Metal feature. See the
 [accepted comparison](../experiments/latent-upscale-results.md) and
 [completed tasks](../experiments/latent-upscale-tasks.md).
 
-Sources above 362 frames are CUDA-only through 736 frames. Required section
-15 v2 distinguishes these sources without changing envelope schema 2. Metal
+Sources above 362 frames are CUDA-only through 1,450 frames. Required section
+15 v2 covers 363–736 and v3 covers 737–1,450, retaining envelope schema 2.
+Source capture remains BF16-only. Metal
 rejects their execution, including no-refinement K=0. The shared target planner
-retains its sequence ceiling; see the [duration contract](../cuda/long-video-contract.md).
+retains its sequence ceiling; see the [duration contract](../cuda/long-video-1450-contract.md).
 
 Fresh upscale jobs automatically acquire the pinned BF16 network under
 `--models-path ROOT` at

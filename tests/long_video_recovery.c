@@ -2,6 +2,7 @@
 #include "src/h3.h"
 #include "src/gpu.h"
 #include "src/sampling/av_state.h"
+#include "src/sampling/sampler_state.h"
 #include "src/memory.h"
 #include "src/upscale/upscale_network.h"
 #include <stdio.h>
@@ -20,7 +21,7 @@ static int cancel_frame(const h3_frame *frame,void *opaque) {
     int *calls=opaque;(*calls)++;return frame->width>0;
 }
 int main(int argc,char **argv) {
-    CHECK(argc==5);
+    CHECK(argc==5||argc==6);
     /* Deterministic allocation failure without exhausting physical VRAM. */
     setenv("H3_CUDA_TEST_MEMORY_BUDGET","65536",1);
     h3_gpu *gpu=h3_gpu_create("src/metal/shaders.metal",error,sizeof(error));CHECK(gpu);
@@ -46,6 +47,20 @@ int main(int argc,char **argv) {
     char *ff=getenv("H3_FFMPEG")?strdup(getenv("H3_FFMPEG")):NULL;
     setenv("H3_FFMPEG","/bin/false",1);o.on_progress=NULL;
     r=h3_decode_av_state(argv[1],argv[2],&o,error,sizeof(error));CHECK(!r&&original(argv[3]));
+    if(argc==6) {
+        h3_sampler_state *completed=h3_sampler_state_load(argv[5],error,sizeof(error));CHECK(completed);
+        CHECK(completed->aligned_frames==464&&completed->render_width==256&&completed->render_height==256&&completed->next_step==completed->total_steps);
+        h3_sampler_state_free(completed);
+        char saved[4096];CHECK(snprintf(saved,sizeof(saved),"%s.h3sample",argv[4])<(int)sizeof(saved));
+        h3_ctx *ctx=h3_load_dir(argv[1]);CHECK(ctx);
+        h3_params p=H3_PARAMS_DEFAULT;p.resume_sampler_state=argv[5];p.save_sampler_state=saved;p.output_path=argv[3];
+        r=h3_generate(ctx,NULL,&p);snprintf(error,sizeof(error),"%s",h3_last_error(ctx));
+        CHECK(!r&&original(argv[3]));
+        completed=h3_sampler_state_load(saved,error,sizeof(error));CHECK(completed);
+        CHECK(completed->next_step==completed->total_steps);
+        h3_sampler_state_free(completed);h3_free(ctx);
+        puts("PASS completed checkpoint survives failed post-denoise delivery");
+    }
     if(ff){setenv("H3_FFMPEG",ff,1);free(ff);}else unsetenv("H3_FFMPEG");
     o.output_path=argv[4];
     r=h3_decode_av_state(argv[1],argv[2],&o,error,sizeof(error));CHECK(r&&r->frames==frames);

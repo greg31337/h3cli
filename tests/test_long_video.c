@@ -5,14 +5,16 @@
 #include "src/sampling/bridge.h"
 #include "src/vae/tiny_vae.h"
 #include "src/upscale/upscale_gpu.h"
+#include "src/weights/quant.h"
+#include "src/sampling/sampler_state.h"
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
 int main(void) {
-    const int raw[]={22,362,363,464,480,481,719,720,736,737,INT_MAX};
-    const int aligned[]={22,362,379,464,481,481,719,736,736,753,INT_MAX};
+    const int raw[]={22,362,363,464,480,481,719,720,736,737,1433,1434,1440,1450,1451,INT_MAX};
+    const int aligned[]={22,362,379,464,481,481,719,736,736,753,1433,1450,1450,1450,1467,INT_MAX};
     char error[512];
     h3_params p=H3_PARAMS_DEFAULT;p.width=p.height=256;p.steps=2;
     h3_device_info device={0};
@@ -35,6 +37,10 @@ int main(void) {
     assert(h3_tiny_vae_frames(107)==362);
     assert(h3_tiny_vae_frames(217)==(H3_NATIVE_CUDA?736:0));
     assert(h3_tiny_vae_frames(218)==0);
+    t=h3_temporal(1440);
+    assert(t.frame_count==1450&&t.video_t==427&&t.audio_t==2417);
+    assert(h3_tiny_vae_frames(427)==(H3_NATIVE_CUDA?1450:0));
+    assert(h3_tiny_vae_frames(432)==0);
     h3_av_state_info s;
     assert(h3_av_state_shape_profile(1920,1088,736,2,&s));
     assert(s.video_elements==(size_t)24*217*120*68&&s.audio_elements==64*1227);
@@ -54,7 +60,11 @@ int main(void) {
         assert(h3_bridge_row_class(&bridge,1,1227+1169,68,120,1227)==H3_ROW_PRESERVED_AUDIO);
         bridge.audio_classes[1169]=255;assert(!h3_bridge_profile_valid(&bridge));
     }
-    assert(!h3_bridge_profile_build(753,8,.5,H3_BRIDGE_STEPPED,&bridge,NULL,0,error,sizeof(error)));
+    assert(!h3_bridge_profile_build(1467,8,.5,H3_BRIDGE_STEPPED,&bridge,NULL,0,error,sizeof(error)));
+    assert(h3_continuation_context(1416,&prefix));
+    assert(prefix.video_prefix_t==417&&prefix.audio_prefix_t==2360);
+    assert(h3_bridge_profile_build(1416,8,.5,H3_BRIDGE_STEPPED,&bridge,NULL,0,error,sizeof(error))==H3_NATIVE_CUDA);
+    if(H3_NATIVE_CUDA)assert(h3_bridge_profile_valid(&bridge));
     h3_canvas_memory m,extra;
     const int cases[][3]={{256,256,464},{256,256,481},{256,256,736},{1344,768,719},{1344,768,736},{1920,1088,736}};
     puts("width,height,frames,rows,resident_GiB,streamed_GiB,decode_host_GiB");
@@ -71,6 +81,51 @@ int main(void) {
     assert(m.video_rows==442680&&m.sequence_rows==445646);
     assert(h3_canvas_memory_estimate(3840,2176,736,3,512,0,&m));
     assert(m.video_rows==1770720&&!h3_canvas_sequence_valid(m.sequence_rows,1));
+    assert(h3_av_state_shape_profile(1920,1088,1450,2,&s));
+    assert(s.video_elements==(size_t)24*427*120*68&&s.audio_elements==64*2417);
+    assert(h3_canvas_memory_estimate(1920,1088,1450,2,512,0,&m));
+    assert(m.video_rows==871080&&m.sequence_rows==876426);
+    assert(h3_canvas_sequence_valid(m.sequence_rows,1));
+    assert(h3_canvas_memory_estimate(3840,2176,1450,3,512,0,&m));
+    assert(m.video_rows==3484320&&!h3_canvas_sequence_valid(m.sequence_rows,1));
+    assert(!h3_canvas_memory_estimate(256,256,1467,0,512,0,&m));
+    h3_quant_memory q;
+    const int sizes[][2]={{256,256},{640,480},{1024,768},{1344,768},{1920,1088}};
+    puts("NVFP4 width,height,rows,padded,chunk,packed,cold,future,warm,host");
+    for(size_t i=0;i<sizeof(sizes)/sizeof(*sizes);i++) {
+        int w=sizes[i][0],h=sizes[i][1];
+        assert(h3_canvas_memory_estimate(w,h,1450,h3_canvas_native_profile(w,h,1),512,0,&m));
+        assert(h3_quant_memory_estimate(m.sequence_rows,50,&q));
+        assert(q.chunk_rows==8192&&q.padded_rows>=q.logical_rows&&q.padded_rows-q.logical_rows<128);
+        assert(q.cold_device_bytes==q.warm_device_bytes+q.cold_conversion_bytes);
+        assert(q.mlp_bytes==UINT64_C(8192)*14336*6);
+        printf("%d,%d,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu\n",w,h,
+            (unsigned long long)q.logical_rows,(unsigned long long)q.padded_rows,(unsigned long long)q.chunk_rows,
+            (unsigned long long)q.packed_core_bytes,(unsigned long long)q.cold_conversion_bytes,
+            (unsigned long long)q.future_bytes,(unsigned long long)q.warm_device_bytes,(unsigned long long)q.cold_host_bytes);
+    }
+    assert(h3_quant_memory_estimate(1000000,50,&q)&&q.padded_rows==1000064);
+    assert(!h3_quant_memory_estimate(1000001,50,&q));
+    assert(!h3_quant_memory_estimate(UINT64_MAX,50,&q));
+    assert(!h3_quant_memory_estimate(1,0,&q)&&!h3_quant_memory_estimate(1,51,&q));
+    assert(h3_quant_native_recipe(2,0,0,362,1344,768)==2);
+    assert(h3_quant_native_recipe(2,0,0,464,256,256)==5);
+    assert(h3_quant_native_recipe(2,0,0,22,1920,1088)==5);
+    assert(h3_quant_native_recipe(0,0,0,1450,1920,1088)==0);
+    for(int version=1;version<=3;version++) {
+        const size_t video[]={0,107,217,427},audio[]={0,604,1228,2418};
+        assert(h3_sampler_temporal_classes((unsigned)version,0)==video[version]);
+        assert(h3_sampler_temporal_classes((unsigned)version,1)==audio[version]);
+    }
+    assert(h3_sampler_temporal_version(362)==1&&h3_sampler_temporal_version(363)==2);
+    assert(h3_sampler_temporal_version(736)==2&&h3_sampler_temporal_version(737)==3);
+    assert(h3_sampler_temporal_version(1450)==3&&!h3_sampler_temporal_classes(4,0));
+    p.frames=1450;p.cuda_denoise_quant=2;snprintf(device.backend,sizeof(device.backend),"cuda");
+    assert(h3_request_params_valid(&p,&device,error,sizeof(error)));
+    p.cuda_denoise_quant=1;assert(!h3_request_params_valid(&p,&device,error,sizeof(error)));
+    p.cuda_denoise_quant=2;p.save_upscale_state="/tmp/forbidden.h3up";
+    assert(!h3_request_params_valid(&p,&device,error,sizeof(error)));
+    p.save_upscale_state=NULL;p.cuda_denoise_quant=0;
     /* Logical operator counts only: even the largest full volume is not allocated. */
     size_t counts[4];h3_upscale_gpu_shape op={.time=217,.height=136,.width=240,.channels=512};
     assert(h3_upscale_gpu_counts(H3_UP_NORM,op,counts));

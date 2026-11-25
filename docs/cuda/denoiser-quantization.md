@@ -1,3 +1,6 @@
+> Current long native NVFP4 uses [execution recipe 5](long-video-1450-contract.md)
+> through 1,450 CUDA frames. The historical short-video results below remain unchanged.
+
 > Historical kernel/qualification guide. M3B/M4 remove `--fast-cuda` and use
 > [one CUDA pipeline with explicit attention/precision options](design-single-pipeline.md).
 > Commands and old acceptance statements below describe their recorded recipes.
@@ -17,7 +20,7 @@ The default is `off`. These preview options change both video and audio.
 Both formats received separate human acceptance for the six matched base-model
 cases on September 19, 2026. The user also accepted the separate 20-step
 hard/bridge continuation and eight-step Turbo strength-1.0
-[gallery](../../outputs/quant-5090/followup/review.html). Other GPUs
+[acceptance record](denoiser-quantization-acceptance.json). Other GPUs
 are not qualified. See the
 [validation report](denoiser-quantization-validation.md) and
 [implementation contract](design-denoiser-quant.md).

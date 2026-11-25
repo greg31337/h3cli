@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import socket
+import shlex
 import subprocess
 import sys
 import time
@@ -15,6 +16,8 @@ def main():
     ap.add_argument('--model',required=True)
     ap.add_argument('--out',type=Path,required=True)
     ap.add_argument('--reject-only',action='store_true')
+    ap.add_argument('--precision',choices=('bf16','nvfp4'),default='bf16')
+    ap.add_argument('--quant-cache')
     a=ap.parse_args();a.out.mkdir(parents=True,exist_ok=False)
     with socket.socket() as sock:
         sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
@@ -34,7 +37,7 @@ def main():
                     if request('GET','/health')[0]==200:break
                 except OSError:pass
                 assert server.poll() is None;time.sleep(.1)
-            status,error=request('POST','/v1/h3/jobs',{'h3cli':'--width 256 --height 256 --frames 737 --steps 2 -p "A teapot."'})
+            status,error=request('POST','/v1/h3/jobs',{'h3cli':'--width 256 --height 256 --frames 1451 --steps 2 -p "A teapot."'})
             assert status in (400,422),(status,error)
             if a.reject_only:
                 if sys.platform=='darwin':
@@ -45,6 +48,9 @@ def main():
             for label,flags,size,frames in (
                 ('video','--width 256 --height 256 --frames 464',(256,256),464),
                 ('still','--still --width 256 --height 256',(256,256),1)):
+                if label=='video' and a.precision=='nvfp4':
+                    flags+=' --cuda-denoise-quant nvfp4'
+                    if a.quant_cache:flags+=' --cuda-denoise-quant-cache '+shlex.quote(a.quant_cache)
                 status,job=request('POST','/v1/h3/jobs',{'h3cli':flags+' --steps 2 --seed 42 -p "A red ceramic teapot on a wooden table."'})
                 assert status==202,(status,job)
                 end=time.monotonic()+1200

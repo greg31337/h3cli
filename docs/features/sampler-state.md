@@ -8,11 +8,11 @@ current AV latents, original sigma grids, continuation masks, and native CPU/GPU
 velocity and core-reuse history. A `.h3av` still stores a completed clean AV latent for starting the
 next segment. Neither format embeds model weights.
 
-CUDA checkpoints above 362 frames use required **section 15 version 2**, with
-expanded temporal bridge arrays, up to 736 frames. Short checkpoints retain
-version 1 and its original array lengths. Old readers reject the new required
-version. Metal rejects long checkpoints before model loading or large tensor
-allocation. See the [duration/state contract](../cuda/long-video-contract.md).
+CUDA checkpoints use required **section 15 version 2** at 363–736 frames
+and **version 3** at 737–1,450 frames. The fixed video/audio class arrays are
+217/1,228 and 427/2,418 bytes respectively. Short checkpoints retain version 1
+and its original 107/604 bytes. Old readers reject unknown required versions. Metal rejects long checkpoints before model loading or large tensor
+allocation. See the [duration/state contract](../cuda/long-video-1450-contract.md).
 
 ## Stop and resume
 
@@ -192,10 +192,11 @@ Prepared-cache identity includes this policy, and resume cannot silently
 change weight format or kernel.
 
 The current container accepts only schema 2. Section 32 is mandatory; retired
-section 33 is unsupported. Sections 40 (cache budget) and 44 (warmups) require
-version 2 with explicit values. Section 45 uses stage-specific source version 1
+section 33 is unsupported. Section 40 (cache budget) requires version 3 and section 44 (warmups)
+requires version 2 with explicit values. Section 45 uses stage-specific source version 1
 or refinement version 2; these are active record types, not migration paths.
-All other supported sections use version 1.
+Section 15 uses duration-dependent versions 1/2/3 as described above.
+Other supported sections use version 1.
 
 Section 1 starts with U32 schema, I32 `total_steps`, `next_step`, and reuse
 interval. Its ordered I32 parameter fields are `width`, `height`, `frames`,
@@ -236,8 +237,9 @@ raw copied video/audio tails. F32 0.999 and 0.001 coefficients, I32 exact-audio
 preservation mode (1), and I32 bridge-present flag follow. When present, the
 bridge subsection stores all profile scalar fields, active-class bitmap, F32
 class strengths, and complete temporal video/audio class arrays: 107/604 bytes
-in section version 1, or 217/1,228 bytes in version 2. Version 2 is required for
-CUDA states above 362 frames, even without a bridge. The output trim
+in section version 1, 217/1,228 bytes in version 2, or 427/2,418 in version 3.
+Version 2 is required for 363–736 frames and version 3 for 737–1,450, even
+without a bridge. Duration/version/length mismatches fail before tensor allocation. The output trim
 policy is stored explicitly in section 1. The source latent itself is omitted.
 
 Section 23 has U64 token count and raw U32 tokenizer IDs, I32 positions-present,

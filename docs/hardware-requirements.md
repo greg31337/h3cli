@@ -174,3 +174,10 @@ active. See the [replacement qualification record](features/empty-still-results.
 for measured Apple M4 Max 128 GiB and RTX PRO 5000 72 GB timings, phase memory,
 and the resolutions actually tested. The geometry limit is not a promise that
 every admitted request fits every machine.
+
+## CUDA videos through 1,450 frames
+
+Native BF16 and opt-in SM120 NVFP4 support the [duration contract](cuda/long-video-1450-contract.md),
+subject to sequence and actual free-memory admission. The [capacity report](cuda/long-video-1450-memory-estimates.md)
+separates resident/streamed and cold/warm budgets. Full 1,450-frame runs are not
+runtime-qualified; bounded feature tests use 256×256 and at most 464 frames.

@@ -12,11 +12,11 @@ Its SHA-256 must be
 `4f57821f5837f32f7142b67d815606dbd7550f194e5c769f7d6c3f83b146a5e6`.
 Native inference does not require Python, Torch or ComfyUI.
 
-Temporal support follows the source backend: CUDA up to 736 frames, Metal up
-to 362, including K=0. Sequence and memory checks still apply; 736 frames at a
+Temporal support follows the source backend: CUDA up to 1,450 frames, Metal up
+to 362, including K=0. Sequence and memory checks still apply; 1,450 frames at a
 3840×2176 target exceed the sequence ceiling. Long upscale execution is not
 runtime-qualified by the bounded duration campaign; see the
-[duration contract](../cuda/long-video-contract.md).
+[duration contract](../cuda/long-video-1450-contract.md).
 
 With `--models-path ROOT`, the upscaler defaults to
 `ROOT/latent-upscale/minimax_h3_latent_upscaler_3d_conv_v1_bf16.safetensors`.

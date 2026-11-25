@@ -231,7 +231,12 @@ int h3_submission_geometry(h3_submission *s,int iw,int ih,double audio,char *e,s
         const sj_value *duration=sj_get(target,"duration_seconds");double seconds;
         if(!duration||duration->type==LJ_NULL)seconds=audio;
         else {if(duration->type!=LJ_NUMBER)return fail(e,n,"target.duration_seconds","expected number");seconds=duration->number;}
-        if(!isfinite(seconds)||seconds<4||seconds>(H3_NATIVE_CUDA?(double)h3_frame_limit(1)/24.0:15.0))return fail(e,n,"target.duration_seconds",H3_NATIVE_CUDA?"must be 4..30.666666666666668 seconds":"must be 4..15 seconds (or a qualifying audio reference)");
+        if(!isfinite(seconds)||seconds<4||seconds>(H3_NATIVE_CUDA?(double)h3_frame_limit(1)/24.0:15.0)) {
+            char range[128];
+            snprintf(range,sizeof(range),"must be 4..%.17g seconds%s",H3_NATIVE_CUDA?(double)h3_frame_limit(1)/24.0:15.0,
+                     H3_NATIVE_CUDA?"":" (or a qualifying audio reference)");
+            return fail(e,n,"target.duration_seconds",range);
+        }
         const sj_value *assertion=sj_get(s->transport,"seconds");if(assertion&&assertion->type!=LJ_NULL&&assertion->number!=seconds)return fail(e,n,"seconds","contradicts target duration");
         int frames=(int)round_even(seconds*24);frames+=(5-frames%17+17)%17;
         if(!integer(&s->request,"frames",frames,e,n))return 0;

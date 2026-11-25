@@ -37,7 +37,7 @@ static inline uint32_t h3_canvas_mlp_rows(uint32_t rows,uint32_t hidden) {
 #define H3_UPSCALE_LATENT_AXIS 240
 #endif
 /* Output duration is independent of canvas and reference-input duration. */
-enum { H3_LEGACY_MAX_FRAMES=362, H3_CUDA_MAX_FRAMES=736,
+enum { H3_LEGACY_MAX_FRAMES=362, H3_CUDA_V2_MAX_FRAMES=736, H3_CUDA_MAX_FRAMES=1450,
        H3_CUDA_MAX_VIDEO_T=2+5*((H3_CUDA_MAX_FRAMES-5)/17),
        H3_CUDA_MAX_AUDIO_T=(H3_CUDA_MAX_FRAMES*40+12)/24 };
 static inline int h3_frame_limit(int cuda) { return cuda?H3_CUDA_MAX_FRAMES:H3_LEGACY_MAX_FRAMES; }

@@ -1,7 +1,7 @@
 /* Reference-only convolution adapters. Audio plans are bounded to 256 and
  * video encoder plans to 128; workspace is at most 3 GiB for audio and
  * 2 GiB for temporal video encoding. Each layout
- * adapter is at most 64 MiB for audio and 1 GiB for the 17-frame encoder.
+ * adapter is at most 128 MiB for audio and 1 GiB for the 17-frame encoder.
  * Buffers belong to the component GPU context and its allocation counters. */
 static int sg_audio_scratch(h3_gpu *g,h3_gpu_tensor **slot,size_t n,size_t limit) {
     if(!n)n=1;
@@ -32,8 +32,8 @@ static int sg_audio_conv(h3_gpu *g,h3_gpu_tensor *out,const h3_gpu_tensor *in,
     size_t bytes=0,ni=(size_t)batch*length*ci,no=(size_t)batch*output_length*co;
     if(!h3_cudnn_reference_conv(g->sglang_conv_cudnn,nullptr,nullptr,nullptr,batch,length,ci,co,kernel,stride,padding,dilation,transpose,
         nullptr,0,&bytes,g->error,sizeof(g->error))||
-       !sg_audio_scratch(g,&g->sglang_conv_input,ni,64u<<20)||
-       !sg_audio_scratch(g,&g->sglang_conv_output,no,64u<<20)||
+       !sg_audio_scratch(g,&g->sglang_conv_input,ni,H3_CUDNN_AUDIO_LAYOUT_LIMIT)||
+       !sg_audio_scratch(g,&g->sglang_conv_output,no,H3_CUDNN_AUDIO_LAYOUT_LIMIT)||
        !sg_audio_scratch(g,&g->sglang_conv_workspace,(bytes+3)/4,H3_CUDNN_AUDIO_WORKSPACE_LIMIT))return 0;
     float *x=(float*)tensor_pointer(g->sglang_conv_input),*y=(float*)tensor_pointer(g->sglang_conv_output);
     sg_audio_to_cf<<<(ni+255)/256,256,0,g->compute>>>(x,(const float*)tensor_pointer(in),length,ci,ni);

@@ -1,5 +1,7 @@
 #include "src/weights/quant.h"
 #include "src/denoise/attention.h"
+#include "src/geometry.h"
+#include "src/weights/residency.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +35,41 @@ unsigned h3_quant_recipe(int mode,int adaptive_cache) {
 }
 unsigned h3_quant_execution_recipe(int mode,int adaptive_cache,int attention) {
     return mode&&attention==H3_ATTENTION_SUBBLOCK?H3_QUANT_SUBBLOCK_VERSION:h3_quant_recipe(mode,adaptive_cache);
+}
+unsigned h3_quant_native_recipe(int mode,int adaptive_cache,int attention,int frames,int width,int height) {
+    if(mode==H3_QUANT_NVFP4&&!adaptive_cache&&!attention&&
+       (frames>H3_LEGACY_MAX_FRAMES||(int64_t)width*height>H3_LEGACY_PIXELS))return H3_QUANT_LONG_VERSION;
+    return h3_quant_execution_recipe(mode,adaptive_cache,attention);
+}
+int h3_quant_memory_estimate(uint64_t rows,unsigned blocks,h3_quant_memory *out) {
+    if(!out||!h3_canvas_sequence_valid(rows,1)||!blocks||blocks>50)return 0;
+    h3_quant_memory m={0};m.logical_rows=rows;m.padded_rows=(rows+127)/128*128;
+    m.chunk_rows=m.padded_rows<H3_QUANT_LONG_ROWS?m.padded_rows:H3_QUANT_LONG_ROWS;
+    const uint32_t nk[][2]={{21504,5376},{5376,7168},{28672,5376},{5376,14336}};
+    uint64_t block=0;
+    for(unsigned i=0;i<4;i++) {
+        uint64_t scale,global,bytes;
+        if(!h3_weight_packed_size(nk[i][0],nk[i][1],H3_QUANT_NVFP4,&scale,&global,&bytes))return 0;
+        block+=bytes;
+        if(bytes>m.packed_stream_bytes)m.packed_stream_bytes=bytes;
+        uint64_t conversion=2*(uint64_t)nk[i][0]*nk[i][1]+bytes;
+        if(conversion>m.cold_conversion_bytes)m.cold_conversion_bytes=conversion;
+        if(!h3_weight_packed_size((uint32_t)m.chunk_rows,nk[i][1],H3_QUANT_NVFP4,&scale,&global,&bytes))return 0;
+        if(bytes>m.activation_bytes)m.activation_bytes=bytes;
+        uint64_t output=2*m.chunk_rows*nk[i][0];
+        if(output>m.padded_output_bytes)m.padded_output_bytes=output;
+    }
+    m.packed_core_bytes=blocks*block;
+    m.mlp_bytes=2*m.chunk_rows*14336*3;m.global_bytes=32;
+    m.future_bytes=h3_canvas_dit_future(rows)+m.activation_bytes+m.padded_output_bytes+
+        m.mlp_bytes+m.global_bytes+m.packed_stream_bytes;
+    m.warm_device_bytes=m.future_bytes+m.packed_core_bytes;
+    /* Preparation precedes MLP execution; sum conservatively until phase peaks
+     * justify tighter admission. Includes the largest cold BF16 operand. */
+    m.cold_device_bytes=m.warm_device_bytes+m.cold_conversion_bytes;
+    m.streamed_host_bytes=m.packed_core_bytes+m.packed_stream_bytes;
+    m.cold_host_bytes=m.streamed_host_bytes+m.cold_conversion_bytes;
+    *out=m;return 1;
 }
 int h3_quant_projection_policy(const char *name,int requested,int adaptive_cache) {
     if(adaptive_cache&&name&&!strncmp(name,"blocks.0.",9))return H3_QUANT_OFF;
