@@ -39,8 +39,33 @@ covers those options and their limits.
 For multi-shot videos, see [text-script rendering](docs/features/sequence-rendering.md).
 The [example script](samples/render-example.txt) demonstrates prompt inheritance
 and continuation chains.
-Use `--dry-run` to inspect the plan, and put `#nomerge` anywhere in the script
-to keep only the individual clips.
+
+### Memory requirements
+
+Estimated **CUDA VRAM capacity in GiB**, with each cell showing
+**fully streamed / fully resident BF16 weights**. These conservative budgets
+cover native generation with default attention, all 50 transformer blocks,
+512 text rows, no references or live previews, and the full video decoder.
+They include 2 GiB for other allocations and 10% capacity headroom.
+
+| Resolution | 5 s | 15 s | 30 s | 60 s |
+| --- | ---: | ---: | ---: | ---: |
+| 640×480 | 10 / 48 | 18 / 56 | 31 / 69 | 55 / 93 |
+| 960×544 | 13 / 51 | 26 / 65 | 48 / 86 | 88 / 126 |
+| 1024×768 | 16 / 55 | 37 / 75 | 68 / 107 | 129 / 167 |
+| 1344×768 | 20 / 58 | 46 / 84 | 88 / 126 | 167 / 205 |
+| 1920×1088 | 34 / 72 | 87 / 125 | 171 / 209 | 330 / 369 |
+
+At 24 fps, these duration requests round up to **124, 362, 736 and 1,450 frames**,
+respectively.
+
+These are planning estimates, not measured minimums or guarantees that a render
+will fit. System RAM is separate from VRAM; see the
+[hardware requirements](docs/hardware-requirements.md). References, caches,
+upscaling, NVFP4 and Sage3 change the budget. See the
+[calculation method](docs/cuda/large-canvas-memory-estimates.md#reproducible-transformer-capacity-calculation),
+[NVFP4 estimates](docs/cuda/long-video-1450-memory-estimates.md), and
+[Sage3 estimates](docs/cuda/sage3-long-memory-estimates.md).
 
 ## Get started
 

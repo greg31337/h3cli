@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #include "src/geometry.h"
 #include "src/log.h"
 #include "src/memory.h"
@@ -1033,7 +1034,7 @@ static int stitch_tiles(float **tiles, const tile_axis *y_axis,
     output->height = full_h;
     output->width = full_w;
     output->rgb = rgb;
-    if(getenv("H3_PROFILE"))fprintf(stderr,"h3cli: video VAE stitching wall=%.6fs tiles=%d frames=%d\n",vae_clock()-start,y_axis->count*x_axis->count,frame_count);
+    if(getenv("H3_PROFILE"))fprintf(stderr,"h3cli: video VAE stitching wall=%ss tiles=%d frames=%d\n",H3_SECONDS(vae_clock()-start, 6),y_axis->count*x_axis->count,frame_count);
     return 1;
 }
 

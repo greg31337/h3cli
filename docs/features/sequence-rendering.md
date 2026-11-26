@@ -27,6 +27,7 @@ sum of delivered segments and can exceed one segment’s duration.
 
 ```sh
 ./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3 --dry-run
+./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3 --dry-run-text
 ./bin/h3cli --render scenes.txt -d /path/to/MiniMaxH3
 ./bin/h3cli --render scenes.txt --output-dir outputs/my-sequence --steps 20
 ```
@@ -43,7 +44,11 @@ tested platforms, package coverage and validation limits.
 
 `--dry-run` validates the whole script and prints a JSON plan containing the
 expanded prompts, effective commands, skipped segments and merge destinations.
-It does not load models, start render workers or create output files. Native
+`--dry-run-text` prints every segment's shell-quoted h3cli command and effective
+multiline prompt, plus planned frame-extraction and upscale commands. Skipped
+segments are labeled and have no execution command. JSON remains the default
+for `--dry-run`; if both flags are present, text output takes precedence.
+Neither mode loads models, runs FFmpeg, starts workers or creates output files. Native
 CLI generation options provide initial defaults; script directives override
 those defaults. Direct `--prompt`, `--output`, continuation-state overrides and
 other operation modes cannot be combined with `--render`.
@@ -347,6 +352,44 @@ active probe. `run.json` records the selected scan timeout and verification mode
 under `validation`. Metadata checks validate container information; enable full
 frame verification when decoded-video integrity needs checking too.
 
+## Frames from the preceding segment
+
+Use this directive before a segment's prompt to extract an image from the
+immediately preceding rendered segment:
+
+```text
+### opening
+#size 256x256
+#frames 22
+summary:
+A cat sits beside a garden gate.
+### next
+#ref-image #last-segment-frame -1
+#use-last-sections
+summary:
+The same cat walks through the gate.
+```
+
+Positive indices are one-based: `1` is the first frame. Negative indices count
+backward: `-1` is the last frame and `-10` is the tenth from the end. Zero,
+out-of-range indices, a missing predecessor, and a skipped predecessor are
+errors. The range uses the preceding clip's delivered frames, after continuation
+prefix trimming. With `#upscale`, extraction uses the upscaled clip; segment-name
+overlays are excluded. Each seed variant refers to its own preceding clip.
+
+The PNG is extracted after its source finishes and before the next h3cli worker
+starts. Extraction failure stops the sequence and preserves completed outputs.
+Both dry-run formats describe the extraction without running it; `run.json`
+records its source, requested index, resolved zero-based index, PNG path, command
+and status under `frame_references`.
+
+Put each frame selector on its own `#ref-image` line. It appends in reference
+order alongside global and local image references, obeys `#unset ref-image`,
+and does not carry into the next segment. It cannot be declared globally before
+the first segment. Normal image-reference limits and conditioning compatibility
+still apply; adding a reference does not make an incompatible FL2VA→Ref2VA
+continuation valid.
+
 ## Continued prompt sections
 
 Recognized headings appear on their own lines, with optional surrounding
@@ -372,8 +415,14 @@ A `#continue` segment automatically inherits each omitted section from the
 previous segment's effective prompt. Writing a heading again replaces its entire
 body; other sections still inherit. These values propagate through subsequent
 continuations in hard and bridge modes. An explicitly empty section clears it
-until a later segment supplies it again. A segment without `#continue` resets
-the prompt-section context.
+until a later segment supplies it again.
+
+Use `#use-last-sections` before the prompt to request the same inheritance for
+an independent segment. It copies omitted sections from the immediately preceding
+segment, including a skipped segment if explicitly requested. It does not enable
+video continuation, trim frames, or inherit local media references. The directive
+applies only to its own segment and requires a preceding segment. A segment with
+neither `#continue` nor `#use-last-sections` resets the prompt-section context.
 
 ```text
 ### opening
@@ -424,7 +473,8 @@ prompt or existing reference files and produce no clip or state.
 A continuation chain includes its first segment and all following `#continue`
 segments. Every heading in that chain must be skipped, or every heading must be
 rendered. Mixing them anywhere in the script is a preprocessing error. Skipped
-chains never seed the prompt sections of a subsequent independent segment.
+chains do not seed a subsequent independent segment's prompt sections unless
+that segment explicitly uses `#use-last-sections`.
 
 ```text
 !### omitted-first

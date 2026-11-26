@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #include "src/sampling/av_state.h"
 
 /* CommonCrypto remains the platform C SHA-256 API on macOS. */
@@ -220,8 +221,8 @@ int h3_av_state_save(const h3_av_state *s, const char *path, char *error, size_t
         unlink(temporary);
     }
     free(temporary);
-    if (ok && getenv("H3_PROFILE")) fprintf(stderr, "h3cli: AV state save %.3f s, %zu bytes\n",
-        h3_av_now()-start, HEADER_SIZE + (s->info.video_elements+s->info.audio_elements)*4);
+    if (ok && getenv("H3_PROFILE")) fprintf(stderr, "h3cli: AV state save %s s, %zu bytes\n",
+        H3_SECONDS(h3_av_now()-start, 3), HEADER_SIZE + (s->info.video_elements+s->info.audio_elements)*4);
     return ok;
 }
 
@@ -267,8 +268,8 @@ h3_av_state *h3_av_state_load(const char *path, char *error, size_t size) {
     }
 done:
     fclose(f);
-    if (s && getenv("H3_PROFILE")) fprintf(stderr,"h3cli: AV state load %.3f s, %zu bytes\n",
-        h3_av_now()-start, HEADER_SIZE+(s->info.video_elements+s->info.audio_elements)*4);
+    if (s && getenv("H3_PROFILE")) fprintf(stderr,"h3cli: AV state load %s s, %zu bytes\n",
+        H3_SECONDS(h3_av_now()-start, 3), HEADER_SIZE+(s->info.video_elements+s->info.audio_elements)*4);
     return s;
 }
 

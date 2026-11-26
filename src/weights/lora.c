@@ -1,3 +1,4 @@
+#include "src/duration.h"
 /* Native runtime LoRA folding. Recipe 1: ascending rank FP32 products/adds,
  * ordered adapters, one BF16 ties-even rounding. Never compile with fast-math. */
 #include "src/weights/lora.h"
@@ -1025,7 +1026,7 @@ int h3_lora_prepare(const h3_lora_selection *selection,const char *source,int mo
     hash_u64(&hash,selection->count);
     for(size_t i=0;i<selection->count;i++){h3_sha256_update(&hash,w.adapters[i].digest,32);uint64_t bits;memcpy(&bits,&selection->args[i].scale,8);hash_u64(&hash,bits);}
     unsigned char digest[32];h3_sha256_final(digest,&hash);hex(digest,key);hashed=now()-start;w.hash_seconds=hashed;
-    fprintf(stderr,"LoRA %s: %zu adapter(s), %zu targets, key %s (source hashing/planning %.2fs)\n",mode?"Ref2VA":"FL2VA",selection->count,w.target_count,key,hashed);
+    fprintf(stderr,"LoRA %s: %zu adapter(s), %zu targets, key %s (source hashing/planning %ss)\n",mode?"Ref2VA":"FL2VA",selection->count,w.target_count,key,H3_SECONDS(hashed, 2));
     if(!cache_dir(&w,root,1)||!cache_dir(&w,variants,1)||!cache_dir(&w,staging,1)||!cache_dir(&w,invalid,1))goto end;
     entry=join(variants,key);if(!entry)goto oom;
     verify_start=now();
@@ -1115,9 +1116,9 @@ ready:
     {char *effective=join(entry,"transformer");if(!effective)goto oom;
     memset(variant,0,sizeof(*variant));variant->transformer=effective;strcpy(variant->key,key);
     variant->cache_hit=hit;variant->hash_seconds=hashed;variant->verify_seconds=verified;variant->prepare_seconds=now()-start;variant->scratch_peak=w.scratch_peak;variant->sampled_bytes=w.sampled_bytes;}
-    if(!hit)fprintf(stderr,"LoRA phases: copy %.2fs (%zu cloned, %zu full copies), fold %.2fs, input/untouched validation %.2fs\n",
-        w.copy_seconds,w.cloned_files,w.copied_files,w.fold_seconds,w.validation_seconds);
-    fprintf(stderr,"LoRA %s: %s; verification %.2fs, preparation %.2fs, sampled %zu bytes, owned arithmetic/I/O scratch %zu bytes\n",mode?"Ref2VA":"FL2VA",sampled_hit?"sampled cache hit":hit?"fully verified cache hit":"fold published",verified,variant->prepare_seconds,w.sampled_bytes,w.scratch_peak);
+    if(!hit)fprintf(stderr,"LoRA phases: copy %ss (%zu cloned, %zu full copies), fold %ss, input/untouched validation %ss\n",
+        H3_SECONDS(w.copy_seconds, 2),w.cloned_files,w.copied_files,H3_SECONDS(w.fold_seconds, 2),H3_SECONDS(w.validation_seconds, 2));
+    fprintf(stderr,"LoRA %s: %s; verification %ss, preparation %ss, sampled %zu bytes, owned arithmetic/I/O scratch %zu bytes\n",mode?"Ref2VA":"FL2VA",sampled_hit?"sampled cache hit":hit?"fully verified cache hit":"fold published",H3_SECONDS(verified, 2),H3_SECONDS(variant->prepare_seconds, 2),w.sampled_bytes,w.scratch_peak);
     if(error&&cap)error[0]=0;
     ok=1;goto end;
 oom:fail(&w,"out of memory preparing LoRA cache");

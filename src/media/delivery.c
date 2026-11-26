@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #include "src/media/delivery.h"
 #include "src/sampling/av_state.h"
 #include "src/media/ffmpeg.h"
@@ -102,7 +103,7 @@ int h3_deliver_video(h3_tiny_vae *tiny,h3_video_vae_decoder *full,
     }
     if(d.writer&&!h3_ffmpeg_writer_finish(d.writer,error,size))return 0;
     if(d.writer&&options->on_progress)options->on_progress("FFmpeg",1,1,options->callback_opaque);
-    if(getenv("H3_PROFILE"))fprintf(stderr,"h3cli: %s delivery: first_frame=%.6f decode_compute_transfer=%.6f conversion=%.6f pipe=%.6f mux_finish=%.6f total=%.6f s\n",
-        tiny?"tiny":"full",d.first,finish-d.start-d.conversion-d.write,d.conversion,d.write,h3_av_now()-finish,h3_av_now()-d.start);
+    if(getenv("H3_PROFILE"))fprintf(stderr,"h3cli: %s delivery: first_frame=%s decode_compute_transfer=%s conversion=%s pipe=%s mux_finish=%s total=%s s\n",
+        tiny?"tiny":"full",H3_SECONDS(d.first, 6),H3_SECONDS(finish-d.start-d.conversion-d.write, 6),H3_SECONDS(d.conversion, 6),H3_SECONDS(d.write, 6),H3_SECONDS(h3_av_now()-finish, 6),H3_SECONDS(h3_av_now()-d.start, 6));
     return 1;
 }

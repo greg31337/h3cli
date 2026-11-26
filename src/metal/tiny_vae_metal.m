@@ -1,3 +1,4 @@
+#include "src/duration.h"
 /* Native MPSGraph TAEH3 decoder. Architecture attribution in src/vae/tiny_vae.c. */
 #include "src/vae/tiny_vae_internal.h"
 #import <Foundation/Foundation.h>
@@ -121,8 +122,8 @@ void h3_tiny_backend_reset(void *backend){if(backend){
 }}
 void h3_tiny_backend_profile(void *backend){if(backend&&getenv("H3_PROFILE")){
     H3TinyMetal *d=(__bridge H3TinyMetal *)backend;
-    fprintf(stderr,"h3cli: tiny Metal FP16: compute=%.6f transfer=%.6f s device_allocated_peak=%lu plans=%lu built=%lu\n",
-        d.computeSeconds,d.transferSeconds,(unsigned long)d.peakBytes,(unsigned long)d.plans.count,(unsigned long)d.planBuilds);
+    fprintf(stderr,"h3cli: tiny Metal FP16: compute=%s transfer=%s s device_allocated_peak=%lu plans=%lu built=%lu\n",
+        H3_SECONDS(d.computeSeconds, 6),H3_SECONDS(d.transferSeconds, 6),(unsigned long)d.peakBytes,(unsigned long)d.plans.count,(unsigned long)d.planBuilds);
 }}
 int h3_tiny_backend_chunk(void *backend,const float *input,int t,int h,int w,float **output,char *error,size_t size){@autoreleasepool{
     *output=NULL;float *pixels=NULL;

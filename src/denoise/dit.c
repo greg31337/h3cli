@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #include "src/log.h"
 #include "src/geometry.h"
 #include "src/sglang/sglang.h"
@@ -2032,8 +2033,8 @@ static h3_dit *load_dit(const char *weight_directory,
             uint32_t rows = h3_dit_schedule_time_rows(dit->schedule);
             uint32_t extra = rows - h3_dit_schedule_time_rows(hard);
             size_t row_bytes = (H3_DIT_BLOCKS*H3_DIT_MODALITIES*H3_DIT_ADALN_SLOTS*H3_DIT_HIDDEN+2*H3_DIT_HIDDEN)*2;
-            H3_VERBOSE("h3cli: bridge modulation preparation %.6f s; %u time rows (%u extra), %zu extra AdaLN bytes, %zu class-plan bytes\n",
-                stream_now()-bridge_prepare_start, rows, extra, (size_t)extra*row_bytes,
+            H3_VERBOSE("h3cli: bridge modulation preparation %s s; %u time rows (%u extra), %zu extra AdaLN bytes, %zu class-plan bytes\n",
+                H3_SECONDS(stream_now()-bridge_prepare_start, 6), rows, extra, (size_t)extra*row_bytes,
                 2*sizeof(h3_bridge_profile)+(size_t)sigmas->steps*H3_TARGET_ROW_CLASSES*sizeof(uint32_t));
             h3_dit_schedule_free(hard);
         } else if ((layout->prefix.video_prefix_t || layout->prefix.audio_prefix_t) && getenv("H3_PROFILE")) {
@@ -4042,8 +4043,8 @@ int h3_dit_denoise_euler_range(h3_dit *dit, h3_sampler_state *state,
     free(initial_video);
     free(initial_audio);
     if (profile_prefix)
-        fprintf(stderr,"h3cli: continuation CPU mask and suffix Euler updates %.6f s across %d transitions\n",
-                prefix_update_seconds, state->next_step-first_step);
+        fprintf(stderr,"h3cli: continuation CPU mask and suffix Euler updates %s s across %d transitions\n",
+                H3_SECONDS(prefix_update_seconds, 6), state->next_step-first_step);
     h3_gpu_profile_mark(dit->gpu, "Euler denoise");
     return ok;
 }
@@ -4120,12 +4121,12 @@ void h3_dit_free(h3_dit *dit) {
     if (dit->ssd_streaming && getenv("H3_PROFILE")) {
         double gib = (double)dit->stream_bytes / (1024.0 * 1024.0 * 1024.0);
         fprintf(stderr,
-                "h3cli: BF16 SSD stream %.3f GiB read in %.3fs (%.3f GiB/s), "
-                "unhidden wait %.3fs\n",
-                gib, dit->stream_read_seconds,
+                "h3cli: BF16 SSD stream %.3f GiB read in %ss (%.3f GiB/s), "
+                "unhidden wait %ss\n",
+                gib, H3_SECONDS(dit->stream_read_seconds, 3),
                 dit->stream_read_seconds > 0.0
                     ? gib / dit->stream_read_seconds : 0.0,
-                dit->stream_wait_seconds);
+                H3_SECONDS(dit->stream_wait_seconds, 3));
     }
     h3_gpu_free(dit->gpu);
     h3_weight_store_free(dit->weights);

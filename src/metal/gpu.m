@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
@@ -218,14 +219,14 @@ static void h3_gpu_profile_emit(H3GPU *gpu, NSString *phase,
     double wall = h3_gpu_now() - wall_start;
     NSString *label = gpu.profileLabel ? gpu.profileLabel : @"Metal context";
     fprintf(stderr,
-        "h3cli profile: %-24s %-14s wall=%8.3fs encode=%7.3fs "
-        "wait=%8.3fs root-gpu=%7.3fs "
+        "h3cli profile: %-24s %-14s wall=%ss encode=%ss "
+        "wait=%ss root-gpu=%ss "
         "peak=%7.3fGiB alloc=%7.3fGiB submissions=%llu "
         "direct=%llu linear=%llu conv=%llu attention=%llu\n",
-        label.UTF8String, phase.UTF8String, wall,
-        value.command_encode_seconds - start.command_encode_seconds,
-        value.command_wait_seconds - start.command_wait_seconds,
-        value.gpu_seconds - start.gpu_seconds,
+        label.UTF8String, phase.UTF8String, H3_SECONDS(wall, 3),
+        H3_SECONDS(value.command_encode_seconds - start.command_encode_seconds, 3),
+        H3_SECONDS(value.command_wait_seconds - start.command_wait_seconds, 3),
+        H3_SECONDS(value.gpu_seconds - start.gpu_seconds, 3),
         (double)value.peak_live_bytes / (1024.0 * 1024.0 * 1024.0),
         (double)h3_gpu_counter_delta(value.allocated_bytes,
                                      start.allocated_bytes) /

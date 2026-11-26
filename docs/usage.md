@@ -5,8 +5,15 @@ This guide retains the detailed rendering controls, feature restrictions and
 measured tradeoffs. Commands assume a source checkout and run from its root;
 with a release package, replace `./bin/h3cli` with the downloaded executable.
 
+Console durations above five seconds are rounded to whole seconds; shorter
+durations retain fractional precision. During denoising, `remaining` estimates
+the time for the remaining steps from completed step timings, excluding preview
+work. It appears after the first measured step and does not include later
+decoding or encoding. Structured timing records retain their numeric precision.
+
 To render a text script, use `./bin/h3cli --render scenes.txt`. Add `--dry-run`
-to inspect expanded prompts and outputs, or `--output-dir DIR` to choose a
+to inspect the JSON plan, `--dry-run-text` for readable commands and expanded
+prompts, or `--output-dir DIR` to choose a
 fresh output directory. The default `scenes-render/scenes.mp4` combines all
 rendered segments; `#nomerge` anywhere in the script disables merging.
 Put `#upscale 0|2|3|4` before the first segment to apply learned 2× upscaling

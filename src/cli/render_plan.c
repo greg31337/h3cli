@@ -108,7 +108,7 @@ static int forbidden(const char *name) {
         "help", "info", "server", "still", "state-only", "decode-av-state",
         "decode-still-latent", "save-still-latent", "resume-sampler-state",
         "stop-after-step", "preview-on-stop", "upscale-state", "upscale-av-state", "inspect-upscale-state",
-        "download-models", "list-models", "render", "output-dir", "dry-run"
+        "download-models", "list-models", "render", "output-dir", "dry-run", "dry-run-text"
     };
     for (size_t i = 0; i < sizeof(names)/sizeof(*names); i++)
         if (!strcmp(name, names[i])) return 1;
@@ -303,12 +303,40 @@ static int set_references(const h3_render_plan *p, h3_request *settings,
     }
     free(list); return ok;
 }
+/* A managed ref-image stores a signed frame selector until worker lowering.
+ * Keeping it in the ordinary reference list preserves ordering and #unset. */
+static int frame_reference(const h3_option_value *v) {
+    return v->source == H3_SOURCE_MANAGED && !strcmp(v->option->name, "ref-image");
+}
+static char *frame_image_path(const h3_render_plan *p, size_t index, size_t setting) {
+    return h3_render_format("%s/%04zu-ref-%zu.png", p->work, index, setting);
+}
+static int set_frame_reference(h3_render_segment *s, const char *arguments,
+                               unsigned char *touched, char *error, size_t size) {
+    const char *marker = "#last-segment-frame";
+    const char *number = arguments + strlen(marker);
+    while (isspace((unsigned char)*number)) number++;
+    char *end = NULL;
+    errno = 0;
+    long long frame = strtoll(number, &end, 10);
+    int invalid = errno == ERANGE || end == number || !frame;
+    while (end && isspace((unsigned char)*end)) end++;
+    if (invalid || (*end && *end != '#')) {
+        snprintf(error, size, "#last-segment-frame requires one nonzero signed integer (1 is first; -1 is last)"); return 0;
+    }
+    const h3_option_descriptor *o = h3_option_find("ref-image");
+    size_t index = (size_t)(o - h3_cli_options);
+    if (!touched[index]) h3_request_remove(&s->settings, "ref-image");
+    touched[index] = 1;
+    char decimal[32]; snprintf(decimal, sizeof(decimal), "%lld", frame);
+    return h3_request_add(&s->settings, "ref-image", decimal, NULL, H3_SOURCE_MANAGED, error, size);
+}
 static void finish_prompt(h3_render_plan *p, unsigned seen) {
     h3_render_segment *s = &p->segments[p->count - 1];
     strip(&s->preamble);
     s->prompt = copy(s->preamble ? s->preamble : "");
     for (size_t j = 0; j < 6; j++) {
-        if (!(seen & (1u << j)) && s->continuing && p->count > 1 &&
+        if (!(seen & (1u << j)) && (s->continuing || s->use_last_sections) && p->count > 1 &&
             p->segments[p->count - 2].sections[j])
             s->sections[j] = copy(p->segments[p->count - 2].sections[j]);
         strip(&s->sections[j]);
@@ -407,13 +435,24 @@ static int parse(h3_render_plan *p, const h3_request *defaults, const char *base
                     good = seed_set(p, list, error, size); free(list);
                 }
             } else if (reference_option(option) && (!s || !prompt_started)) {
-                good = set_references(p, s ? &s->settings : &global_references, option,
-                                      arguments, base, touched, error, size);
+                const char *raw = arguments;
+                while (raw && isspace((unsigned char)*raw)) raw++;
+                const char *marker = "#last-segment-frame";
+                size_t length = strlen(marker);
+                if (raw && !strncmp(raw, marker, length) && (!raw[length] || isspace((unsigned char)raw[length]))) {
+                    if (strcmp(name, "ref-image") || !s) {
+                        snprintf(error, size, "#last-segment-frame is only valid in a segment's #ref-image directive"); good = 0;
+                    } else good = set_frame_reference(s, raw, touched, error, size);
+                } else good = set_references(p, s ? &s->settings : &global_references, option,
+                                             arguments, base, touched, error, size);
             } else if (!s) { snprintf(error, size, "start the first video with ### NAME or !### NAME"); good = 0; }
             else if (prompt_started) { snprintf(error, size, "put directives before the prompt; use \\# for a literal hash"); good = 0; }
             else if (!strcmp(name, "continue")) {
                 if (arity || s->continuing) { snprintf(error, size, "use #continue once, with no value"); good = 0; }
                 else s->continuing = 1;
+            } else if (!strcmp(name, "use-last-sections")) {
+                if (arity || s->use_last_sections) { snprintf(error, size, "use #use-last-sections once, with no value"); good = 0; }
+                else s->use_last_sections = 1;
             } else if (!strcmp(name, "size")) {
                 char *dimensions = arity == 1 ? copy(first) : copy("");
                 char *separator = strpbrk(dimensions, "xX");
@@ -495,7 +534,7 @@ static int expand_seeds(h3_render_plan *p, char *error, size_t size) {
                      p->source, s->line, seed, offset); goto fail;
         }
         h3_render_segment *to = &expanded[run * p->count + i];
-        to->line = s->line; to->continuing = s->continuing; to->skipped = s->skipped;
+        to->line = s->line; to->continuing = s->continuing; to->use_last_sections = s->use_last_sections; to->skipped = s->skipped;
         to->frames = s->frames; to->delivered = s->delivered; to->width = s->width; to->height = s->height;
         to->seed_offset = offset;
         to->name = h3_render_format("seed-%" PRIu64 "/%s", offset, s->name);
@@ -516,6 +555,7 @@ static int validate(h3_render_plan *p, char *error, size_t size) {
         h3_render_segment *s = &p->segments[i];
 #define FAIL(...) do { snprintf(error, size, __VA_ARGS__); goto invalid; } while (0)
         if (s->continuing && !i) FAIL("#continue needs a preceding segment");
+        if (s->use_last_sections && !i) FAIL("#use-last-sections needs a preceding segment");
         if (s->continuing && p->upscale && p->upscale_refine_steps)
             FAIL("continuations require #upscale 0; refinement is unsupported with #continue");
         if (s->continuing && s->skipped != p->segments[i-1].skipped)
@@ -566,6 +606,14 @@ static int validate(h3_render_plan *p, char *error, size_t size) {
         for (size_t j = 0; j < s->settings.count; j++) {
             const h3_option_value *v = &s->settings.values[j];
             if (v->option->path != H3_PATH_MEDIA) continue;
+            if (frame_reference(v)) {
+                if (!i || p->segments[i-1].skipped) FAIL("#last-segment-frame needs a preceding rendered segment");
+                long long frame = strtoll(v->value, NULL, 10);
+                int count = p->segments[i-1].delivered;
+                if (frame > count || frame < -(long long)count)
+                    FAIL("#last-segment-frame %s is outside the preceding segment's %d delivered frames", v->value, count);
+                continue;
+            }
             struct stat st;
             if (stat(v->value, &st) || !S_ISREG(st.st_mode) ||
                 (v->second && (stat(v->second, &st) || !S_ISREG(st.st_mode)))) FAIL("missing #%s file: %s", v->option->name, v->value);
@@ -626,10 +674,12 @@ int h3_render_plan_read(h3_render_plan *p, const h3_request *request, char *erro
     p->merged = h3_render_format("%s.mp4", name);
     p->output = output ? h3_render_absolute(cwd, output->value) : h3_render_format("%s/%s-render", base, name);
     p->work = h3_render_format("%s/.render", p->output); free(name);
-    p->dry_run = h3_request_get(request, "dry-run") != NULL;
+    p->dry_run_text = h3_request_get(request, "dry-run-text") != NULL;
+    p->dry_run = p->dry_run_text || h3_request_get(request, "dry-run") != NULL;
     for (size_t i = 0; i < request->count; i++) {
         const h3_option_value *v = &request->values[i];
-        if (!strcmp(v->option->name, "render") || !strcmp(v->option->name, "output-dir") || !strcmp(v->option->name, "dry-run")) continue;
+        if (!strcmp(v->option->name, "render") || !strcmp(v->option->name, "output-dir") ||
+            !strcmp(v->option->name, "dry-run") || !strcmp(v->option->name, "dry-run-text")) continue;
         if (!set_option(&defaults, v->option->name, v->value, v->second, cwd, touched, error, size)) goto done;
     }
     FILE *file = fopen(p->source, "rb");
@@ -660,6 +710,11 @@ void h3_render_plan_free(h3_render_plan *p) {
 int h3_render_request(const h3_render_plan *p, size_t index, h3_request *request, char *error, size_t size) {
     const h3_render_segment *s = &p->segments[index];
     if (!clone_settings(request, &s->settings, 1, error, size)) return 0;
+    for (size_t j = 0; j < request->count; j++) if (frame_reference(&request->values[j])) {
+        free(request->values[j].value);
+        request->values[j].value = frame_image_path(p, index, j);
+        request->values[j].source = H3_SOURCE_NATIVE;
+    }
     if (p->upscale) {
         h3_request_remove(request,"upscale-model");h3_request_remove(request,"upscale-noise");h3_request_remove(request,"upscale-seed");
         if(p->upscale_refine_steps) {
@@ -721,6 +776,7 @@ sj_value *h3_render_plan_json(const h3_render_plan *p, const char *binary) {
         sj_add(row, "seed", sj_uint((uint64_t)strtoull(value(s, "seed"), NULL, 10)));
         if (p->seed_count) sj_add(row, "seed_offset", sj_uint(s->seed_offset));
         sj_add(row, "prompt", sj_string(s->prompt)); sj_add(row, "continuing", sj_bool(s->continuing));
+        sj_add(row, "use_last_sections", sj_bool(s->use_last_sections));
         sj_add(row, "status", sj_string(s->skipped ? "skipped" : "planned"));
         sj_add(row, "frames", sj_int(s->frames)); sj_add(row, "delivered", sj_int(s->delivered));
         sj_add(row, "width", sj_int(h3_render_width(p,s))); sj_add(row, "height", sj_int(h3_render_height(p,s)));
@@ -728,6 +784,32 @@ sj_value *h3_render_plan_json(const h3_render_plan *p, const char *binary) {
         char *video = h3_render_format("%s/%s", p->output, s->name);
         sj_add(row, "video", sj_string(video)); free(video);
         if (!s->skipped) {
+            sj_value *references = sj_array();
+            for (size_t j = 0; j < s->settings.count; j++) if (frame_reference(&s->settings.values[j])) {
+                const h3_render_segment *previous = &p->segments[i-1];
+                long long requested = strtoll(s->settings.values[j].value, NULL, 10);
+                int frame = (int)(requested > 0 ? requested - 1 : previous->delivered + requested);
+                char *source = p->overlay_segment_name ?
+                    h3_render_format("%s/%04zu%s.mp4", p->work, i-1, p->upscale ? "-upscaled" : "") :
+                    h3_render_format("%s/%s", p->output, previous->name);
+                char *image = frame_image_path(p, i, j);
+                char *filter = h3_render_format("select=eq(n\\,%d)", frame);
+                const char *ffmpeg = getenv("H3_FFMPEG");
+                if (!ffmpeg || !*ffmpeg) ffmpeg = "ffmpeg";
+                const char *argv[] = {ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error", "-n", "-i", source,
+                    "-map", "0:v:0", "-vf", filter, "-frames:v", "1", "-fps_mode", "vfr", "-an", "-sn", "-dn",
+                    "-c:v", "png", "-update", "1", image};
+                sj_value *reference = sj_object(), *command = sj_array();
+                for (size_t k = 0; k < sizeof(argv)/sizeof(*argv); k++) sj_add(command, NULL, sj_string(argv[k]));
+                sj_add(reference, "requested_frame", sj_int(requested));
+                sj_add(reference, "frame_index", sj_int(frame));
+                sj_add(reference, "source_segment", sj_string(previous->name));
+                sj_add(reference, "source_video", sj_string(source));
+                sj_add(reference, "image", sj_string(image));
+                sj_add(reference, "command", command); sj_add(reference, "status", sj_string("planned"));
+                sj_add(references, NULL, reference); free(source); free(image); free(filter);
+            }
+            sj_add(row, "frame_references", references);
             h3_request request = {0}; char error[256]; int argc = 0;
             if (!h3_render_request(p, i, &request, error, sizeof(error))) { h3_request_free(&request); sj_free(row); sj_free(report); return NULL; }
             char **argv = h3_request_argv(&request, &argc);

@@ -68,10 +68,11 @@ def main():
     assert any(line.startswith('video VAE load') and re.search(r'\b36/36\s+\([0-9.]+ s\)$', line) for line in lines)
     # 56 frames = three temporal chunks; 128px fits one spatial tile.
     assert any(line.startswith('video VAE decode') and re.search(r'\b108/108\s+\([0-9.]+ s\)$', line) for line in lines)
-    timing = re.fullmatch(r'h3(?:cli)?: total wall time: (\d+\.\d{2}) s', lines[-1])
+    timing = re.fullmatch(r'h3(?:cli)?: total wall time: (\d+(?:\.\d{2})?) s', lines[-1])
     assert timing, lines[-1]
     reported_seconds = float(timing[1])
-    assert 0 < reported_seconds <= wall_seconds + 0.02
+    assert 0 < reported_seconds <= wall_seconds + 0.51
+    assert reported_seconds <= 5 or '.' not in timing[1]
     assert abs(reported_seconds - wall_seconds) < max(1.0, wall_seconds * 0.05)
     assert any(line == f'h3cli: wrote {OUT / "face.mp4"}' for line in lines[:-1])
     assert sha(OUT / 'face.mp4') == baseline['mp4_sha256']

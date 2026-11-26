@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #include "src/log.h"
 #include "src/denoise/attention.h"
 #include "src/denoise/adaptive_cache.h"
@@ -54,7 +55,10 @@ static void usage(const char *program) {
         "      --render FILE      Render a text script; merge as FILE_STEM.mp4\n"
         "      --output-dir DIR   Fresh directory for --render outputs\n"
         "      --dry-run          Validate --render and print its expanded JSON plan\n"
+        "      --dry-run-text     Print --render commands and effective prompts as text\n"
         "                        #nomerge anywhere disables merges; #continue inherits prompt sections\n"
+        "                        #use-last-sections inherits prompt sections for an independent segment\n"
+        "                        #ref-image #last-segment-frame N extracts a preceding clip frame (1 first, -1 last)\n"
         "                        Before first segment: #overlay-segment-name, #seed-set N,...,\n"
         "                        #ref ALIAS PATH (use ALIAS in later media references)\n"
         "                        #ref-* media before first segment apply to every segment; local refs append\n"
@@ -885,7 +889,7 @@ static int cli_execute(int argc, char **argv) {
         h3_free(ctx);
         struct timespec end;
         clock_gettime(CLOCK_MONOTONIC, &end);
-        fprintf(stderr,"h3cli: upscale total wall time %.6f s\n",(double)(end.tv_sec-operation_begin.tv_sec)+(double)(end.tv_nsec-operation_begin.tv_nsec)/1e9+model_preparation_seconds);
+        fprintf(stderr,"h3cli: upscale total wall time %s s\n",H3_SECONDS((double)(end.tv_sec-operation_begin.tv_sec)+(double)(end.tv_nsec-operation_begin.tv_nsec)/1e9+model_preparation_seconds, 6));
         return !ok;
     }
     if(upscale_given||upscale_import) {fprintf(stderr,"h3cli: upscale controls require --upscale-state or --upscale-av-state; resume restores them from its checkpoint\n");return 2;}
@@ -1028,7 +1032,7 @@ static int cli_execute(int argc, char **argv) {
         struct timespec end;
         clock_gettime(CLOCK_MONOTONIC, &end);
         double elapsed=(double)(end.tv_sec-operation_begin.tv_sec)+(double)(end.tv_nsec-operation_begin.tv_nsec)/1e9;
-        fprintf(stderr,"h3cli: wrote %s\nh3cli: total wall time: %.2f s\n",output,elapsed+model_preparation_seconds);return 0;
+        fprintf(stderr,"h3cli: wrote %s\nh3cli: total wall time: %s s\n",output,H3_SECONDS(elapsed+model_preparation_seconds, 2));return 0;
     }
     if(!lora.count&&(lora.cache_dir||lora.memory_mib)){
         fprintf(stderr,"h3cli: --lora-cache/--lora-memory-mib require --lora\n");return 2;
@@ -1190,8 +1194,8 @@ static int cli_execute(int argc, char **argv) {
                 (double)(generation_end.tv_nsec - generation_begin.tv_nsec) / 1e9;
             /* Include lazy weight loading, conditioning and media delivery.
              * Subtracting their costs would conceal the cold pipeline cost. */
-            H3_VERBOSE("h3cli: %s generation including lazy weights: %.6f s\n",
-                (params.cuda_attention||params.cuda_denoise_quant)?"SGLang-base with explicit approximation":"reference",seconds);
+            H3_VERBOSE("h3cli: %s generation including lazy weights: %s s\n",
+                (params.cuda_attention||params.cuda_denoise_quant)?"SGLang-base with explicit approximation":"reference",H3_SECONDS(seconds, 6));
         }
         if (!result) {
             h3_cli_progress_finish(&cli.progress, stderr);
@@ -1232,7 +1236,7 @@ static int cli_execute(int argc, char **argv) {
         clock_gettime(CLOCK_MONOTONIC, &operation_end);
         double elapsed = (double)(operation_end.tv_sec - operation_begin.tv_sec) +
             (double)(operation_end.tv_nsec - operation_begin.tv_nsec) / 1e9;
-        fprintf(stderr, "h3cli: total wall time: %.2f s\n", elapsed+model_preparation_seconds);
+        fprintf(stderr, "h3cli: total wall time: %s s\n", H3_SECONDS(elapsed+model_preparation_seconds, 2));
     }
     return 0;
 }
@@ -1357,8 +1361,8 @@ int h3_cli_run(int argc, char **argv, const h3_cli_hooks *hooks) {
         status = h3_render_run(&request, binary, validate_render_options);
         free(binary); goto done;
     }
-    if (h3_request_get(&request, "output-dir") || h3_request_get(&request, "dry-run")) {
-        snprintf(error, sizeof(error), "--output-dir and --dry-run require --render"); goto done;
+    if (h3_request_get(&request, "output-dir") || h3_request_get(&request, "dry-run") || h3_request_get(&request, "dry-run-text")) {
+        snprintf(error, sizeof(error), "--output-dir, --dry-run and --dry-run-text require --render"); goto done;
     }
     int prefetch=h3_request_get(&request,"download-models")!=NULL;
     int list=h3_request_get(&request,"list-models")!=NULL;
@@ -1396,7 +1400,7 @@ int h3_cli_run(int argc, char **argv, const h3_cli_hooks *hooks) {
     download_progress_state download_state = {.hooks = hooks};
     int ready = h3_models_prepare(&plan, download_progress, &download_state, error, sizeof(error));
     model_preparation_seconds=h3_av_now()-preparing_began;
-    if(model_preparation_seconds>=.1)fprintf(stderr,"h3cli: model preparation %.3f s\n",model_preparation_seconds);
+    if(model_preparation_seconds>=.1)fprintf(stderr,"h3cli: model preparation %s s\n",H3_SECONDS(model_preparation_seconds, 3));
     if (!hooks) { sigaction(SIGINT, &old_int, NULL); sigaction(SIGTERM, &old_term, NULL); }
     if (!ready) { status = download_cancelled ? 130 : 1; goto done; }
     if (prefetch || (hooks && hooks->prepare_only)) { status = 0; goto done; }

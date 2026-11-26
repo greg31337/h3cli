@@ -6,7 +6,7 @@
 /* The planner never starts workers, reads models or creates outputs. */
 typedef struct {
     char *name, *label, *prompt, *preamble, *sections[6];
-    int line, continuing, skipped, frames, delivered, width, height;
+    int line, continuing, use_last_sections, skipped, frames, delivered, width, height;
     uint64_t seed_offset;
     h3_request settings;
 } h3_render_segment;
@@ -19,7 +19,7 @@ typedef struct {
     size_t seed_count;
     h3_render_reference *references;
     size_t reference_count;
-    int nomerge, dry_run, overlay_segment_name, upscale, upscale_refine_steps;
+    int nomerge, dry_run, dry_run_text, overlay_segment_name, upscale, upscale_refine_steps;
 } h3_render_plan;
 
 static inline int h3_render_width(const h3_render_plan *p,const h3_render_segment *s) {return s->width*(p->upscale?2:1);}

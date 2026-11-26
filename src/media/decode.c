@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #include "src/media/delivery.h"
 #include "src/sampling/av_state.h"
 #include "src/execution.h"
@@ -101,13 +102,13 @@ h3_result *h3_decode_av_owned(const char *model_dir,h3_av_state *state,
         memcpy(p.tiny_sha256,h3_tiny_vae_digest(tiny),65);if(progress(1,1,&pr))goto cancelled;
     }else{p.tiny_sha256[0]=0;pr.phase="video VAE load";
         full=h3_video_vae_decoder_load(video_path,"src/metal/shaders.metal",state->info.latent_h,state->info.latent_w,progress,&pr,error,size);if(!full)goto done;}
-    if(getenv("H3_PROFILE"))fprintf(stderr,"h3cli: decode-only audio=%.6f decoder_cold_load=%.6f s\n",audio_seconds,h3_av_now()-load_begin);
+    if(getenv("H3_PROFILE"))fprintf(stderr,"h3cli: decode-only audio=%s decoder_cold_load=%s s\n",H3_SECONDS(audio_seconds, 6),H3_SECONDS(h3_av_now()-load_begin, 6));
     if(!h3_deliver_video(tiny,full,state->video,state->info.video_t,state->info.latent_h,state->info.latent_w,&p,&audio,options,error,size))goto done;
     result=calloc(1,sizeof(*result));if(!result){snprintf(error,size,"cannot allocate decode result");goto done;}
     result->width=p.width;result->height=p.height;result->frames=state->info.frames-p.trim_frames;
     result->fps=p.fps;result->sample_rate=audio.sample_rate;result->audio_samples=audio.samples;result->seed=state->info.seed;
     result->presentation=p;result->av_state=state;state=NULL;
-    if(getenv("H3_PROFILE"))fprintf(stderr,"h3cli: decode-only through MP4 completion %.6f s; denoiser calls=0\n",h3_av_now()-begin);
+    if(getenv("H3_PROFILE"))fprintf(stderr,"h3cli: decode-only through MP4 completion %s s; denoiser calls=0\n",H3_SECONDS(h3_av_now()-begin, 6));
     goto done;
 cancelled:snprintf(error,size,"decoder loading cancelled");
 done:h3_tiny_vae_free(tiny);h3_video_vae_decoder_free(full);h3_audio_waveform_free(&audio);h3_av_state_free(state);
@@ -166,8 +167,8 @@ h3_result *h3_decode_still_values(const h3_still_latent *input,const char *vae_d
     result->kind=H3_RESULT_STILL;result->width=rgb.width;result->height=rgb.height;result->frames=1;
     if(getenv("H3_PROFILE")) {
         h3_memory_snapshot mem;h3_memory_sample(&mem);
-        fprintf(stderr,"h3cli: still cold_load=%.6fs decode=%.6fs delivery=%.6fs footprint=%llu denoiser_calls=0 audio_decode_calls=0 frames=1\n",
-            loaded-start,decoded-loaded,h3_av_now()-decoded,(unsigned long long)mem.physical_footprint);
+        fprintf(stderr,"h3cli: still cold_load=%ss decode=%ss delivery=%ss footprint=%llu denoiser_calls=0 audio_decode_calls=0 frames=1\n",
+            H3_SECONDS(loaded-start, 6),H3_SECONDS(decoded-loaded, 6),H3_SECONDS(h3_av_now()-decoded, 6),(unsigned long long)mem.physical_footprint);
     }
     goto done;
 failure:h3_result_free(result);result=NULL;

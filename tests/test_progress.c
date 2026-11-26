@@ -1,4 +1,5 @@
 #include "src/cli/cli_progress.h"
+#include "src/duration.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,6 +24,11 @@ static void screen(const char *raw, char *out) {
 }
 
 int main(void) {
+    CHECK(!strcmp(H3_SECONDS(4.25, 2), "4.25"));
+    CHECK(!strcmp(H3_SECONDS(5.0, 2), "5.00"));
+    CHECK(!strcmp(H3_SECONDS(5.01, 6), "5"));
+    CHECK(!strcmp(H3_SECONDS(290.4, 2), "290"));
+    CHECK(!strcmp(H3_SECONDS(4724.6, 6), "4725"));
     h3_cli_progress_state state = {.terminal = 1}; char *raw = NULL; size_t size = 0;
     FILE *f = open_memstream(&raw, &size); CHECK(f);
     h3_cli_progress_update(&state, f, "reference vision preparation", 0, 1);
@@ -71,6 +77,7 @@ int main(void) {
     state.step_started -= 2;
     h3_cli_progress_update(&state, f, "denoise", 3, 6);
     CHECK(strstr(raw, "last step: 2."));
+    CHECK(strstr(raw, "remaining: 6 s"));
     before = size;
     state.step_started -= 3600; /* Preview work must not enter the next step. */
     h3_cli_progress_update(&state, f, "denoise", 3, 6);
@@ -81,6 +88,24 @@ int main(void) {
     h3_cli_progress_update(&state, f, "denoise enqueue", 5, 6);
     h3_cli_progress_update(&state, f, "denoise", 6, 6);
     CHECK(!strstr(raw + before, "last step:"));
+    CHECK(fclose(f) == 0); free(raw);
+    /* ETA counts measured work after resume, not already completed steps or
+     * wall time spent in previews. Durations over five seconds are integral. */
+    raw = NULL; size = 0; memset(&state, 0, sizeof(state));
+    f = open_memstream(&raw, &size); CHECK(f);
+    h3_cli_progress_update(&state, f, "denoise", 14, 30);
+    CHECK(!strstr(raw, "remaining:"));
+    state.step_started -= 290;
+    state.pending[0].started -= 4724;
+    h3_cli_progress_update(&state, f, "denoise", 15, 30);
+    CHECK(strstr(raw, "(4724 s; last step: 290 s; remaining: 4350 s)"));
+    before = size;
+    state.step_started -= 3000;
+    h3_cli_progress_update(&state, f, "denoise", 15, 30);
+    CHECK(size == before && state.denoise_steps == 1);
+    state.step_started -= 310;
+    h3_cli_progress_update(&state, f, "denoise", 16, 30);
+    CHECK(strstr(raw + before, "last step: 310 s; remaining: 4200 s"));
     CHECK(fclose(f) == 0); free(raw);
     /* Explicit plain mode has no carriage returns or profiling records, and a
      * large decode cannot flood the log with thousands of tiny updates. */

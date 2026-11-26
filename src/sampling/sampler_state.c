@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #include "src/log.h"
 #include "src/sglang/sglang.h"
 #include "src/denoise/attention.h"
@@ -740,10 +741,10 @@ void h3_sampler_log(const h3_sampler_state *s,const char *action,uint64_t bytes,
     if(s->params.cuda_attention)h3_log_printf("h3cli: checkpoint attention=%s recipe=%u plan=%u\n",h3_attention_name(s->params.cuda_attention),s->attention_version,s->attention_plan);
     if(s->params.cuda_denoise_quant)h3_log_printf("h3cli: checkpoint denoise quantization=%s recipe=%u\n",h3_quant_name(s->params.cuda_denoise_quant),s->quant_version);
     h3_log_printf("h3cli: sampler %s: %s %s, geometry %dx%d / %d frames, schedule=%d completed=%d next=%d, sigma V=%.9g A=%.9g\n"
-        "h3cli: sampler prefix V=%d A=%d, conditioning=%zu prepared=%zu checkpoint=%llu bytes, %.3f s\n",
+        "h3cli: sampler prefix V=%d A=%d, conditioning=%zu prepared=%zu checkpoint=%llu bytes, %s s\n",
         action,s->ref2va?"Ref2VA":"FL2VA",s->sampler_mode?"GPU-state":"CPU-state",s->render_width,s->render_height,s->aligned_frames,
         s->total_steps,s->next_step,s->next_step,(double)s->sigmas.video[s->next_step],(double)s->sigmas.audio[s->next_step],
         s->layout.prefix.video_prefix_t,s->layout.prefix.audio_prefix_t,
         s->text.tokens*s->text.width*2+(s->condition_video_elements+s->condition_audio_elements)*4,
-        h3_sampler_prepared_bytes(s),(unsigned long long)bytes,seconds);
+        h3_sampler_prepared_bytes(s),(unsigned long long)bytes,H3_SECONDS(seconds, 3));
 }

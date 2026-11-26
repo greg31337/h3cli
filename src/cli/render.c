@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #include "src/cli/render.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -246,8 +247,8 @@ static sj_value *inspect(const char *probe, const char *path, int64_t frames, in
     int missing = stored <= 0 || floor(stored) != stored;
     if (!missing && stored != (double)frames) goto invalid;
     if (missing || options->verify_frames) {
-        fprintf(stderr, "h3cli: %s: %s; scanning video frames (timeout %.3g s)\n", path,
-                missing ? "container frame count unavailable" : "full frame verification requested", options->scan_timeout);
+        fprintf(stderr, "h3cli: %s: %s; scanning video frames (timeout %s s)\n", path,
+                missing ? "container frame count unavailable" : "full frame verification requested", H3_SECONDS(options->scan_timeout, 3));
         sj_value *scanned = probe_media(probe, path, 1, options->scan_timeout, log, error, size);
         if (!scanned) { sj_free(root); return NULL; }
         double counted = number(media_stream(scanned, "video"), "nb_read_frames");
@@ -378,6 +379,61 @@ static int preflight(const h3_render_plan *p, const char *ffmpeg, const char *pr
     }
     free(pattern); free(path); free(log); return ok;
 }
+static void print_command(const sj_value *command) {
+    /* POSIX shell quoting is for display only. Execution always uses argv. */
+    for (size_t i = 0; command && i < command->count; i++) {
+        if (i) putchar(' ');
+        putchar('\'');
+        for (const char *p = sj_text(command->items[i]); *p; p++) {
+            if (*p == '\'') fputs("'\\''", stdout);
+            else putchar(*p);
+        }
+        putchar('\'');
+    }
+    putchar('\n');
+}
+static void print_plan(const sj_value *report) {
+    const sj_value *segments = sj_get(report, "segments");
+    for (size_t i = 0; i < segments->count; i++) {
+        const sj_value *row = segments->items[i];
+        printf("### %s [%s]\n", sj_field(row, "name"), sj_field(row, "status"));
+        const sj_value *refs = sj_get(row, "frame_references");
+        for (size_t j = 0; refs && j < refs->count; j++) {
+            puts("Extract reference frame:"); print_command(sj_get(refs->items[j], "command"));
+        }
+        const sj_value *command = sj_get(row, "command");
+        if (command) { puts("h3cli command:"); print_command(command); }
+        printf("Prompt:\n%s\n", sj_field(row, "prompt"));
+        command = sj_get(row, "upscale_command");
+        if (command) { puts("h3cli upscale command:"); print_command(command); }
+        putchar('\n');
+    }
+}
+static int extract_references(const h3_render_plan *p, size_t index, sj_value *row,
+                               sj_value *report, double timeout, char *error, size_t size) {
+    sj_value *references = (sj_value *)sj_get(row, "frame_references");
+    for (size_t i = 0; references && i < references->count; i++) {
+        sj_value *reference = references->items[i];
+        sj_set(row, "stage", sj_string("reference extraction"));
+        sj_set(reference, "status", sj_string("running"));
+        if (!report_write(p, report, error, size)) return 0;
+        const sj_value *command = sj_get(reference, "command");
+        char **argv = calloc(command->count + 1, sizeof(*argv));
+        if (!argv) { snprintf(error, size, "out of memory"); return 0; }
+        for (size_t j = 0; j < command->count; j++) argv[j] = (char *)sj_text(command->items[j]);
+        char *log = h3_render_format("%s/%04zu-ref-%zu.log", p->work, index, i);
+        int ok = process(argv, log, 0, NULL, timeout, error, size);
+        free(argv); free(log);
+        struct stat st;
+        const char *image = sj_field(reference, "image");
+        if (ok && (stat(image, &st) || !S_ISREG(st.st_mode) || st.st_size <= 0)) {
+            snprintf(error, size, "reference frame extraction produced no image: %s", image); ok = 0;
+        }
+        sj_set(reference, "status", sj_string(ok ? "complete" : "failed"));
+        if (!ok || !report_write(p, report, error, size)) return 0;
+    }
+    return 1;
+}
 int h3_render_run(const h3_request *request, const char *binary, int (*validate)(const h3_request *)) {
     h3_render_plan plan = {0}; sj_value *report = NULL, **videos = NULL, *running = NULL;
     char error[2048] = {0}; int status = 2, created = 0, signals_set = 0;
@@ -398,7 +454,11 @@ int h3_render_run(const h3_request *request, const char *binary, int (*validate)
     }
     report = h3_render_plan_json(&plan, binary);
     if (!report) { snprintf(error, sizeof(error), "cannot allocate render report"); goto done; }
-    if (plan.dry_run) { sj_write(stdout, report); putchar('\n'); status = 0; goto done; }
+    if (plan.dry_run) {
+        if (plan.dry_run_text) print_plan(report);
+        else { sj_write(stdout, report); putchar('\n'); }
+        status = 0; goto done;
+    }
     size_t active = 0;
     for (size_t i = 0; i < plan.count; i++) active += !plan.segments[i].skipped;
     if (!active) { puts("All segments skipped; nothing to render."); status = 0; goto done; }
@@ -437,6 +497,7 @@ int h3_render_run(const h3_request *request, const char *binary, int (*validate)
             const h3_render_segment *s = &plan.segments[i]; if (s->skipped) continue;
             int width=h3_render_width(&plan,s),height=h3_render_height(&plan,s);
             running = segments->items[i]; sj_set(running, "status", sj_string("running"));
+            if (!extract_references(&plan, i, running, report, options.scan_timeout, error, sizeof(error))) goto done;
             sj_set(running,"stage",sj_string("generation"));
             if (!report_write(&plan, report, error, sizeof(error))) goto done;
             fprintf(stderr, "h3cli: segment %zu/%zu: %s (%d delivered frames)\n", ++completed, active, s->name, s->delivered);

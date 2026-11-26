@@ -1,4 +1,5 @@
 #include "src/cli/cli_progress.h"
+#include "src/duration.h"
 #include <string.h>
 #include <time.h>
 
@@ -33,9 +34,17 @@ void h3_cli_progress_update(h3_cli_progress_state *state, FILE *stream,
     int same_phase = !strcmp(state->phase, phase);
     int denoise = !strcmp(phase, "denoise");
     if (denoise) {
+        if (!same_phase || total != state->total || completed < state->completed) {
+            state->denoise_seconds = 0;
+            state->denoise_steps = 0;
+        }
         if (same_phase && total > 0 && state->total == total &&
             completed == state->completed + 1 && state->step_started > 0)
             step_seconds = now - state->step_started;
+        if (step_seconds >= 0) {
+            state->denoise_seconds += step_seconds;
+            state->denoise_steps++;
+        }
         /* Repeated step starts exclude preview time from the next step. */
         state->step_started = now;
     } else state->step_started = 0;
@@ -66,13 +75,16 @@ void h3_cli_progress_update(h3_cli_progress_state *state, FILE *stream,
     int draw = !same_phase || done || (!state->terminal && denoise) ||
         now-state->last_draw >= (state->terminal ? 0.1 : 5.0);
     if (draw) {
-        char status[64], timing[96], line[256];
+        char status[64], timing[256], line[384];
         if (total <= 0) snprintf(status, sizeof(status), "loading...");
         else if (!completed) snprintf(status, sizeof(status), "starting...");
         else snprintf(status, sizeof(status), "%d/%d", completed, total);
-        if (step_seconds >= 0)
-            snprintf(timing, sizeof(timing), "%.2f s; last step: %.2f s", elapsed, step_seconds);
-        else snprintf(timing, sizeof(timing), "%.2f s", elapsed);
+        if (step_seconds >= 0) {
+            double remaining = completed < total ?
+                state->denoise_seconds / state->denoise_steps * (total - completed) : 0;
+            snprintf(timing, sizeof(timing), "%s s; last step: %s s; remaining: %s s",
+                     H3_SECONDS(elapsed, 2), H3_SECONDS(step_seconds, 2), H3_SECONDS(remaining, 2));
+        } else snprintf(timing, sizeof(timing), "%s s", H3_SECONDS(elapsed, 2));
         snprintf(line, sizeof(line), "%-28s %-12s (%s)", phase, status, timing);
         if (state->terminal) {
             int width = (int)strlen(line);
@@ -89,7 +101,7 @@ void h3_cli_progress_update(h3_cli_progress_state *state, FILE *stream,
     }
     if (done) {
         if (state->phase_timing)
-            fprintf(stream, "h3cli: phase duration %s: %.6f s\n", phase, elapsed);
+            fprintf(stream, "h3cli: phase duration %s: %s s\n", phase, H3_SECONDS(elapsed, 6));
         if (timer) memset(timer, 0, sizeof(*timer));
         state->phase_started = 0;
     }

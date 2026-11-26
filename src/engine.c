@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #include "src/log.h"
 #include "src/sglang/sglang.h"
 #include "src/denoise/attention.h"
@@ -1213,19 +1214,19 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     if (params->continuation && !h3_av_state_validate_continuation(params->continuation,
         render_width,render_height,temporal.frame_count,context_frames,
         ctx->av_signature[ref2va],&prefix,ctx->error,sizeof(ctx->error))) return NULL;
-    if (getenv("H3_PROFILE")) fprintf(stderr,"h3cli: AV compatibility signature %.3f s\n",h3_av_now()-signature_start);
+    if (getenv("H3_PROFILE")) fprintf(stderr,"h3cli: AV compatibility signature %s s\n",H3_SECONDS(h3_av_now()-signature_start, 3));
     if (bridge_mode && !resume) {
         double started = h3_av_now();
         if (!h3_bridge_profile_build(context_frames,params->bridge_video_steps,
             params->bridge_max_strength,params->bridge_profile,&bridge,NULL,0,ctx->error,sizeof(ctx->error))) return NULL;
-        if (getenv("H3_PROFILE")) fprintf(stderr,"h3cli: bridge profile construction %.6f s, %zu bytes\n",h3_av_now()-started,sizeof(bridge));
+        if (getenv("H3_PROFILE")) fprintf(stderr,"h3cli: bridge profile construction %s s, %zu bytes\n",H3_SECONDS(h3_av_now()-started, 6),sizeof(bridge));
     }
     if (has_continuation) H3_VERBOSE(
-        "h3cli: continuation raw=%d frames, protected=%d frames / %d video steps / %d audio ticks (%.3f s), net-new=%d frames (%.3f s)\n"
+        "h3cli: continuation raw=%d frames, protected=%d frames / %d video steps / %d audio ticks (%s s), net-new=%d frames (%s s)\n"
         "h3cli: mode=%s, explicit references=%zu, prefix trimming=%s\n",
         temporal.frame_count,context_frames,prefix.video_prefix_t,prefix.audio_prefix_t,
-        (double)context_frames/H3_FPS,temporal.frame_count-context_frames,
-        (double)(temporal.frame_count-context_frames)/H3_FPS,
+        H3_SECONDS((double)context_frames/H3_FPS, 3),temporal.frame_count-context_frames,
+        H3_SECONDS((double)(temporal.frame_count-context_frames)/H3_FPS, 3),
         ref2va ? "Ref2VA" : "T2VA",params->reference_count,
         params->keep_continuation_prefix ? "off" : "on");
     char still_compatibility[65]={0};
@@ -1474,8 +1475,8 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
         if (ctx->cache_enabled) { ctx->tiny_decoder=tiny_decoder; tiny_is_cached=1; }
         memcpy(delivery.tiny_sha256,h3_tiny_vae_digest(tiny_decoder),65);
         if (h3_progress_emit(&progress,"tiny VAE load",1,1)) goto cleanup;
-        if (getenv("H3_PROFILE")) fprintf(stderr,"h3cli: tiny VAE %s load %.6f s; FP16; sha256=%s\n",
-            hit?"cached":"cold",h3_av_now()-load_begin,delivery.tiny_sha256);
+        if (getenv("H3_PROFILE")) fprintf(stderr,"h3cli: tiny VAE %s load %s s; FP16; sha256=%s\n",
+            hit?"cached":"cold",H3_SECONDS(h3_av_now()-load_begin, 6),delivery.tiny_sha256);
     } else { h3_tiny_vae_free(ctx->tiny_decoder); ctx->tiny_decoder=NULL; }
     if (resume) {
         if (!h3_text_embedding_copy(&text,&resume->text)) { h3_set_error(ctx,"cannot restore checkpoint text conditioning"); goto cleanup; }
@@ -2191,12 +2192,12 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     if (bridge_mode) {
         layout.bridge = &bridge;
         H3_VERBOSE("h3cli: continuation mode=bridge, profile=%s, max strength=%.6g\n"
-            "h3cli: bridge=%d video steps / %d frames (%.6f s); exact=%d steps / %d frames (%.6f s)\n"
-            "h3cli: audio bridge ticks=[0,%d), exact=[%d,%d); audio bridge duration=%.6f s\n"
+            "h3cli: bridge=%d video steps / %d frames (%s s); exact=%d steps / %d frames (%s s)\n"
+            "h3cli: audio bridge ticks=[0,%d), exact=[%d,%d); audio bridge duration=%s s\n"
             "h3cli: video bridge masks:",h3_bridge_profile_name(bridge.type),(double)bridge.max_strength,
-            bridge.video_bridge_t,bridge.bridge_frames,(double)bridge.bridge_frames/H3_FPS,
-            bridge.video_exact_t,context_frames-bridge.bridge_frames,(double)(context_frames-bridge.bridge_frames)/H3_FPS,
-            bridge.audio_bridge_t,bridge.audio_bridge_t,bridge.prefix.audio_prefix_t,(double)bridge.audio_bridge_t/H3_AUDIO_LATENT_FPS);
+            bridge.video_bridge_t,bridge.bridge_frames,H3_SECONDS((double)bridge.bridge_frames/H3_FPS, 6),
+            bridge.video_exact_t,context_frames-bridge.bridge_frames,H3_SECONDS((double)(context_frames-bridge.bridge_frames)/H3_FPS, 6),
+            bridge.audio_bridge_t,bridge.audio_bridge_t,bridge.prefix.audio_prefix_t,H3_SECONDS((double)bridge.audio_bridge_t/H3_AUDIO_LATENT_FPS, 6));
         for (int t=0;t<prefix.video_prefix_t;t++) H3_VERBOSE(" %.3g",(double)bridge.class_mask[bridge.video_classes[t]]);
         H3_VERBOSE("\n");
         size_t counts[H3_TARGET_ROW_CLASSES]={0};
@@ -2453,8 +2454,8 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
                 h3_av_state_insert_prefix(params->continuation,&target,prefix,video,audio,1))) {
             h3_set_error(ctx,"cannot initialize continuation latent prefix"); goto cleanup;
         }
-        if (getenv("H3_PROFILE")) fprintf(stderr,"h3cli: %s initialization %.6f s; existing target noise, no full mask tensors\n",
-            bridge_mode ? "bridge AV" : "continuation prefix",h3_av_now()-copy_start);
+        if (getenv("H3_PROFILE")) fprintf(stderr,"h3cli: %s initialization %s s; existing target noise, no full mask tensors\n",
+            bridge_mode ? "bridge AV" : "continuation prefix",H3_SECONDS(h3_av_now()-copy_start, 6));
     }
     if (sampler) { memcpy(sampler->video,video,video_count*sizeof(float)); memcpy(sampler->audio,audio,audio_count*sizeof(float)); }
     }
@@ -2718,7 +2719,7 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
                 &params->output_encoding, detail, sizeof(detail));
         if (!encoded) { h3_set_error(ctx,"%s",detail); goto cleanup; }
         if (h3_progress_emit(&progress, "FFmpeg", frames.frames, frames.frames)) goto cleanup;
-        if(getenv("H3_PROFILE"))fprintf(stderr,"h3cli: FFmpeg mux wall %.6f s\n",h3_av_now()-mux_start);
+        if(getenv("H3_PROFILE"))fprintf(stderr,"h3cli: FFmpeg mux wall %s s\n",H3_SECONDS(h3_av_now()-mux_start, 6));
     }
 delivered:
     result = calloc(1, sizeof(*result));

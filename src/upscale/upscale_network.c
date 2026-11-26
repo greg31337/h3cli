@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #include "src/log.h"
 /* Native LBH full-context graph. Weight/source notices: THIRD_PARTY_NOTICES.md. */
 #include "src/upscale/upscale_network.h"
@@ -103,8 +104,8 @@ h3_upscale_model *h3_upscale_model_load(const char *path,char *e,size_t n) {
         m->stats.weights_bytes+=t->data_end-t->data_begin;
     }
     m->stats.load_seconds=h3_av_now()-begin;
-    H3_VERBOSE("h3cli: latent upscaler: recipe=1 full-context BF16 weights=%llu load=%.6fs sha256=%s\n",
-        (unsigned long long)m->stats.weights_bytes,m->stats.load_seconds,up_artifact_hash);
+    H3_VERBOSE("h3cli: latent upscaler: recipe=1 full-context BF16 weights=%llu load=%ss sha256=%s\n",
+        (unsigned long long)m->stats.weights_bytes,H3_SECONDS(m->stats.load_seconds, 6),up_artifact_hash);
     goto done;
 bad:h3_upscale_model_free(m);m=NULL;
 done:h3_st_free_header(&header);return m;

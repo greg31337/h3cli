@@ -44,7 +44,7 @@ class NativeMediaTests(unittest.TestCase):
         self.env.update(H3_FFMPEG=self.ffmpeg, H3_FFPROBE=self.ffprobe)
         self.worker = self.root/'synthetic worker.py'
         self.worker.write_text(f'''#!{sys.executable}
-import json, math, os, subprocess, sys
+import hashlib, json, math, os, subprocess, sys
 from pathlib import Path
 args = sys.argv[1:]
 def value(name, default=None):
@@ -77,6 +77,12 @@ width, height = int(value('width','864')), int(value('height','480'))
 if saved:
     width, height, frames, trim = saved['width']*2, saved['height']*2, saved['frames'], saved['trim']
 metadata = dict(width=width, height=height, frames=frames, trim=trim, prompt=prompt)
+references = [Path(args[i+1]) for i,a in enumerate(args[:-1]) if a == '--ref-image']
+for reference in references:
+    assert reference.is_file(), reference
+    if '-ref-' in reference.name:
+        assert reference.read_bytes().startswith(b'\\x89PNG'), reference
+metadata['reference_sha256'] = [hashlib.sha256(p.read_bytes()).hexdigest() for p in references]
 if '--continue-from' in args:
     previous = json.loads(Path(value('continue-from')).read_text())
     assert (previous['width'], previous['height']) == (width, height)
@@ -84,8 +90,11 @@ frames -= trim
 color = 'blue' if 'blue' in prompt else 'red'
 frequency = 660 if color == 'blue' else 440
 encoding = ['-c:v', 'libx264rgb', '-crf', '0', '-pix_fmt', 'rgb24'] if '--lossless-video' in args else ['-c:v','libx264','-crf','18','-pix_fmt','yuv420p']
+visual = f'color=c={{color}}:s={{width}}x{{height}}:r=24:d={{frames/24:.12f}}'
+if 'FRAME_PATTERN' in prompt:
+    visual = f'testsrc2=s={{width}}x{{height}}:r=24:d={{frames/24:.12f}}'
 command = [os.environ['H3_FFMPEG'], '-nostdin','-v','error','-n', '-f','lavfi','-i',
-           f'color=c={{color}}:s={{width}}x{{height}}:r=24:d={{frames/24:.12f}}',
+           visual,
            '-f','lavfi','-i',f'sine=frequency={{frequency}}:sample_rate=32000','-t',f'{{frames/24:.12f}}',
            '-frames:v',str(frames),*encoding,'-c:a','aac','-ar','32000','-ac','2',value('output')]
 subprocess.run(command, check=True)
@@ -115,6 +124,113 @@ with (state.parent/'worker-order.jsonl').open('a') as log:
         if canvas:
             command += ['-vf', f'scale={canvas[0]}:{canvas[1]}:force_original_aspect_ratio=decrease:force_divisible_by=2,pad={canvas[0]}:{canvas[1]}:(ow-iw)/2:(oh-ih)/2,setsar=1']
         return subprocess.check_output(command + ['-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'])
+
+    def test_previous_frames_and_independent_prompt_inheritance(self):
+        report = self.run_script('''#seed-set 1,2
+### a
+#size 256x256
+#frames 22
+#steps 2
+subject_definitions:
+A red cat.
+summary:
+FRAME_PATTERN
+non_diegetic_music:
+N/A
+### b
+#use-last-sections
+#ref-image #last-segment-frame 1
+#ref-image #last-segment-frame -1
+summary:
+blue
+### c
+#use-last-sections
+#ref-image #last-segment-frame -10
+summary:
+red
+''')
+        self.assertEqual(report['status'], 'complete')
+        for start in (0,3):
+            first,second,third = report['segments'][start:start+3]
+            pixels = self.rgb(first['video']); stride = 256*256*3
+            self.assertNotEqual(pixels[:stride], pixels[-stride:])
+            for row,source in ((second,first),(third,second)):
+                self.assertFalse(row['continuing'])
+                self.assertIn('subject_definitions:\nA red cat.', row['prompt'])
+                self.assertNotIn('--continue-from', row['command'])
+                source_pixels = self.rgb(source['video'])
+                hashes = []
+                for ref in row['frame_references']:
+                    self.assertEqual(ref['status'], 'complete')
+                    self.assertEqual(ref['source_video'], source['video'])
+                    index=ref['frame_index']
+                    self.assertEqual(self.rgb(ref['image']), source_pixels[index*stride:(index+1)*stride])
+                    hashes.append(hashlib.sha256(Path(ref['image']).read_bytes()).hexdigest())
+                self.assertEqual(json.loads(Path(row['state']).read_text())['reference_sha256'], hashes)
+        self.assertEqual([m['frames'] for m in report['merged']], [66,66])
+
+    def test_previous_frame_after_upscale_before_overlay(self):
+        report = self.run_script('''#upscale 0
+#overlay-segment-name
+### a
+#size 256x256
+#frames 22
+#steps 2
+FRAME_PATTERN
+### b
+#ref-image #last-segment-frame -1
+blue
+''')
+        first,second = report['segments']; ref=second['frame_references'][0]
+        self.assertEqual(ref['source_video'], first['original_video'])
+        self.assertTrue(ref['source_video'].endswith('0000-upscaled.mp4'))
+        frame = self.rgb(ref['image']); stride=512*512*3
+        self.assertEqual(frame, self.rgb(first['original_video'])[-stride:])
+        self.assertNotEqual(frame, self.rgb(first['video'])[-stride:])
+        self.assertEqual(report['merged'][0]['frames'], 44)
+
+    def test_previous_frame_from_continuation_delivered_suffix(self):
+        report = self.run_script('''### a
+#size 256x256
+#frames 39
+#steps 2
+red
+### b
+#continue
+#frames 56
+FRAME_PATTERN
+### c
+#frames 22
+#ref-image #last-segment-frame -17
+#ref-image #last-segment-frame -1
+blue
+''')
+        first,second,third=report['segments']; stride=256*256*3
+        self.assertEqual(second['delivered'],17)
+        pixels=self.rgb(second['video'])
+        self.assertEqual(len(pixels),17*stride)
+        self.assertEqual([r['frame_index'] for r in third['frame_references']],[0,16])
+        for ref,expected in zip(third['frame_references'],(pixels[:stride],pixels[-stride:])):
+            self.assertEqual(self.rgb(ref['image']),expected)
+
+    def test_reference_extraction_failure_stops_before_next_worker(self):
+        wrapper = self.root/'failing extraction.py'
+        wrapper.write_text(f'''#!{sys.executable}
+import os,sys
+if '-c:v' in sys.argv and sys.argv[sys.argv.index('-c:v')+1]=='png':
+    print('injected extraction failure',file=sys.stderr)
+    raise SystemExit(7)
+os.execv({self.ffmpeg!r},[{self.ffmpeg!r},*sys.argv[1:]])
+''')
+        wrapper.chmod(0o755);self.env['H3_FFMPEG']=str(wrapper)
+        report=self.run_script('### a\n#size 256x256\n#frames 22\n#steps 2\nred\n'
+                               '### b\n#ref-image #last-segment-frame -1\nblue',1)
+        self.assertEqual([r['status'] for r in report['segments']],['complete','failed'])
+        self.assertEqual(report['segments'][1]['stage'],'reference extraction')
+        self.assertEqual(report['segments'][1]['frame_references'][0]['status'],'failed')
+        self.assertTrue((self.out/'a.mp4').exists())
+        self.assertFalse((self.out/'.render/0001.h3av').exists())
+        self.assertFalse((self.out/'scenes.mp4').exists())
 
     def probe_wrapper(self, edit='', on_scan='pass'):
         wrapper = self.root/'probe wrapper.py'

@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #include "src/log.h"
 /* Native narrow DiT projections. Original implementation of the cuBLASLt
  * documented tensorwide FP8 and tiled VEC16 UE4M3 NVFP4 contracts. */
@@ -315,7 +316,7 @@ static h3_gpu_tensor *quant_finish_weight(h3_gpu *g,std::vector<unsigned char> &
     result->elements=(size_t)n*k;result->quant_mode=g->quant_mode;
     result->quant_n=n;result->quant_k=k;result->quant_scale=scale;result->quant_global=global;
     if(hit)g->quant_cache_hits++;else g->quant_cache_misses++;
-    if(g->profiling)fprintf(stderr,"h3cli: quant weight %s %ux%u %s bytes=%zu time=%.6fs\n",h3_quant_name(g->quant_mode),n,k,hit?"cache-hit":"prepared",bytes,now()-start);
+    if(g->profiling)fprintf(stderr,"h3cli: quant weight %s %ux%u %s bytes=%zu time=%ss\n",h3_quant_name(g->quant_mode),n,k,hit?"cache-hit":"prepared",bytes,H3_SECONDS(now()-start, 6));
     return result;
 }
 h3_gpu_tensor *h3_gpu_quant_load(h3_gpu *g,const char *path,uint64_t offset,unsigned n,unsigned k) {

@@ -1,3 +1,4 @@
+#include "src/duration.h"
 #include "src/log.h"
 #include "src/geometry.h"
 #include "src/sglang/sglang.h"
@@ -466,10 +467,10 @@ int h3_gpu_synchronize(h3_gpu *g) {
         ok=h3_cuda_subblock_collect(g->subblock,&g->subblock_stats,g->error,sizeof(g->error));
         if(ok&&g->subblock_stats.calls!=g->subblock_reported) {
             auto &s=g->subblock_stats;g->subblock_reported=s.calls;
-            fprintf(stderr,"h3cli: subblock step=%d calls=%llu dense_bypass=%llu protected_calls=%llu selected=%llu possible=%llu protected_queries=%llu added_protected=%llu workspace=%llu pool_seconds=%.9g route_seconds=%.9g kernel_seconds=%.9g output_seconds=%.9g profiled=%llu unprofiled=%llu\n",
+            fprintf(stderr,"h3cli: subblock step=%d calls=%llu dense_bypass=%llu protected_calls=%llu selected=%llu possible=%llu protected_queries=%llu added_protected=%llu workspace=%llu pool_seconds=%s route_seconds=%s kernel_seconds=%s output_seconds=%s profiled=%llu unprofiled=%llu\n",
                 g->sol_step,(unsigned long long)s.calls,(unsigned long long)g->subblock_bypass,(unsigned long long)g->subblock_protected_calls,
                 (unsigned long long)s.pairs[0],(unsigned long long)s.pairs[1],(unsigned long long)s.pairs[2],(unsigned long long)s.pairs[3],
-                (unsigned long long)s.workspace_bytes,s.pool_seconds,s.route_seconds,s.kernel_seconds,s.output_seconds,
+                (unsigned long long)s.workspace_bytes,H3_SECONDS(s.pool_seconds, 9),H3_SECONDS(s.route_seconds, 9),H3_SECONDS(s.kernel_seconds, 9),H3_SECONDS(s.output_seconds, 9),
                 (unsigned long long)s.profiled_regions,(unsigned long long)s.unprofiled_regions);
         }
     }
@@ -508,24 +509,24 @@ void h3_gpu_profile_mark(h3_gpu *g,const char *phase) {
         (unsigned long long)g->sglang_host_hits,(unsigned long long)g->sglang_host_read_bytes);
     if(g->sglang_vae)fprintf(stderr,"h3cli: full VAE profile: graph_replays=%llu pinned_output=%zu\n",
         (unsigned long long)g->vae_replays,g->vae_pinned_bytes);
-    if(g->quant_mode)fprintf(stderr,"h3cli: quant profile %s / %s: mode=%s recipe=%d native_calls=%llu cache_hits=%llu prepared=%llu conversion=%.6fs (included in GEMM) stream=%s\n",
+    if(g->quant_mode)fprintf(stderr,"h3cli: quant profile %s / %s: mode=%s recipe=%d native_calls=%llu cache_hits=%llu prepared=%llu conversion=%ss (included in GEMM) stream=%s\n",
         g->label.c_str(),phase,h3_quant_name(g->quant_mode),(g->policy.quant_recipe?g->policy.quant_recipe:h3_quant_execution_recipe(g->quant_mode,g->policy.adaptive_cache,g->policy.attention)),
         (unsigned long long)g->quant_calls,(unsigned long long)g->quant_cache_hits,
-        (unsigned long long)g->quant_cache_misses,g->stats.quant_conversion_seconds,g->quant_streaming?"compressed":"resident");
+        (unsigned long long)g->quant_cache_misses,H3_SECONDS(g->stats.quant_conversion_seconds, 6),g->quant_streaming?"compressed":"resident");
     if(g->quant_diagnostics)fprintf(stderr,"h3cli: quant packing diagnostics (weights and activations): clipped=%llu nonzero-to-zero=%llu\n",
         (unsigned long long)g->stats.quant_clipped_values,(unsigned long long)g->stats.quant_zeroed_values);
-    fprintf(stderr,"h3cli: CUDA profile %s / %s: wall %.3fs peak %.3f GiB, GEMM %llu attention %llu conv %llu, H2D %.3f GiB D2H %.3f GiB stream %.3f GiB copy %.3fs wait %.3fs\n",g->label.c_str(),phase,now()-g->start,complete_stats.peak_live_bytes/1073741824.,(unsigned long long)g->stats.linear_dispatches,(unsigned long long)g->stats.attention_dispatches,(unsigned long long)g->stats.conv_dispatches,g->stats.h2d_bytes/1073741824.,g->stats.d2h_bytes/1073741824.,g->stats.streamed_bytes/1073741824.,g->stats.transfer_seconds,g->stats.command_wait_seconds);
-    if(g->sage)fprintf(stderr,"h3cli: Sage profile attention=%s recipe=%d plan=%d sage2=%llu sage3=%llu groups=%llu workspace=%llu reduction=%.6f pack=%.6f correction=%.6f kernel=%.6f output=%.6f seconds\n",
+    fprintf(stderr,"h3cli: CUDA profile %s / %s: wall %ss peak %.3f GiB, GEMM %llu attention %llu conv %llu, H2D %.3f GiB D2H %.3f GiB stream %.3f GiB copy %ss wait %ss\n",g->label.c_str(),phase,H3_SECONDS(now()-g->start, 3),complete_stats.peak_live_bytes/1073741824.,(unsigned long long)g->stats.linear_dispatches,(unsigned long long)g->stats.attention_dispatches,(unsigned long long)g->stats.conv_dispatches,g->stats.h2d_bytes/1073741824.,g->stats.d2h_bytes/1073741824.,g->stats.streamed_bytes/1073741824.,H3_SECONDS(g->stats.transfer_seconds, 3),H3_SECONDS(g->stats.command_wait_seconds, 3));
+    if(g->sage)fprintf(stderr,"h3cli: Sage profile attention=%s recipe=%d plan=%d sage2=%llu sage3=%llu groups=%llu workspace=%llu reduction=%s pack=%s correction=%s kernel=%s output=%s seconds\n",
         h3_attention_name(g->attention_mode),H3_ATTENTION_VERSION,H3_ATTENTION_PLAN_VERSION,
         (unsigned long long)g->sage_stats.calls[1],(unsigned long long)g->sage_stats.calls[2],
         (unsigned long long)g->sage_stats.head_groups,(unsigned long long)g->sage_stats.workspace_bytes,
-        g->sage_stats.reduction_seconds,g->sage_stats.pack_seconds,g->sage_stats.correction_seconds,
-        g->sage_stats.kernel_seconds,g->sage_stats.output_seconds);
-    if(g->sol)fprintf(stderr,"h3cli: SOL profile finite=%.6f summary=%.6f router=%.6f fused_exact_centroid_merge=%.6f output=%.6f profiled_regions=%llu unprofiled_regions=%llu seconds\n",
-        g->sol_stats.finite_seconds,g->sol_stats.summary_seconds,g->sol_stats.route_seconds,g->sol_stats.fused_seconds,g->sol_stats.output_seconds,
+        H3_SECONDS(g->sage_stats.reduction_seconds, 6),H3_SECONDS(g->sage_stats.pack_seconds, 6),H3_SECONDS(g->sage_stats.correction_seconds, 6),
+        H3_SECONDS(g->sage_stats.kernel_seconds, 6),H3_SECONDS(g->sage_stats.output_seconds, 6));
+    if(g->sol)fprintf(stderr,"h3cli: SOL profile finite=%s summary=%s router=%s fused_exact_centroid_merge=%s output=%s profiled_regions=%llu unprofiled_regions=%llu seconds\n",
+        H3_SECONDS(g->sol_stats.finite_seconds, 6),H3_SECONDS(g->sol_stats.summary_seconds, 6),H3_SECONDS(g->sol_stats.route_seconds, 6),H3_SECONDS(g->sol_stats.fused_seconds, 6),H3_SECONDS(g->sol_stats.output_seconds, 6),
         (unsigned long long)g->sol_stats.profiled_regions,(unsigned long long)g->sol_stats.unprofiled_regions);
-    fprintf(stderr,"h3cli: CUDA category seconds: GEMM %.6f attention %.6f conv %.6f; pinned peak %.3f GiB; bounce stalls %llu / %.6fs\n",g->stats.linear_seconds,g->stats.attention_seconds,g->stats.conv_seconds,g->stats.peak_pinned_bytes/1073741824.,(unsigned long long)g->stats.stream_stalls,g->stats.stream_wait_seconds);
-    fprintf(stderr,"h3cli: CUDA transfer events: H2D %.6fs (%.3f GiB/s), D2H %.6fs; uncovered upload wait %.6fs; normalization/elementwise %.6fs; source read/upload wall %.6fs\n",g->stats.h2d_seconds,g->stats.h2d_seconds?g->stats.h2d_bytes/1073741824./g->stats.h2d_seconds:0.0,g->stats.d2h_seconds,g->stats.slot_wait_seconds,g->stats.normalization_seconds,g->stats.transfer_seconds);
+    fprintf(stderr,"h3cli: CUDA category seconds: GEMM %s attention %s conv %s; pinned peak %.3f GiB; bounce stalls %llu / %ss\n",H3_SECONDS(g->stats.linear_seconds, 6),H3_SECONDS(g->stats.attention_seconds, 6),H3_SECONDS(g->stats.conv_seconds, 6),g->stats.peak_pinned_bytes/1073741824.,(unsigned long long)g->stats.stream_stalls,H3_SECONDS(g->stats.stream_wait_seconds, 6));
+    fprintf(stderr,"h3cli: CUDA transfer events: H2D %ss (%.3f GiB/s), D2H %ss; uncovered upload wait %ss; normalization/elementwise %ss; source read/upload wall %ss\n",H3_SECONDS(g->stats.h2d_seconds, 6),g->stats.h2d_seconds?g->stats.h2d_bytes/1073741824./g->stats.h2d_seconds:0.0,H3_SECONDS(g->stats.d2h_seconds, 6),H3_SECONDS(g->stats.slot_wait_seconds, 6),H3_SECONDS(g->stats.normalization_seconds, 6),H3_SECONDS(g->stats.transfer_seconds, 6));
     if(g->sglang_reference)fprintf(stderr,"h3cli: reference host weights: entries=%zu hits=%llu misses=%llu file_read=%.3f GiB pinned=%.3f GiB process_cap=40 GiB\n",
         g->sglang_host_weights.size(),(unsigned long long)g->sglang_host_hits,
         (unsigned long long)g->sglang_host_misses,g->sglang_host_read_bytes/1073741824.,g->stats.pinned_bytes/1073741824.);

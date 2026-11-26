@@ -15,6 +15,8 @@ typedef struct {
     int total;
     double phase_started;
     double step_started;
+    double denoise_seconds;
+    unsigned denoise_steps;
     int phase_timing;
     int terminal; /* Redraw style, including output forwarded through a pipe. */
     int line_open;

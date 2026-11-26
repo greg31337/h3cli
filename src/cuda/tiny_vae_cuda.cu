@@ -1,3 +1,4 @@
+#include "src/duration.h"
 /* Native TAEH3 CUDA decoder; architecture attribution in src/vae/tiny_vae.c.
  * NHWC FP16 activations/weights, FP32 convolution accumulation. Each decoder
  * owns one nonblocking stream. No transformer stream or scratch is borrowed. */
@@ -275,8 +276,8 @@ extern "C" void h3_tiny_backend_profile(void *opaque){
 #ifdef H3_CUDA_USE_CUDNN
     plans=d->plans.size();
 #endif
-    fprintf(stderr,"h3cli: tiny CUDA FP16: compute=%.6f transfer=%.6f s device_owned_peak=%zu pinned=%zu scratch=%zu plans=%zu built=%llu cublas=%llu cudnn=%llu\n",
-        d->compute_seconds,d->transfer_seconds,d->peak,d->pinned_bytes,d->scratch.bytes,plans,
+    fprintf(stderr,"h3cli: tiny CUDA FP16: compute=%s transfer=%s s device_owned_peak=%zu pinned=%zu scratch=%zu plans=%zu built=%llu cublas=%llu cudnn=%llu\n",
+        H3_SECONDS(d->compute_seconds, 6),H3_SECONDS(d->transfer_seconds, 6),d->peak,d->pinned_bytes,d->scratch.bytes,plans,
         (unsigned long long)d->plan_builds,(unsigned long long)d->blas_calls,(unsigned long long)d->cudnn_calls);
 }
 extern "C" int h3_tiny_backend_chunk(void *opaque,const float *input,int t,int h,int w,float **output,char *error,size_t size){

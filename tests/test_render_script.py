@@ -2,6 +2,7 @@
 """Native script planning tests; no models or GPU required."""
 import json
 import os
+import shlex
 from pathlib import Path
 import subprocess
 import sys
@@ -662,6 +663,116 @@ Three.
                 self.assertEqual(rows[2]['prompt'], f'{heading}:\nNew.')
                 self.assertEqual(rows[3]['prompt'], 'Preamble.')
                 self.assertEqual(rows[4]['prompt'], 'Another preamble.')
+
+    def test_use_last_sections_is_independent_local_and_transitive(self):
+        rows = self.plan('### a\nsubject_definitions:\nCat.\nsummary:\nOld.\nnon_diegetic_music:\nN/A\n'
+                         '### b\n#use-last-sections\nsummary:\nNew.\n'
+                         '### c\n#use-last-sections\nnon_diegetic_music:\n'
+                         '### d\nIndependent.\n### e\n#continue\nsummary:\nLast.')['segments']
+        self.assertEqual(rows[1]['prompt'], 'subject_definitions:\nCat.\n\nsummary:\nNew.\n\nnon_diegetic_music:\nN/A')
+        self.assertEqual(rows[2]['prompt'], 'subject_definitions:\nCat.\n\nsummary:\nNew.')
+        for row in rows[1:3]:
+            self.assertTrue(row['use_last_sections'])
+            self.assertFalse(row['continuing'])
+            self.assertNotIn('--continue-from', row['command'])
+        self.assertFalse(rows[3]['use_last_sections'])
+        self.assertEqual(rows[3]['prompt'], 'Independent.')
+        self.assertEqual(rows[4]['prompt'], 'summary:\nLast.')
+
+    def test_use_last_sections_rejections(self):
+        for text in ('#use-last-sections\n### a\nOne.',
+                     '### a\n#use-last-sections\nOne.',
+                     '### a\nOne.\n### b\n#use-last-sections 1\nTwo.',
+                     '### a\nOne.\n### b\n#use-last-sections\n#use-last-sections\nTwo.',
+                     '### a\nOne.\n### b\nTwo.\n#use-last-sections'):
+            with self.subTest(text=text):
+                result = self.invoke(text)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertFalse(self.out.exists())
+
+    def test_use_last_sections_can_explicitly_inherit_from_skipped_segment(self):
+        rows = self.plan('!### a\nsubject_definitions:\nCat.\nsummary:\nOld.\n'
+                         '### b\n#use-last-sections\nsummary:\nNew.')['segments']
+        self.assertEqual(rows[0]['status'], 'skipped')
+        self.assertEqual(rows[1]['prompt'], 'subject_definitions:\nCat.\n\nsummary:\nNew.')
+        self.assertNotIn('--continue-from', rows[1]['command'])
+
+    def test_previous_frame_indices_and_reference_order(self):
+        rows = self.plan('#ref-image one.png\n### a\n#frames 22\nOne.\n'
+                         '### b\n#ref-image #last-segment-frame 1\n'
+                         '#ref-image two.png\n#ref-image #last-segment-frame -10 # comment\n'
+                         '#refimage #last-segment-frame +22\nTwo.\n### c\nThree.')['segments']
+        refs = rows[1]['frame_references']
+        self.assertEqual([r['frame_index'] for r in refs], [0,12,21])
+        self.assertEqual([r['requested_frame'] for r in refs], [1,-10,22])
+        self.assertEqual(self.command_values(rows[1], 'ref-image'),
+                         [str(self.root/'one.png'), refs[0]['image'], str(self.root/'two.png'), refs[1]['image'], refs[2]['image']])
+        for ref in refs:
+            self.assertEqual(ref['source_video'], rows[0]['video'])
+            self.assertEqual(ref['command'][-1], ref['image'])
+            self.assertFalse(Path(ref['image']).exists())
+        self.assertEqual(rows[2]['frame_references'], [])
+        self.assertEqual(self.command_values(rows[2], 'ref-image'), [str(self.root/'one.png')])
+
+    def test_previous_frame_uses_delivered_suffix_and_seed_local_source(self):
+        rows = self.plan('#seed-set 7,9\n### a\n#frames 56\nOne.\n'
+                         '### b\n#continue\nTwo.\n### c\n#ref-image #last-segment-frame -17\nThree.')['segments']
+        for i in (2,5):
+            ref = rows[i]['frame_references'][0]
+            self.assertEqual(ref['frame_index'], 0)
+            self.assertEqual(ref['source_video'], rows[i-1]['video'])
+            self.assertEqual(self.command_values(rows[i], 'ref-image'), [ref['image']])
+        self.assertNotEqual(rows[2]['frame_references'][0]['image'], rows[5]['frame_references'][0]['image'])
+
+    def test_previous_frame_overlay_upscale_and_unset(self):
+        rows = self.plan('#upscale 0\n#overlay-segment-name\n### a\n#size 256x256\n#frames 22\nOne.\n'
+                         '### b\n#ref-image #last-segment-frame -1\nTwo.\n'
+                         '### c\n#ref-image #last-segment-frame -1\n#unset ref-image\nThree.')['segments']
+        self.assertEqual(rows[1]['frame_references'][0]['source_video'], str(self.out/'.render/0000-upscaled.mp4'))
+        self.assertEqual(rows[2]['frame_references'], [])
+        self.assertEqual(self.command_values(rows[2], 'ref-image'), [])
+
+    def test_previous_frame_rejects_invalid_and_unavailable_indices(self):
+        for index in ('0','-0','23','-23','9223372036854775808','-9223372036854775808','1.5','abc','','-1 extra'):
+            result = self.invoke(f'### a\n#frames 22\nOne.\n### b\n#ref-image #last-segment-frame {index}\nTwo.')
+            self.assertEqual(result.returncode, 2, (index,result.stderr))
+            self.assertIn('#last-segment-frame', result.stderr)
+        for text in ('#ref-image #last-segment-frame -1\n### a\nOne.',
+                     '### a\n#ref-image #last-segment-frame -1\nOne.',
+                     '!### a\nOne.\n### b\n#ref-image #last-segment-frame -1\nTwo.',
+                     '### a\nOne.\n### b\n#ref-audio #last-segment-frame -1\nTwo.',
+                     '### a\n#frames 56\nOne.\n### b\n#continue\nTwo.\n### c\n#ref-image #last-segment-frame 18\nThree.'):
+            result = self.invoke(text)
+            self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertFalse(self.out.exists())
+
+    def test_readable_dry_run_has_exact_commands_and_effective_prompts(self):
+        text = ('### a\n#frames 22\nsubject_definitions:\nA cat with a red collar.\nsummary:\nIt says "hi".\n'
+                "### b\n#use-last-sections\n#ref-image #last-segment-frame -1\nsummary:\nCat's next step.\n")
+        plan = self.plan(text)
+        result = self.invoke(text, '--dry-run-text', dry=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(self.out.exists())
+        for row in plan['segments']:
+            self.assertIn('Prompt:\n'+row['prompt']+'\n', result.stdout)
+        blocks = result.stdout.split('h3cli command:\n')[1:]
+        self.assertEqual(len(blocks), 2)
+        for block,row in zip(blocks,plan['segments']):
+            self.assertEqual(shlex.split(block.split('\nPrompt:\n',1)[0]), row['command'])
+        self.assertIn('Extract reference frame:', result.stdout)
+        self.assertNotIn('--dry-run-text', plan['segments'][0]['command'])
+
+    def test_dry_run_text_requires_render_and_is_not_a_segment_setting(self):
+        result = subprocess.run([str(BINARY), '--dry-run-text'], env=self.env,
+                                capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('require --render', result.stderr)
+        self.assertNotEqual(self.invoke('### a\n#dry-run-text\nOne.').returncode, 0)
+        result = self.invoke('### a\nOne.', '--dry-run-text')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('h3cli command:', result.stdout)
+        self.assertIn('Prompt:\nOne.\n', result.stdout)
+        self.assertFalse(self.out.exists())
 
     def test_canonical_order_partial_overrides_transitive_and_reset(self):
         original = '\n'.join(f'{h}:\n{h} body\n  indented detail' for h in reversed(HEADINGS))
