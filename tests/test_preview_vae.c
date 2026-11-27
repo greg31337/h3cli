@@ -6,7 +6,9 @@
 #include "src/media/ffmpeg.h"
 #include "src/memory.h"
 #include "src/execution.h"
+#include "src/geometry.h"
 #include <assert.h>
+#include <limits.h>
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
@@ -60,7 +62,13 @@ static void temporal_input(float *z,int time,int h,int w){
 static void host(void) {
     h3_params p=H3_PARAMS_DEFAULT,z={0};CHECK(!p.preview_vae&&!p.preview_vae_model&&!z.preview_vae);
     CHECK(h3_tiny_vae_frames(7)==22&&h3_tiny_vae_frames(17)==56&&h3_tiny_vae_frames(27)==90&&h3_tiny_vae_frames(72)==243&&h3_tiny_vae_frames(107)==362);
-    CHECK(!h3_tiny_vae_frames(2)&&!h3_tiny_vae_frames(8)&&!h3_tiny_vae_frames(112));
+    CHECK(!h3_tiny_vae_frames(INT_MIN)&&!h3_tiny_vae_frames(2)&&!h3_tiny_vae_frames(8));
+    /* Extended durations are CUDA-only. Keep concrete frame-count oracles so
+     * the old 362-frame cap cannot silently return on CUDA or grow on Metal. */
+    const int extended[][2]={{112,379},{217,736},{422,1433},{427,1450}};
+    for(size_t i=0;i<sizeof(extended)/sizeof(*extended);i++)
+        CHECK(h3_tiny_vae_frames(extended[i][0])==(H3_NATIVE_CUDA?extended[i][1]:0));
+    CHECK(!h3_tiny_vae_frames(428)&&!h3_tiny_vae_frames(432)&&!h3_tiny_vae_frames(INT_MAX));
     CHECK(!h3_preview_vae_options(0,"missing",error,sizeof(error)));
     char directory[]="/tmp/h3-preview-vae-XXXXXX";CHECK(mkdtemp(directory));char path[512],meta[540],video[512];
     snprintf(path,sizeof(path),"%s/test.h3av",directory);snprintf(meta,sizeof(meta),"%s.presentation",path);snprintf(video,sizeof(video),"%s/test.mp4",directory);
