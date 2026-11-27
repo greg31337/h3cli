@@ -29,4 +29,15 @@ void h3_still_latent_free(h3_still_latent *);
 int h3_still_options(const h3_params *, char *, size_t);
 h3_result *h3_decode_still_values(const h3_still_latent *, const char *,
     const h3_decode_options *, char *, size_t);
+/* Batch-local still decoder, never shared with a video decoder or live DiT.
+ * All items must use the same VAE identity and latent canvas. Zero initialize. */
+typedef struct {
+    h3_video_vae_decoder *decoder;
+    char *directory;
+    int height, width;
+    char compatibility[65];
+} h3_still_decode_cache;
+void h3_still_decode_cache_clear(h3_still_decode_cache *cache);
+h3_result *h3_decode_still_values_cached(const h3_still_latent *, const char *,
+    const h3_decode_options *, h3_still_decode_cache *, char *, size_t);
 #endif

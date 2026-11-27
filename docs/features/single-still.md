@@ -22,6 +22,39 @@ the decoder repeats the latent five times and returns raw frame 3. See the
   --decode-still-latent outputs/teapot.safetensors -o outputs/teapot-decoded.png
 ```
 
+Use `--still-count N` with `--still` to generate several images from the same
+prompt and references, using seeds `SEED` through `SEED + N - 1`:
+
+```sh
+./bin/h3cli --still --still-count 3 --seed 42 \
+  --width 640 --height 480 --steps 50 \
+  -p 'A polished red ceramic teapot on a pale wooden table.' \
+  --save-still-latent outputs/teapot.safetensors -o outputs/teapot.png
+```
+
+This writes `teapot-seed-42.png`, `teapot-seed-43.png`, and
+`teapot-seed-44.png` under `outputs/`, with matching `-seed-N.safetensors`
+files when `--save-still-latent` is supplied. The omitted count and
+`--still-count 1` preserve the original filenames. Counts must be positive
+integers, and the final seed must fit an unsigned 64-bit integer.
+
+The batch prepares the prompt, image references, transformer, and sampling
+schedule once. It samples each seed into an anonymous temporary file, releases
+the transformer, and loads the stock VAE once to decode all images. PNG delivery
+starts after every latent has been sampled. Transformer and decoder allocations
+remain separate, and only one image's latent and decoded pixels are needed in
+RAM at a time. Temporary disk use grows by approximately
+`N * 24 * (width / 16) * (height / 16) * 4` bytes and is cleaned up when the batch
+finishes or fails. Requested latent files and completed PNGs remain available
+if a later image fails.
+
+CUDA batches also retain partial/streamed transformer placement between seeds,
+provided the weight options and memory headroom remain compatible.
+
+`--frames-dir DIR` writes `frame-0000.ppm`, `frame-0001.ppm`, and so on in seed
+order. `--still-count` is a native CLI option; video render scripts and HTTP
+jobs do not accept it.
+
 Canvas dimensions must be positive multiples of 32, at most 16,777,216 pixels
 and 8192 per side. Both 3872×2176 and 2176×3872 are admitted. These are genuine
 T=1 target canvases; no smaller render or final upscaler is used. Device memory

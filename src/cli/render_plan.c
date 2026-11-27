@@ -105,7 +105,7 @@ char *h3_render_chain_name(const h3_render_segment *s) {
 static int forbidden(const char *name) {
     static const char *names[] = {
         "prompt", "output", "continue-from", "save-av-state", "keep-continuation-prefix",
-        "help", "info", "server", "still", "state-only", "decode-av-state",
+        "help", "info", "server", "still", "still-count", "state-only", "decode-av-state",
         "decode-still-latent", "save-still-latent", "resume-sampler-state",
         "stop-after-step", "preview-on-stop", "upscale-state", "upscale-av-state", "inspect-upscale-state",
         "download-models", "list-models", "render", "output-dir", "dry-run", "dry-run-text"

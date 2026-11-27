@@ -25,6 +25,7 @@ struct h3_ctx {
     uint8_t av_signature[2][32];
     int av_signature_ready[2];
     int cache_enabled;
+    int still_latent_only; /* Internal batch sampling; decode after releasing DiT. */
     char *conditioning_key;
     size_t conditioning_tokens;
     size_t conditioning_width;
@@ -48,6 +49,10 @@ struct h3_ctx {
 };
 
 h3_result *h3_generate_upscale_state(h3_ctx *ctx,h3_sampler_state *state,const h3_upscale_options *options);
+/* Borrow the normal still pipeline, retaining its prepared cache and returning
+ * an owned latent without decoding or invoking the final-frame callback. */
+h3_result *h3_generate_still_latent(h3_ctx *ctx, const char *prompt,
+    const h3_params *params);
 
 void h3_set_error(h3_ctx *ctx, const char *format, ...)
     __attribute__((format(printf, 2, 3)));

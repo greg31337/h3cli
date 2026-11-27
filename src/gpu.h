@@ -41,7 +41,7 @@ int h3_gpu_audio_decode_preflight(unsigned time,char *error,size_t size);
 int h3_gpu_quant_shape_preflight(h3_gpu *gpu,uint64_t rows);
 int h3_gpu_plan_bf16_weights(h3_gpu *gpu,uint64_t active_mask,uint64_t block_bytes,
     uint64_t future_bytes,int force_stream,int retry_cap,h3_weight_plan *plan);
-int h3_gpu_weight_plan_compatible(h3_gpu *gpu,int force_stream);
+int h3_gpu_weight_plan_compatible(h3_gpu *gpu,int force_stream,int stable_batch);
 #endif
 /* Quantized descriptors are only loaded explicitly by repeated DiT blocks.
  * Their BF16 projection interfaces dispatch native narrow GEMMs. */

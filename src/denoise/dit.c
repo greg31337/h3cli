@@ -3165,12 +3165,13 @@ int h3_dit_forward(h3_dit *dit, int step,
     return ok;
 }
 
-int h3_dit_placement_compatible(h3_dit *dit,int explicit_ssd) {
+int h3_dit_placement_compatible(h3_dit *dit,int explicit_ssd,int stable_batch) {
     if(!dit||dit->explicit_ssd_streaming!=explicit_ssd)return 0;
 #ifdef __APPLE__
+    (void)stable_batch;
     return 1;
 #else
-    return h3_gpu_weight_plan_compatible(dit->gpu,explicit_ssd);
+    return h3_gpu_weight_plan_compatible(dit->gpu,explicit_ssd,stable_batch);
 #endif
 }
 int h3_dit_get_gpu_stats(const h3_dit *dit, h3_gpu_stats *stats) {

@@ -588,7 +588,7 @@ int h3_gpu_plan_bf16_weights(h3_gpu *g,uint64_t mask,uint64_t block,uint64_t fut
         g->stats.resident_blocks=plan->resident_count;g->stats.active_weight_blocks=plan->active_count;g->stats.resident_block_mask=plan->resident_mask;}
     return ok;
 }
-int h3_gpu_weight_plan_compatible(h3_gpu *g,int force_stream) {
+int h3_gpu_weight_plan_compatible(h3_gpu *g,int force_stream,int stable_batch) {
     if(!g)return 0;
     h3_weight_options requested;char error[128];h3_cuda_policy policy=h3_cuda_policy_current();
     if(policy.weights_captured)requested=policy.weights;
@@ -596,10 +596,10 @@ int h3_gpu_weight_plan_compatible(h3_gpu *g,int force_stream) {
     h3_weight_options old=g->weight_options;
     if(force_stream){requested.mode=H3_WEIGHTS_STREAM;old.mode=H3_WEIGHTS_STREAM;}
     if(!h3_weight_options_equal(&requested,&old))return 0;
-    /* A constrained automatic plan must reconsider capacity on each request:
-     * external allocations may disappear as well as grow. Full and explicit
-     * streamed contexts can be retained subject to the normal headroom check. */
-    if(old.mode==H3_WEIGHTS_AUTO && (g->quant_streaming ||
+    /* Reconsider a constrained automatic plan between independent requests.
+     * A fixed batch can keep its placement; options and available headroom
+     * must still match, including when only some blocks are resident. */
+    if(!stable_batch && old.mode==H3_WEIGHTS_AUTO && (g->quant_streaming ||
        (g->weight_plan.active_count && g->weight_plan.resident_count<g->weight_plan.active_count)))return 0;
     size_t free,total;
     return selected(g)&&cudaMemGetInfo(&free,&total)==cudaSuccess&&free>=std::max<uint64_t>(1ull<<30,total/10);

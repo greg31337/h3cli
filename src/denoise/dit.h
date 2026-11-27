@@ -152,7 +152,7 @@ int h3_dit_denoise_euler_preview(
 int h3_dit_reuse_schedule(int steps, int reuse_interval, uint8_t *selected,
                           size_t selected_count);
 
-int h3_dit_placement_compatible(h3_dit *dit,int explicit_ssd);
+int h3_dit_placement_compatible(h3_dit *dit,int explicit_ssd,int stable_batch);
 int h3_dit_get_gpu_stats(const h3_dit *dit, h3_gpu_stats *stats);
 int h3_dit_release_weight_cache(h3_dit *dit, char *error, size_t error_size);
 

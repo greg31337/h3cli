@@ -883,7 +883,7 @@ Three.
     def test_managed_and_nonvideo_modes_rejected(self):
         flags = {'prompt': 'Text', 'output': 'out.mp4', 'continue-from': 'state.h3av',
                  'save-av-state': 'state.h3av', 'keep-continuation-prefix': None,
-                 'still': None, 'info': None, 'state-only': None, 'stop-after-step': '1',
+                 'still': None, 'still-count': '2', 'info': None, 'state-only': None, 'stop-after-step': '1',
                  'resume-sampler-state': 'state.h3sp', 'download-models': 'all', 'list-models': None}
         for name, value in flags.items():
             with self.subTest(name=name):

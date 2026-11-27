@@ -88,7 +88,7 @@ int main(int argc,char **argv) {
                 uint8_t key[32];CHECK(prepared&&ctx->dit_sampler_key_ready);
                 CHECK(h3_sampler_prepared_key(retained->sampler_state,key));
                 CHECK(!memcmp(key,ctx->dit_sampler_key,32));
-                CHECK(h3_dit_placement_compatible(prepared,0));
+                CHECK(h3_dit_placement_compatible(prepared,0,0));
             }
             h3_result *continued=h3_generate(ctx,NULL,&resume);CHECK(continued&&continued->status==H3_RESULT_PAUSED);
             if(live)CHECK(ctx->dit==prepared);

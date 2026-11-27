@@ -21,6 +21,7 @@
 #include "src/cli/options.h"
 #include "src/cli/dispatch.h"
 #include "src/cli/render.h"
+#include "src/cli/still_batch.h"
 #include "src/platform.h"
 #include "src/request.h"
 #include "src/internal.h"
@@ -109,10 +110,14 @@ static void usage(const char *program) {
         "                        Preset defaults; explicit flags win in any order\n"
         "                        50/50/50/12/6 steps; high uses CUDA adaptive cache\n"
         "                        (Metal reuse 2); previews use reuse 2/3 and tiny VAE\n"
-        "      --output-quality Q MP4 compression: default, maximum, high, medium, low\n"
-        "                         Omitted: CRF 18; explicit default: SGLang CRF 25\n"
-        "      --ffmpeg-crf N     H.264 CRF 0..51; overrides output-quality\n"
-        "      --lossless-video   Preserve RGB24 frames exactly (H.264 RGB); audio AAC\n"
+        "      --output-quality Q MP4 compression (H.264/YUV420, CUDA and Metal)\n"
+        "                        CRF: default=25, maximum=0, high=5, medium=22, low=33\n"
+        "                        Omitted: CRF 18; explicit default: SGLang CRF 25\n"
+        "                        Lower CRF: more detail, usually larger files\n"
+        "                        Video encoding only; independent of --quality\n"
+        "      --ffmpeg-crf N     H.264 CRF 0..51; overrides --output-quality in any order\n"
+        "      --lossless-video   Preserve RGB24 exactly (libx264rgb, CRF 0); audio AAC\n"
+        "                        Overrides --output-quality; --ffmpeg-crf must be 0 or omitted\n"
         "      --reuse N          Denoiser reuse: 1 close, 2 fast, 3 aggressive\n"
         "      --layers N         DiT blocks: 50 exact, 45 fast, 40 aggressive\n"
         "      --core-reuse N     Core refresh: 1 exact, 4 fast, 6 aggressive\n"
@@ -183,6 +188,9 @@ static void usage(const char *program) {
         "      --decode-still-latent PATH  Decode one normalized .safetensors latent to PNG\n"
         "      --image-vae PATH    Retired; use the stock video VAE in --model-dir\n"
         "      --still             Single-image generation, PNG output\n"
+        "      --still-count N     With --still: seeds SEED through SEED+N-1 (default: 1)\n"
+        "                          N>1: OUTPUT-seed-SEED.png; same suffix for saved latents\n"
+        "                          Reuses conditioning/DiT, then decodes all images with one VAE load\n"
         "      --save-still-latent PATH  Save normalized still .safetensors latent\n"
         "      --decode-av-state PATH  Decode saved final latents without sampling\n"
           "                              Ordinary CUDA BF16 video defaults to SGLang\n"
@@ -310,6 +318,7 @@ typedef struct {
     int display_failed;
     const char *frames_dir;
     int frame_write_failed;
+    int frame_offset;
 } cli_state;
 
 static int cli_progress(const char *phase, int completed, int total,
@@ -333,7 +342,7 @@ static int cli_frame(const h3_frame *frame, void *opaque) {
     if (!preview && state->frames_dir && !state->frame_write_failed) {
         char path[1024];
         int length = snprintf(path, sizeof(path), "%s/frame-%04d.ppm",
-                              state->frames_dir, frame->frame_index);
+                              state->frames_dir, frame->frame_index+state->frame_offset);
         FILE *output = length > 0 && (size_t)length < sizeof(path) ?
             fopen(path, "wb") : NULL;
         if (!output ||
@@ -400,6 +409,18 @@ static float parse_metal_float(const char *value, const char *label) {
 }
 static double model_preparation_seconds;
 static int cli_quality_reported;
+static void cli_still_batch_item(int index,int count,uint64_t seed,int decoding,void *opaque) {
+    cli_state *state=opaque;
+    h3_cli_progress_finish(&state->progress,stderr);
+    state->frame_offset=index;
+    fprintf(stderr,"h3cli: %s still %d/%d, seed=%" PRIu64 "\n",decoding?"decoding":"sampling",index+1,count,seed);
+}
+static void cli_still_batch_result(const h3_result *result,const char *output,void *opaque) {
+    cli_state *state=opaque;
+    h3_cli_progress_finish(&state->progress,stderr);
+    if(cli_hooks&&cli_hooks->result)cli_hooks->result(result,cli_hooks->opaque);
+    if(output&&*output)fprintf(stderr,"h3cli: wrote %s\n",output);
+}
 static int cli_execute(int argc, char **argv) {
     struct timespec operation_begin;
     clock_gettime(CLOCK_MONOTONIC, &operation_begin);
@@ -430,6 +451,7 @@ static int cli_execute(int argc, char **argv) {
     int info = 0;
     int frames_given = 0;
     int seconds_given = 0;
+    int still_count = 1, still_count_given = 0;
     int option;
     int generation_given = 0, still_conflict_given = 0, quant_verify_given = 0;
     int quality = -1, steps_given = 0, reuse_given = 0, preview_vae_given = 0;
@@ -548,6 +570,7 @@ static int cli_execute(int argc, char **argv) {
             case OPT_IMAGE_VAE:
                 fprintf(stderr,"h3cli: --image-vae is retired; use --still or --decode-still-latent with --model-dir and the stock video VAE\n");return 2;
             case OPT_STILL: params.still=1; break;
+            case OPT_STILL_COUNT: still_count=parse_int(optarg,"still-count");still_count_given=1;break;
             case OPT_SAVE_STILL: params.save_still_latent=optarg; break;
             case OPT_DECODE_AV_STATE: decode_av_state = optarg; break;
                         case OPT_ADAPTIVE_CACHE:
@@ -925,6 +948,12 @@ static int cli_execute(int argc, char **argv) {
             params.backend_set|=8;params.cuda_sol_set=0;
         }
     }
+    if(still_count_given) {
+        char error[512];
+        if(!h3_still_batch_validate(&params,still_count,error,sizeof(error))) {
+            fprintf(stderr,"h3cli: %s\n",error);return 2;
+        }
+    }
     if(quant_verify_given&&((!params.cuda_denoise_quant&&!params.resume_sampler_state)||decode_still||decode_av_state)) {
         fprintf(stderr,"h3cli: --cuda-denoise-quant-verify requires quantized generation or sampler resume\n");return 2;
     }
@@ -1184,47 +1213,58 @@ static int cli_execute(int argc, char **argv) {
                 params.preview_denoise = !params.still;
             }
         }
-        struct timespec generation_begin = {0};
-        if (params._arithmetic_recipe) clock_gettime(CLOCK_MONOTONIC, &generation_begin);
-        h3_result *result = h3_generate(ctx, prompt, &params);
-        if (params._arithmetic_recipe && result && result->status == H3_RESULT_COMPLETE) {
-            struct timespec generation_end;
-            clock_gettime(CLOCK_MONOTONIC, &generation_end);
-            double seconds = (double)(generation_end.tv_sec - generation_begin.tv_sec) +
-                (double)(generation_end.tv_nsec - generation_begin.tv_nsec) / 1e9;
-            /* Include lazy weight loading, conditioning and media delivery.
-             * Subtracting their costs would conceal the cold pipeline cost. */
-            H3_VERBOSE("h3cli: %s generation including lazy weights: %s s\n",
-                (params.cuda_attention||params.cuda_denoise_quant)?"SGLang-base with explicit approximation":"reference",H3_SECONDS(seconds, 6));
-        }
-        if (!result) {
-            h3_cli_progress_finish(&cli.progress, stderr);
-            fprintf(stderr, "h3cli: %s\n", h3_last_error(ctx));
-            h3_free(ctx);
-            h3_av_state_free(continuation);
-            return 1;
-        }
-        if (save_av_state && result->status == H3_RESULT_COMPLETE) {
+        if(still_count>1) {
             char error[512];
-            if (!h3_result_save_av_state(result,save_av_state,error,sizeof(error))) {
+            h3_still_batch_hooks batch_hooks={cli_still_batch_item,cli_still_batch_result,&cli};
+            if(!h3_still_batch_run(ctx,prompt,&params,still_count,&batch_hooks,error,sizeof(error))) {
+                h3_cli_progress_finish(&cli.progress,stderr);
                 fprintf(stderr,"h3cli: %s\n",error);
-                if (cli_hooks && cli_hooks->result)
-                    cli_hooks->result(result, cli_hooks->opaque);
-                h3_result_free(result);
+                h3_free(ctx);h3_av_state_free(continuation);return 1;
+            }
+            report_wall_time=1;
+        } else {
+            struct timespec generation_begin = {0};
+            if (params._arithmetic_recipe) clock_gettime(CLOCK_MONOTONIC, &generation_begin);
+            h3_result *result = h3_generate(ctx, prompt, &params);
+            if (params._arithmetic_recipe && result && result->status == H3_RESULT_COMPLETE) {
+                struct timespec generation_end;
+                clock_gettime(CLOCK_MONOTONIC, &generation_end);
+                double seconds = (double)(generation_end.tv_sec - generation_begin.tv_sec) +
+                    (double)(generation_end.tv_nsec - generation_begin.tv_nsec) / 1e9;
+                /* Include lazy weight loading, conditioning and media delivery.
+                 * Subtracting their costs would conceal the cold pipeline cost. */
+                H3_VERBOSE("h3cli: %s generation including lazy weights: %s s\n",
+                    (params.cuda_attention||params.cuda_denoise_quant)?"SGLang-base with explicit approximation":"reference",H3_SECONDS(seconds, 6));
+            }
+            if (!result) {
+                h3_cli_progress_finish(&cli.progress, stderr);
+                fprintf(stderr, "h3cli: %s\n", h3_last_error(ctx));
                 h3_free(ctx);
                 h3_av_state_free(continuation);
                 return 1;
             }
-            fprintf(stderr,"h3cli: saved complete AV state: %s\n",save_av_state);
-        }
-        int wrote_media = !params.state_only && (result->status == H3_RESULT_COMPLETE || params.preview_on_stop);
-        if (result->status == H3_RESULT_PAUSED) fprintf(stderr,"h3cli: paused successfully after %d/%d transitions\n",result->completed_steps,result->total_steps);
-        if (cli_hooks && cli_hooks->result)
-            cli_hooks->result(result, cli_hooks->opaque);
-        h3_result_free(result);
-        if (wrote_media && output && *output) {
-            fprintf(stderr, "h3cli: wrote %s\n", output);
-            report_wall_time = 1;
+            if (save_av_state && result->status == H3_RESULT_COMPLETE) {
+                char error[512];
+                if (!h3_result_save_av_state(result,save_av_state,error,sizeof(error))) {
+                    fprintf(stderr,"h3cli: %s\n",error);
+                    if (cli_hooks && cli_hooks->result)
+                        cli_hooks->result(result, cli_hooks->opaque);
+                    h3_result_free(result);
+                    h3_free(ctx);
+                    h3_av_state_free(continuation);
+                    return 1;
+                }
+                fprintf(stderr,"h3cli: saved complete AV state: %s\n",save_av_state);
+            }
+            int wrote_media = !params.state_only && (result->status == H3_RESULT_COMPLETE || params.preview_on_stop);
+            if (result->status == H3_RESULT_PAUSED) fprintf(stderr,"h3cli: paused successfully after %d/%d transitions\n",result->completed_steps,result->total_steps);
+            if (cli_hooks && cli_hooks->result)
+                cli_hooks->result(result, cli_hooks->opaque);
+            h3_result_free(result);
+            if (wrote_media && output && *output) {
+                fprintf(stderr, "h3cli: wrote %s\n", output);
+                report_wall_time = 1;
+            }
         }
         if (cli.frames_dir)
             fprintf(stderr, "h3cli: wrote frames to %s\n", cli.frames_dir);

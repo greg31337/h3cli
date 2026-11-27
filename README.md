@@ -216,6 +216,8 @@ covered in the [reference guide](docs/usage.md#8-add-image-video-and-audio-refer
 
 `--still` generates one PNG directly at the requested resolution, including
 3872×2176, using the stock H3 model. The dedicated `--image-vae` option is retired.
+Add `--still-count N` to generate consecutive seeds in one batch, reusing model
+loading and preprocessing; output filenames include each seed when N is greater than 1.
 See the [still guide](docs/features/single-still.md) for examples, saved-latent
 migration and measured hardware limits.
 

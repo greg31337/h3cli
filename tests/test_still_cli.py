@@ -25,4 +25,11 @@ class StillCLI(unittest.TestCase):
     subprocess.run(['./bin/still_probe','png',str(width),str(height),str(path)],check=True,capture_output=True)
     data=path.read_bytes();self.assertEqual(data[:8],b'\x89PNG\r\n\x1a\n');self.assertEqual(struct.unpack('>II',data[16:24]),(width,height))
  def test_video_selection(self):self.reject(['-d','missing','--image-vae','x'],'retired')
+ def test_still_count_validation(self):
+  base=['--still','-p','x','-d','missing']
+  for count in ('0','-1','1.5','2147483648','18446744073709551616'):
+   with self.subTest(count=count):self.reject(base+['--still-count',count],'still-count')
+  self.reject(['--still-count','2','-p','x','-d','missing'],'requires --still')
+  self.reject(base+['--still-count','2','--seed','18446744073709551615'],'overflow')
+  self.reject(base+['--still-count','3','--seed','18446744073709551614'],'overflow')
 if __name__=='__main__':unittest.main()

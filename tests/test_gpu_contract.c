@@ -150,6 +150,8 @@ static void (*volatile contract[])(void) = {
     (void (*)(void))h3_gpu_native_sol_report,
     (void (*)(void))h3_gpu_q8_load,
 #else
+    (void (*)(void))h3_gpu_audio_decode_preflight,
+    (void (*)(void))h3_gpu_quant_shape_preflight,
     (void (*)(void))h3_gpu_plan_bf16_weights,
     (void (*)(void))h3_gpu_weight_plan_compatible,
     (void (*)(void))h3_gpu_dit_attention_noise,

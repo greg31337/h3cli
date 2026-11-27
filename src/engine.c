@@ -1421,7 +1421,8 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     }
     uint8_t resume_key[32]={0};
     if(resume && !h3_sampler_prepared_key(resume,resume_key)) { h3_set_error(ctx,"cannot identify prepared checkpoint state"); goto cleanup; }
-    if(ctx->dit && !h3_dit_placement_compatible(ctx->dit,params->ssd_streaming)) {
+    if(ctx->dit && !h3_dit_placement_compatible(ctx->dit,params->ssd_streaming,
+            params->still && ctx->still_latent_only)) {
         h3_dit_free(ctx->dit);ctx->dit=NULL;free(ctx->dit_key);ctx->dit_key=NULL;ctx->dit_sampler_key_ready=0;
         H3_VERBOSE("h3cli: invalidated retained DiT weight placement\n");
     }
@@ -2507,14 +2508,14 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
     if(params->save_upscale_state && (!sampler || paused ||
         !h3_upscale_capture(sampler,up_raw_video,up_raw_audio,&up_record,
             params->save_upscale_state,ctx->error,sizeof(ctx->error))))goto cleanup;
-    if(params->still && dit_is_cached) {
+    if(params->still && !ctx->still_latent_only && dit_is_cached) {
         ctx->dit=NULL;free(ctx->dit_key);ctx->dit_key=NULL;ctx->dit_sampler_key_ready=0;dit_is_cached=0;
     }
     #ifdef __APPLE__
     /* Completed latents/checkpoints own everything required for delivery or
      * continuation. Production VAE must not overlap a retained transformer.
      * A paused invocation keeps its prepared cache for immediate resumption. */
-    if(dit_is_cached&&!paused&&!tiny_decoder) {
+    if(dit_is_cached&&!paused&&!tiny_decoder&&!ctx->still_latent_only) {
         ctx->dit=NULL;free(ctx->dit_key);ctx->dit_key=NULL;ctx->dit_sampler_key_ready=0;
         dit_is_cached=0;
         H3_VERBOSE("h3cli: releasing completed DiT cache before production VAE\n");
@@ -2530,7 +2531,13 @@ static h3_result *h3_generate_state(h3_ctx *ctx, const char *prompt,
         if(params->save_still_latent && !h3_still_latent_save(params->save_still_latent,z,ctx->error,sizeof(ctx->error))) {free(z);goto cleanup;}
         h3_decode_options options={.output_path=params->output_path,.output_encoding=params->output_encoding,.on_frame=params->on_frame,
             .on_progress=params->on_progress,.callback_opaque=params->callback_opaque};
-        result=h3_decode_still_values(z,vae_path,&options,ctx->error,sizeof(ctx->error));
+        if(ctx->still_latent_only) {
+            result=calloc(1,sizeof(*result));
+            if(result) {
+                result->kind=H3_RESULT_STILL;result->width=params->width;
+                result->height=params->height;result->frames=1;
+            } else h3_set_error(ctx,"cannot retain sampled still result");
+        } else result=h3_decode_still_values(z,vae_path,&options,ctx->error,sizeof(ctx->error));
         if(result) {
             result->still_latent=z;video=NULL;result->seed=params->seed;
             result->completed_steps=params->steps;result->total_steps=params->steps;
@@ -2794,6 +2801,16 @@ cleanup:
         h3_cache_clear(ctx);
     if (progress.cancelled && progress.cancellation_error[0])
         h3_set_error(ctx, "%s", progress.cancellation_error);
+    return result;
+}
+
+h3_result *h3_generate_still_latent(h3_ctx *ctx,const char *prompt,const h3_params *params) {
+    if(!ctx || !params)return NULL;
+    if(!params->still) {h3_set_error(ctx,"still latent sampling requires --still");return NULL;}
+    int previous=ctx->still_latent_only;
+    ctx->still_latent_only=1;
+    h3_result *result=h3_generate(ctx,prompt,params);
+    ctx->still_latent_only=previous;
     return result;
 }
 

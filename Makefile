@@ -122,7 +122,7 @@ LIB_C := $(COMMON_C) $(PLATFORM_C)
 LIB_OBJ := $(LIB_C:.c=.o) $(LIB_M:.m=.o) $(LIB_CUDA:.cu=.o) $(LIB_CXX:.cpp=.o)
 SERVER_C := src/server/resources.c src/server/bundle.c src/server/json.c src/server/sglang.c src/server/server.c src/server/http.c src/server/queue.c src/server/assets.c src/server/worker.c
 MODEL_C := src/models/catalog.c src/models/common.c src/models/resolve.c src/models/transfer.c src/models/store.c
-CLI_C := src/h3cli.c src/cli/cli_progress.c src/cli/options.c src/cli/arguments.c src/cli/render_plan.c src/cli/render.c src/cli/render_overlay.c src/request.c $(MODEL_C) $(SERVER_C)
+CLI_C := src/h3cli.c src/cli/cli_progress.c src/cli/still_batch.c src/cli/options.c src/cli/arguments.c src/cli/render_plan.c src/cli/render.c src/cli/render_overlay.c src/request.c $(MODEL_C) $(SERVER_C)
 CLI_OBJ := $(CLI_C:.c=.o) third_party/civetweb/src/civetweb.o
 CLI_LDLIBS := -lsqlite3 -lcurl -lpthread
 RENDER_TEST_C := tests/render_driver.c src/cli/render_plan.c src/cli/render.c src/cli/render_overlay.c src/request.c src/cli/options.c src/server/json.c src/weights/lora_json.c
@@ -901,8 +901,12 @@ bin/still_probe: tests/still_probe.o bin/libh3.a | bin
 
 bin/still_tests: tests/test_still.o bin/libh3.a | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-.PHONY: test-still-host test-still-gpu test-still-sanitize
-test-still-host: bin/h3cli bin/still_tests bin/still_probe bin/still_layout_fixture
+.PHONY: test-still-host test-still-gpu test-still-sanitize test-still-batch
+bin/still_batch_tests: tests/test_still_batch.c src/cli/still_batch.c src/cli/still_batch.h bin/libh3.a | bin
+	$(CC) $(CPPFLAGS) $(CFLAGS) -I. tests/test_still_batch.c bin/libh3.a $(LDFLAGS) $(LDLIBS) -o $@
+test-still-batch: bin/still_batch_tests
+	./bin/still_batch_tests
+test-still-host: bin/h3cli bin/still_tests bin/still_probe bin/still_layout_fixture test-still-batch
 	python3 tests/still_host.py ./bin/still_tests
 	python3 tests/test_still_cli.py
 	python3 tests/test_still_metadata.py
@@ -918,7 +922,7 @@ bin/still_generate: tests/still_generate.o bin/libh3.a | bin
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 clean-still:
-	rm -f bin/still_probe bin/still_generate bin/still_tests bin/still_controls bin/still_layout_fixture bin/still_lifecycle bin/still_context
+	rm -f bin/still_probe bin/still_generate bin/still_tests bin/still_batch_tests bin/still_controls bin/still_layout_fixture bin/still_lifecycle bin/still_context
 .PHONY: clean-still
 clean: clean-still
 
