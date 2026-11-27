@@ -2,6 +2,7 @@
 # Bootstrap can run before Python or a release configuration exists.
 set -euo pipefail
 h3_prereq_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$h3_prereq_root/release/python.sh"
 h3_prereq_platform=''
 h3_prereq_install=false
 h3_prereq_dry=false
@@ -42,7 +43,7 @@ if [[ "$h3_prereq_install" == true ]]; then
     h3_prereq_run brew install python pkg-config gh minisign
   else
     h3_prereq_missing=()
-    if ! command -v python3 >/dev/null || ! python3 -c 'import sys; sys.exit(sys.version_info < (3, 10))'; then
+    if ! h3_release_select_python; then
       h3_prereq_missing+=(python)
     fi
     for h3_prereq_tool in pkg-config gh minisign; do
@@ -53,8 +54,7 @@ if [[ "$h3_prereq_install" == true ]]; then
   fi
 fi
 if [[ "$h3_prereq_dry" == false ]]; then
-  command -v python3 >/dev/null || { echo 'Python missing; run this step with --install first' >&2; exit 2; }
-  python3 -c 'import sys; sys.exit("Python 3.10+ is required" if sys.version_info < (3, 10) else 0)'
+  h3_release_require_python
   h3_prereq_tools=(git)
   if [[ "$h3_prereq_platform" == linux ]]; then h3_prereq_tools+=(skopeo umoci cp); else h3_prereq_tools+=(pkg-config xcrun); fi
   for h3_prereq_tool in "${h3_prereq_tools[@]}"; do

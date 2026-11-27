@@ -39,6 +39,15 @@ credential names. Subsequent configuration normally changes only the version.
 The default label is **prerelease**; choose `--channel stable` here for a stable
 release. The same automated checks apply to both labels.
 
+Release commands require Python 3.10+ and select a compatible `python3` from
+`PATH` or Homebrew, including when Apple's older Python appears first. Child
+workers inherit that selection. If none is installed, run
+`./release/macos/step1-prerequisites.sh --install` on macOS or
+`./release/linux/step1-prerequisites.sh --install` on Linux, then retry.
+When using project-local Mac tools under `outputs/setup/`, first run
+`source outputs/setup/macos-env.sh` in each new shell to expose the installed
+Python and locked `pkg-config` to all release stages.
+
 Configuration verifies GitHub write access, signing, notarization and selected
 hosts, installs missing host helpers and provisions missing locked model files.
 It retains existing model files of the expected size; it does not hash all model
