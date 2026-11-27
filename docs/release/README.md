@@ -44,9 +44,11 @@ Release commands require Python 3.10+ and select a compatible `python3` from
 workers inherit that selection. If none is installed, run
 `./release/macos/step1-prerequisites.sh --install` on macOS or
 `./release/linux/step1-prerequisites.sh --install` on Linux, then retry.
-When using project-local Mac tools under `outputs/setup/`, first run
-`source outputs/setup/macos-env.sh` in each new shell to expose the installed
-Python and locked `pkg-config` to all release stages.
+Mac workers select the `pkg-config` version required by the selected source's
+toolchain lock, searching `PATH` and the original checkout's
+`outputs/setup/tools/bin`. That selection carries into snapshots and later
+stages; sourcing `outputs/setup/macos-env.sh` is optional. A different Homebrew
+version does not replace the locked version or bypass toolchain validation.
 
 Configuration verifies GitHub write access, signing, notarization and selected
 hosts, installs missing host helpers and provisions missing locked model files.

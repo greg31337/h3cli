@@ -7,7 +7,11 @@ h3_release_use_python() {
     h3_python_directory="$(cd -- "$(dirname -- "$h3_python_candidate")" && pwd)" || return 1
     # Workers and build scripts also invoke python3 by name. Keep them on the
     # same interpreter even when they change working directories.
-    export PATH="$h3_python_directory:$PATH"
+    # If this is already the selected interpreter, keep earlier directories
+    # containing other qualified helpers in place.
+    if [[ "$(command -v python3)" != "$h3_python_directory/python3" ]]; then
+      export PATH="$h3_python_directory:$PATH"
+    fi
     hash -r
     return 0
   fi

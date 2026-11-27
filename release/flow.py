@@ -19,6 +19,7 @@ import tempfile
 from common import ROOT, read, write, sha, digest, require, identities, verify, receipt, completed, attempt, run
 import build_process
 import driver
+from host_tools import macos_environment
 
 STAGES = ('build-local','test-local','build-packages','test-packages','publish')
 PLATFORMS = {'macos':'macos-arm64','linux':'linux-x86_64'}
@@ -302,7 +303,8 @@ class Flow:
             copy(m,Path(job['base'])/(stage+'.json'),local,receive=True)
             return read(local)
         command=[sys.executable,'-c',PACKAGE_WORKER,self.source/'release',verifier,stage,'--job',path] if verifier else [sys.executable,self.source/'release/worker.py',stage,'--job',path]
-        run(command,cwd=self.source,log=log)
+        env=macos_environment(self.source,ROOT) if name=='macos' else None
+        run(command,cwd=self.source,log=log,env=env)
         return None if stage=='provision' else read(Path(job['base'])/(stage+'.json'))
 
     def inputs(self,stage):
